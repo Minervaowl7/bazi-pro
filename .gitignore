@@ -25,3 +25,4 @@ venv/
 # Cache
 *.cache
 /tmp/
+.claude/

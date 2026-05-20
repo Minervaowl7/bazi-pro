@@ -143,8 +143,13 @@ if __name__ == "__main__":
     # 确定语料库路径
     script_dir = os.path.dirname(os.path.abspath(__file__))
     default_corpus = os.path.join(script_dir, "..", "references", "classical_corpus.md")
-    # 也尝试 skill 目录下的路径
     if not os.path.exists(default_corpus):
+        # 检查 SKILL_DIR 环境变量
+        skill_dir_env = os.environ.get("SKILL_DIR")
+        if skill_dir_env:
+            default_corpus = os.path.join(skill_dir_env, "references", "classical_corpus.md")
+    if not os.path.exists(default_corpus):
+        # 最后尝试 ~/.hermes 路径
         skill_dir = os.path.join(os.path.expanduser("~"), ".hermes", "skills", "bazi-pro")
         default_corpus = os.path.join(skill_dir, "references", "classical_corpus.md")
 
