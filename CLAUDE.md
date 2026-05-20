@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |------|------|
 | `SKILL.md` | Runtime contract for the Agent — execution flow, step schemas, output spec |
 | `scripts/retrieve_classical.py` | BM25 + jieba retriever over 2964 classical entries |
+| `scripts/generate_report.py` | Report generator: analysis text → beautiful HTML/MD/PDF report |
 | `references/classical_corpus.md` | Classical corpus (6 texts, line-oriented `[ID] @topic @source ## content`) |
 | `references/tiaohou.md` | 调候用神 reference table (10 stems × 12 months, based on 穷通宝鉴) |
 | `references/ETHICS.md` | Ethical wording rules, prohibited language, special-situation templates |
@@ -24,10 +25,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **算析分离**: Chart calculation lives in MCP / deterministic code. The skill only interprets.
 2. **No fabricated citations**: Every classical quote must come from `retrieve_classical.py` output or an explicit reference file.
 3. **Calculation boundaries**: Simple counting (tallying stems/branches, rough percentages for §0.0 gating) is OK for the LLM. Fragile math (multiplication chains, hidden-stem ratios, combination corrections) must come from MCP or scripts. Missing MCP data gets labeled "⚠️ MCP 未提供", never hand-computed.
-4. **One canonical execution order**: Step 0 → 1 → 2 → 3(格局) → 4(喜用) → 5(五行力量) → 6(大运) → 7(刑冲合害) → 8(分维度) → 9(历史校准). No "tentative → backfill" loops. If you edit the flow, update `SKILL.md`, `README.md`, and all cross-references.
+4. **One canonical execution order**: Step 0 → 1 → 2 → 3(格局) → 4(喜用) → 5(五行力量) → 6(大运) → 7(刑冲合害) → 8(分维度) → 9(历史校准) → [可选] Step 10(生成报告). No "tentative → backfill" loops. If you edit the flow, update `SKILL.md`, `README.md`, and all cross-references.
 5. **Ethics first**: Health, finance, marriage, fertility, death, disaster, and legal topics must use cultural-reference phrasing only — never deterministic prediction or professional advice. See `references/ETHICS.md`.
 
-## Architecture: v3.3 linear execution flow
+## Architecture: v3.4 linear execution flow
 
 ```
 Phase 0 (data prep)       Phase 1 (basics)     Phase 2 (core)         Phase 3 (analysis)
@@ -36,12 +37,15 @@ Phase 0 (data prep)       Phase 1 (basics)     Phase 2 (core)         Phase 3 (a
 │  0.0 五行快速预检 │       │ 数据校验  │        │  层0: 特殊格局    │    │ Step 7: 刑冲合害 │
 │  0.1 单通道检索   │       │ Step 2   │        │  层1-5: 月令/暗格 │    │ Step 8: 分维度   │
 │  0.2 双通道检索   │       │ 旺衰判定  │        │  层6: 量化评分    │    │ Step 9: 历史校准 │
-└─────────────────┘       └──────────┘        │ Step 4: 喜用判定  │    └─────────────────┘
-                                               │  4.1-4.5 四层裁决  │
-                                               │ Step 5: 五行力量  │
-                                               └──────────────────┘
+└─────────────────┘       └──────────┘        │ Step 4: 喜用判定  │    └────────┬────────┘
+                                               │  4.1-4.5 四层裁决  │             │ (可选)
+                                               │ Step 5: 五行力量  │             ▼
+                                               └──────────────────┘    ┌──────────────────────┐
+                                                                       │ Step 10: 生成报告     │
+                                                                       │  分析文本 → HTML/MD   │
+                                                                       │  (含封面、目录、样式)  │
+                                                                       └──────────────────────┘
 ```
-
 **Two-turn protocol** (详细版 only): Turn 1 outputs Step 1 + Step 2 + raw MCP element preview + 3 historical verification questions, then **stops**. Turn 2 continues with Step 3 → 4 → 5 (with corrections) → 6 → 7 → 8 after user feedback.
 
 **Path convention**: All script paths use `${SKILL_DIR:-.}/scripts/retrieve_classical.py`. `SKILL_DIR` is injected by the Hermes runtime. Never hard-code absolute paths like `/home/administrator/...`.
@@ -79,6 +83,14 @@ python3 /path/to/bazi-pro/scripts/retrieve_classical.py \
   "伤官见官 甲木 身弱 财星通关" \
   -k 5 --json \
   --corpus /path/to/bazi-pro/references/classical_corpus.md
+```
+
+Generate a report from analysis output:
+
+```bash
+python3 scripts/generate_report.py --input analysis.md --output report.html
+python3 scripts/generate_report.py --input analysis.md --output report.html --pdf
+cat analysis.md | python3 scripts/generate_report.py > report.html
 ```
 
 There is no formal test suite. Before committing retrieval changes, run `--stats` and these golden-query smoke tests:
@@ -151,6 +163,7 @@ Before finalizing changes, verify:
 - [ ] No reference file is linked but missing.
 - [ ] No absolute paths (`/home/...`) are present.
 - [ ] At least 3 golden-query smoke tests pass.
+- [ ] `scripts/generate_report.py` smoke test passes with sample analysis text.
 - [ ] Any new dependency is declared.
 - [ ] Ethics language remains non-deterministic and non-coercive (see `references/ETHICS.md`).
 - [ ] No classical quotation is fabricated — every citation traces to `retrieve_classical.py` output or a reference file.
