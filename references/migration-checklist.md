@@ -2,6 +2,25 @@
 
 当将 bazi-pro skill 从一台机器复制到另一台机器时，按以下清单检查。
 
+## 0. 获取源码
+
+**GitHub 仓库**：`git@github.com:Minervaowl7/bazi-pro.git`
+
+```bash
+git clone git@github.com:Minervaowl7/bazi-pro.git
+cd bazi-pro
+```
+
+安装/更新到 Hermes Agent skill 目录：
+
+```bash
+cp SKILL.md ~/.hermes/skills/bazi-pro/SKILL.md
+cp -r scripts/* ~/.hermes/skills/bazi-pro/scripts/
+cp -r references/* ~/.hermes/skills/bazi-pro/references/
+```
+
+更新后通过 `head -5 ~/.hermes/skills/bazi-pro/SKILL.md` 验证版本号。
+
 ## 1. 环境依赖
 
 ```bash

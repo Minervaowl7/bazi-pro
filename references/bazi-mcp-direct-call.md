@@ -65,7 +65,7 @@ find /home -name "index.js" -path "*bazi-mcp*" 2>/dev/null
 find /mnt -name "index.js" -path "*bazi-mcp*" -maxdepth 6 2>/dev/null
 ```
 
-找到后，将脚本中的 `import` 路径和 `cd` 目录替换为实际路径。常见替代位置（按优先级）：\n- `~/.npm/_npx/<hash>/node_modules/bazi-mcp/dist/index.js`（npx 缓存）\n- `~/mcp-servers/bazi-mcp/dist/index.js`（手动安装）\n\n> **当前用户环境已知路径**：`/home/administrator/mcp-servers/bazi-mcp/dist/index.js`
+找到后，将脚本中的 `import` 路径和 `cd` 目录替换为实际路径。常见替代位置（按优先级）：\n- `~/.npm/_npx/<hash>/node_modules/bazi-mcp/dist/index.js`（npx 缓存）\n- `~/mcp-servers/bazi-mcp/dist/index.js`（手动安装）\n\n> **当前用户环境已知路径**：`/home/liyunlong/.npm/_npx/6c6c93aa84f1c2cf/node_modules/bazi-mcp/dist/index.js`
 
 ### 注意事项
 

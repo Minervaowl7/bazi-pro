@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-八字命理分析报告生成器 v1.0
+八字命理分析报告生成器 v1.1
 用法: python3 generate_report.py --input <analysis.md> --output <report.html>
      python3 generate_report.py --input <analysis.md> --output <report.html> --pdf
      cat analysis.md | python3 generate_report.py > report.html
@@ -272,7 +272,8 @@ def simple_md_to_html(text: str) -> str:
             close_lists()
             level = len(m.group(1))
             title = m.group(2).strip()
-            base = re.sub(r'[^\w一-鿿]', '-', title).strip('-').lower() or 'section'
+            base = re.sub(r'[^\w\u4e00-\u9fff]', '-', title).strip('-').lower() or 'section'
+            base = re.sub(r'-{2,}', '-', base)  # collapse multiple dashes
             out.append(f'<h{level} id="{base}">{flush_inlines(title)}</h{level}>')
             i += 1
             continue
@@ -399,10 +400,17 @@ def generate_html_report(meta: dict, body_text: str,
 
 
 CSS_TRADITIONAL = '''
+/* ==== Font face for emoji ==== */
+@font-face {
+    font-family: "Noto Color Emoji";
+    src: local("Noto Color Emoji");
+    font-display: swap;
+}
+
 /* ==== Reset & Base ==== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-    font-family: "Noto Serif SC", "SimSun", "STSong", "WenQuanYi Zen Hei", "Microsoft YaHei", serif;
+    font-family: "Noto Serif CJK SC", "DejaVu Serif", "Noto Color Emoji", "SimSun", "STSong", "WenQuanYi Zen Hei", "Microsoft YaHei", serif;
     font-size: 16px; line-height: 1.85; color: #3a3a3a; background: #f5f0e8;
 }
 a { color: #8b0000; text-decoration: none; }
@@ -487,12 +495,12 @@ a:hover { text-decoration: underline; }
 /* ==== Code ==== */
 .content code {
     background: #f5e6d3; padding: 2px 6px; border-radius: 3px;
-    font-family: "Courier New", "SimHei", monospace; font-size: 14px; color: #8b4513;
+    font-family: "DejaVu Sans Mono", "Noto Sans Mono", "Courier New", "SimHei", monospace; font-size: 14px; color: #8b4513;
 }
 .content pre {
     background: #2d2416; color: #e8d5a0; padding: 16px 20px;
     border-radius: 6px; overflow-x: auto;
-    font-family: "Courier New", "SimHei", monospace;
+    font-family: "DejaVu Sans Mono", "Noto Sans Mono", "Courier New", "SimHei", monospace;
     font-size: 13px; line-height: 1.5; margin: 16px 0;
 }
 .content pre.ascii-art { background: #1a1a2e; color: #a0d468; }
@@ -610,24 +618,51 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
 # PDF generation (optional, graceful degradation)
 # ---------------------------------------------------------------------------
 
+# Emoji → text fallback for PDF (weasyprint may not render color emoji glyphs)
+_EMOJI_FALLBACK = {
+    '🔮': '★', '⭐': '★', '🌟': '★',
+    '⚠️': '⚠', '⚠': '⚠',
+    '🔴': '●', '🟢': '●', '🟡': '●',
+    '✅': '✓', '✔️': '✓', '✔': '✓',
+    '❌': '✗', '✖️': '✗', '✖': '✗',
+    '🌊': '≈', '🔥': '!', '💧': '≈',
+    '🌱': '·', '📈': '↑', '🚀': '↑↑',
+    '📊': '=', '📌': '·', '🔑': '#',
+    '🩺': '+', '⏳': '~', '⛔': '⊗',
+    '☯': '☯', '🏠': '[家]', '💰': '[财]',
+    '❤️': '[心]', '💀': '[危]',
+}
+
+def strip_emoji_for_pdf(html: str) -> str:
+    """Remove variation selectors and replace emoji with text glyphs for PDF."""
+    # First, strip VS16 (U+FE0F) which forces emoji presentation
+    html = html.replace('\ufe0f', '')
+    # Then apply explicit fallbacks
+    for emoji, text in _EMOJI_FALLBACK.items():
+        html = html.replace(emoji, text)
+    return html
+
 def try_generate_pdf(html_content: str, output_path: str) -> tuple:
     """尝试生成 PDF，返回 (success, message)"""
     pdf_path = output_path.rsplit('.', 1)[0] + '.pdf'
 
+    # Strip emoji for reliable PDF rendering (weasyprint color emoji support is limited)
+    pdf_html = strip_emoji_for_pdf(html_content)
+
     # Attempt 1: weasyprint (best quality)
     try:
         from weasyprint import HTML
-        HTML(string=html_content).write_pdf(pdf_path)
+        HTML(string=pdf_html).write_pdf(pdf_path)
         return True, f'PDF 已保存至: {pdf_path}'
     except ImportError:
         pass
     except Exception as e:
-        pass  # fall through to next method
+        print(f'  [weasyprint] 渲染异常: {e}', file=sys.stderr)
 
     # Attempt 2: pdfkit (wkhtmltopdf)
     try:
         import pdfkit
-        pdfkit.from_string(html_content, pdf_path)
+        pdfkit.from_string(pdf_html, pdf_path)
         return True, f'PDF 已保存至: {pdf_path}'
     except ImportError:
         pass
