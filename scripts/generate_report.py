@@ -15,6 +15,9 @@ import textwrap
 from datetime import datetime
 from html import escape
 from pathlib import Path
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from dashboard import generate_dashboard
 
 
 # ---------------------------------------------------------------------------
@@ -835,6 +838,8 @@ def main():
                         help='输出格式（默认: md）')
     parser.add_argument('--style', choices=['traditional', 'modern'], default='traditional',
                         help='样式主题（默认: traditional）')
+    parser.add_argument('--theme', choices=['report', 'dashboard'], default='report',
+                        help='呈现主题: report(传统报告) / dashboard(交互仪表盘)')
     parser.add_argument('--gender', help='性别（覆盖自动提取）')
     parser.add_argument('--birth', help='出生日期（覆盖自动提取）')
     parser.add_argument('--name', help='姓名/称呼')
@@ -892,14 +897,21 @@ def main():
         output_base = os.path.join(os.getcwd(), f'bazi_report_{ts}{ext}')
 
     # --- Generate ---
-    if args.format in ('html', 'both'):
-        html_content = generate_html_report(meta, analysis_text, args.title, report_date)
-        html_path = output_base if args.format == 'html' else (
+    if args.format in ('html', 'both') or args.theme == 'dashboard':
+        if args.theme == 'dashboard':
+            html_content = generate_dashboard(meta, analysis_text, args.title, report_date, simple_md_to_html)
+        else:
+            html_content = generate_html_report(meta, analysis_text, args.title, report_date)
+        html_path = output_base if args.format in ('html', 'both') else (
             output_base.rsplit('.', 1)[0] + '.html'
         )
+        if args.theme == 'dashboard':
+            if not html_path.endswith('_dashboard.html'):
+                html_path = html_path.replace('.html', '_dashboard.html') if '.html' in html_path else html_path + '_dashboard.html'
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        print(f'HTML 报告已保存至: {html_path}')
+        label = '仪表盘' if args.theme == 'dashboard' else 'HTML 报告'
+        print(f'{label}已保存至: {html_path}')
 
         if args.pdf:
             success, msg = try_generate_pdf(html_content, html_path)

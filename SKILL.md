@@ -1329,6 +1329,9 @@ ANALYSIS_EOF
 # 如需 HTML 格式（显式指定 --format html）
 python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --format html --output ~/bazi_report.html
 
+# 交互式仪表盘（暗色模式+五行雷达图+大运时间轴+可折叠章节）
+python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --theme dashboard --output ~/bazi_dashboard.html
+
 # 同时生成 PDF（需安装 weasyprint 或 pdfkit）
 python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --output ~/bazi_report.md --pdf
 ```
@@ -1339,6 +1342,7 @@ python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --ou
 |------|------|---------|
 | **Markdown**（默认） | 增强版 Markdown，含元数据头和统一页脚。原始分析内容零失真，可用任何 Markdown 编辑器/预览器（VS Code、Typora、Obsidian 等）打开 | 推荐首选：零转换、零失真、跨平台通用 |
 | **HTML** | 精美排版：封面 + 目录 + 样式化表格 + ASCII 图保留，需显式 `--format html` | 需要精美打印/分享时使用 |
+| **仪表盘** ⭐ | 交互式暗色主题：SVG 五行雷达图 + 大运时间轴 + 可折叠章节 + 一键亮色切换。`--theme dashboard` | 推荐：可视化强、有设计感 |
 | **PDF** | 从 HTML 转换（需额外依赖，见 10.3） | 正式交付、打印分发 |
 
 #### 10.3 PDF 依赖
