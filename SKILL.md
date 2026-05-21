@@ -1311,34 +1311,34 @@ XXXX年（⏳ 变动年）：
 
 ---
 
-### 第十步：生成分析报告（可选，标准版/详细版适用）
+### 第十步：生成分析报告（标准版/详细版适用）
 
-分析完成后，可将解读内容保存为精美的 HTML 或 Markdown 报告文件。
+分析完成后，将解读内容保存为 Markdown 报告文件（可被任何 Markdown 编辑器/预览器打开，也可用 generate_report.py --format html 转为 HTML）。
 
 #### 10.1 执行命令
 
 ```bash
-# 将分析输出保存为临时文件，再生成 HTML 报告
-python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --output ~/bazi_report.html
+# 默认生成 Markdown 报告（推荐，零失真）
+python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --output ~/bazi_report.md
 
-# 通过管道输入分析文本
-cat << 'ANALYSIS_EOF' | python3 ${SKILL_DIR:-.}/scripts/generate_report.py -o ~/bazi_report.html
+# 通过管道输入分析文本（默认输出 Markdown）
+cat << 'ANALYSIS_EOF' | python3 ${SKILL_DIR:-.}/scripts/generate_report.py -o ~/bazi_report.md
 <完整的分析 Markdown 文本>
 ANALYSIS_EOF
 
-# 生成 Markdown 格式报告
-python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --format md --output ~/bazi_report.md
+# 如需 HTML 格式（显式指定 --format html）
+python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --format html --output ~/bazi_report.html
 
-# 同时尝试生成 PDF（需安装 weasyprint 或 pdfkit）
-python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --output ~/bazi_report.html --pdf
+# 同时生成 PDF（需安装 weasyprint 或 pdfkit）
+python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --output ~/bazi_report.md --pdf
 ```
 
 #### 10.2 输出格式
 
 | 格式 | 说明 | 适用场景 |
 |------|------|---------|
-| **HTML**（默认） | 精美排版：封面 + 目录 + 样式化表格 + ASCII 图保留，浏览器打开即可查看，支持打印为 PDF | 最推荐：视觉效果好，零依赖 |
-| **Markdown** | 增强版 Markdown，含元数据头和统一页脚 | 纯文本存档、Git 版本管理 |
+| **Markdown**（默认） | 增强版 Markdown，含元数据头和统一页脚。原始分析内容零失真，可用任何 Markdown 编辑器/预览器（VS Code、Typora、Obsidian 等）打开 | 推荐首选：零转换、零失真、跨平台通用 |
+| **HTML** | 精美排版：封面 + 目录 + 样式化表格 + ASCII 图保留，需显式 `--format html` | 需要精美打印/分享时使用 |
 | **PDF** | 从 HTML 转换（需额外依赖，见 10.3） | 正式交付、打印分发 |
 
 #### 10.3 PDF 依赖
@@ -1351,11 +1351,11 @@ python3 ${SKILL_DIR:-.}/scripts/generate_report.py --input /tmp/analysis.md --ou
 
 脚本在依赖缺失时会输出明确提示，不会报错中断。
 
-#### 10.4 执行时机（v3.5 修订：全部自动生成）
+#### 10.4 执行时机（v3.5 修订：全部自动生成 Markdown 报告）
 
 - **精简版**（单点问题，约 300-500 字）：不触发报告生成。内容太短，不适合独立报告。
-- **标准版**（完整九步，约 3000-5000 字）：逐条输出完毕后，**立即将全部分析内容保存为 Markdown 文件并调用 generate_report.py 自动生成 HTML 报告**。无需询问用户——报告作为分析的自然产出物交付。用户在对话中已看到完整分析，报告用于存档和分享。
-- **详细版**（深度解读）：Turn 2 全部输出完成后，**自动生成报告并告知用户保存路径**（与标准版逻辑一致）。
+- **标准版**（完整九步，约 3000-5000 字）：逐条输出完毕后，**立即将全部分析内容保存为 Markdown 文件并调用 generate_report.py 自动生成 Markdown 报告**。无需询问用户——报告作为分析的自然产出物交付，零失真。
+- **详细版**（深度解读）：Turn 2 全部输出完成后，**自动生成 Markdown 报告并告知用户保存路径**（与标准版逻辑一致）。
 
 #### 10.5 报告内容
 

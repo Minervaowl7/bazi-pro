@@ -695,7 +695,7 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
   <p><strong>免责声明</strong></p>
   <p>本报告基于 Bazi MCP 排盘数据和传统命理学理论（参酌《穷通宝鉴》《子平真诠》《三命通会》《滴天髓》《神峰通考》等经典），仅供传统文化学习与参考，不构成任何决策依据。命理学属于传统文化范畴，涉及健康和财务的判断请以专业诊断为准。人生在于自身的努力和选择，命理仅为认知自我的辅助工具。</p>
   <br>
-  <p>报告生成时间：{report_date} &nbsp;|&nbsp; bazi-pro v3.4 &nbsp;|&nbsp; 生成工具: scripts/generate_report.py</p>
+  <p>报告生成时间：{report_date} &nbsp;|&nbsp; bazi-pro v3.5 &nbsp;|&nbsp; 生成工具: scripts/generate_report.py</p>
 </div>
 
 </div>
@@ -801,7 +801,7 @@ def generate_enhanced_markdown(meta: dict, body_text: str,
     lines.append('')
     lines.append('---')
     lines.append('')
-    lines.append(f'*报告生成时间：{report_date} | bazi-pro v3.4 | generate_report.py*')
+    lines.append(f'*报告生成时间：{report_date} | bazi-pro v3.5 | generate_report.py*')
     lines.append('')
     lines.append(
         '> **免责声明**：本报告基于传统命理学理论，仅供传统文化学习与参考，'
@@ -831,8 +831,8 @@ def main():
     parser.add_argument('--title', default='八字命理分析报告', help='报告标题')
     parser.add_argument('--meta', help='元数据 JSON 文件路径')
     parser.add_argument('--pdf', action='store_true', help='同时生成 PDF')
-    parser.add_argument('--format', choices=['html', 'md', 'both'], default='html',
-                        help='输出格式（默认: html）')
+    parser.add_argument('--format', choices=['html', 'md', 'both'], default='md',
+                        help='输出格式（默认: md）')
     parser.add_argument('--style', choices=['traditional', 'modern'], default='traditional',
                         help='样式主题（默认: traditional）')
     parser.add_argument('--gender', help='性别（覆盖自动提取）')
@@ -888,7 +888,7 @@ def main():
         output_base = args.output
     else:
         ts = datetime.now().strftime('%Y%m%d_%H%M%S')
-        ext = '.md' if args.format == 'md' else '.html'
+        ext = '.html' if args.format == 'html' else '.md'
         output_base = os.path.join(os.getcwd(), f'bazi_report_{ts}{ext}')
 
     # --- Generate ---
