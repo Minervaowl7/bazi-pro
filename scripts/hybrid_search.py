@@ -128,6 +128,10 @@ class HybridSearcher:
         results = []
         for idx, score in fused[:k]:
             e = self.entries[idx]
+            # Matched terms
+            entry_text = f"{e['topic']} {e['content']}"
+            query_terms = query_str.split()
+            matched = [t for t in query_terms if t in entry_text]
             results.append({
                 "score": round(score, 4),
                 "id": e["id"],
@@ -138,7 +142,9 @@ class HybridSearcher:
                     "bm25": round(bm25_scores.get(idx, 0.0), 4),
                     "vector": round(vector_scores.get(idx, 0.0), 4),
                     "authority": round(CLASSICAL_AUTHORITY.get(e["source"], 0.80), 2),
-                }
+                },
+                "matched_terms": matched,
+                "why": f"BM25={bm25_scores.get(idx, 0):.2f} + vector={vector_scores.get(idx, 0):.2f} + authority({e['source']})={CLASSICAL_AUTHORITY.get(e['source'], 0.80):.2f}" + (f" | matched: {', '.join(matched)}" if matched else "")
             })
         return results
 
