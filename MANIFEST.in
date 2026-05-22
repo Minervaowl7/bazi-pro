@@ -1,0 +1,5 @@
+include LICENSE
+include README.md
+recursive-include references *.md
+recursive-include examples *.md *.json *.html
+recursive-include dist *.html

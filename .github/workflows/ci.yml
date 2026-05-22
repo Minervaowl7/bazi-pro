@@ -78,4 +78,4 @@ jobs:
           pip install dist/*.whl --force-reinstall
           bazi-retrieve --stats
           bazi-doctor
-          echo '✅ Wheel install OK' "
+          echo '✅ Wheel install OK'
