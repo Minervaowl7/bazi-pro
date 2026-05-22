@@ -8,6 +8,7 @@ from html import escape
 from bazi_pro.view_model import DashboardVM
 from bazi_pro.ui.verdict_seal import render_seal_svg, SEAL_CSS
 from bazi_pro.ui.report import render_report as _render_report
+from bazi_pro.ui.replay import render_replay as _render_replay
 
 
 def render_dashboard(vm: DashboardVM, *, screenshot_mode: bool = False) -> str:
@@ -126,11 +127,8 @@ def render_report(vm: DashboardVM, body_html: str = '', appendix_html: str = '')
 
 
 def render_replay(vm: DashboardVM) -> str:
-    """渲染 Replay HTML — 裁决回放"""
-    stages_html = ''
-    for s in vm.trace_stages:
-        stages_html += f'<li>{escape(s.title)} — {escape(s.summary)}</li>'
-    return f'<html><body><h1>Verdict Replay</h1><ul>{stages_html}</ul></body></html>'
+    """渲染 Replay HTML — 裁决过程回放（三栏：主张·证据·反证）"""
+    return _render_replay(vm)
 
 
 # ── Components ──
