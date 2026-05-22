@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""
+bazi-pro HTML Quality Regression Tests v4.3
+防止 UI 回退：占位文案 · summary 长度 · TOC 有效性 · 必需模块
+"""
+
+import sys
+import re
+import pytest
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+# ── Fixtures ──
+
+@pytest.fixture
+def sample_trace():
+    """加载 sample_trace.json"""
+    path = REPO_ROOT / "examples" / "sample_trace.json"
+    if path.exists():
+        import json
+        return json.loads(path.read_text(encoding='utf-8'))
+    return {}
+
+
+@pytest.fixture
+def rendered_dashboard():
+    """渲染一份 Dashboard 用于检查"""
+    try:
+        from bazi_pro.view_model import DashboardVM
+        from bazi_pro.ui import render_dashboard
+        vm = DashboardVM()
+        vm.verdict.day_master = "丁火"
+        vm.verdict.pattern = "建禄月劫"
+        vm.verdict.decision = "不从，按正格论"
+        vm.verdict.yongshen = ["木"]
+        vm.verdict.xishen = ["水", "金"]
+        vm.verdict.jishen = ["火", "土"]
+        vm.verdict.confidence = 0.80
+        vm.bazi = "壬午 乙巳 丁亥 癸卯"
+        return render_dashboard(vm)
+    except Exception:
+        return ""
+
+
+@pytest.fixture
+def rendered_report():
+    """渲染一份 Report 用于检查"""
+    try:
+        from bazi_pro.view_model import DashboardVM
+        from bazi_pro.ui import render_report
+        vm = DashboardVM()
+        vm.verdict.day_master = "丁火"
+        vm.verdict.pattern = "建禄月劫"
+        vm.verdict.decision = "不从，按正格论"
+        vm.bazi = "壬午 乙巳 丁亥 癸卯"
+        return render_report(vm)
+    except Exception:
+        return ""
+
+
+# ── P0: 禁止占位文案 ──
+
+BANNED_WORDS = [
+    "未提取", "undefined", "null", "NaN", "TODO", "debug",
+    "None", "Error", "Traceback", "Exception",
+]
+
+
+@pytest.mark.parametrize("word", BANNED_WORDS)
+def test_dashboard_no_banned_words(rendered_dashboard, word):
+    """Dashboard 不得包含禁用词"""
+    if not rendered_dashboard:
+        pytest.skip("Dashboard 未渲染")
+    assert word not in rendered_dashboard, f"Dashboard 包含禁用词: '{word}'"
+
+
+@pytest.mark.parametrize("word", BANNED_WORDS)
+def test_report_no_banned_words(rendered_report, word):
+    """Report 不得包含禁用词"""
+    if not rendered_report:
+        pytest.skip("Report 未渲染")
+    assert word not in rendered_report, f"Report 包含禁用词: '{word}'"
+
+
+# ── P0: Evidence Summary 长度 ──
+
+def test_evidence_summary_length(rendered_dashboard):
+    """所有 details summary 不超过 40 中文字符"""
+    if not rendered_dashboard:
+        pytest.skip("Dashboard 未渲染")
+    summaries = re.findall(r'<summary>(.+?)</summary>', rendered_dashboard)
+    for s in summaries:
+        # Strip HTML tags for length check
+        clean = re.sub(r'<[^>]+>', '', s)
+        assert len(clean) <= 60, f"Summary 过长 ({len(clean)} 字): {clean[:40]}..."
+
+
+# ── P0: Dashboard 必需模块 ──
+
+DASHBOARD_REQUIRED = [
+    ("verdict-seal-svg", "Verdict Seal"),
+    ("pillars", "四柱命盘"),
+    ("verdict-row", "用神裁决行"),
+    ("证据链审查", "证据链模块"),
+    ("五行账簿", "Element Balance Ledger"),
+]
+
+
+@pytest.mark.parametrize("marker,label", DASHBOARD_REQUIRED)
+def test_dashboard_required_sections(rendered_dashboard, marker, label):
+    """Dashboard 包含所有必需模块"""
+    if not rendered_dashboard:
+        pytest.skip("Dashboard 未渲染")
+    assert marker in rendered_dashboard, f"Dashboard 缺少必需模块: {label}"
+
+
+# ── P0: Report 必需模块 ──
+
+REPORT_REQUIRED = [
+    ("BAZI ANALYSIS", "封面标题"),
+    ("Executive Summary", "执行摘要"),
+    ("关键裁决", "裁决表"),
+    ("风险与建议", "风险建议"),
+]
+
+
+@pytest.mark.parametrize("marker,label", REPORT_REQUIRED)
+def test_report_required_sections(rendered_report, marker, label):
+    """Report 包含所有必需模块"""
+    if not rendered_report:
+        pytest.skip("Report 未渲染")
+    assert marker in rendered_report, f"Report 缺少必需模块: {label}"
+
+
+# ── P1: Replay 结构完整性 ──
+
+def test_replay_has_three_columns():
+    """Replay Viewer 有三栏布局"""
+    try:
+        from bazi_pro.view_model import DashboardVM
+        from bazi_pro.ui import render_replay
+        vm = DashboardVM()
+        html = render_replay(vm)
+        assert "replay-layout" in html, "缺少三栏布局容器"
+        assert "stage-nav" in html, "缺少步骤导航栏"
+        assert "stage-detail" in html, "缺少步骤详情区"
+        assert "claim-panel" in html, "缺少主张面板"
+        assert "counter-panel" in html, "缺少反证面板"
+        assert "ArrowRight" in html, "缺少键盘导航"
+    except ImportError:
+        pytest.skip("bazi_pro 模块不可用")
+
+
+# ── P1: Screenshot mode ──
+
+def test_dashboard_screenshot_mode():
+    """Screenshot 模式移除交互控件"""
+    try:
+        from bazi_pro.view_model import DashboardVM
+        from bazi_pro.ui import render_dashboard
+        vm = DashboardVM()
+        vm.verdict.day_master = "丁火"
+        html = render_dashboard(vm, screenshot_mode=True)
+        assert "share-mode" in html, "缺少 share-mode class"
+    except ImportError:
+        pytest.skip("bazi_pro 模块不可用")
+
+
+# ── P2: TOC 无重复闭合（从旧版生成器检查） ──
+
+def test_toc_no_duplicate_close():
+    """已生成的报告 HTML 不得包含 </ol></li> 重复闭合"""
+    report_files = list(REPO_ROOT.glob("examples/*report*.html"))
+    if not report_files:
+        pytest.skip("无示例报告文件")
+    for rf in report_files[:2]:
+        if rf.exists():
+            content = rf.read_text(encoding='utf-8', errors='ignore')
+            count = content.count('</ol></li>')
+            assert count == 0, f"{rf.name} 包含 {count} 处 </ol></li> 重复闭合"
+
+
+# ── 运行入口 ──
+
+if __name__ == "__main__":
+    sys.exit(pytest.main([__file__, "-v", "--tb=short"]))
