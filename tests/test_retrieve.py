@@ -1,4 +1,4 @@
-"""Smoke tests for bazi-pro v4.1 — 核心命令可用性验证"""
+"""Smoke tests for bazi-pro v4.2 — 核心命令可用性验证"""
 
 import sys
 import os
@@ -115,7 +115,7 @@ def test_version_consistency():
 
     # README
     readme = (REPO_ROOT / "README.md").read_text()
-    assert "v4.1" in readme
+    assert "v4.2" in readme
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 bazi doctor — 环境诊断工具
-检查 bazi-pro 运行环境，列出各组件状态
+检查 bazi-pro v4.2 运行环境，列出各组件状态
 """
 
 import sys
@@ -93,7 +93,7 @@ def _check_examples():
 
 
 def main():
-    print("bazi-pro v4.1 — 环境诊断")
+    print("bazi-pro v4.2 — 环境诊断")
     print("=" * 40)
 
     checks = [

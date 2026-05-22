@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-八字命理古籍检索脚本 v4.1
+八字命理古籍检索脚本 v4.2
 - BM25 + jieba 分词检索（2964条，6部经典，约29.8万字）
 - 索引缓存：首次构建后持久化到 .cache/，后续检索毫秒级
 - 批量检索：--batch 一次传入多个 query，复用同一索引
@@ -246,7 +246,7 @@ def _resolve_corpus() -> str:
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="八字古籍检索 (BM25 + jieba) v4.1")
+    parser = argparse.ArgumentParser(description="八字古籍检索 (BM25 + jieba) v4.2")
     parser.add_argument("query", nargs="*", default=[], help="检索查询")
     parser.add_argument("-k", type=int, default=8, help="返回条数")
     parser.add_argument("--corpus", default=_resolve_corpus(), help="语料库路径")
