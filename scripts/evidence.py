@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-命理分析证据链对象 v4.0
+命理分析证据链对象 v4.1
 将八字分析的结构化结论输出为 JSON Evidence Object，支持：
 - 每个 claim 附带古籍依据（classical citation ID）
 - 置信度评分
@@ -121,7 +121,7 @@ def build_analysis_evidence(
             "day_master": day_master,
             "gender": gender,
             "bazi": bazi,
-            "engine": "bazi-pro v4.0",
+            "engine": "bazi-pro v4.1",
             "evidence_chain_completeness": _completeness(classical_refs, evidence_chain)
         },
         "evidence_chain": evidence_chain,
