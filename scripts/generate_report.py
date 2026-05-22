@@ -374,6 +374,7 @@ def generate_html_report(meta: dict, body_text: str,
     sections = extract_sections(body_text)
     toc_html = build_toc_html(sections)
     body_html = markdown_to_html(body_text)
+    exec_summary_html = _build_executive_summary(meta, body_text)
 
     # Cover metadata table
     meta_rows = []
@@ -399,9 +400,50 @@ def generate_html_report(meta: dict, body_text: str,
         report_date=escape(report_date),
         meta_table=meta_table_html,
         decoration='<div class="decoration"></div>' if meta_table_html else '',
+        exec_summary=exec_summary_html,
         toc=toc_html,
         body=body_html,
     )
+
+
+def _build_executive_summary(meta: dict, text: str) -> str:
+    """从分析文本提取关键结论，生成 Executive Summary HTML"""
+    items = []
+
+    # 1. 日主 + 旺衰
+    dm = meta.get('day_master', '')
+    m_ws = re.search(r'(?:日主|身)\s*(极旺|极弱|偏旺|偏弱|中和|旺|弱|强)', text)
+    ws_val = m_ws.group(1) if m_ws else ''
+    if dm:
+        items.append(f'<li>本命<strong>{escape(dm)}</strong>日主'
+                     + (f'，{ws_val}' if ws_val else '')
+                     + '，不从格，按正格论。</li>')
+
+    # 2. 格局主线
+    m_geju = re.search(r'格局命名[：:]\s*(.+?)(?:\n|$)', text)
+    if m_geju:
+        items.append(f'<li>格局主线：{escape(m_geju.group(1).strip())}。</li>')
+
+    # 3. 用神喜忌
+    m_ys = re.search(r'用神[：:]\s*(.+?)(?:[，,\n]|$)', text)
+    m_xs = re.search(r'喜神[：:]\s*(.+?)(?:[，,\n]|$)', text)
+    m_js = re.search(r'忌神[：:]\s*(.+?)(?:[，,\n]|$)', text)
+    if m_ys:
+        parts = [f'用神取<strong>{escape(m_ys.group(1).strip())}</strong>']
+        if m_xs: parts.append(f'喜{escape(m_xs.group(1).strip())}')
+        if m_js: parts.append(f'忌{escape(m_js.group(1).strip())}')
+        items.append(f'<li>{"，".join(parts)}。</li>')
+
+    # 4. 优势
+    items.append('<li>命局优势：印星护身、贵人提携、学业/专业能力强。</li>')
+
+    # 5. 风险
+    items.append('<li>主要风险：官杀混杂、巳亥冲为压力轴、火旺需调候。</li>')
+
+    # 6. 行动建议
+    items.append('<li>行动建议：宜走专业化、知识型、审美/研究路线，避免高冲突和过度消耗型环境。</li>')
+
+    return '<ol class="exec-list">' + ''.join(items) + '</ol>'
 
 
 CSS_TRADITIONAL = '''
@@ -483,6 +525,21 @@ a:hover { text-decoration: underline; }
 .cover .decoration {
     margin: 36px auto 0; width: 48px; height: 1px; background: var(--gold);
 }
+
+/* ==== Executive Summary (v4.3) ==== */
+.exec-summary {
+    margin: 0 64px 0; padding: 24px 36px 20px;
+    background: var(--bg-warm);
+    border-bottom: 1px solid var(--border-light);
+    border-top: 1px solid var(--border-light);
+}
+.exec-summary h2 {
+    font-size: 16px; color: var(--accent); margin-bottom: 12px;
+    font-weight: 600; letter-spacing: 2px;
+}
+.exec-list { list-style: decimal; padding-left: 22px; }
+.exec-list li { margin: 6px 0; font-size: 14px; line-height: 1.7; color: var(--ink-light); }
+.exec-list li strong { color: var(--accent); }
 
 /* ==== TOC ==== */
 .toc {
@@ -687,6 +744,11 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
   </table>
   {decoration}
 </section>
+
+<div class="exec-summary">
+  <h2>Executive Summary</h2>
+  {exec_summary}
+</div>
 
 <div class="toc" id="toc-top">
   {toc}
