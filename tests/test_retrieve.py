@@ -1,4 +1,4 @@
-"""Smoke tests for bazi-pro v4.2 — 核心命令可用性验证"""
+"""Smoke tests for bazi-pro v5.0 — 核心命令可用性验证"""
 
 import sys
 import os
@@ -107,15 +107,15 @@ def test_version_consistency():
     """版本号一致性"""
     # pyproject.toml
     ppt = (REPO_ROOT / "pyproject.toml").read_text()
-    assert 'version = "4.1.0"' in ppt
+    assert 'version = "5.0.0"' in ppt
 
     # bazi_pro/__init__.py
     init = (REPO_ROOT / "bazi_pro" / "__init__.py").read_text()
-    assert '__version__ = "4.1.0"' in init
+    assert '__version__ = "5.0.0"' in init
 
     # README
     readme = (REPO_ROOT / "README.md").read_text()
-    assert "v4.2" in readme
+    assert "v5.0" in readme
 
 
 if __name__ == "__main__":
