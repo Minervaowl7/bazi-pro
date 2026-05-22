@@ -55,6 +55,12 @@ jobs:
           grep -q 'evidence-card' "$DASHFILE" && echo "✅ Dashboard with evidence"
           grep -q 'relation-graph' "$DASHFILE" && echo "✅ Dashboard with graph"
 
+      - name: Trace validation
+        run: |
+          python -m bazi_pro.trace demo > /tmp/trace.json
+          python -m bazi_pro.trace validate /tmp/trace.json
+          python -m bazi_pro.evidence --validate examples/sample_trace.json
+
       - name: Golden cases
         run: python tests/run_golden.py
 

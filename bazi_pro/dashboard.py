@@ -652,7 +652,7 @@ function toggleTheme(){{
 <div class="analysis-content" id="analysis">{analysis_html}</div>
 
 <div class="footer">
-    <p>{escape(report_date)} &nbsp;|&nbsp; bazi-pro v4.2 &nbsp;|&nbsp; Dashboard v3.0</p>
+    <p>{escape(report_date)} &nbsp;|&nbsp; bazi-pro v4.3 &nbsp;|&nbsp; Dashboard v3.0</p>
     <p style="margin-top:4px">仅供传统文化学习与参考，不构成任何决策依据</p>
 </div>
 

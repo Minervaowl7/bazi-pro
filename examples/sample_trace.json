@@ -1,0 +1,187 @@
+{
+  "schema_version": "trace.v1",
+  "run_id": "demo-sample",
+  "engine": {
+    "name": "bazi-pro",
+    "version": "4.3.0",
+    "corpus_size": 2964,
+    "corpus_hash": "adc6c45b894d"
+  },
+  "input": {
+    "day_master": "丁火",
+    "pillars": [
+      "壬午",
+      "乙巳",
+      "丁亥",
+      "癸卯"
+    ],
+    "source": "examples/sample_bazi_mcp.json",
+    "gender": "女",
+    "solar_date": "2002-05-19 06:14"
+  },
+  "stages": [
+    {
+      "id": "parse",
+      "title": "命盘解析",
+      "status": "done",
+      "summary": "提取四柱、日主、五行、十神基础信息。",
+      "outputs": {
+        "day_master": "丁火",
+        "month_branch": "巳"
+      }
+    },
+    {
+      "id": "strength",
+      "title": "旺衰裁决",
+      "status": "done",
+      "summary": "综合月令、根气、帮扶判断日主强弱。",
+      "confidence": 0.82,
+      "claims": [
+        "日主身旺偏强，不从"
+      ],
+      "evidence_ids": [
+        "ev_strength_001"
+      ]
+    },
+    {
+      "id": "retrieval_positive",
+      "title": "顺向古籍检索",
+      "status": "done",
+      "summary": "检索支持当前裁决方向的古籍依据。",
+      "results": [
+        {
+          "id": "SMTH_01164",
+          "source": "三命通会",
+          "score": 15.23,
+          "matched_terms": [
+            "建禄",
+            "比劫",
+            "财官"
+          ]
+        },
+        {
+          "id": "ZPZ_00031",
+          "source": "子平真诠",
+          "score": 14.56,
+          "matched_terms": [
+            "建禄月劫",
+            "本身不可为用"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "retrieval_counterfactual",
+      "title": "反事实检索",
+      "status": "done",
+      "summary": "检索可能推翻当前裁决的相反证据。",
+      "results": [
+        {
+          "id": "DTM_00082",
+          "source": "滴天髓",
+          "score": 15.65,
+          "matched_terms": [
+            "假从",
+            "从象"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pattern",
+      "title": "格局筛查",
+      "status": "done",
+      "summary": "六层筛查：从格不成立→层3建禄月劫，透官煞，印化通关。",
+      "confidence": 0.8,
+      "evidence_ids": [
+        "ev_geju_001"
+      ],
+      "decision": "建禄月劫之格，透官煞，印化通关"
+    },
+    {
+      "id": "yongshen",
+      "title": "喜用神裁决",
+      "status": "done",
+      "summary": "四层架构裁决：格局用神火+病药土+扶抑水/土/金→格局主导，用神=火，喜神=木。",
+      "confidence": 0.8,
+      "decision": "用神火，喜神木，忌神水"
+    },
+    {
+      "id": "final_decision",
+      "title": "最终裁决",
+      "status": "done",
+      "summary": "建禄月劫，透官煞，印化通关。格局评分55/100中下等。用神火喜神木忌神水。",
+      "confidence": 0.79,
+      "decision": "建禄月劫之格，印化官煞，用火喜木忌水"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev_parse_001",
+      "claim": "命盘解析完成",
+      "basis": {
+        "mcp_fields": [
+          "yearPillar",
+          "monthPillar",
+          "dayPillar",
+          "hourPillar"
+        ],
+        "rules": [
+          "MCP字段解析",
+          "十神推导"
+        ],
+        "classics": []
+      }
+    },
+    {
+      "id": "ev_strength_001",
+      "claim": "日主偏旺",
+      "basis": {
+        "mcp_fields": [
+          "dayMaster",
+          "monthBranch",
+          "fiveElements"
+        ],
+        "rules": [
+          "得令+3(帝旺)",
+          "得地4分(≥3)",
+          "得势5.5分(≥4)"
+        ],
+        "classics": [
+          "DTM_00082",
+          "SMTH_01164"
+        ]
+      },
+      "confidence": 0.82,
+      "counter_evidence": [
+        "官杀三重透干，但双干共享一弱根"
+      ],
+      "final_decision": "身旺偏强，不从"
+    },
+    {
+      "id": "ev_geju_001",
+      "claim": "建禄月劫之格，透官煞，印化通关",
+      "basis": {
+        "mcp_fields": [
+          "monthBranch",
+          "hiddenStems",
+          "surfaceStems"
+        ],
+        "rules": [
+          "月令劫财不透→建禄月劫",
+          "年壬官+时癸煞→官煞混杂",
+          "月乙印通关"
+        ],
+        "classics": [
+          "ZPZ_00031",
+          "SMTH_01164"
+        ]
+      },
+      "confidence": 0.8
+    }
+  ],
+  "artifacts": {
+    "report_html": "sample_dashboard.html",
+    "report_md": "sample_report.md"
+  }
+}

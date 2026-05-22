@@ -1,6 +1,6 @@
 [project]
 name = "bazi-pro"
-version = "4.2.0"
+version = "4.3.0"
 description = "专业八字命理分析引擎 — BM25+jieba 古籍检索 · 四层喜用神裁决 · 六层格局筛查 · 可视化报告"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,6 +32,7 @@ bazi-retrieve = "bazi_pro.retrieve_classical:main"
 bazi-report = "bazi_pro.generate_report:main"
 bazi-doctor = "bazi_pro.doctor:main"
 bazi-evidence = "bazi_pro.evidence:main"
+bazi-trace = "bazi_pro.trace:main" 
 
 [tool.setuptools]
 packages = ["bazi_pro"]

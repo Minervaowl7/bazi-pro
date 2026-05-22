@@ -9,6 +9,7 @@
 """
 
 import json
+import sys
 from typing import Optional
 
 
@@ -121,7 +122,7 @@ def build_analysis_evidence(
             "day_master": day_master,
             "gender": gender,
             "bazi": bazi,
-            "engine": "bazi-pro v4.2",
+            "engine": "bazi-pro v4.3",
             "evidence_chain_completeness": _completeness(classical_refs, evidence_chain)
         },
         "evidence_chain": evidence_chain,
@@ -163,7 +164,34 @@ def _completeness(refs: list[dict], chain: list[dict]) -> str:
 
 # CLI
 def main():
-    """Demo evidence object"""
+    """Demo evidence object or write trace to file"""
+    import argparse
+    p = argparse.ArgumentParser(description="bazi-pro evidence/trace tool")
+    p.add_argument("--trace-out", help="输出 analysis_trace.json 路径")
+    p.add_argument("--validate", help="校验 trace JSON 文件")
+    args = p.parse_args()
+
+    if args.validate:
+        from bazi_pro.trace import validate_trace
+        ok, errors = validate_trace(args.validate)
+        if ok:
+            print("✅ Trace valid")
+        else:
+            print("❌ Validation errors:")
+            for e in errors:
+                print(f"  - {e}")
+            sys.exit(1)
+        return
+
+    if args.trace_out:
+        from bazi_pro.trace import demo_trace
+        import json as _json
+        trace = demo_trace()
+        with open(args.trace_out, "w", encoding="utf-8") as f:
+            _json.dump(trace, f, ensure_ascii=False, indent=2)
+        print(f"✅ Trace saved: {args.trace_out}")
+        return
+
     # Demo: 使用内置示例数据
     demo = build_analysis_evidence(
         day_master="丙火",

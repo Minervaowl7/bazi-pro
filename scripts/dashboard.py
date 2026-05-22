@@ -275,7 +275,7 @@ def _score_ring_svg(score: int, max_score: int = 100) -> str:
 
 def _timeline_html(dayun_list: list) -> str:
     if not dayun_list:
-        return '<p style="color:var(--text-dim);text-align:center">大运数据未提取</p>'
+        return ''
     ji_map = {'吉': 'tl-good', '大吉': 'tl-good', '凶': 'tl-bad',
               '平': 'tl-neutral', '平偏吉': 'tl-good', '平偏凶': 'tl-bad'}
     items = []
@@ -293,7 +293,7 @@ def _timeline_html(dayun_list: list) -> str:
 # ── v3.0: Evidence Inspector ──
 
 def _extract_evidence(text: str) -> list[dict]:
-    """从分析文本提取证据链：古籍引用 + 评分breakdown + 用神裁决"""
+    """从分析文本提取证据链（v4.3: summary ≤28 字 + detail 分离）"""
     evidence = []
 
     # E1: 古籍引用（从第〇步结果提取）
@@ -302,7 +302,8 @@ def _extract_evidence(text: str) -> list[dict]:
         classics.append({'score': float(m.group(1)), 'source': m.group(2), 'content': m.group(3)[:60]})
     if classics:
         evidence.append({
-            'claim': '古籍检索',
+            'summary': f'古籍检索 · {len(classics)} 条命中',
+            'detail': f'BM25 + jieba 分词检索，命中 {len(classics)} 条古籍条文',
             'confidence': 0.85,
             'classics': [f'{c["source"]}: {c["content"]}...' for c in classics[:5]],
             'rules': ['BM25 + jieba 分词', f'命中 {len(classics)} 条条文'],
@@ -313,16 +314,18 @@ def _extract_evidence(text: str) -> list[dict]:
     m_score = re.search(r'(\d+)\s*/\s*100.*?(中[下上]等|上等|下等)', text)
     if m_score:
         evidence.append({
-            'claim': f'格局评分 {m_score.group(1)}/100（{m_score.group(2)}）',
+            'summary': f'格局 {m_score.group(1)}/100 · {m_score.group(2)}',
+            'detail': f'格局评分 {m_score.group(1)}/100（{m_score.group(2)}）',
             'confidence': 0.82,
             'rules': ['六层格局筛查', '用神力度·相神完备·忌神受制·格局清纯·日主有根'],
         })
 
     # E3: 旺衰
-    m_ws = re.search(r'身(旺|弱|强|中和).*?(偏强|偏弱)?', text)
+    m_ws = re.search(r'(?:日主|身)\s*(旺|弱|强|中和|极旺|极弱)', text)
     if m_ws:
         evidence.append({
-            'claim': f'日主{m_ws.group(0)}',
+            'summary': f'旺衰 · 日主{m_ws.group(1)}',
+            'detail': f'日主{m_ws.group(1)}（得令·得地·得势三要素量化）',
             'confidence': 0.78,
             'rules': ['得令·得地·得势三要素量化'],
         })
@@ -332,11 +335,13 @@ def _extract_evidence(text: str) -> list[dict]:
     m_xs = re.search(r'喜神[：:]\s*(.+?)(?:[，,\n]|$)', text)
     m_js = re.search(r'忌神[：:]\s*(.+?)(?:[，,\n]|$)', text)
     if m_ys:
-        claim_parts = [f'用神={m_ys.group(1).strip()}']
-        if m_xs: claim_parts.append(f'喜神={m_xs.group(1).strip()}')
-        if m_js: claim_parts.append(f'忌神={m_js.group(1).strip()}')
+        ys_val = m_ys.group(1).strip()
+        detail_parts = [f'用神={ys_val}']
+        if m_xs: detail_parts.append(f'喜神={m_xs.group(1).strip()}')
+        if m_js: detail_parts.append(f'忌神={m_js.group(1).strip()}')
         evidence.append({
-            'claim': '喜用神判定: ' + ', '.join(claim_parts),
+            'summary': f'喜用神 · 用{ys_val}',
+            'detail': '喜用神判定: ' + ', '.join(detail_parts),
             'confidence': 0.80,
             'rules': ['四层架构（格局·病药·扶抑·调候）', '格局优先裁决'],
         })
@@ -345,7 +350,8 @@ def _extract_evidence(text: str) -> list[dict]:
     ji_count = len(re.findall(r'(?:吉|大吉)', text[:len(text)//2]))
     if ji_count > 0:
         evidence.append({
-            'claim': f'大运趋势分析（{ji_count}+步吉运识别）',
+            'summary': f'大运趋势 · {ji_count}+ 步吉运',
+            'detail': f'大运趋势分析（{ji_count}+步吉运识别）',
             'confidence': 0.75,
             'rules': ['大运上限原则', '病药突破机制', '连续性忌神检测'],
         })
@@ -354,14 +360,18 @@ def _extract_evidence(text: str) -> list[dict]:
 
 
 def _evidence_html(evidence: list[dict]) -> str:
-    """生成可展开证据面板 HTML"""
+    """生成可展开证据面板 HTML（v4.3: summary ≤28 字 + body 含 detail）"""
     if not evidence:
         return ''
     cards = []
     for i, evi in enumerate(evidence):
         conf = evi.get('confidence', 0.7)
         conf_cls = 'conf-high' if conf >= 0.8 else ('conf-mid' if conf >= 0.65 else 'conf-low')
+        summary_text = evi.get('summary', evi.get('claim', '证据'))
+        detail_text = evi.get('detail', evi.get('claim', ''))
         rows = []
+        if detail_text:
+            rows.append(f'<div class="evi-row"><span class="evi-label">结论</span><span class="evi-value">{escape(detail_text)}</span></div>')
         rows.append(f'<div class="evi-row"><span class="evi-label">置信度</span><span class="evi-value"><span class="evi-confidence {conf_cls}">{conf:.0%}</span></span></div>')
         if evi.get('rules'):
             rows.append(f'<div class="evi-row"><span class="evi-label">规则</span><span class="evi-value">{", ".join(evi["rules"])}</span></div>')
@@ -371,7 +381,7 @@ def _evidence_html(evidence: list[dict]) -> str:
         if evi.get('counter'):
             rows.append(f'<div class="evi-counter">⚠️ 反证: {escape(evi["counter"])}</div>')
         cards.append(f'''<details class="evidence-card">
-            <summary>🔍 {escape(evi["claim"])}</summary>
+            <summary>🔍 {escape(summary_text)}</summary>
             <div class="evi-body">{''.join(rows)}</div>
         </details>''')
     return '<div class="evidence-section"><h3 style="font-size:13px;color:var(--text-dim);margin-bottom:10px;letter-spacing:2px">证据链审查</h3>' + '\n'.join(cards) + '</div>'
@@ -546,7 +556,7 @@ def generate_dashboard(meta: dict, analysis_text: str,
             pillar_html += f'<div class="pillar" style="--pillar-accent:{color};--pillar-color:{color};--pillar-zhi-color:{zhi_color}"><div class="label">{["年","月","日","时"][i]}柱</div><div class="gan">{gan}</div><div class="zhi">{zhi}</div></div>'
 
     # ── Charts ──
-    radar_html = _draw_radar_svg(dd['wuxing']) if dd['wuxing'] else '<p style="color:var(--text-dim);text-align:center">五行数据未提取</p>'
+    radar_html = _draw_radar_svg(dd['wuxing']) if dd['wuxing'] else ''
     bars_html = _wuxing_bar_html(dd['wuxing']) if dd['wuxing'] else ''
     score_html = _score_ring_svg(dd['score']) if dd['score'] > 0 else ''
     timeline_html = _timeline_html(dd['dayun'])
@@ -600,7 +610,7 @@ function toggleTheme(){{
 <div class="container">
 
 <div class="header">
-    <div class="bazi">{escape(dd['bazi'] or '八字数据未提取')}</div>
+    <div class="bazi">{escape(dd['bazi'] or '')}</div>
     <div class="sub">{escape(report_title)} &nbsp;·&nbsp; {escape(report_date)}</div>
 </div>
 
@@ -610,7 +620,7 @@ function toggleTheme(){{
     <div class="card" style="text-align:center">
         <h3>格局评分</h3>
         {score_html}
-        <div style="margin-top:10px;font-size:19px;font-weight:800;color:var(--accent-glow)">{escape(dd['geju'] or '未提取')}</div>
+        <div style="margin-top:10px;font-size:19px;font-weight:800;color:var(--accent-glow)">{escape(dd['geju'] or '')}</div>
         <div style="font-size:13px;color:var(--text-dim);margin-top:6px">{escape(dd['score_label'])}</div>
     </div>
     <div class="card" style="text-align:center">
@@ -622,7 +632,7 @@ function toggleTheme(){{
 <div class="grid">
     <div class="card">
         <h3>五行占比明细</h3>
-        {bars_html or '<p style="color:var(--text-dim)">五行数据未提取</p>'}
+        {bars_html or '<p style="color:var(--text-dim);font-size:13px">此报告未包含五行占比数据</p>'}
     </div>
     <div class="card">
         <h3>基本信息 &amp; 喜用神</h3>
@@ -632,18 +642,18 @@ function toggleTheme(){{
 
 <!-- v3.0: 证据链审查 -->
 <div class="card full">
-    {evidence_html or '<p style="color:var(--text-dim);text-align:center">证据数据未提取</p>'}
+    {evidence_html or '<p style="color:var(--text-dim);text-align:center;font-size:13px">此报告未包含证据链数据</p>'}
 </div>
 
 <!-- v3.0: 刑冲合害关系图谱 -->
 <div class="card full" style="text-align:center">
     <h3>刑冲合害关系图谱</h3>
-    {graph_html or '<p style="color:var(--text-dim)">关系数据未提取</p>'}
+    {graph_html or '<p style="color:var(--text-dim);font-size:13px">此报告未包含刑冲合害数据</p>'}
 </div>
 
 <div class="card full">
     <h3>大运时间轴（横向滚动）</h3>
-    {timeline_html}
+    {timeline_html or '<p style="color:var(--text-dim);font-size:13px">此报告未包含大运数据</p>'}
 </div>
 
 <div class="analysis-toggle">
@@ -652,7 +662,7 @@ function toggleTheme(){{
 <div class="analysis-content" id="analysis">{analysis_html}</div>
 
 <div class="footer">
-    <p>{escape(report_date)} &nbsp;|&nbsp; bazi-pro v4.2 &nbsp;|&nbsp; Dashboard v3.0</p>
+    <p>{escape(report_date)} &nbsp;|&nbsp; bazi-pro v4.1 &nbsp;|&nbsp; Dashboard v3.0</p>
     <p style="margin-top:4px">仅供传统文化学习与参考，不构成任何决策依据</p>
 </div>
 

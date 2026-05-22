@@ -698,7 +698,7 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
   <p><strong>免责声明</strong></p>
   <p>本报告基于 Bazi MCP 排盘数据和传统命理学理论（参酌《穷通宝鉴》《子平真诠》《三命通会》《滴天髓》《神峰通考》等经典），仅供传统文化学习与参考，不构成任何决策依据。命理学属于传统文化范畴，涉及健康和财务的判断请以专业诊断为准。人生在于自身的努力和选择，命理仅为认知自我的辅助工具。</p>
   <br>
-  <p>报告生成时间：{report_date} &nbsp;|&nbsp; bazi-pro v4.2 &nbsp;|&nbsp; 生成工具: scripts/generate_report.py</p>
+  <p>报告生成时间：{report_date} &nbsp;|&nbsp; bazi-pro v4.3 &nbsp;|&nbsp; 生成工具: scripts/generate_report.py</p>
 </div>
 
 </div>
@@ -804,7 +804,7 @@ def generate_enhanced_markdown(meta: dict, body_text: str,
     lines.append('')
     lines.append('---')
     lines.append('')
-    lines.append(f'*报告生成时间：{report_date} | bazi-pro v4.2 | generate_report.py*')
+    lines.append(f'*报告生成时间：{report_date} | bazi-pro v4.3 | generate_report.py*')
     lines.append('')
     lines.append(
         '> **免责声明**：本报告基于传统命理学理论，仅供传统文化学习与参考，'
