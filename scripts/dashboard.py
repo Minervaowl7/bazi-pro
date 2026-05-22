@@ -21,8 +21,8 @@ ZHI_WUXING = {
     '申': '金', '酉': '金', '戌': '土', '亥': '水',
 }
 WUXING_COLORS = {
-    '木': '#4caf50', '火': '#ef5350', '土': '#ff9800',
-    '金': '#e0c878', '水': '#42a5f5',
+    '木': '#7aad8a', '火': '#d86a5a', '土': '#c89a6a',
+    '金': '#c4b898', '水': '#6a90a8',
 }
 WUXING_COLORS_DIM = {
     '木': '#2e7d32', '火': '#b71c1c', '土': '#e65100',
@@ -32,39 +32,39 @@ WUXING_COLORS_DIM = {
 # ── CSS (v3.0: +evidence panels, +graph) ──
 DASHBOARD_CSS = r'''
 :root {
-    --bg: #12121a; --bg-card: #1c1c28; --bg-pillar: #222236;
-    --text: #e8e0d0; --text-dim: #9998b0; --accent: #d4af37;
-    --accent-glow: #f0d060; --wood: #4caf50; --fire: #ef5350;
-    --earth: #ff9800; --metal: #e0c878; --water: #42a5f5;
-    --good: #66bb6a; --warn: #ffa726; --bad: #ef5350;
-    --border: #2e2e44; --shadow: 0 2px 20px rgba(0,0,0,0.5);
+    --bg: #1a1612; --bg-card: #221e18; --bg-pillar: #2a241c;
+    --text: #e8dcc8; --text-dim: #8a7a60; --accent: #c4a85a;
+    --accent-glow: #d8c060; --wood: #7aad8a; --fire: #d86a5a;
+    --earth: #c89a6a; --metal: #c4b898; --water: #6a90a8;
+    --good: #6aac7a; --warn: #d89a4a; --bad: #d86a5a;
+    --border: #342e24; --shadow: 0 2px 20px rgba(0,0,0,0.5);
     --radius: 10px; --gap: 14px;
-    --bar-wood: #66bb6a; --bar-fire: #ef5350; --bar-earth: #ffa726;
-    --bar-metal: #fdd835; --bar-water: #42a5f5;
-    --he-color: #ffd700; --chong-color: #ff4444; --xing-color: #cc66ff;
-    --hai-color: #888888; --sanhe-color: #44ddcc;
+    --bar-wood: #6aac7a; --bar-fire: #d86a5a; --bar-earth: #d89a4a;
+    --bar-metal: #fdd835; --bar-water: #6a90a8;
+    --he-color: #c89a4a; --chong-color: #d86a5a; --xing-color: #9a6aaa;
+    --hai-color: #9a9a9a; --sanhe-color: #5a9a86;
 }
 @media (prefers-color-scheme: light) {
     :root {
-        --bg: #faf6ed; --bg-card: #fffef7; --bg-pillar: #fdf5e8;
-        --text: #3a2510; --text-dim: #887860; --accent: #8b4513;
-        --accent-glow: #a0522d; --border: #e0d0b8;
+        --bg: #f7f1e8; --bg-card: #fffaf2; --bg-pillar: #f1e6d6;
+        --text: #241a14; --text-dim: #7a6a58; --accent: #8a3b2a;
+        --accent-glow: #b85c4a; --border: #e8d9c4;
         --shadow: 0 2px 16px rgba(60,30,10,0.08);
-        --bar-wood: #4caf50; --bar-fire: #ef5350; --bar-earth: #ff9800;
-        --bar-metal: #f9a825; --bar-water: #42a5f5;
-        --he-color: #b8860b; --chong-color: #cc0000; --xing-color: #9933cc;
-        --hai-color: #888888; --sanhe-color: #008877;
+        --bar-wood: #7aad8a; --bar-fire: #d86a5a; --bar-earth: #c89a6a;
+        --bar-metal: #b7aa8b; --bar-water: #6a90a8;
+        --he-color: #b99a5b; --chong-color: #c44a3a; --xing-color: #8a5c9e;
+        --hai-color: #9a9a9a; --sanhe-color: #4a8a7a;
     }
 }
 [data-theme="light"] {
-    --bg: #faf6ed; --bg-card: #fffef7; --bg-pillar: #fdf5e8;
-    --text: #3a2510; --text-dim: #887860; --accent: #8b4513;
-    --accent-glow: #a0522d; --border: #e0d0b8;
+    --bg: #f7f1e8; --bg-card: #fffaf2; --bg-pillar: #f1e6d6;
+    --text: #241a14; --text-dim: #7a6a58; --accent: #8a3b2a;
+    --accent-glow: #b85c4a; --border: #e8d9c4;
     --shadow: 0 2px 16px rgba(60,30,10,0.08);
-    --bar-wood: #4caf50; --bar-fire: #ef5350; --bar-earth: #ff9800;
-    --bar-metal: #f9a825; --bar-water: #42a5f5;
-    --he-color: #b8860b; --chong-color: #cc0000; --xing-color: #9933cc;
-    --hai-color: #888888; --sanhe-color: #008877;
+    --bar-wood: #7aad8a; --bar-fire: #d86a5a; --bar-earth: #c89a6a;
+    --bar-metal: #b7aa8b; --bar-water: #6a90a8;
+    --he-color: #b99a5b; --chong-color: #c44a3a; --xing-color: #8a5c9e;
+    --hai-color: #9a9a9a; --sanhe-color: #4a8a7a;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Noto Serif SC","Noto Serif CJK SC","Source Han Serif SC","STSong","SimSun","Microsoft YaHei",serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.75;font-size:15px}
@@ -134,9 +134,9 @@ a{color:var(--accent)}
 .tl-item .tl-zhi{color:var(--tl-zhi-color, var(--text-dim));margin-left:2px}
 .tl-item .tl-age{font-size:12px;color:var(--text-dim);margin-top:4px}
 .tl-item .tl-badge{font-size:11px;padding:2px 8px;border-radius:10px;margin-top:6px;display:inline-block;font-weight:600}
-.tl-good{--tl-accent:var(--good)}.tl-good .tl-badge{background:#0d3a1a;color:var(--good)}
-.tl-warn{--tl-accent:var(--warn)}.tl-warn .tl-badge{background:#3a2a08;color:var(--warn)}
-.tl-bad{--tl-accent:var(--bad)}.tl-bad .tl-badge{background:#3a0a0a;color:var(--bad)}
+.tl-good{--tl-accent:var(--good)}.tl-good .tl-badge{background:#0d2a12;color:var(--good)}
+.tl-warn{--tl-accent:var(--warn)}.tl-warn .tl-badge{background:#2a1e06;color:var(--warn)}
+.tl-bad{--tl-accent:var(--bad)}.tl-bad .tl-badge{background:#2a0a0a;color:var(--bad)}
 .tl-neutral{--tl-accent:var(--border)}
 
 /* ── v3.0: Evidence Inspector ── */
@@ -154,9 +154,9 @@ a{color:var(--accent)}
 .evi-label{color:var(--text-dim);flex-shrink:0}
 .evi-value{text-align:right;font-weight:500;max-width:65%;word-break:break-all}
 .evi-confidence{display:inline-block;padding:2px 8px;border-radius:8px;font-size:12px;font-weight:700}
-.conf-high{background:#0d3a1a;color:var(--good)}
-.conf-mid{background:#3a2a08;color:var(--warn)}
-.conf-low{background:#3a0a0a;color:var(--bad)}
+.conf-high{background:#0d2a12;color:var(--good)}
+.conf-mid{background:#2a1e06;color:var(--warn)}
+.conf-low{background:#2a0a0a;color:var(--bad)}
 .evi-classic{display:inline-block;background:var(--bg-pillar);padding:2px 8px;border-radius:6px;
     font-size:12px;margin:2px 4px 2px 0;font-family:monospace;color:var(--accent)}
 .evi-counter{color:var(--warn);font-size:13px;padding:8px 12px;margin-top:8px;
@@ -258,10 +258,10 @@ def _draw_radar_svg(wuxing: dict) -> str:
 def _score_ring_svg(score: int, max_score: int = 100) -> str:
     pct = score / max_score
     circumference = 2 * math.pi * 34
-    if score >= 80: color, glow = '#66bb6a', '#a5d6a7'
-    elif score >= 60: color, glow = '#4caf50', '#81c784'
-    elif score >= 40: color, glow = '#ffa726', '#ffcc80'
-    else: color, glow = '#ef5350', '#ef9a9a'
+    if score >= 80: color, glow = '#6aac7a', '#a5d6a7'
+    elif score >= 60: color, glow = '#7aad8a', '#81c784'
+    elif score >= 40: color, glow = '#d89a4a', '#ffcc80'
+    else: color, glow = '#d86a5a', '#ef9a9a'
     dash = pct * circumference
     return f'''<svg class="score-ring-wrap" viewBox="0 0 100 100">
     <circle class="bg" cx="50" cy="50" r="34"/>
