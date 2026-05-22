@@ -28,11 +28,23 @@ const result = await getBaziDetail({
 console.log(JSON.stringify(result, null, 2));
 ```
 
-### 执行命令
+### 简化单行调用（推荐）
+
+无需创建临时 .mjs 文件，直接在 MCP 模块目录下用 `node -e` 单行调用：
 
 ```bash
-cd /home/administrator/mcp-servers/bazi-mcp && node /tmp/bazi-query.mjs
+cd /home/administrator/mcp-servers/bazi-mcp && node -e "
+import('./dist/index.js').then(m => {
+  m.getBaziDetail({
+    solarDatetime: '2002-05-19T06:14:00+08:00',
+    gender: 0,
+    eightCharProviderSect: 2
+  }).then(r => console.log(JSON.stringify(r, null, 2)));
+});
+"
 ```
+
+> 此方式免去创建 `/tmp/bazi-query.mjs` 的步骤，适合一次性排盘。
 
 ### 参数说明
 
