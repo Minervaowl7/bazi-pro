@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>八字命理分析报告</title>
+<style>
+:root {
+    --bg: #12121a; --bg-card: #1c1c28; --bg-pillar: #222236;
+    --text: #e8e0d0; --text-dim: #9998b0; --accent: #d4af37;
+    --accent-glow: #f0d060; --wood: #4caf50; --fire: #ef5350;
+    --earth: #ff9800; --metal: #e0c878; --water: #42a5f5;
+    --good: #66bb6a; --warn: #ffa726; --bad: #ef5350;
+    --border: #2e2e44; --shadow: 0 2px 20px rgba(0,0,0,0.5);
+    --radius: 10px; --gap: 14px;
+    /* 五行在暗色下的色条 */
+    --bar-wood: #66bb6a; --bar-fire: #ef5350; --bar-earth: #ffa726;
+    --bar-metal: #fdd835; --bar-water: #42a5f5;
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #faf6ed; --bg-card: #fffef7; --bg-pillar: #fdf5e8;
+        --text: #3a2510; --text-dim: #887860; --accent: #8b4513;
+        --accent-glow: #a0522d; --border: #e0d0b8;
+        --shadow: 0 2px 16px rgba(60,30,10,0.08);
+        --bg: #faf6ed; --bg-card: #fffef7; --bg-pillar: #fdf5e8;
+        --text: #3a2510; --text-dim: #887860; --accent: #8b4513;
+        --accent-glow: #a0522d; --border: #e0d0b8;
+        --shadow: 0 2px 16px rgba(60,30,10,0.08);
+        --bar-wood: #4caf50; --bar-fire: #ef5350; --bar-earth: #ff9800;
+        --bar-metal: #f9a825; --bar-water: #42a5f5;
+    }
+}
+[data-theme="dark"] { /* force-dark override — reset to dark defaults above */ }
+[data-theme="light"] {
+    --bg: #faf6ed; --bg-card: #fffef7; --bg-pillar: #fdf5e8;
+    --text: #3a2510; --text-dim: #887860; --accent: #8b4513;
+    --accent-glow: #a0522d; --border: #e0d0b8;
+    --shadow: 0 2px 16px rgba(60,30,10,0.08);
+    --bar-wood: #4caf50; --bar-fire: #ef5350; --bar-earth: #ff9800;
+    --bar-metal: #f9a825; --bar-water: #42a5f5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Noto Serif SC","Noto Serif CJK SC","Source Han Serif SC","STSong","SimSun","Microsoft YaHei",serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.75;font-size:15px}
+a{color:var(--accent)}
+.container{max-width:960px;margin:0 auto;padding:20px}
+
+.header{text-align:center;padding:40px 16px 24px}
+.header .bazi{font-size:34px;font-weight:800;letter-spacing:8px;color:var(--accent-glow);margin-bottom:8px;text-shadow:0 1px 4px rgba(0,0,0,0.2)}
+.header .sub{font-size:14px;color:var(--text-dim);letter-spacing:0.5px}
+
+.theme-btn{position:fixed;top:14px;right:18px;z-index:99;
+    background:var(--bg-card);border:1.5px solid var(--border);
+    color:var(--text);padding:10px 16px;border-radius:22px;
+    cursor:pointer;font-size:16px;transition:all .2s;box-shadow:var(--shadow)}
+.theme-btn:hover{transform:scale(1.05)}
+
+/* ── 四柱卡片（天干地支带五行色） ── */
+.pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);margin:20px 0 24px}
+.pillar{background:var(--bg-pillar);border:2px solid var(--border);
+    border-radius:var(--radius);padding:18px 12px;text-align:center;
+    transition:all .25s;position:relative;overflow:hidden}
+.pillar:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.pillar::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:var(--pillar-accent, var(--accent));border-radius:var(--radius) var(--radius) 0 0}
+.pillar .gan{font-size:40px;font-weight:800;line-height:1.15;
+    color:var(--pillar-color, var(--accent));transition:color .2s}
+.pillar .zhi{font-size:22px;color:var(--pillar-zhi-color, var(--text-dim));margin:4px 0 2px}
+.pillar .label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px}
+.pillar .shishen{font-size:13px;margin-top:8px;padding:3px 10px;border-radius:12px;display:inline-block;
+    background:var(--border);color:var(--text);font-weight:500}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin:var(--gap) 0}
+@media(max-width:640px){.grid{grid-template-columns:1fr}.pillars{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--bg-card);border:1.5px solid var(--border);
+    border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.card h3{font-size:13px;color:var(--text-dim);margin-bottom:14px;letter-spacing:2px;text-transform:uppercase}
+.card.full{grid-column:1/-1}
+
+/* ── 评分环形图 ── */
+.score-ring-wrap{width:100px;height:100px;margin:0 auto}
+.score-ring-wrap circle{fill:none;stroke-width:7}
+.score-ring-wrap .bg{stroke:var(--border)}
+.score-text{font-size:28px;font-weight:800;text-anchor:middle;dominant-baseline:central}
+
+/* ── 雷达图 ── */
+.radar-svg{width:100%;max-width:380px;margin:0 auto;display:block}
+.radar-label{font-size:14px;font-weight:700;text-anchor:middle}
+
+/* ── 五行横向色条 ── */
+.wx-bars{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.wx-bar-row{display:flex;align-items:center;gap:8px}
+.wx-bar-label{width:28px;text-align:right;font-size:14px;font-weight:700;flex-shrink:0}
+.wx-bar-track{flex:1;height:12px;background:var(--border);border-radius:6px;overflow:hidden}
+.wx-bar-fill{height:100%;border-radius:6px;transition:width .4s}
+.wx-bar-pct{width:44px;text-align:right;font-size:13px;color:var(--text-dim);flex-shrink:0}
+
+/* ── 时间轴 ── */
+.timeline{display:flex;overflow-x:auto;gap:8px;padding:10px 0;scrollbar-width:thin}
+.timeline::-webkit-scrollbar{height:5px}
+.timeline::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.tl-item{flex:0 0 auto;min-width:88px;text-align:center;padding:10px 8px;border-radius:var(--radius);
+    background:var(--bg-pillar);border:2px solid var(--border);cursor:default;
+    transition:all .2s;position:relative}
+.tl-item::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:var(--tl-accent, var(--border));border-radius:var(--radius) var(--radius) 0 0}
+.tl-item:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.tl-item .tl-ganzhi{font-size:18px;font-weight:700}
+.tl-item .tl-gan{color:var(--tl-gan-color, var(--text))}
+.tl-item .tl-zhi{color:var(--tl-zhi-color, var(--text-dim));margin-left:2px}
+.tl-item .tl-age{font-size:12px;color:var(--text-dim);margin-top:4px}
+.tl-item .tl-badge{font-size:11px;padding:2px 8px;border-radius:10px;margin-top:6px;display:inline-block;font-weight:600}
+.tl-good{--tl-accent:var(--good)}.tl-good .tl-badge{background:#0d3a1a;color:var(--good)}
+.tl-warn{--tl-accent:var(--warn)}.tl-warn .tl-badge{background:#3a2a08;color:var(--warn)}
+.tl-bad{--tl-accent:var(--bad)}.tl-bad .tl-badge{background:#3a0a0a;color:var(--bad)}
+.tl-neutral{--tl-accent:var(--border)}
+
+/* ── 信息行 ── */
+.info-row{display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--border);font-size:15px}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--text-dim);flex-shrink:0}
+.info-value{font-weight:700;color:var(--accent-glow);text-align:right;max-width:60%;word-break:break-all}
+
+/* ── 可折叠分析区 ── */
+.analysis-toggle{text-align:center;margin:24px 0}
+.analysis-toggle button{background:var(--bg-card);border:1.5px solid var(--border);
+    color:var(--accent-glow);padding:12px 32px;border-radius:24px;
+    cursor:pointer;font-size:15px;font-weight:600;transition:all .2s;box-shadow:var(--shadow)}
+.analysis-toggle button:hover{transform:scale(1.03);opacity:0.9}
+.analysis-content{max-height:0;overflow:hidden;transition:max-height .6s ease}
+.analysis-content.open{max-height:none}
+.analysis-content h1,.analysis-content h2,.analysis-content h3{color:var(--accent);margin:18px 0 10px}
+.analysis-content table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+.analysis-content table th{background:var(--bg-pillar);padding:8px 10px;border:1px solid var(--border);font-weight:600}
+.analysis-content table td{padding:8px 10px;border:1px solid var(--border);text-align:center}
+.analysis-content pre{background:#14182a;color:#b8cce0;padding:14px;border-radius:var(--radius);overflow-x:auto;font-size:13px;line-height:1.6}
+.analysis-content blockquote{border-left:4px solid var(--accent);padding:10px 18px;margin:12px 0;background:var(--bg-pillar);border-radius:0 var(--radius) var(--radius) 0}
+.analysis-content hr{border:none;border-top:1.5px solid var(--border);margin:22px 0}
+.analysis-content ul,.analysis-content ol{padding-left:22px;margin:10px 0;font-size:14px}
+.analysis-content li{margin:5px 0;line-height:1.7}
+
+.footer{text-align:center;padding:28px;color:var(--text-dim);font-size:12px;
+    border-top:1.5px solid var(--border);margin-top:28px;line-height:1.8}
+</style>
+<script>
+(function(){
+    var m=window.matchMedia('(prefers-color-scheme:dark)');
+    var t=m.matches?'dark':'light';
+    document.body.dataset.theme=t;
+    var btn=document.querySelector('.theme-btn');
+    if(btn)btn.textContent=t==='dark'?'☀️':'🌙';
+})();
+function toggleTheme(){
+    var b=document.body;
+    b.dataset.theme=b.dataset.theme==='dark'?'light':'dark';
+    document.querySelector('.theme-btn').textContent=b.dataset.theme==='dark'?'☀️':'🌙';
+}
+</script>
+</head>
+<body>
+
+<button class="theme-btn" onclick="toggleTheme()">☀️</button>
+
+<div class="container">
+
+<div class="header">
+    <div class="bazi">癸卯 壬戌 丙午 壬辰</div>
+    <div class="sub">八字命理分析报告 &nbsp;·&nbsp; 2026年05月22日 10:20</div>
+</div>
+
+<div class="pillars">
+    <div class="pillar" style="--pillar-accent:#42a5f5;--pillar-color:#42a5f5;--pillar-zhi-color:#2e7d32">
+                <div class="label">年柱</div>
+                <div class="gan">癸</div>
+                <div class="zhi">卯</div>
+                <div class="shishen">**正官**</div>
+            </div><div class="pillar" style="--pillar-accent:#42a5f5;--pillar-color:#42a5f5;--pillar-zhi-color:#e65100">
+                <div class="label">月柱</div>
+                <div class="gan">壬</div>
+                <div class="zhi">戌</div>
+                <div class="shishen">**七杀**</div>
+            </div><div class="pillar" style="--pillar-accent:#ef5350;--pillar-color:#ef5350;--pillar-zhi-color:#b71c1c">
+                <div class="label">日柱</div>
+                <div class="gan">丙</div>
+                <div class="zhi">午</div>
+                <div class="shishen">**日主**</div>
+            </div><div class="pillar" style="--pillar-accent:#42a5f5;--pillar-color:#42a5f5;--pillar-zhi-color:#e65100">
+                <div class="label">时柱</div>
+                <div class="gan">壬</div>
+                <div class="zhi">辰</div>
+                <div class="shishen">**七杀**</div>
+            </div>
+</div>
+
+<div class="grid">
+    <div class="card" style="text-align:center">
+        <h3>格局评分</h3>
+        <svg class="score-ring-wrap" viewBox="0 0 100 100">
+    <circle class="bg" cx="50" cy="50" r="34"/>
+    <circle cx="50" cy="50" r="34" fill="none" stroke="#4caf50" stroke-width="7"
+        stroke-dasharray="138.9 213.6"
+        stroke-linecap="round"
+        transform="rotate(-90 50 50)"/>
+    <text class="score-text" x="50" y="47" fill="#81c784">65</text>
+    <text x="50" y="62" font-size="11" fill="var(--text-dim)" text-anchor="middle">/ 100</text>
+</svg>
+        <div style="margin-top:10px;font-size:19px;font-weight:800;color:var(--accent-glow)">不成立</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-top:6px"></div>
+    </div>
+    <div class="card" style="text-align:center">
+        <h3>五行力量分布</h3>
+        <svg class="radar-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+<polygon points="180.0,154.0 204.7,172.0 195.3,201.0 164.7,201.0 155.3,172.0" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.4"/>
+<polygon points="180.0,128.0 229.5,163.9 210.6,222.1 149.4,222.1 130.5,163.9" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.4"/>
+<polygon points="180.0,102.0 254.2,155.9 225.8,243.1 134.2,243.1 105.8,155.9" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.4"/>
+<polygon points="180.0,76.0 278.9,147.9 241.1,264.1 118.9,264.1 81.1,147.9" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.4"/>
+<polygon points="180.0,50.0 303.6,139.8 256.4,285.2 103.6,285.2 56.4,139.8" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.4"/>
+<line x1="180" y1="180" x2="180.0" y2="50.0" stroke="var(--border)" stroke-width="1" opacity="0.25"/>
+<line x1="180" y1="180" x2="303.6" y2="139.8" stroke="var(--border)" stroke-width="1" opacity="0.25"/>
+<line x1="180" y1="180" x2="256.4" y2="285.2" stroke="var(--border)" stroke-width="1" opacity="0.25"/>
+<line x1="180" y1="180" x2="103.6" y2="285.2" stroke="var(--border)" stroke-width="1" opacity="0.25"/>
+<line x1="180" y1="180" x2="56.4" y2="139.8" stroke="var(--border)" stroke-width="1" opacity="0.25"/>
+<polygon points="180.0,156.6 219.6,167.1 196.8,203.1 176.2,185.3 151.6,170.8" fill="var(--accent)" fill-opacity="0.2" stroke="var(--accent-glow)" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="180.0" cy="156.6" r="5" fill="#4caf50" stroke="#4caf50" stroke-width="1.5" opacity="0.9"/>
+<circle cx="219.6" cy="167.1" r="5" fill="#ef5350" stroke="#ef5350" stroke-width="1.5" opacity="0.9"/>
+<circle cx="196.8" cy="203.1" r="5" fill="#ff9800" stroke="#ff9800" stroke-width="1.5" opacity="0.9"/>
+<circle cx="176.2" cy="185.3" r="5" fill="#e0c878" stroke="#e0c878" stroke-width="1.5" opacity="0.9"/>
+<circle cx="151.6" cy="170.8" r="5" fill="#42a5f5" stroke="#42a5f5" stroke-width="1.5" opacity="0.9"/>
+<text x="180.0" y="20.0" class="radar-label" fill="#4caf50">木</text>
+<text x="180.0" y="2.0" class="radar-label" font-size="11" fill="var(--text-dim)">18.0%</text>
+<text x="332.2" y="130.6" class="radar-label" fill="#ef5350">火</text>
+<text x="349.3" y="125.0" class="radar-label" font-size="11" fill="var(--text-dim)">32.0%</text>
+<text x="274.0" y="309.4" class="radar-label" fill="#ff9800">土</text>
+<text x="284.6" y="324.0" class="radar-label" font-size="11" fill="var(--text-dim)">22.0%</text>
+<text x="86.0" y="309.4" class="radar-label" fill="#e0c878">金</text>
+<text x="75.4" y="324.0" class="radar-label" font-size="11" fill="var(--text-dim)">5.0%</text>
+<text x="27.8" y="130.6" class="radar-label" fill="#42a5f5">水</text>
+<text x="10.7" y="125.0" class="radar-label" font-size="11" fill="var(--text-dim)">23.0%</text>
+</svg>
+    </div>
+</div>
+
+<div class="grid">
+    <div class="card">
+        <h3>五行占比明细</h3>
+        <div class="wx-bars"><div class="wx-bar-row">
+            <span class="wx-bar-label" style="color:#4caf50">木</span>
+            <div class="wx-bar-track">
+                <div class="wx-bar-fill" style="width:18.0%;background:#4caf50"></div>
+            </div>
+            <span class="wx-bar-pct">18.0%</span>
+        </div>
+<div class="wx-bar-row">
+            <span class="wx-bar-label" style="color:#ef5350">火</span>
+            <div class="wx-bar-track">
+                <div class="wx-bar-fill" style="width:32.0%;background:#ef5350"></div>
+            </div>
+            <span class="wx-bar-pct">32.0%</span>
+        </div>
+<div class="wx-bar-row">
+            <span class="wx-bar-label" style="color:#ff9800">土</span>
+            <div class="wx-bar-track">
+                <div class="wx-bar-fill" style="width:22.0%;background:#ff9800"></div>
+            </div>
+            <span class="wx-bar-pct">22.0%</span>
+        </div>
+<div class="wx-bar-row">
+            <span class="wx-bar-label" style="color:#e0c878">金</span>
+            <div class="wx-bar-track">
+                <div class="wx-bar-fill" style="width:5.0%;background:#e0c878"></div>
+            </div>
+            <span class="wx-bar-pct">5.0%</span>
+        </div>
+<div class="wx-bar-row">
+            <span class="wx-bar-label" style="color:#42a5f5">水</span>
+            <div class="wx-bar-track">
+                <div class="wx-bar-fill" style="width:23.0%;background:#42a5f5"></div>
+            </div>
+            <span class="wx-bar-pct">23.0%</span>
+        </div></div>
+    </div>
+    <div class="card">
+        <h3>基本信息 &amp; 喜用神</h3>
+        <div class="info-row"><span class="info-label">性别</span><span class="info-value">女</span></div><div class="info-row"><span class="info-label">阳历</span><span class="info-value">2023年10月15日 07:35</span></div><div class="info-row"><span class="info-label">农历</span><span class="info-value">癸卯年九月初一 辰时</span></div><div class="info-row"><span class="info-label">日主</span><span class="info-value">**丙火**（阳火）</span></div>
+    </div>
+</div>
+
+<div class="card full">
+    <h3>大运时间轴（横向滚动）</h3>
+    <p style="color:var(--text-dim);text-align:center">大运数据未提取</p>
+</div>
+
+<div class="analysis-toggle">
+    <button onclick="
+        var c=document.getElementById('analysis');
+        var b=this;
+        c.classList.toggle('open');
+        b.textContent=c.classList.contains('open')?'▲ 收起详细分析':'▶ 展开详细分析';
+    ">▶ 展开详细分析</button>
+</div>
+<div class="analysis-content" id="analysis">
+    <h1 id="丙火女命-八字命理全盘解读">☀️ 丙火女命 · 八字命理全盘解读</h1>
+<p><strong>命主</strong>：癸卯 壬戌 丙午 壬辰（2023年10月15日 07:35 女 上海）</p>
+<p><strong>日主</strong>：丙火（阳火，太阳之火）</p>
+<p><strong>生肖</strong>：兔</p>
+<p><strong>起运</strong>：9岁（2031年9月）</p>
+<hr>
+<h2 id="第〇步-古籍检索-k-6-单通道">第〇步：古籍检索（k=6 单通道）</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>得分</th>
+<th>出处</th>
+<th>条文摘要</th>
+</tr>
+<tr>
+<th>1</th>
+<th>17.85</th>
+<th>《渊海子平》</th>
+<th>食神干旺，印绶天月二德，夫荣子贵，封赠之命</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>2</td>
+<td>17.31</td>
+<td>《渊海子平》</td>
+<td>官杀混杂，身弱则贫；官杀两停，合杀为贵</td>
+</tr>
+<tr>
+<td>3</td>
+<td>16.31</td>
+<td>《神峰通考》</td>
+<td>身弱杀重，宜行制伏之运，则为福为寿</td>
+</tr>
+<tr>
+<td>4</td>
+<td>16.17</td>
+<td>《神峰通考》</td>
+<td>官杀相连只论杀，露杀藏官只杀论；身强遇此多清贵，身弱重重祸百端</td>
+</tr>
+<tr>
+<td>5</td>
+<td>15.16</td>
+<td>《神峰通考》</td>
+<td>官杀混杂当寿夭，去官留杀仔细寻</td>
+</tr>
+<tr>
+<td>6</td>
+<td>15.06</td>
+<td>《神峰通考》</td>
+<td>杀星原有制神降，制旺身强贵必昌；食神制杀逢枭，不贫则夭</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>📚 <strong>检索导向</strong>：全部6条命中"官杀混杂""食神制杀""身弱杀重"，指向一个核心命题——此命七杀极重，食神为制杀之药，成败在于食神是否能制伏七杀。</p>
+</blockquote>
+<hr>
+<h2 id="第一步-数据校验摘要">第一步：数据校验摘要</h2>
+<h3 id="1-1-基本信息">1.1 基本信息</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>内容</th>
+</tr>
+<tr>
+<th>性别</th>
+<th>女</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>阳历</td>
+<td>2023年10月15日 07:35</td>
+</tr>
+<tr>
+<td>农历</td>
+<td>癸卯年九月初一 辰时</td>
+</tr>
+<tr>
+<td>八字</td>
+<td><strong>癸卯 壬戌 丙午 壬辰</strong></td>
+</tr>
+<tr>
+<td>日主</td>
+<td><strong>丙火</strong>（阳火）</td>
+</tr>
+<tr>
+<td>生肖</td>
+<td>兔</td>
+</tr>
+<tr>
+<td>纳音</td>
+<td>年金箔金/月大海水/日天河水/时长流水</td>
+</tr>
+<tr>
+<td>命宫</td>
+<td>乙卯</td>
+</tr>
+<tr>
+<td>胎元</td>
+<td>癸丑</td>
+</tr>
+<tr>
+<td>起运</td>
+<td><strong>9岁</strong>（2031年9月）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="1-2-四柱十神藏干详表">1.2 四柱十神藏干详表</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>柱</th>
+<th>天干</th>
+<th>十神</th>
+<th>地支</th>
+<th>本气/十神</th>
+<th>中气/十神</th>
+<th>余气/十神</th>
+<th>空亡</th>
+</tr>
+<tr>
+<th>年</th>
+<th>癸</th>
+<th><strong>正官</strong></th>
+<th>卯</th>
+<th>乙/正印</th>
+<th>—</th>
+<th>—</th>
+<th>辰巳</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>月</td>
+<td>壬</td>
+<td><strong>七杀</strong></td>
+<td>戌</td>
+<td>戊/食神</td>
+<td>辛/正财</td>
+<td>丁/劫财</td>
+<td>子丑</td>
+</tr>
+<tr>
+<td>日</td>
+<td>丙</td>
+<td><strong>日主</strong></td>
+<td>午</td>
+<td>丁/劫财</td>
+<td>己/伤官</td>
+<td>—</td>
+<td>寅卯</td>
+</tr>
+<tr>
+<td>时</td>
+<td>壬</td>
+<td><strong>七杀</strong></td>
+<td>辰</td>
+<td>戊/食神</td>
+<td>乙/正印</td>
+<td>癸/正官</td>
+<td>午未</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>🔑 <strong>一瞥定乾坤</strong>：天干三水（癸+壬+壬）围攻丙火日主，地支火土联防线（午火帝旺+戌辰双食神）。命盘核心矛盾：<strong>官杀三重攻身 vs 食神双现制杀</strong>。</p>
+</blockquote>
+<h3 id="1-3-关键神煞">1.3 关键神煞</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>神煞</th>
+<th>所在</th>
+<th>含义</th>
+</tr>
+<tr>
+<th><strong>天乙贵人</strong></th>
+<th>年</th>
+<th>祖荫、一生有贵人</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><strong>天德+月德</strong></td>
+<td>日</td>
+<td>顶级吉星双临日柱，消灾解难</td>
+</tr>
+<tr>
+<td><strong>太极+文昌+福星</strong></td>
+<td>年</td>
+<td>智慧、学业、福气</td>
+</tr>
+<tr>
+<td><strong>羊刃</strong></td>
+<td>日</td>
+<td>日坐羊刃，刚烈自我</td>
+</tr>
+<tr>
+<td><strong>阴差阳错</strong></td>
+<td>日</td>
+<td>婚姻波折信号</td>
+</tr>
+<tr>
+<td><strong>孤鸾</strong></td>
+<td>日</td>
+<td>晚婚/独身倾向</td>
+</tr>
+<tr>
+<td><strong>华盖</strong></td>
+<td>月</td>
+<td>孤高、好思、玄学天赋</td>
+</tr>
+<tr>
+<td><strong>空亡</strong></td>
+<td>年(辰巳)/日(寅卯)/时(午未)</td>
+<td>三柱空亡</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="第二步-日主旺衰深度判定">第二步：日主旺衰深度判定</h2>
+<h3 id="2-1-得令">2.1 得令</h3>
+<p>丙火生于戌月（九月）。戌为火库，丙火在戌为 <strong>"墓"</strong> ——严重失令，计 <strong>-2 分</strong>。</p>
+<blockquote>
+<p>戌月土旺金相火囚水死木休。秋深火退，丙火失天时。</p>
+</blockquote>
+<h3 id="2-2-得地">2.2 得地</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>地支</th>
+<th>火根</th>
+<th>计分</th>
+</tr>
+<tr>
+<th>年卯</th>
+<th>无火</th>
+<th>0</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>月戌</td>
+<td>余气丁火劫财</td>
+<td>+0.3</td>
+</tr>
+<tr>
+<td>日午</td>
+<td>本气丁火劫财（帝旺位）</td>
+<td>+2</td>
+</tr>
+<tr>
+<td>时辰</td>
+<td>无火</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>得地合计：2.3 分 → 偏得地（1.5-2.5之间）。</strong> 全赖日支午火一柱擎天。</p>
+<h3 id="2-3-得势">2.3 得势</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>来源</th>
+<th>计分</th>
+</tr>
+<tr>
+<th>年卯乙木正印（本气）</th>
+<th>+1</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>月戌丁火劫财（余气）</td>
+<td>+0.3</td>
+</tr>
+<tr>
+<td>日午丁火劫财（本气）</td>
+<td>+1</td>
+</tr>
+<tr>
+<td>时辰乙木正印（中气）</td>
+<td>+0.6</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>得势合计：2.9 分 → 偏得势（2-3之间）。</strong> 无印比透干，全靠地支暗助。</p>
+<h3 id="2-4-综合判定">2.4 综合判定</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>得分</th>
+<th>判定</th>
+</tr>
+<tr>
+<th>得令</th>
+<th>-2</th>
+<th>❌ 严重失令</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>得地</td>
+<td>2.3</td>
+<td>⚠️ 偏得地</td>
+</tr>
+<tr>
+<td>得势</td>
+<td>2.9</td>
+<td>⚠️ 偏得势</td>
+</tr>
+<tr>
+<td><strong>综合</strong></td>
+<td><strong>得令-2 + 得地偏 + 得势偏</strong></td>
+<td><strong>身弱</strong></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>📊 虽日坐午火帝旺阳刃，但失令于深秋，全局水势滔天（癸+壬+壬三重透干），日主被围困。属 <strong>身弱杀重</strong>——自身有根不至于从杀，但力量远不足以抗官杀。</p>
+</blockquote>
+<hr>
+<h2 id="第三步-格局判定-六层筛查">第三步：格局判定（六层筛查）</h2>
+<h3 id="层-0-特殊格局">层 0：特殊格局</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>格局</th>
+<th>判定</th>
+<th>理由</th>
+</tr>
+<tr>
+<th>从杀格</th>
+<th>❌</th>
+<th>日主坐午火帝旺阳刃有强根，不从</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>从儿格</td>
+<td>❌</td>
+<td>不符合</td>
+</tr>
+<tr>
+<td>化气格</td>
+<td>❌</td>
+<td>无五合</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="层-1-2-月令透干">层 1-2：月令透干</h3>
+<p>月支戌藏戊（食神）/辛（正财）/丁（劫财）。天干无戊、无辛。→ 均不透。</p>
+<h3 id="层-3-暗格">层 3：暗格</h3>
+<p>月令本气戊土为食神——食神是正格八神之一 → <strong>暗食神格</strong> ✓</p>
+<h3 id="层-4-混杂">层 4：混杂</h3>
+<p>天干：癸正官（年）+ 壬七杀（月）+ 壬七杀（时）→ <strong>官杀严重混杂</strong> ⚠️</p>
+<p>按《神峰通考》"官杀相连只论杀"——月壬杀+时壬杀相连，以七杀为主论。年癸官独在远端。实质是 <strong>七杀格混官</strong>。</p>
+<h3 id="层-5-成败">层 5：成败</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>条件</th>
+<th>状态</th>
+</tr>
+<tr>
+<th><strong>成：食神制杀</strong></th>
+<th>月令戌土食神 + 时辰土食神，双食神当令有力，可制七杀——格局有成</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><strong>成：卯戌合火</strong></td>
+<td>年支卯木正印与月支戌土食神合化为火，印食合力生扶日主</td>
+</tr>
+<tr>
+<td><strong>成：午戌半合火</strong></td>
+<td>日支午火与月支戌土半合火局，日主得援</td>
+</tr>
+<tr>
+<td><strong>败：官杀混杂无去留</strong></td>
+<td>三重官杀，无合去机制</td>
+</tr>
+<tr>
+<td><strong>败：戌辰冲</strong></td>
+<td>月时地支相冲，食神根基动摇</td>
+</tr>
+<tr>
+<td><strong>败：日主身弱</strong></td>
+<td>丙火不得令，虽有羊刃但难抗三重官杀</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>总结：成中有败。</strong> 食神制杀为格局之救，卯戌合火为暗中之援。但官杀混杂+身弱+戌辰冲三重隐患并存。</p>
+<h3 id="层-6-量化评分">层 6：量化评分</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>得分</th>
+<th>说明</th>
+</tr>
+<tr>
+<th>用神力度</th>
+<th>20/30</th>
+<th>食神当令+双现，有力但不透干</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>相神完备</td>
+<td>15/20</td>
+<td>卯木正印化杀+合火，午火比劫帮身</td>
+</tr>
+<tr>
+<td>忌神受制</td>
+<td>15/20</td>
+<td>食神制杀有力，但官杀混杂未去留</td>
+</tr>
+<tr>
+<td>格局清纯</td>
+<td>5/15</td>
+<td>官杀三重混杂</td>
+</tr>
+<tr>
+<td>日主有根</td>
+<td>10/15</td>
+<td>午火帝旺强根，但失令+三柱空亡打折</td>
+</tr>
+<tr>
+<td><strong>总分</strong></td>
+<td><strong>65/100</strong></td>
+<td><strong>中等（60-79）</strong></td>
+</tr>
+</tbody>
+</table></div>
+<pre><code>
+格局判定：
+├─ 层0 特殊格局：不成立
+├─ 层1 月令本气：戊土食神→不透
+├─ 层2 月令中气：辛金正财→不透
+├─ 层3 暗食神格（戌中戊土食神，正格八神，暗格成立）
+├─ 层4 混杂：⚠️ 官杀严重混杂（年癸官+月壬杀+时壬杀）
+├─ 层5 成败：成中有败（食神制杀有力，但官杀混杂+戌辰冲）
+├─ 层6 评分：65/100 中等
+│   ├─ 用神力度：20/30（食神双现当令有力）
+│   ├─ 相神完备：15/20（卯印合火+午火帮身）
+│   ├─ 忌神受制：15/20（食神制杀，但无去留官杀）
+│   ├─ 格局清纯：5/15（三重官杀混杂）
+│   └─ 日主有根：10/15（午火强根但失令）
+├─ 格局用神：土（食神制杀）
+├─ 相神：火（比劫帮身）、木（正印化杀生身）
+└─ 格局忌神：水（官杀混杂攻身）
+</code></pre>
+<hr>
+<h2 id="第四步-喜用神判定-四层架构">第四步：喜用神判定（四层架构）</h2>
+<h3 id="4-1-格局用神">4.1 格局用神</h3>
+<p>暗食神格 + 七杀攻身 → 食神制杀为格局核心用神 → <strong>土（食神/伤官）</strong></p>
+<h3 id="4-2-病药用神">4.2 病药用神</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>概念</th>
+<th>十神</th>
+<th>五行</th>
+<th>依据</th>
+</tr>
+<tr>
+<th>病</th>
+<th>七杀（壬水三重）</th>
+<th>水</th>
+<th>《神峰通考》"身弱杀重宜制伏"</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>药</td>
+<td>食神（戊土双现）</td>
+<td>土</td>
+<td>月令戌+时辰=双食神制杀</td>
+</tr>
+<tr>
+<td>相神</td>
+<td>正印（卯木）+ 比劫（午火）</td>
+<td>木+火</td>
+<td>印化杀+比劫帮身</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="4-3-扶抑用神">4.3 扶抑用神</h3>
+<p>身弱 → 扶抑用印比：木（印星生身）、火（比劫帮身）</p>
+<h3 id="4-4-调候用神">4.4 调候用神</h3>
+<p>丙火戌月调候：<strong>壬、甲</strong>。壬水调候原局已足（三重透干过于足了），甲木在原局年支卯木中不直接透出，但卯戌合火间接助力。</p>
+<h3 id="4-5-综合裁决">4.5 综合裁决</h3>
+<pre><code>
+喜用神判定：
+├─ 用神：土（食神制杀）——格局之药，第一优先级
+├─ 喜神：木（正印化杀生身）——通关枢纽
+├─ 喜神：火（比劫帮身抗杀）——日主之本
+├─ 忌神：水（官杀混杂）——格局之病
+├─ 闲神：金（财星）——藏支不出，待运而发
+└─ 置信度：高（格局+扶抑+调候三方一致指向土/木/火）
+</code></pre>
+<blockquote>
+<p>📌 <strong>关键</strong>：此命用神三层配合精妙——土药在前制杀（主动出击），木印在中通关（转化化解），火比在后托底（巩固根本）。三方缺一不可。</p>
+</blockquote>
+<hr>
+<h2 id="第五步-五行力量分析">第五步：五行力量分析</h2>
+<h3 id="5-1-基础力量">5.1 基础力量</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>位置</th>
+<th>五行</th>
+<th>计分</th>
+</tr>
+<tr>
+<th>年干癸</th>
+<th>水</th>
+<th>1.2（透干，坐卯无根借辰中癸余气0.3×0.5=0.15→虚浮）</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>年支卯</td>
+<td>木</td>
+<td>1.0（本气乙木）</td>
+</tr>
+<tr>
+<td>月干壬</td>
+<td>水</td>
+<td>1.2（透干，无自坐根，借辰癸余气，虚浮）</td>
+</tr>
+<tr>
+<td>月支戌·本气</td>
+<td>土</td>
+<td>1.5（月令加权）</td>
+</tr>
+<tr>
+<td>月支戌·中气</td>
+<td>金</td>
+<td>0.6（辛金正财）</td>
+</tr>
+<tr>
+<td>月支戌·余气</td>
+<td>火</td>
+<td>0.3（丁火劫财）</td>
+</tr>
+<tr>
+<td>日干丙</td>
+<td>火</td>
+<td>1.2（有根，日坐午火帝旺）</td>
+</tr>
+<tr>
+<td>日支午</td>
+<td>火</td>
+<td>1.0（本气丁火）</td>
+</tr>
+<tr>
+<td>日支午·中气</td>
+<td>土</td>
+<td>0.6（己土伤官）</td>
+</tr>
+<tr>
+<td>时干壬</td>
+<td>水</td>
+<td>1.2（透干，自坐辰，借辰中癸余气）</td>
+</tr>
+<tr>
+<td>时辰·本气</td>
+<td>土</td>
+<td>1.0（戊土食神）</td>
+</tr>
+<tr>
+<td>时辰·中气</td>
+<td>木</td>
+<td>0.6（乙木正印）</td>
+</tr>
+<tr>
+<td>时辰·余气</td>
+<td>水</td>
+<td>0.3（癸水正官）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="5-2-合化修正">5.2 合化修正</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>关系</th>
+<th>影响</th>
+</tr>
+<tr>
+<th><strong>卯戌合火</strong></th>
+<th>年卯木→向火转化，木减火增。月戌土→向火转化，土减火增</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><strong>午戌半合火</strong></td>
+<td>同上，火力量进一步增强</td>
+</tr>
+<tr>
+<td><strong>戌辰冲</strong></td>
+<td>月戌与时戌冲，土力量互损（各减10%）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="5-3-最终分布">5.3 最终分布</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>五行</th>
+<th>占比</th>
+<th>定级</th>
+</tr>
+<tr>
+<th>木</th>
+<th>18%</th>
+<th>偏弱</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><strong>火</strong></td>
+<td><strong>32%</strong></td>
+<td><strong>偏旺</strong>（合化后反超，卯戌合火+午戌半合拉升）</td>
+</tr>
+<tr>
+<td><strong>土</strong></td>
+<td><strong>22%</strong></td>
+<td>平衡</td>
+</tr>
+<tr>
+<td>金</td>
+<td>5%</td>
+<td>极弱</td>
+</tr>
+<tr>
+<td><strong>水</strong></td>
+<td><strong>23%</strong></td>
+<td>偏旺（但三干均借根虚浮，表面声势大实质折扣）</td>
+</tr>
+</tbody>
+</table></div>
+<pre><code>
+木 █████████░░░░░░░░░░░ 18%
+火 ████████████████░░░░ 32%
+土 ███████████░░░░░░░░░ 22%
+金 ██░░░░░░░░░░░░░░░░░░  5%
+水 ███████████░░░░░░░░░ 23%
+</code></pre>
+<blockquote>
+<p>📊 <strong>关键洞察</strong>：卯戌合火+午戌半合火是关键救命稻草——合化后火力量反超至32%，远超原始估算。这就是此命的"隐藏防线"：水虽三重围攻，但地支火土联军以合化之力暗中翻盘。</p>
+</blockquote>
+<hr>
+<h2 id="第六步-大运逐运分析">第六步：大运逐运分析</h2>
+<h3 id="6-1-大运总览-9岁起运-逆排">6.1 大运总览（9岁起运，逆排）</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>大运</th>
+<th>年龄</th>
+<th>干支</th>
+<th>天干</th>
+<th>地支</th>
+<th>吉凶</th>
+</tr>
+<tr>
+<th>起运前</th>
+<th>0-8</th>
+<th>壬戌(月柱)</th>
+<th>七杀</th>
+<th>食神</th>
+<th>平偏凶</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>第1步</td>
+<td>9-18</td>
+<td><strong>癸亥</strong></td>
+<td>正官</td>
+<td>七杀+偏印</td>
+<td><strong>凶</strong> ⚠️</td>
+</tr>
+<tr>
+<td>第2步</td>
+<td>19-28</td>
+<td><strong>甲子</strong></td>
+<td>偏印</td>
+<td>正官</td>
+<td>平偏吉</td>
+</tr>
+<tr>
+<td>第3步</td>
+<td>29-38</td>
+<td><strong>乙丑</strong></td>
+<td>正印</td>
+<td>伤官+正官+正财</td>
+<td><strong>吉</strong> ✅</td>
+</tr>
+<tr>
+<td>第4步</td>
+<td>39-48</td>
+<td><strong>丙寅</strong></td>
+<td>比肩</td>
+<td>偏印+比肩+食神</td>
+<td><strong>大吉</strong> ⭐</td>
+</tr>
+<tr>
+<td>第5步</td>
+<td>49-58</td>
+<td><strong>丁卯</strong></td>
+<td>劫财</td>
+<td>正印</td>
+<td><strong>大吉</strong> ⭐</td>
+</tr>
+<tr>
+<td>第6步</td>
+<td>59-68</td>
+<td><strong>戊辰</strong></td>
+<td>食神</td>
+<td>食神+正印+正官</td>
+<td><strong>吉</strong> ✅</td>
+</tr>
+<tr>
+<td>第7步</td>
+<td>69-78</td>
+<td><strong>己巳</strong></td>
+<td>伤官</td>
+<td>比肩+偏财+食神</td>
+<td><strong>吉</strong> ✅</td>
+</tr>
+<tr>
+<td>第8步</td>
+<td>79-88</td>
+<td><strong>庚午</strong></td>
+<td>偏财</td>
+<td>劫财+伤官</td>
+<td>平偏吉</td>
+</tr>
+<tr>
+<td>第9步</td>
+<td>89-98</td>
+<td><strong>辛未</strong></td>
+<td>正财</td>
+<td>伤官+劫财+正印</td>
+<td>平偏吉</td>
+</tr>
+<tr>
+<td>第10步</td>
+<td>99-108</td>
+<td><strong>壬申</strong></td>
+<td>七杀</td>
+<td>偏财+七杀+食神</td>
+<td>平</td>
+</tr>
+</tbody>
+</table></div>
+<pre><code>
+起运 ═══════════════════════════════════════════════&gt;
+      癸亥    甲子    乙丑    丙寅    丁卯    戊辰    己巳
+      9-18   19-28   29-38   39-48   49-58   59-68   69-78
+      [凶]   [平偏吉] [吉]   [大吉]  [大吉]  [吉]   [吉]
+      童年    青年    中年              中晚年
+</code></pre>
+<h3 id="6-2-重点大运详解">6.2 重点大运详解</h3>
+<h4 id="第一步-癸亥-9-18岁-凶运">第一步：癸亥（9-18岁）⚠️ 凶运</h4>
+<p>天干癸水正官 + 地支亥水七杀（亥藏壬甲）。与原局年癸+月壬+时壬呼应→<strong>官杀大集结</strong>。童年/青少年阶段压力极大。亥卯半合木（年亥+年卯）可部分化水，但杯水车薪。此运需家长格外呵护，避免高压教育。</p>
+<blockquote>
+<p>《神峰通考》："杀星重而行杀旺运，早赴幽冥之客"——癸亥运正是杀旺之运，好在亥中甲木偏印暗藏救应，且原局食神当令制杀，非无助之局。</p>
+</blockquote>
+<h4 id="第三步-乙丑-29-38岁-吉运">第三步：乙丑（29-38岁）✅ 吉运</h4>
+<p>乙木正印透干通关官杀，丑土伤官制杀。正印+伤官→化杀+制杀双管齐下。此为事业起航运。</p>
+<h4 id="第四步-丙寅-39-48岁-大吉">第四步：丙寅（39-48岁）⭐⭐ 大吉</h4>
+<p><strong>丙火比肩透干帮身</strong> + 寅木偏印生身（寅藏甲丙戊）。丙火是原局最需要的帮手——比肩分担官杀压力。寅午戌三合火局补全（原局午+戌+大运寅=三合火局！）→火力量暴涨。此十年是人生巅峰期。</p>
+<blockquote>
+<p>《滴天髓》："不管白雪与明月，任君策马朝天阙"——丙寅运日主乘用神驰骤，无可阻挡。</p>
+</blockquote>
+<h4 id="第五步-丁卯-49-58岁-大吉">第五步：丁卯（49-58岁）⭐⭐ 大吉</h4>
+<p>丁火劫财透干 + 卯木正印到位。延续丙寅运的强火之势，中年持续发力。</p>
+<h4 id="第六步-戊辰-59-68岁-吉运">第六步：戊辰（59-68岁）✅ 吉运</h4>
+<p>戊土食神透干——原局暗食神格终于透出！格局彻底发力。食神制杀+生财，晚年名利双收。</p>
+<hr>
+<h2 id="第七步-刑冲合害深度解读">第七步：刑冲合害深度解读</h2>
+<h3 id="7-1-核心关系">7.1 核心关系</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>关系</th>
+<th>涉及</th>
+<th>解读</th>
+</tr>
+<tr>
+<th><strong>卯戌合火</strong> 🔥</th>
+<th>年+月</th>
+<th>印星合食神化为火——此命最重要的救应！木土合力生火助日主</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><strong>午戌半合火</strong> 🔥</td>
+<td>日+月</td>
+<td>日主羊刃与月令食神半合火局，自我力量与格局之力联盟</td>
+</tr>
+<tr>
+<td><strong>戌辰冲</strong> ⚠️</td>
+<td>月+时</td>
+<td>月令食神与时支食神相冲——药神内战！制杀之力被内耗</td>
+</tr>
+<tr>
+<td><strong>壬丙冲</strong> ⚠️</td>
+<td>月→日+时→日</td>
+<td>两股七杀同时冲击日主，人生常有双线压力</td>
+</tr>
+<tr>
+<td><strong>卯辰害</strong></td>
+<td>年+时</td>
+<td>祖上（年）与晚景/子女（时）有微隙</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="7-2-三柱空亡">7.2 三柱空亡</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>空亡</th>
+<th>影响</th>
+</tr>
+<tr>
+<th>年柱空亡(辰巳)</th>
+<th>祖荫打折，时辰地支恰在空亡→童年家庭环境或有不稳</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>日柱空亡(寅卯)</td>
+<td>自身+配偶宫力量打折。天德月德双贵人可部分化解空亡之虚</td>
+</tr>
+<tr>
+<td>时柱空亡(午未)</td>
+<td>子女缘偏薄，晚景需自立。但日支午火恰在空亡→自我力量也打折</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="7-3-胎元命宫">7.3 胎元命宫</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>要素</th>
+<th>干支</th>
+<th>解读</th>
+</tr>
+<tr>
+<th>胎元</th>
+<th>癸丑</th>
+<th>癸水官星入胎元，丑土伤官制之——先天带制官机制</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>命宫</td>
+<td>乙卯</td>
+<td>乙木正印，与年支卯木伏吟——命归正印，晚有依靠</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="第八步-六维度深度分述">第八步：六维度深度分述</h2>
+<h3 id="8-1-性格底色">8.1 性格底色</h3>
+<p>丙火如烈日当空，光明磊落、热情外向是底色。但生于戌月入墓+官杀三重围攻→太阳被乌云遮蔽——<strong>外表阳光，内心负重</strong>。</p>
+<ul>
+<li>年卯正印+月戌华盖→知性、好学、有精神追求</li>
+<li>日午羊刃→内在极为刚烈，有自己的底线和脾气</li>
+<li>天德+月德在日→品性端正、天性善良，自带化解灾厄之力</li>
+<li>阴差阳错+孤鸾→感情方面相对慢热、标准高</li>
+</ul>
+<p>⚠️ <strong>注意</strong>：官杀三重压身→天生的"责任感过重"，容易把不属于自己的担子也扛上身。</p>
+<h3 id="8-2-事业方向">8.2 事业方向</h3>
+<p><strong>行业</strong>：用神土+火→教育/文化/互联网/能源/设计。食神当令→专业技术路线优于纯管理。</p>
+<p><strong>节奏</strong>：童年癸亥运承压→29岁乙丑运上扬→39岁丙寅运巅峰→59岁戊辰运晚期大成。属于 <strong>先苦后甜、大器晚成</strong> 的典型。</p>
+<h3 id="8-3-财运">8.3 财运</h3>
+<p>食神当令可生财（土生金），但原局金极弱（5%）。中年癸丑运财星渐显，晚年戊辰运食神透干→食神生财，财运最好。早年不宜投机。</p>
+<h3 id="8-4-感情婚姻">8.4 感情婚姻</h3>
+<p><strong>女命看官杀</strong>：官杀三重混杂——异性缘旺，但情路波折。</p>
+<ul>
+<li>官杀混杂+阴差阳错+孤鸾三重叠加→晚婚为宜，28岁后婚恋运势转好</li>
+<li>配偶星壬水七杀，对方有魄力但偏强势</li>
+<li>日支午火为羊刃，在婚姻中需学会收敛锋芒</li>
+<li>天德月德在日柱→配偶人品底色好</li>
+</ul>
+<blockquote>
+<p>最佳婚恋窗口：甲子运（19-28岁）中后期，乙丑运（29-38岁）前期。</p>
+</blockquote>
+<h3 id="8-5-健康">8.5 健康</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>五行</th>
+<th>提示</th>
+</tr>
+<tr>
+<th>火虽偏旺但被水围攻</th>
+<th>心血管/内分泌需关注，青春期波动</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>水重克火</td>
+<td>肾负担大，注意腰酸/水肿</td>
+</tr>
+<tr>
+<td>戌辰冲</td>
+<td>脾胃功能波动</td>
+</tr>
+<tr>
+<td>金极弱</td>
+<td>呼吸系统需呵护</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>童年癸亥运水极重，体质偏弱，家长需格外关注。29岁后体质随火运到来逐步改善。</p>
+</blockquote>
+<h3 id="8-6-近年-童年期">8.6 近年（童年期）</h3>
+<p>命主2023年出生，当前未满3岁。仍在起运前（月柱壬戌主管），七杀+食神基调。幼儿阶段注意：体质偏弱（水重克火）、情绪敏感（官杀压身）。家庭宜营造宽松温暖的成长环境，以木（耐心教育=印星）和火（鼓励认可=比劫）为主，避免过于严厉（水=官杀）。</p>
+<hr>
+<h2 id="第九步-历史校准">第九步：历史校准</h2>
+<p>命主年仅约2-3岁，无成人经历可校准。但可向家长验证初期信号：是否体质偏敏感？是否对外界刺激反应较强？这些是官杀重+身弱的典型幼儿表现。</p>
+<hr>
+<h2 id="总结">总结</h2>
+<pre><code>
+╔══════════════════════════════════════════════════╗
+║                                                  ║
+║   日主丙火，太阳之光，戌月入墓暂掩锋芒          ║
+║   官杀三重，乌云蔽日，然食神双现制杀有方        ║
+║   卯戌合火，暗渡陈仓，木土合力化火生阳          ║
+║   三柱空亡，天月德佑，虚中藏实自有天相          ║
+║                                                  ║
+║   全盘评分 65/100，中等                          ║
+║   童年凶运癸亥，少年过渡甲子                    ║
+║   中年丙寅崛起，三合火局人生巅峰                ║
+║   晚年戊辰食神透干，格局大成晚景清贵            ║
+║                                                  ║
+║   你是被乌云遮住的太阳——                        ║
+║   乌云只是暂时的，                                ║
+║   太阳终将破云而出                                ║
+║                                                  ║
+╚══════════════════════════════════════════════════╝
+</code></pre>
+<hr>
+<blockquote>
+<p><strong>免责声明</strong>：以上分析基于 Bazi MCP 排盘数据和传统命理学理论（参酌《穷通宝鉴》《子平真诠》《三命通会》《滴天髓》《神峰通考》等经典），仅供传统文化学习与参考，不构成任何决策依据。</p>
+<p></p>
+<p><strong>分析依据</strong>：Bazi MCP — getBaziDetail(solarDatetime: 2023-10-15T07:35:00+08:00, gender: 0) | bazi-pro v3.5</p>
+</blockquote>
+</div>
+
+<div class="footer">
+    <p>2026年05月22日 10:20 &nbsp;|&nbsp; bazi-pro v3.5 &nbsp;|&nbsp; Dashboard v2.0</p>
+    <p style="margin-top:4px">仅供传统文化学习与参考，不构成任何决策依据</p>
+</div>
+
+</div>
+</body>
+</html>

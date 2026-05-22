@@ -1,0 +1,39 @@
+[project]
+name = "bazi-pro"
+version = "4.0.0"
+description = "专业八字命理分析引擎 — BM25+jieba 古籍检索 · 四层喜用神裁决 · 六层格局筛查 · 可视化报告"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Minervaowl7" }
+]
+keywords = ["bazi", "chinese-metaphysics", "fortune-telling", "classical-chinese", "nlp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+dependencies = [
+    "jieba>=0.42.1",
+]
+
+[project.optional-dependencies]
+hybrid = ["sentence-transformers>=2.2", "faiss-cpu>=1.7", "numpy>=1.24"]
+report = ["markdown>=3.5"]
+pdf = ["weasyprint>=60"]
+
+[project.scripts]
+bazi-retrieve = "scripts.retrieve_classical:main"
+bazi-report = "scripts.generate_report:main"
+
+[tool.setuptools]
+packages = []
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
