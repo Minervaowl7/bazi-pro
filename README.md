@@ -1,5 +1,7 @@
 # bazi-pro v4.2
 
+[![CI](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml)
+
 **可审计、可交互、可视化的八字命理分析引擎**
 
 📜 2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 四层喜用神裁决 · 六层格局筛查 · 交互式仪表盘
