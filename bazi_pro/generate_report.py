@@ -17,7 +17,9 @@ from html import escape
 from pathlib import Path
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from bazi_pro.dashboard import generate_dashboard
+from bazi_pro.dashboard import generate_dashboard  # 遗留仪表盘 v3.0
+from bazi_pro.ui import render_dashboard          # 新版仪表盘 v5.0
+from bazi_pro.view_model import build_vm_from_analysis_text
 
 
 # ---------------------------------------------------------------------------
@@ -899,7 +901,13 @@ def main():
     # --- Generate ---
     if args.format in ('html', 'both') or args.theme == 'dashboard':
         if args.theme == 'dashboard':
-            html_content = generate_dashboard(meta, analysis_text, args.title, report_date, simple_md_to_html)
+            # v5.0: 新版仪表盘 — 动态 SVG 命盘 + 命运河流时间轴 + 推理图谱
+            try:
+                vm = build_vm_from_analysis_text(analysis_text)
+                html_content = render_dashboard(vm)
+            except Exception:
+                # 降级到遗留仪表盘
+                html_content = generate_dashboard(meta, analysis_text, args.title, report_date, simple_md_to_html)
         else:
             html_content = generate_html_report(meta, analysis_text, args.title, report_date)
         html_path = output_base if args.format in ('html', 'both') else (
