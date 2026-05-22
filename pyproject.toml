@@ -5,6 +5,7 @@ description = "专业八字命理分析引擎 — BM25+jieba 古籍检索 · 四
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Minervaowl7" }
 ]
