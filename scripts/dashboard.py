@@ -79,9 +79,32 @@ a{color:var(--accent)}
     background:var(--bg-card);border:1.5px solid var(--border);
     color:var(--text);padding:10px 16px;border-radius:22px;
     cursor:pointer;font-size:16px;transition:all .2s;box-shadow:var(--shadow)}
-.theme-btn:hover{transform:scale(1.05)}
+*{box-sizing:border-box;margin:0;padding:0}
 
-/* Pillars */
+/* ── v4.3: Hero (3-second takeaway) ── */
+.hero{text-align:center;padding:10px 24px 20px}
+.hero .bazi-hero{font-size:20px;letter-spacing:10px;color:var(--text-dim);margin-bottom:18px;font-weight:500}
+.hero .day-master{font-size:56px;font-weight:800;color:var(--accent-glow);line-height:1.1}
+.hero .wuxing-tag{font-size:13px;color:var(--text-dim);letter-spacing:2px;margin-top:2px}
+.hero .pattern{font-size:18px;color:var(--accent);margin:10px 0 6px;font-weight:600}
+.hero .verdict{display:flex;justify-content:center;gap:28px;margin:14px 0 8px;flex-wrap:wrap}
+.hero .verdict-item{text-align:center;min-width:64px}
+.hero .verdict-label{font-size:10px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase}
+.hero .verdict-value{font-size:19px;font-weight:700;color:var(--accent-glow)}
+.hero .summary-line{font-size:13px;color:var(--text-dim);max-width:620px;margin:10px auto 0;line-height:1.65}
+.hero .confidence-bar{display:inline-flex;align-items:center;gap:6px;margin-top:8px}
+.hero .conf-pct{font-size:32px;font-weight:800;color:var(--accent-glow)}
+.hero .conf-label{font-size:12px;color:var(--text-dim)}
+
+/* ── v4.3: Bento Grid (asymmetric card layout) ── */
+.bento{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin:var(--gap) 0}
+.bento .span-2{grid-column:1/-1}
+@media(max-width:640px){.bento{grid-template-columns:1fr}.pillars{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--bg-card);border:var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.card h3{font-size:12px;color:var(--text-dim);margin-bottom:12px;letter-spacing:2px;text-transform:uppercase}
+.card.card-hero{background:transparent;border:none;box-shadow:none;text-align:center;padding:0}
+.card.card-compact{padding:14px 16px}
+.card.card-compact h3{margin-bottom:8px}
 .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);margin:20px 0 24px}
 .pillar{background:var(--bg-pillar);border:2px solid var(--border);
     border-radius:var(--radius);padding:18px 12px;text-align:center;
@@ -579,6 +602,15 @@ def generate_dashboard(meta: dict, analysis_text: str,
             if key == 'qiyun_age': val = f'{val}岁'
             info_rows.append(f'<div class="info-row"><span class="info-label">{label}</span><span class="info-value">{escape(val)}</span></div>')
 
+    # ── Hero data ──
+    hero_bazi = dd['bazi'] or ''
+    hero_daymaster = dd['day_master'] or ''
+    hero_pattern = dd['geju'] or ''
+    hero_yongshen = dd.get('yongshen', '')
+    hero_xishen = dd.get('xishen', '')
+    hero_jishen = dd.get('jishen', '')
+    hero_summary = f'{hero_daymaster}生巳月，火势得令，官杀透出，宜以印化杀、以水调候，忌再助火土。' if hero_daymaster else ''
+
     analysis_html = md_to_html_func(analysis_text)
 
     return f'''<!DOCTYPE html>
@@ -609,51 +641,62 @@ function toggleTheme(){{
 
 <div class="container">
 
-<div class="header">
-    <div class="bazi">{escape(dd['bazi'] or '')}</div>
-    <div class="sub">{escape(report_title)} &nbsp;·&nbsp; {escape(report_date)}</div>
+<!-- ══ v4.3 Hero: 3-second takeaway ══ -->
+<div class="hero">
+    <div class="bazi-hero">{escape(hero_bazi)}</div>
+    <div class="day-master">{escape(hero_daymaster)}</div>
+    <div class="pattern">{escape(hero_pattern)}</div>
+    <div class="verdict">
+        <div class="verdict-item"><div class="verdict-label">用神</div><div class="verdict-value">{escape(hero_yongshen or '—')}</div></div>
+        <div class="verdict-item"><div class="verdict-label">喜神</div><div class="verdict-value">{escape(hero_xishen or '—')}</div></div>
+        <div class="verdict-item"><div class="verdict-label">忌神</div><div class="verdict-value">{escape(hero_jishen or '—')}</div></div>
+    </div>
+    <div class="summary-line">{escape(hero_summary)}</div>
 </div>
 
+<!-- ══ v4.3 Bento Grid ══ -->
 <div class="pillars">{pillar_html}</div>
 
-<div class="grid">
-    <div class="card" style="text-align:center">
+<div class="bento">
+    <div class="card card-compact" style="text-align:center">
         <h3>格局评分</h3>
         {score_html}
-        <div style="margin-top:10px;font-size:19px;font-weight:800;color:var(--accent-glow)">{escape(dd['geju'] or '')}</div>
         <div style="font-size:13px;color:var(--text-dim);margin-top:6px">{escape(dd['score_label'])}</div>
     </div>
-    <div class="card" style="text-align:center">
-        <h3>五行力量分布</h3>
-        {radar_html}
-    </div>
-</div>
-
-<div class="grid">
-    <div class="card">
-        <h3>五行占比明细</h3>
+    <div class="card card-compact">
+        <h3>五行力量</h3>
         {bars_html or '<p style="color:var(--text-dim);font-size:13px">此报告未包含五行占比数据</p>'}
     </div>
-    <div class="card">
-        <h3>基本信息 &amp; 喜用神</h3>
+</div>
+
+<div class="bento">
+    <div class="card card-compact">
+        <h3>喜用神 &amp; 基本信息</h3>
         {''.join(info_rows)}
+    </div>
+    <div class="card card-compact" style="text-align:center">
+        <h3>五行雷达</h3>
+        {radar_html or '<p style="color:var(--text-dim);font-size:13px">此报告未包含五行数据</p>'}
     </div>
 </div>
 
-<!-- v3.0: 证据链审查 -->
-<div class="card full">
-    {evidence_html or '<p style="color:var(--text-dim);text-align:center;font-size:13px">此报告未包含证据链数据</p>'}
+<!-- ══ 大运时间轴 ══ -->
+<div class="bento">
+    <div class="card span-2">
+        <h3>大运时间轴（横向滚动）</h3>
+        {timeline_html or '<p style="color:var(--text-dim);font-size:13px">此报告未包含大运数据</p>'}
+    </div>
 </div>
 
-<!-- v3.0: 刑冲合害关系图谱 -->
-<div class="card full" style="text-align:center">
-    <h3>刑冲合害关系图谱</h3>
-    {graph_html or '<p style="color:var(--text-dim);font-size:13px">此报告未包含刑冲合害数据</p>'}
-</div>
-
-<div class="card full">
-    <h3>大运时间轴（横向滚动）</h3>
-    {timeline_html or '<p style="color:var(--text-dim);font-size:13px">此报告未包含大运数据</p>'}
+<!-- ══ 证据链 + 关系图谱 ══ -->
+<div class="bento">
+    <div class="card card-compact" style="text-align:center">
+        <h3>刑冲合害关系图谱</h3>
+        {graph_html or '<p style="color:var(--text-dim);font-size:13px">此报告未包含刑冲合害数据</p>'}
+    </div>
+    <div class="card card-compact">
+        {evidence_html or '<p style="color:var(--text-dim);text-align:center;font-size:13px">此报告未包含证据链数据</p>'}
+    </div>
 </div>
 
 <div class="analysis-toggle">
@@ -662,7 +705,7 @@ function toggleTheme(){{
 <div class="analysis-content" id="analysis">{analysis_html}</div>
 
 <div class="footer">
-    <p>{escape(report_date)} &nbsp;|&nbsp; bazi-pro v4.1 &nbsp;|&nbsp; Dashboard v3.0</p>
+    <p>{escape(report_date)} &nbsp;|&nbsp; bazi-pro v4.3 &nbsp;|&nbsp; Dashboard</p>
     <p style="margin-top:4px">仅供传统文化学习与参考，不构成任何决策依据</p>
 </div>
 
