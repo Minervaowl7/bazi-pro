@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bazi-pro — 可审计的八字命理分析引擎</title>
+<style>
+:root{--bg:#0f0f14;--card:#1a1a24;--text:#e8e0d0;--dim:#8888a0;--accent:#d4af37;--glow:#f0d060;--border:#2e2e44;--good:#66bb6a;--warn:#ffa726;--bad:#ef5350}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Noto Serif SC","Microsoft YaHei",serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.7}
+.container{max-width:800px;margin:0 auto;padding:40px 20px}
+.hero{text-align:center;padding:60px 0 40px}
+.hero h1{font-size:42px;font-weight:800;letter-spacing:4px;color:var(--glow)}
+.hero .tagline{font-size:18px;color:var(--dim);margin-top:8px}
+.hero .badge{display:inline-block;margin-top:16px;padding:6px 18px;border-radius:20px;background:var(--card);border:1px solid var(--border);font-size:14px;color:var(--accent)}
+.quickstart{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin:20px 0}
+.quickstart h2{font-size:16px;color:var(--dim);margin-bottom:12px}
+.quickstart pre{background:#14182a;color:#b8cce0;padding:16px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.8}
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:30px 0}
+.feat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center}
+.feat .icon{font-size:28px;margin-bottom:10px}
+.feat h3{font-size:15px;color:var(--accent);margin-bottom:6px}
+.feat p{font-size:13px;color:var(--dim);line-height:1.6}
+.stats{display:flex;justify-content:center;gap:40px;margin:30px 0;flex-wrap:wrap}
+.stat{text-align:center}
+.stat .num{font-size:32px;font-weight:800;color:var(--glow)}
+.stat .label{font-size:13px;color:var(--dim)}
+.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:30px 0}
+.compare{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.compare h3{font-size:14px;color:var(--dim);margin-bottom:10px;letter-spacing:1px}
+.compare .list{font-size:14px;line-height:2.2}
+.compare .list span{display:block;padding:4px 0;border-bottom:1px solid var(--border)}
+.compare .list span:last-child{border:none}
+.compare .check{color:var(--good)}
+.compare .cross{color:var(--bad)}
+.compare .warn{color:var(--warn)}
+.footer{text-align:center;padding:40px 20px;color:var(--dim);font-size:12px;border-top:1px solid var(--border);margin-top:30px}
+.footer a{color:var(--accent);text-decoration:none}
+@media(max-width:600px){.comparison{grid-template-columns:1fr}.stats{gap:20px}.hero h1{font-size:32px}}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="hero">
+    <h1>bazi-pro</h1>
+    <p class="tagline">可审计、可交互、可视化的八字命理分析引擎</p>
+    <span class="badge">v4.2 · Replayable Evidence Engine</span>
+</div>
+
+<div class="stats">
+    <div class="stat"><div class="num">2,964</div><div class="label">古籍条文</div></div>
+    <div class="stat"><div class="num">6</div><div class="label">命理经典</div></div>
+    <div class="stat"><div class="num">0.5s</div><div class="label">热检索延迟</div></div>
+    <div class="stat"><div class="num">4/4</div><div class="label">Golden Cases</div></div>
+</div>
+
+<div class="quickstart">
+    <h2>⚡ 30 秒体验</h2>
+    <pre>git clone git@github.com:Minervaowl7/bazi-pro.git
+cd bazi-pro
+pip install -r requirements.txt
+python scripts/doctor.py
+python scripts/retrieve_classical.py "食神 制杀 身弱" -k 3 --json
+python scripts/generate_report.py --input examples/sample_analysis.md --theme dashboard --format html --output demo.html
+open demo.html</pre>
+</div>
+
+<div class="features">
+    <div class="feat">
+        <div class="icon">📜</div>
+        <h3>古籍引擎</h3>
+        <p>BM25+Hybrid检索，2964条条文，6部经典，双通道反事实裁决</p>
+    </div>
+    <div class="feat">
+        <div class="icon">🔍</div>
+        <h3>证据审查</h3>
+        <p>每个结论附带古籍依据+规则触发+置信度，可展开质询</p>
+    </div>
+    <div class="feat">
+        <div class="icon">🕸️</div>
+        <h3>关系图谱</h3>
+        <p>SVG刑冲合害网络图，四柱节点+合冲刑害四色边</p>
+    </div>
+    <div class="feat">
+        <div class="icon">🎛️</div>
+        <h3>仪表盘</h3>
+        <p>五行雷达图+大运时间轴+评分环，暗色/亮色跟随系统</p>
+    </div>
+</div>
+
+<div class="comparison">
+    <div class="compare" style="border-color:var(--bad)">
+        <h3>⚠️ 传统命理 Skill</h3>
+        <div class="list">
+            <span>❌ 不告知为什么这样判断</span>
+            <span>❌ 结论无法验证</span>
+            <span>❌ 古籍引用不可追溯</span>
+            <span>❌ 纯文本输出</span>
+            <span>❌ 术语不统一</span>
+        </div>
+    </div>
+    <div class="compare" style="border-color:var(--good)">
+        <h3>✅ bazi-pro v4.2</h3>
+        <div class="list">
+            <span class="check">✓ 每结论附带证据链</span>
+            <span class="check">✓ Golden Cases 可回归</span>
+            <span class="check">✓ 古籍 ID + 置信度可追溯</span>
+            <span class="check">✓ 交互式仪表盘+图谱</span>
+            <span class="check">✓ 经典术语严格校验</span>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <p>bazi-pro v4.2 · <a href="https://github.com/Minervaowl7/bazi-pro">GitHub</a> · MIT License</p>
+    <p style="margin-top:6px">排盘由 Bazi MCP 完成 · 仅供传统文化学习与参考</p>
+</div>
+
+</div>
+
+</body>
+</html>
