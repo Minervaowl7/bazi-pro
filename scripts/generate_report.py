@@ -611,6 +611,11 @@ a:hover { text-decoration: underline; }
 .content table tr:nth-child(even) td { background: var(--bg-warm); }
 .content table tr:nth-child(odd) td { background: var(--bg-card); }
 .content table td:first-child { text-align: left; font-weight: 500; }
+/* v4.3: collapse tall tables */
+.content table.collapsed tbody tr:nth-child(n+9) { display: none; }
+.table-expand-btn { display: block; text-align: center; padding: 4px;
+    font-size: 12px; color: var(--accent); cursor: pointer; }
+.table-expand-btn:hover { text-decoration: underline; }
 
 /* ==== Code & ASCII Art ==== */
 .content code {
