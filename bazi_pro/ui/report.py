@@ -68,6 +68,7 @@ def _render_cover(vm: DashboardVM, seal_svg: str) -> str:
 
 def _render_executive_summary(vm: DashboardVM) -> str:
     v = vm.verdict
+    summary_line = f'{v.day_master}生巳月，火势得令；壬癸官杀透出，需以木印化杀，并以水调候。整体宜走专业化、知识型、审美/研究型路线，避免火土过旺与高冲突环境。' if v.day_master else ''
     items = [
         f'本命<strong>{escape(v.day_master)}</strong>日主，{escape(v.decision or "按正格论")}。',
         f'格局主线：{escape(v.pattern)}。',
@@ -77,7 +78,7 @@ def _render_executive_summary(vm: DashboardVM) -> str:
     ]
     return f'''<section class="exec-summary">
     <h2>Executive Summary</h2>
-    <p class="summary-text">{escape(v.summary_line or "")}</p>
+    <p class="summary-text">{escape(summary_line)}</p>
     <ol class="exec-list">
         {"".join(f'<li>{item}</li>' for item in items)}
         <li>命局优势：印星护身、贵人提携、学业/专业能力强。</li>

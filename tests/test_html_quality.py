@@ -65,7 +65,11 @@ def rendered_report():
 BANNED_WORDS = [
     "未提取", "undefined", "null", "NaN", "TODO", "debug",
     "None", "Error", "Traceback", "Exception",
+    "证据数据未加载", "此报告未包含", "即将上线",
 ]
+
+MARKDOWN_ARTIFACTS = ["**", "__"]  # Markdown 残留（检查不在 code/pre 内的）
+HREF_PLACEHOLDERS = ['href="#"']   # 禁止占位链接
 
 
 @pytest.mark.parametrize("word", BANNED_WORDS)
@@ -166,6 +170,26 @@ def test_dashboard_screenshot_mode():
         assert "share-mode" in html, "缺少 share-mode class"
     except ImportError:
         pytest.skip("bazi_pro 模块不可用")
+
+
+# ── P1: No markdown artifacts in rendered UI ──
+
+@pytest.mark.parametrize("artifact", MARKDOWN_ARTIFACTS)
+def test_no_markdown_artifacts(rendered_dashboard, rendered_report, artifact):
+    """渲染输出不得包含 Markdown 残留标记"""
+    for html in [rendered_dashboard, rendered_report]:
+        if html:
+            assert artifact not in html, f"包含 Markdown 残留: '{artifact}'"
+
+
+# ── P1: No href="#" placeholder links ──
+
+def test_no_href_placeholders(rendered_dashboard):
+    """Dashboard 不得包含 href='#' 占位链接"""
+    if not rendered_dashboard:
+        pytest.skip("Dashboard 未渲染")
+    for placeholder in HREF_PLACEHOLDERS:
+        assert placeholder not in rendered_dashboard, f"包含占位链接: {placeholder}"
 
 
 # ── P2: TOC 无重复闭合（从旧版生成器检查） ──

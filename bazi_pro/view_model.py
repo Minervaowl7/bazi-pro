@@ -274,12 +274,36 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
     vm.verdict.day_master = vm.verdict.day_master or vm.day_master
     vm.verdict.decision = '不从，按正格论' if '从格' in text else ''
 
+    raw_yongshen = ''
+    raw_xishen = ''
+    raw_jishen = ''
     for key, pat in [('yongshen', r'用神[：:]\s*(.+?)(?:[，,\n]|$)'),
                       ('xishen', r'喜神[：:]\s*(.+?)(?:[，,\n]|$)'),
                       ('jishen', r'忌神[：:]\s*(.+?)(?:[，,\n]|$)')]:
         m = re.search(pat, text)
         if m:
-            vals = [v.strip() for v in m.group(1).split('、') if v.strip()]
-            setattr(vm.verdict, key, vals)
+            val = m.group(1).strip()
+            if key == 'yongshen': raw_yongshen = val
+            elif key == 'xishen': raw_xishen = val
+            elif key == 'jishen': raw_jishen = val
+            setattr(vm.verdict, key, [val])  # raw single-item list
+
+    # ── v4.3.1: Text cleaning pass ──
+    try:
+        from bazi_pro.ui.text_cleaner import build_clean_verdict
+        cv = build_clean_verdict(
+            raw_pattern=vm.verdict.pattern,
+            raw_yongshen=raw_yongshen,
+            raw_xishen=raw_xishen,
+            raw_jishen=raw_jishen,
+            raw_decision=vm.verdict.decision,
+        )
+        vm.verdict.pattern = cv.pattern_short or vm.verdict.pattern
+        vm.verdict.yongshen = [cv.yongshen_label] if cv.yongshen_label else vm.verdict.yongshen
+        vm.verdict.xishen = cv.xishen_labels if cv.xishen_labels else vm.verdict.xishen
+        vm.verdict.jishen = cv.jishen_labels if cv.jishen_labels else vm.verdict.jishen
+        vm.verdict.decision = cv.decision or vm.verdict.decision
+    except ImportError:
+        pass  # text_cleaner not available, use raw
 
     return vm

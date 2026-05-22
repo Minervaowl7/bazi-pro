@@ -101,13 +101,14 @@ def _seal_sub_text(v: VerdictVM) -> str:
 
 
 def _seal_bottom_text(v: VerdictVM) -> str:
-    """底部弧文：用神 · 喜神"""
+    """底部弧文：短标签，最多 10 字"""
     parts = []
     if v.yongshen:
-        parts.append(f'用{"·".join(v.yongshen[:2])}')
+        parts.append('用' + ''.join(v.yongshen[:2]))
     if v.xishen:
-        parts.append(f'喜{"·".join(v.xishen[:2])}')
-    return ' · '.join(parts) if parts else ''
+        parts.append('喜' + ''.join(v.xishen[:2]))
+    result = ' · '.join(parts)
+    return result[:14]  # hard cap
 
 
 def _seal_font_size(text: str) -> int:

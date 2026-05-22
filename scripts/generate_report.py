@@ -912,6 +912,8 @@ def main():
     parser.add_argument('--gender', help='性别（覆盖自动提取）')
     parser.add_argument('--birth', help='出生日期（覆盖自动提取）')
     parser.add_argument('--name', help='姓名/称呼')
+    parser.add_argument('--report-url', default='', help='完整报告 URL（Dashboard 导航按钮）')
+    parser.add_argument('--replay-url', default='', help='回放推理链 URL（Dashboard 导航按钮）')
     parser.add_argument('--engine', choices=['v4.3', 'legacy', 'auto'], default='auto',
                         help='渲染引擎: v4.3(新UI) / legacy(旧版) / auto(自动检测)')
 
@@ -942,6 +944,10 @@ def main():
         cli_meta['solar_date'] = args.birth
     if args.name:
         cli_meta['name'] = args.name
+    if args.report_url:
+        cli_meta['report_url'] = args.report_url
+    if args.replay_url:
+        cli_meta['replay_url'] = args.replay_url
 
     file_meta = {}
     if args.meta:
@@ -984,7 +990,8 @@ def main():
             from bazi_pro.view_model import build_vm_from_analysis_text
             from bazi_pro.ui import render_dashboard
             vm = build_vm_from_analysis_text(analysis_text)
-            html_content = render_dashboard(vm)
+            html_content = render_dashboard(vm,
+                report_url=args.report_url, replay_url=args.replay_url)
         elif use_v43 and args.theme == 'report':
             # ── v4.3 Report engine ──
             from bazi_pro.view_model import build_vm_from_analysis_text
