@@ -53,7 +53,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **算析分离**: Chart calculation is external (MCP / deterministic code). This repo only interprets.
 2. **No fabricated citations**: Every classical quote must come from `retrieve_classical.py` output or a reference file.
-3. **Calculation boundaries**: Simple counting (tallying stems/branches) is OK for the LLM. Fragile math (multiplication chains, hidden-stem ratios) must come from MCP or scripts. Missing MCP data gets labeled "⚠️ MCP 未提供".
+3. **Calculation boundaries**: Deterministic mappings from known data are **推导** (derivation, OK): stem→element, stem relationships→shishen. Fragile math is **推算** (computation, FORBIDDEN): multiplication chains, hidden-stem ratios, combination corrections. Missing MCP data gets labeled "⚠️ MCP 未提供". Always mark derivations with "⚠️ 由已知数据推导，未经 MCP 验证".
 4. **Linear execution flow**: Step 0→1→2→3→4→5→6→7→8→9→[optional]10. No tentative→backfill loops.
 5. **Ethics first**: Health, finance, marriage, fertility, death topics use cultural-reference phrasing only — never deterministic prediction. See `references/ETHICS.md`.
 6. **UI data contract**: All UI components accept `DashboardVM` dataclass only. No regex extraction inside UI code (legacy `build_vm_from_analysis_text()` is deprecated).
@@ -261,7 +261,7 @@ When bumping the version, update ALL of these:
 
 - [ ] Version strings match across `__init__.py`, `pyproject.toml`, `README.md`, `SKILL.md`
 - [ ] Step order consistent everywhere (flow diagram, two-turn protocol, README, cross-references)
-- [ ] No absolute paths (`/home/...`) present
+- [ ] No absolute paths (`/home/...`) present — use relative paths or environment variables
 - [ ] At least 3 golden-query smoke tests pass
 - [ ] `scripts/generate_report.py` smoke test passes
 - [ ] New dependencies declared in `pyproject.toml`
@@ -271,3 +271,43 @@ When bumping the version, update ALL of these:
 - [ ] New UI components support both dark/light themes
 - [ ] SVG graphics include `<title>` / `<desc>` accessibility tags
 - [ ] Backward compatibility: existing CLI interfaces still work
+- [ ] No Markdown residue (`**`, `*`, `__`, backticks) leaks into extracted data — `_strip_md()` applied
+
+## 推导 vs 推算（v5.0 明确区分）
+
+`SKILL.md` 核心原则中"绝不自行推算"与字段降级策略中"缺失时推导"的冲突已解决，关键是区分两种操作：
+
+| 操作 | 定义 | 是否允许 | 标注要求 |
+|------|------|---------|---------|
+| **推导** | 从已知数据的确定性映射（天干→五行、干支关系→十神） | 允许 | "⚠️ 由已知数据推导" |
+| **推算** | 乘法链、合化修正、藏干比例、刑冲连锁反应 | **禁止** | "⚠️ MCP 未提供" |
+
+十神是天干之间的固定关系映射（日干对年干→正官/七杀等），属于**推导**而非推算。五行力量精确值、合化后百分比修正属于**推算**，LLM 不得自行执行。
+
+## 已知局限与架构债务
+
+以下问题已识别，属于后续迭代改进方向，非当前版本的阻塞性缺陷：
+
+### 高优先级
+
+1. **BM25 检索仅为关键词匹配**：不理解古文是否真正支持当前命局判断。BM25 做的是相关性排序，不是真伪验证。改进方向：预构建索引 + 命理专名词典（建禄、羊刃、从强 等）+ 反例条文通道 + 出处页码版本校勘。
+
+2. **量化评分缺乏校准**：格局六层评分和喜用神四层评分的权重是经验设定，未经过标注集验证。评分应被视为「格局相对高低的参考标尺」而非客观计算值。
+
+3. **历史校准容易后见之明**：Step 9 的"历史事件闭环校准"可能形成"怎么都能解释通"的闭环。建议将它视为**置信度校验**而非**结论调整**。
+
+4. **测试集不足**：现有 4 个 golden cases 覆盖边界格局判定（从杀 vs 身弱、羊刃 vs 从强 等），但缺少：节气交界前后日柱、23 点子时两种流派、夏令时/时区、真太阳时输入、MCP 缺字段降级路径。
+
+### 中优先级
+
+5. **`build_vm_from_analysis_text()` 仍在使用**：虽然标记为过时，但 `generate_report.py --theme dashboard` 需要它来从 Markdown 构建 ViewModel。理想状态是所有数据通过 `analysis_trace.json` 流转。
+
+6. **CSS 重复定义**：每个 UI 渲染器（`ui/__init__.py`、`report.py`、`replay.py`、`verdict_seal.py`）内嵌独立 CSS。`references/design_tokens.css` 是参考规范但实际文件未引用。
+
+7. **伦理覆盖不足**：`references/ETHICS.md` 已明确不预测生死、不替代医疗法律建议，但可进一步补充：心理危机应对、未成年人保护、重大投资决策、婚恋恐吓类话术的拒答模板。
+
+### 低优先级
+
+8. **遗留仪表盘**：`bazi_pro/dashboard.py`（v3.0）仍保留，仅在新版 `ui/__init__.py:render_dashboard()` 构建失败时作为降级路径使用。后续可逐步移除。
+
+9. **Windows 换行符**：项目当前在 Windows 环境开发，CRLF 换行符在 Git 中产生警告。建议在 `.gitattributes` 中配置 `* text=auto`。
