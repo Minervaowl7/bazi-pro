@@ -7,6 +7,7 @@ bazi-pro UI Renderer v4.3
 from html import escape
 from bazi_pro.view_model import DashboardVM
 from bazi_pro.ui.verdict_seal import render_seal_svg, SEAL_CSS
+from bazi_pro.ui.report import render_report as _render_report
 
 
 def render_dashboard(vm: DashboardVM, *, screenshot_mode: bool = False) -> str:
@@ -119,9 +120,9 @@ if(location.search.includes('mode=share'))document.body.classList.add('share-mod
 </html>'''
 
 
-def render_report(vm: DashboardVM) -> str:
-    """渲染 Report HTML — 咨询报告"""
-    return f'<html><body><h1>Report: {escape(vm.verdict.day_master)}</h1></body></html>'
+def render_report(vm: DashboardVM, body_html: str = '', appendix_html: str = '') -> str:
+    """渲染 Report HTML — 咨询报告（结论先行）"""
+    return _render_report(vm, body_html, appendix_html)
 
 
 def render_replay(vm: DashboardVM) -> str:
