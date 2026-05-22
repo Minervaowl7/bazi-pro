@@ -2,5 +2,5 @@
 
 __version__ = "4.1.0"
 
-from scripts.retrieve_classical import retrieve, retrieve_batch, load_corpus
-from scripts.evidence import build_analysis_evidence, new_evidence
+from bazi_pro.retrieve_classical import retrieve, retrieve_batch, load_corpus
+from bazi_pro.evidence import build_analysis_evidence, new_evidence

@@ -28,13 +28,13 @@ report = ["markdown>=3.5"]
 pdf = ["weasyprint>=60"]
 
 [project.scripts]
-bazi-retrieve = "scripts.retrieve_classical:main"
-bazi-report = "scripts.generate_report:main"
-bazi-doctor = "scripts.doctor:main"
-bazi-evidence = "scripts.evidence:main"
+bazi-retrieve = "bazi_pro.retrieve_classical:main"
+bazi-report = "bazi_pro.generate_report:main"
+bazi-doctor = "bazi_pro.doctor:main"
+bazi-evidence = "bazi_pro.evidence:main"
 
 [tool.setuptools]
-packages = ["scripts", "bazi_pro"]
+packages = ["bazi_pro"]
 
 [build-system]
 requires = ["setuptools>=64"]
