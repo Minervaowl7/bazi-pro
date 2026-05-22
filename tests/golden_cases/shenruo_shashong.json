@@ -6,11 +6,15 @@
     "day_master": "壬",
     "bazi": "辛巳 乙未 壬子 甲辰",
     "month_branch": "未",
-    "expected_pattern": "正官格",
-    "expected_wangshuai": "身弱"
+    "expected_pattern": "暗正官格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "偏得势"
   },
-  "must_include": ["身弱", "有根", "不从"],
+  "must_include": ["正官"],
   "must_not_include": ["从杀格", "从官杀格"],
   "classical_support": ["SFTK_00068"],
-  "notes": "日坐子水帝旺有根，即使官杀重也不从"
+  "notes": "月支未本气己正官不透干，暗正官格"
 }

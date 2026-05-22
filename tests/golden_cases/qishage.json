@@ -6,11 +6,15 @@
     "day_master": "甲",
     "bazi": "壬辰 戊申 甲寅 丙寅",
     "month_branch": "申",
-    "expected_pattern": "七杀格",
-    "expected_wangshuai": "中和偏旺"
+    "expected_pattern": "偏印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": -3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "不得势"
   },
-  "must_include": ["七杀格", "食神制杀"],
+  "must_include": ["偏印格"],
   "must_not_include": ["正官格", "从格"],
   "classical_support": ["ZPZQ_00025"],
-  "notes": "月令申中庚金七杀透干，食神丙火制杀"
+  "notes": "月支申中气壬水偏印透干，偏印格"
 }

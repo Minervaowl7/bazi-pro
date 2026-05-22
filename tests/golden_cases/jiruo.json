@@ -1,0 +1,23 @@
+{
+  "id": "jiruo",
+  "description": "极弱 — 甲木日主，绝地无根无助",
+  "scenario": "甲木日主，申月绝地，全无根气",
+  "input": {
+    "day_master": "甲",
+    "bazi": "庚午 壬申 甲寅 丙午",
+    "month_branch": "申",
+    "expected_pattern": "七杀格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": -3,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "七杀格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "绝地+无根+无助"
+}

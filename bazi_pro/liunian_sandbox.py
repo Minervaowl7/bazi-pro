@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""
-bazi-pro 流年推演沙盒 v5.0
-年份滑块 2020-2040，拖拽实时更新流年干支、合冲关系、五行变化
-"""
+"""bazi-pro 流年沙盒 v5.0 (EXPERIMENTAL)"""
 
 from dataclasses import dataclass, field
 from bazi_pro import GAN_WUXING, ZHI_WUXING, derive_shishen, count_wuxing_from_bazi, wuxing_pct
+from bazi_pro.core_rules import full_analysis
+
+EXPERIMENTAL = True
 
 GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']
 ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']
@@ -68,6 +68,10 @@ class LiunianSandbox:
         self.day_master = mcp_json.get('日主', '')
         self._year_range = (2020, 2040)
         self._year_data: dict[int, YearData] = {}
+        self._core_result = full_analysis(mcp_json)
+
+    def get_core_result(self):
+        return self._core_result
 
     def set_year_range(self, start: int, end: int) -> None:
         self._year_range = (start, end)
@@ -116,7 +120,6 @@ class LiunianSandbox:
             dm_wx = GAN_WUXING.get(self.day_master, '')
             if zhi_wx and dm_wx:
                 sheng_map = {'木': '水', '火': '木', '土': '火', '金': '土', '水': '金'}
-                ke_map = {'木': '金', '火': '水', '土': '木', '金': '火', '水': '土'}
                 if zhi_wx == dm_wx:
                     yd.shen_trigger.append(f'地支{zhi}({zhi_wx})→比肩力量')
                 elif sheng_map.get(zhi_wx) == dm_wx:

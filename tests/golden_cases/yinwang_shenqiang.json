@@ -6,11 +6,15 @@
     "day_master": "丙",
     "bazi": "甲午 丁卯 丙寅 甲午",
     "month_branch": "卯",
-    "expected_pattern": "正印格",
-    "expected_wangshuai": "身旺"
+    "expected_pattern": "暗正印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "木",
+    "expected_deling_score": 1,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "得势"
   },
-  "must_include": ["印旺", "身旺", "食伤泄秀"],
+  "must_include": ["正印"],
   "must_not_include": ["从格"],
   "classical_support": ["ZPZQ_00035"],
-  "notes": "印星过旺身强，需食伤泄秀为用"
+  "notes": "月支卯本气乙正印不透干，暗正印格"
 }

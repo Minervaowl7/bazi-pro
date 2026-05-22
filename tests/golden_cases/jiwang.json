@@ -1,0 +1,23 @@
+{
+  "id": "jiwang",
+  "description": "极旺 — 壬水日主，得令得地得势极强",
+  "scenario": "壬水日主，子月帝旺，金水成势，极旺",
+  "input": {
+    "day_master": "壬",
+    "bazi": "壬子 壬子 壬申 庚子",
+    "month_branch": "子",
+    "expected_pattern": "从强格",
+    "expected_wangshuai": "身旺",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "从强格"
+  ],
+  "must_not_include": [
+    "比肩格"
+  ],
+  "notes": "得令+得地+得势极强"
+}

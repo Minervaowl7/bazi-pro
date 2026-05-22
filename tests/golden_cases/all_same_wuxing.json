@@ -1,0 +1,23 @@
+{
+  "id": "all_same_wuxing",
+  "description": "全金五行 — 庚金日主，全局金行",
+  "scenario": "庚金日主，四柱天干地支全为金行",
+  "input": {
+    "day_master": "庚",
+    "bazi": "庚申 辛酉 庚申 辛酉",
+    "month_branch": "酉",
+    "expected_pattern": "从革格",
+    "expected_wangshuai": "身旺",
+    "expected_yongshen_wx": "火",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "从革格"
+  ],
+  "must_not_include": [
+    "比肩格"
+  ],
+  "notes": "全局金行"
+}

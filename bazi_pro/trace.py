@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-分析追踪与证据链构建器 v4.3
+分析追踪与证据链构建器 v5.0
 TraceBuilder: 逐步构建可回放的分析 trace JSON
 Validator: 校验 trace schema 完整性
 """

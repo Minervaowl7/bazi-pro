@@ -6,11 +6,15 @@
     "day_master": "庚",
     "bazi": "戊戌 甲子 庚申 丙戌",
     "month_branch": "子",
-    "expected_pattern": "伤官格",
-    "expected_wangshuai": "偏弱"
+    "expected_pattern": "暗伤官格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": -2,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
   },
-  "must_include": ["伤官格", "印星制伤", "伤官佩印"],
+  "must_include": ["伤官"],
   "must_not_include": ["从格"],
   "classical_support": ["ZPZQ_00050"],
-  "notes": "伤官配印为贵格，印星制伤官"
+  "notes": "月支子本气癸伤官不透干，暗伤官格"
 }

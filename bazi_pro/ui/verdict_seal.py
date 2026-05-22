@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro Verdict Seal v4.5 — 命理裁决朱砂印章（动画升级版）
+bazi-pro Verdict Seal v5.0 — 命理裁决朱砂印章（动画升级版）
 盖章动画 + 墨迹扩散 + 外圈旋转微动画 + PNG 导出
 品牌记忆点：看一眼就知道这是 bazi-pro
 """

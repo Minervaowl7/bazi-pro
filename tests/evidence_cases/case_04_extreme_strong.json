@@ -1,0 +1,35 @@
+{
+  "id": "case_04_extreme_strong",
+  "description": "Extreme strong (极旺) case with all three strength indicators maximally positive",
+  "input": {
+    "day_master": "甲木",
+    "gender": "男",
+    "bazi": "甲寅 丙寅 甲辰 甲子",
+    "deling_score": 3,
+    "dedi_score": 5.0,
+    "deshi_score": 6.0,
+    "wangshuai": "极旺",
+    "pattern_name": "建禄格",
+    "pattern_score": 75,
+    "pattern_tier": "中等",
+    "yongshen": "火",
+    "xishen": "土、金",
+    "jishen": "水",
+    "classical_refs": [
+      {"id": "YHZ_00012", "topic": "旺衰", "source": "渊海子平", "content": "木生春令，其势极旺，须用火泄之"},
+      {"id": "SFTK_00033", "topic": "格局", "source": "神峰通考", "content": "建禄生春月，财官喜透天"}
+    ],
+    "key_features": ["寅辰半合木", "子辰半合水"],
+    "dayun_summary": [
+      {"ganzhi": "丁卯", "ji": "吉"},
+      {"ganzhi": "戊辰", "ji": "大吉"},
+      {"ganzhi": "己巳", "ji": "大吉"},
+      {"ganzhi": "庚午", "ji": "吉"}
+    ]
+  },
+  "expected": {
+    "min_chains": 5,
+    "completeness": "High",
+    "must_have_stages": ["E1", "E2", "E3", "E4", "E5"]
+  }
+}

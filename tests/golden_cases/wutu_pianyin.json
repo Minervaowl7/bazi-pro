@@ -1,0 +1,23 @@
+{
+  "id": "wutu_pianyin",
+  "description": "戊土日主偏印格 — 丙火偏印透干",
+  "scenario": "戊土日主，巳月丙火偏印透干",
+  "input": {
+    "day_master": "戊",
+    "bazi": "丙寅 癸巳 戊午 壬子",
+    "month_branch": "巳",
+    "expected_pattern": "偏印格",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "木",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "偏印格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "戊土日主巳月丙火偏印透干"
+}

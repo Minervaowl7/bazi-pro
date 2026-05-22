@@ -1,0 +1,34 @@
+{
+  "id": "case_05_extreme_weak",
+  "description": "Extreme weak (极弱) case with all three strength indicators maximally negative",
+  "input": {
+    "day_master": "丁火",
+    "gender": "女",
+    "bazi": "壬子 壬子 丁卯 壬子",
+    "deling_score": -3,
+    "dedi_score": 0.5,
+    "deshi_score": 1.0,
+    "wangshuai": "极弱",
+    "pattern_name": "七杀格",
+    "pattern_score": 55,
+    "pattern_tier": "下等",
+    "yongshen": "木",
+    "xishen": "火、土",
+    "jishen": "水",
+    "classical_refs": [
+      {"id": "YHZ_00056", "topic": "旺衰", "source": "渊海子平", "content": "火生冬月，水旺火灭，须用木以生之"},
+      {"id": "SFTK_00078", "topic": "用神", "source": "神峰通考", "content": "身弱杀重，用印化杀为上策"}
+    ],
+    "key_features": ["子卯刑", "壬丁合"],
+    "dayun_summary": [
+      {"ganzhi": "辛亥", "ji": "凶"},
+      {"ganzhi": "庚戌", "ji": "平偏吉"},
+      {"ganzhi": "己酉", "ji": "凶"}
+    ]
+  },
+  "expected": {
+    "min_chains": 5,
+    "completeness": "High",
+    "must_have_stages": ["E1", "E2", "E3", "E4", "E5"]
+  }
+}

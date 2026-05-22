@@ -1,0 +1,23 @@
+{
+  "id": "yinwuxu_sanhe",
+  "description": "三合局 — 寅午戌三合火局",
+  "scenario": "丙火日主，月支寅日支午时支戌，三合火局",
+  "input": {
+    "day_master": "丙",
+    "bazi": "甲辰 庚寅 丙午 戊戌",
+    "month_branch": "寅",
+    "expected_pattern": "偏印格",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": 2,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "偏印格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "寅午戌三合火局"
+}

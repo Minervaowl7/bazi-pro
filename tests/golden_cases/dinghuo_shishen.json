@@ -1,0 +1,23 @@
+{
+  "id": "dinghuo_shishen",
+  "description": "丁火日主食神格 — 戊土食神透干",
+  "scenario": "丁火日主，辰月戊土食神透干",
+  "input": {
+    "day_master": "丁",
+    "bazi": "戊申 丙辰 丁卯 甲辰",
+    "month_branch": "辰",
+    "expected_pattern": "伤官格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "木",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "伤官格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "丁火日主辰月戊土食神透干"
+}

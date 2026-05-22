@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro UI Renderer v4.5
+bazi-pro UI Renderer v5.0
 从 ViewModel 渲染 Dashboard / Report / Replay 三种输出形态
 集成动态 SVG 命盘、命运河流时间轴、推理图谱等新版可视化组件
 """
@@ -18,7 +18,7 @@ from bazi_pro.ui.reasoning_graph import render_reasoning_graph
 
 def render_dashboard(vm: DashboardVM, *, screenshot_mode: bool = False,
                      report_url: str = '', replay_url: str = '') -> str:
-    """渲染 Dashboard HTML — 命理案卷裁决首页（v4.5 升级版）"""
+    """渲染 Dashboard HTML — 命理案卷裁决首页（v5.0 升级版）"""
     seal = render_seal_with_animation(vm, size=180)
     hero = _render_hero(vm, seal)
     pillar_chart = render_pillar_chart(vm)
@@ -139,7 +139,7 @@ body{{font-family:"Noto Serif SC","STSong",serif;background:var(--bg);color:var(
 <div class="evidence-dossier">{evidence}</div>
 
 {nav}
-<div class="footer"><p>bazi-pro v4.5 · 仅供传统文化学习与参考</p></div>
+<div class="footer"><p>bazi-pro v5.0 · 仅供传统文化学习与参考</p></div>
 </div>
 <script>
 {SEAL_JS}
@@ -151,7 +151,7 @@ if(location.search.includes('mode=share'))document.body.classList.add('share-mod
 
 def render_report(vm: DashboardVM, body_html: str = '', appendix_html: str = '',
                   raw_markdown: str = '') -> str:
-    """渲染 Report HTML — 咨询报告（结论先行，v4.4 composer）
+    """渲染 Report HTML — 咨询报告（结论先行，v5.0 composer）
     body_html 由 render_document_body() 生成，已包含 .content-main + .appendix
     """
     if raw_markdown and not body_html:

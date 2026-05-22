@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Hybrid Search v4.7 — 融合检索引擎（优化版）
+Hybrid Search v5.0 — 融合检索引擎（优化版）
 BM25 + 向量检索(INT8量化) + 经典权威权重 + 主题匹配 → 融合排序
 新增：FAISS 索引预构建/加载、缓存预热 Top-100、匹配词高亮、CLI 搜索入口
 
@@ -12,7 +12,6 @@ BM25 + 向量检索(INT8量化) + 经典权威权重 + 主题匹配 → 融合�
 
 import sys
 import os
-from typing import Optional
 
 # 检测可选依赖
 try:
@@ -32,6 +31,8 @@ try:
     _HAS_FAISS = True
 except ImportError:
     _HAS_FAISS = False
+
+from bazi_pro.retrieve_classical import _make_counter_query
 
 _HYBRID_READY = _HAS_NUMPY and _HAS_EMBED and _HAS_FAISS
 
@@ -129,12 +130,14 @@ class HybridSearcher:
         return warm_results
 
     def search(self, query_str: str, k: int = 8,
-               bm25_weight: float = 0.55, vector_weight: float = 0.30) -> list[dict]:
+               bm25_weight: float = 0.55, vector_weight: float = 0.30) -> dict:
         """
         融合检索
 
         得分 = bm25_weight × BM25_norm + vector_weight × cosine_sim
               + 0.10 × authority + 0.05 × topic_match
+
+        返回 {"results": [...], "counter_evidence": [...]}
         """
         query_tokens = self._tokenize(query_str)
 
@@ -147,7 +150,7 @@ class HybridSearcher:
         vector_scores = {}
         if self._ready and self.vector_index is not None:
             q_vec = self.embedder.encode([query_str], normalize_embeddings=True)
-            D, I = self.vector_index.search(q_vec.astype(np.float32), min(k * 4, len(self.entries)))
+            D, I = self.vector_index.search(q_vec.astype(np.float32), min(k * 4, len(self.entries)))  # noqa: E741
             for i, d in zip(I[0], D[0]):
                 vector_scores[int(i)] = float(d)
 
@@ -175,7 +178,6 @@ class HybridSearcher:
         query_terms = query_str.split()
         for idx, score in fused[:k]:
             e = self.entries[idx]
-            # Matched terms + 高亮
             entry_text = f"{e['topic']} {e['content']}"
             matched = [t for t in query_terms if t in entry_text]
             highlighted = _highlight_matches(e['content'], matched)
@@ -194,7 +196,50 @@ class HybridSearcher:
                 "matched_terms": matched,
                 "why": f"BM25={bm25_scores.get(idx, 0):.2f} + vector={vector_scores.get(idx, 0):.2f} + authority({e['source']})={CLASSICAL_AUTHORITY.get(e['source'], 0.80):.2f}" + (f" | matched: {', '.join(matched)}" if matched else "")
             })
-        return results
+
+        counter_query_str = _make_counter_query(query_str)
+        counter_tokens = self._tokenize(counter_query_str)
+        counter_bm25_top = self.bm25.get_top_n(counter_tokens, n=min(k * 4, len(self.entries)))
+        counter_bm25_scores = {idx: score for idx, score in counter_bm25_top}
+        counter_bm25_max = max(counter_bm25_scores.values()) if counter_bm25_scores else 1.0
+
+        counter_vector_scores = {}
+        if self._ready and self.vector_index is not None:
+            cq_vec = self.embedder.encode([counter_query_str], normalize_embeddings=True)
+            cD, cI = self.vector_index.search(cq_vec.astype(np.float32), min(k * 4, len(self.entries)))
+            for i, d in zip(cI[0], cD[0]):
+                counter_vector_scores[int(i)] = float(d)
+
+        counter_candidates = set(counter_bm25_scores.keys()) | set(counter_vector_scores.keys())
+        counter_fused = []
+        for idx in counter_candidates:
+            bm25_norm = counter_bm25_scores.get(idx, 0.0) / counter_bm25_max
+            vec_score = counter_vector_scores.get(idx, 0.0)
+            authority = CLASSICAL_AUTHORITY.get(self.entries[idx]["source"], 0.80)
+            topic_score = sum(
+                TOPIC_BONUS.get(t, 0) for t in TOPIC_BONUS
+                if t in self.entries[idx]["topic"]
+            )
+            final = (bm25_weight * bm25_norm
+                     + vector_weight * vec_score
+                     + 0.10 * authority
+                     + 0.05 * topic_score)
+            counter_fused.append((idx, final))
+
+        counter_fused.sort(key=lambda x: x[1], reverse=True)
+
+        counter_evidence = []
+        for idx, score in counter_fused[:3]:
+            e = self.entries[idx]
+            counter_evidence.append({
+                "score": round(score, 4),
+                "id": e["id"],
+                "topic": e["topic"],
+                "source": e["source"],
+                "content": e["content"]
+            })
+
+        return {"results": results, "counter_evidence": counter_evidence}
 
     @staticmethod
     def _tokenize(text: str) -> list[str]:
@@ -207,10 +252,9 @@ class HybridSearcher:
 
 # 便捷函数：如果依赖不全则降级为纯 BM25
 def hybrid_retrieve_or_fallback(bm25, entries: list[dict],
-                                 query_str: str, k: int = 8) -> tuple[list[dict], str]:
+                                 query_str: str, k: int = 8) -> tuple[dict, str]:
     """尝试 Hybrid Search，降级时自动 fallback 到 BM25"""
     if not _HYBRID_READY:
-        # Fallback: 纯 BM25
         from bazi_pro.retrieve_classical import extract_query
         query_tokens = extract_query(query_str)
         top_n = bm25.get_top_n(query_tokens, n=k)
@@ -224,13 +268,30 @@ def hybrid_retrieve_or_fallback(bm25, entries: list[dict],
                 "source": e["source"],
                 "content": e["content"]
             })
-        return results, "bm25_only"
+
+        counter_query_str = _make_counter_query(query_str)
+        counter_tokens = extract_query(counter_query_str)
+        counter_top_n = bm25.get_top_n(counter_tokens, n=min(3, len(entries)))
+        counter_evidence = []
+        for idx, score in counter_top_n:
+            if score <= 0:
+                continue
+            e = entries[idx]
+            counter_evidence.append({
+                "score": round(score, 4),
+                "id": e["id"],
+                "topic": e["topic"],
+                "source": e["source"],
+                "content": e["content"]
+            })
+
+        return {"results": results, "counter_evidence": counter_evidence}, "bm25_only"
 
     searcher = HybridSearcher(bm25, entries)
     texts = [f"{e['topic']} {e['content']}" for e in entries]
     searcher.build_vector_index(texts)
-    results = searcher.search(query_str, k=k)
-    return results, "hybrid"
+    search_result = searcher.search(query_str, k=k)
+    return search_result, "hybrid"
 
 
 def _highlight_matches(text: str, matched_terms: list[str]) -> str:
@@ -301,7 +362,7 @@ _WARMUP_QUERIES = [
 def main():
     """CLI 入口：检索 + 状态检查"""
     import argparse
-    parser = argparse.ArgumentParser(description='bazi-pro Hybrid Search v4.7')
+    parser = argparse.ArgumentParser(description='bazi-pro Hybrid Search v5.0')
     parser.add_argument('query', nargs='?', help='检索查询词')
     parser.add_argument('-k', type=int, default=8, help='返回结果数')
     parser.add_argument('--json', action='store_true', help='JSON 格式输出')
@@ -361,13 +422,13 @@ def main():
         import json
         entries = load_corpus(corpus_path)
         bm25, _ = get_bm25(corpus_path, entries=entries)
-        results, mode = hybrid_retrieve_or_fallback(bm25, entries, args.query, k=args.k)
-        output = {'mode': mode, 'results': results}
+        search_result, mode = hybrid_retrieve_or_fallback(bm25, entries, args.query, k=args.k)
+        output = {'mode': mode, 'results': search_result['results'], 'counter_evidence': search_result['counter_evidence']}
         if args.json:
             print(json.dumps(output, ensure_ascii=False, indent=2))
         else:
             print(f"Mode: {mode}")
-            for r in results:
+            for r in search_result['results']:
                 print(f"  [{r['id']}] ({r['score']}) @{r['topic']} #{r['source']} ## {r['content'][:80]}...")
 
 

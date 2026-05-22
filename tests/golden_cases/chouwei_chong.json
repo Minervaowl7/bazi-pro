@@ -1,0 +1,23 @@
+{
+  "id": "chouwei_chong",
+  "description": "地支冲 — 丑未冲",
+  "scenario": "己土日主，年支丑日支未，丑未相冲",
+  "input": {
+    "day_master": "己",
+    "bazi": "辛丑 辛未 己未 丁卯",
+    "month_branch": "未",
+    "expected_pattern": "比肩格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "火",
+    "expected_deling_score": 1,
+    "expected_dedi_level": "得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "比肩格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "年支丑与日支未相冲"
+}

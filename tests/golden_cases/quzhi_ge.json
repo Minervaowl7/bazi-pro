@@ -1,0 +1,23 @@
+{
+  "id": "quzhi_ge",
+  "description": "曲直格 — 甲木日主，木行专旺",
+  "scenario": "甲木日主，全局木行成势，曲直格",
+  "input": {
+    "day_master": "甲",
+    "bazi": "甲寅 丁卯 甲寅 乙亥",
+    "month_branch": "卯",
+    "expected_pattern": "劫财格",
+    "expected_wangshuai": "身旺",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "劫财格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "日主木行占比极高，曲直格"
+}

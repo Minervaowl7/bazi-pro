@@ -1,0 +1,23 @@
+{
+  "id": "dizhi_chong",
+  "description": "地支冲 — 子午冲",
+  "scenario": "壬水日主，年支午日支子，子午相冲",
+  "input": {
+    "day_master": "壬",
+    "bazi": "庚午 戊子 壬子 甲辰",
+    "month_branch": "子",
+    "expected_pattern": "建禄月劫，透七杀",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "建禄月劫"
+  ],
+  "must_not_include": [
+    "待定"
+  ],
+  "notes": "年支午与日支子相冲"
+}

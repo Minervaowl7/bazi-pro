@@ -1,4 +1,7 @@
 # bazi-pro 依赖
+# 完整可选依赖定义见 pyproject.toml [project.optional-dependencies]
+# 安装方式: pip install bazi-pro[hybrid] / [report] / [pdf] / [server] / [tui] / [all]
+#
 # 核心依赖
 jieba>=0.42.1          # 中文分词（BM25 检索）
 

@@ -1,0 +1,23 @@
+{
+  "id": "congguansha_ge",
+  "description": "从官杀格 — 甲木日主极弱，官杀成势",
+  "scenario": "甲木日主，全局官杀成势，日主无根无从",
+  "input": {
+    "day_master": "甲",
+    "bazi": "庚午 辛酉 甲辰 庚午",
+    "month_branch": "酉",
+    "expected_pattern": "正官格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "正官格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "日主极弱，官杀成势，从官杀格"
+}

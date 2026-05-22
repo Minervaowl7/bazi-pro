@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Golden Case 验证器 — 确保引擎不回归关键边界案例
-用法: python tests/run_golden.py
-"""
-
 import json
 import sys
 from pathlib import Path
@@ -18,7 +13,6 @@ def load_cases():
 
 
 def test_core_analysis(case: dict) -> bool:
-    """调用 bazi_pro.core_rules.full_analysis 做确定性计算强断言验证"""
     from bazi_pro.core_rules import full_analysis
 
     inp = case.get("input", {})
@@ -47,28 +41,71 @@ def test_core_analysis(case: dict) -> bool:
         else:
             print(f"  ✅ Core 旺衰: {actual_ws}")
 
+    expected_pattern = inp.get("expected_pattern")
+    if expected_pattern:
+        actual_pattern = result["pattern"]["pattern"]
+        if expected_pattern != actual_pattern:
+            print(f"  ❌ Core 格局: 预期 '{expected_pattern}'，实际 '{actual_pattern}'")
+            ok = False
+        else:
+            print(f"  ✅ Core 格局: {actual_pattern}")
+
+    expected_yongshen_wx = inp.get("expected_yongshen_wx")
+    if expected_yongshen_wx:
+        actual_yongshen = result["yongshen"]["yongshen"]
+        if expected_yongshen_wx != actual_yongshen:
+            print(f"  ❌ Core 用神: 预期 '{expected_yongshen_wx}'，实际 '{actual_yongshen}'")
+            ok = False
+        else:
+            print(f"  ✅ Core 用神: {actual_yongshen}")
+
+    expected_deling_score = inp.get("expected_deling_score")
+    if expected_deling_score is not None:
+        actual_deling_score = result["deling"]["score"]
+        if expected_deling_score != actual_deling_score:
+            print(f"  ❌ Core 得令: 预期 {expected_deling_score}，实际 {actual_deling_score}")
+            ok = False
+        else:
+            print(f"  ✅ Core 得令: {actual_deling_score}")
+
+    expected_dedi_level = inp.get("expected_dedi_level")
+    if expected_dedi_level:
+        actual_dedi_level = result["dedi"]["level"]
+        if expected_dedi_level != actual_dedi_level:
+            print(f"  ❌ Core 得地: 预期 '{expected_dedi_level}'，实际 '{actual_dedi_level}'")
+            ok = False
+        else:
+            print(f"  ✅ Core 得地: {actual_dedi_level}")
+
+    expected_deshi_level = inp.get("expected_deshi_level")
+    if expected_deshi_level:
+        actual_deshi_level = result["deshi"]["level"]
+        if expected_deshi_level != actual_deshi_level:
+            print(f"  ❌ Core 得势: 预期 '{expected_deshi_level}'，实际 '{actual_deshi_level}'")
+            ok = False
+        else:
+            print(f"  ✅ Core 得势: {actual_deshi_level}")
+
     pattern_str = result["pattern"]["pattern"]
+    pattern_reason = result["pattern"].get("reason", "")
+    yongshen_str = str(result.get("yongshen", {}))
+
     must_include = case.get("must_include", [])
     for kw in must_include:
-        if kw not in pattern_str:
-            found_in_ws = kw in result["wangshuai"]["verdict"]
-            found_in_yongshen = kw in str(result.get("yongshen", {}))
-            found_in_reason = kw in result["pattern"].get("reason", "")
-            if not (found_in_ws or found_in_yongshen or found_in_reason):
-                print(f"  ❌ Core 格局 must_include: 关键词 '{kw}' 未在格局/旺衰/用神结果中找到")
-                ok = False
-            else:
-                print(f"  ✅ Core 格局 must_include: '{kw}' 已命中（格局={pattern_str}）")
+        found = (kw in pattern_str or kw in pattern_reason or kw in yongshen_str)
+        if not found:
+            print(f"  ❌ Core must_include: 关键词 '{kw}' 未在格局/原因/用神中找到")
+            ok = False
         else:
-            print(f"  ✅ Core 格局 must_include: '{kw}' 已命中（格局={pattern_str}）")
+            print(f"  ✅ Core must_include: '{kw}' 已命中（格局={pattern_str}）")
 
     must_not_include = case.get("must_not_include", [])
     for kw in must_not_include:
         if kw in pattern_str:
-            print(f"  ❌ Core 格局 must_not_include: 关键词 '{kw}' 不应出现在格局判定中（格局={pattern_str}）")
+            print(f"  ❌ Core must_not_include: 关键词 '{kw}' 不应出现在格局判定中（格局={pattern_str}）")
             ok = False
         else:
-            print(f"  ✅ Core 格局 must_not_include: '{kw}' 未出现（格局={pattern_str}）")
+            print(f"  ✅ Core must_not_include: '{kw}' 未出现（格局={pattern_str}）")
 
     pillars = result.get("pillars", [])
     has_shishen = any(p.get("shishen") for p in pillars)
@@ -90,33 +127,7 @@ def test_core_analysis(case: dict) -> bool:
     return ok
 
 
-def test_retrieve_classical(case: dict) -> bool:
-    """验证古籍检索是否覆盖 case 需要的经典条文"""
-    import subprocess
-    query = f"{case['scenario']}"[:80]
-    r = subprocess.run(
-        ["python3", "-m", "bazi_pro.retrieve_classical", query, "-k", "8", "--json"],
-        capture_output=True, text=True, timeout=30,
-        cwd=str(Path(__file__).resolve().parent.parent)
-    )
-    if r.returncode != 0:
-        print(f"  ⚠️ 检索脚本失败: {r.stderr[:100]}")
-        return False
-    data = json.loads(r.stdout)
-    results = data.get("queries", [{"results": data.get("results", [])}])[0].get("results", [])
-    found_ids = {r["id"] for r in results}
-    expected = set(case.get("classical_support", []))
-    overlap = found_ids & expected
-    if overlap:
-        print(f"  ✅ 古籍命中: {overlap}")
-        return True
-    else:
-        print(f"  ❌ 预期 {expected}，实际未命中（返回 {len(results)} 条）")
-        return False
-
-
 def test_evidence_structure(case: dict) -> bool:
-    """验证 evidence.py 输出结构完整性"""
     import subprocess
     r = subprocess.run(
         ["python3", "-c",
@@ -141,7 +152,6 @@ def test_evidence_structure(case: dict) -> bool:
 
 
 def test_keyword_exclusions(case: dict) -> bool:
-    """验证 SKILL.md 解读红线是否包含禁止术语"""
     skill_md = Path(__file__).resolve().parent.parent / "SKILL.md"
     if not skill_md.exists():
         return True

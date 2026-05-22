@@ -127,6 +127,28 @@ def extract_query(features: str) -> list[str]:
     return tokenize(features)
 
 
+def _make_counter_query(query: str) -> str:
+    pairs = [
+        ("正官", "七杀"),
+        ("身旺", "身弱"),
+        ("从强", "正格"),
+        ("食神", "偏印"),
+        ("印星", "财星"),
+    ]
+    result = query
+    replaced = False
+    for a, b in pairs:
+        if a in result:
+            result = result.replace(a, b)
+            replaced = True
+        elif b in result:
+            result = result.replace(b, a)
+            replaced = True
+    if not replaced:
+        result = result + " 反证 对立"
+    return result
+
+
 # ---------- Cached BM25 ----------
 
 def get_bm25(corpus_path: str, entries: list[dict],
@@ -180,13 +202,31 @@ def retrieve(corpus_path: str, query_str: str, k: int = 8,
             "content": e["content"]
         })
 
+    counter_query_str = _make_counter_query(query_str)
+    counter_tokens = extract_query(counter_query_str)
+    counter_top_n = bm25.get_top_n(counter_tokens, n=min(3, len(entries)))
+
+    counter_evidence = []
+    for idx, score in counter_top_n:
+        if score <= 0:
+            continue
+        e = entries[idx]
+        counter_evidence.append({
+            "score": round(score, 4),
+            "id": e["id"],
+            "topic": e["topic"],
+            "source": e["source"],
+            "content": e["content"]
+        })
+
     latency = round((time.time() - t0) * 1000)
     return {
         "mode": "bm25_cached" if cache_hit else "bm25_cold",
         "cache": "hit" if cache_hit else "miss",
         "latency_ms": latency,
         "corpus_size": len(entries),
-        "results": results
+        "results": results,
+        "counter_evidence": counter_evidence
     }
 
 
@@ -216,7 +256,24 @@ def retrieve_batch(corpus_path: str, queries: list[str], k: int = 8,
                 "source": e["source"],
                 "content": e["content"]
             })
-        all_results.append({"query": q, "results": q_results})
+
+        counter_query_str = _make_counter_query(q)
+        counter_tokens = extract_query(counter_query_str)
+        counter_top_n = bm25.get_top_n(counter_tokens, n=min(3, len(entries)))
+        q_counter = []
+        for idx, score in counter_top_n:
+            if score <= 0:
+                continue
+            e = entries[idx]
+            q_counter.append({
+                "score": round(score, 4),
+                "id": e["id"],
+                "topic": e["topic"],
+                "source": e["source"],
+                "content": e["content"]
+            })
+
+        all_results.append({"query": q, "results": q_results, "counter_evidence": q_counter})
 
     latency = round((time.time() - t0) * 1000)
     return {

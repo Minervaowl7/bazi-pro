@@ -1,0 +1,23 @@
+{
+  "id": "zhengcai_benqi",
+  "description": "正财格 — 月令正财本气透干",
+  "scenario": "甲木日主，丑月己土正财透干",
+  "input": {
+    "day_master": "甲",
+    "bazi": "己巳 丁丑 甲子 丙寅",
+    "month_branch": "丑",
+    "expected_pattern": "正财格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": 1,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "正财格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "月支丑本气己土正财透干"
+}

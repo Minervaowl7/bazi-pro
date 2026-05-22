@@ -1,0 +1,34 @@
+{
+  "id": "case_08_high_pattern_score",
+  "description": "High pattern score (>=80) case, E2 confidence should be 0.85",
+  "input": {
+    "day_master": "辛金",
+    "gender": "男",
+    "bazi": "壬申 壬子 辛酉 己丑",
+    "deling_score": 1,
+    "dedi_score": 3.0,
+    "deshi_score": 4.0,
+    "wangshuai": "身旺",
+    "pattern_name": "食神格",
+    "pattern_score": 85,
+    "pattern_tier": "上等",
+    "yongshen": "水",
+    "xishen": "木、火",
+    "jishen": "土",
+    "classical_refs": [
+      {"id": "YHZ_00034", "topic": "格局", "source": "渊海子平", "content": "食神生旺，胜似财官，主人聪明俊秀"},
+      {"id": "SFTK_00056", "topic": "用神", "source": "神峰通考", "content": "食神旺相，用财以泄秀"}
+    ],
+    "key_features": ["申子半合水", "酉丑半合金"],
+    "dayun_summary": [
+      {"ganzhi": "癸丑", "ji": "吉"},
+      {"ganzhi": "甲寅", "ji": "大吉"},
+      {"ganzhi": "乙卯", "ji": "吉"}
+    ]
+  },
+  "expected": {
+    "min_chains": 5,
+    "completeness": "High",
+    "must_have_stages": ["E1", "E2", "E3", "E4", "E5"]
+  }
+}
