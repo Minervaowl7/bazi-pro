@@ -55,8 +55,9 @@ jobs:
       - name: Dashboard
         run: |
           python -m bazi_pro.generate_report --input examples/sample_analysis.md --theme dashboard --format html --output /tmp/dashboard.html
-          grep -q 'evidence-card' /tmp/dashboard.html && echo "✅ Dashboard with evidence"
-          grep -q 'relation-graph' /tmp/dashboard.html && echo "✅ Dashboard with graph"
+          DASHFILE=$(ls /tmp/dashboard*.html | head -1)
+          grep -q 'evidence-card' "$DASHFILE" && echo "✅ Dashboard with evidence"
+          grep -q 'relation-graph' "$DASHFILE" && echo "✅ Dashboard with graph"
 
       - name: Golden cases
         run: python tests/run_golden.py

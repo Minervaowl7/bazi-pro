@@ -905,9 +905,7 @@ def main():
         html_path = output_base if args.format in ('html', 'both') else (
             output_base.rsplit('.', 1)[0] + '.html'
         )
-        if args.theme == 'dashboard':
-            if not html_path.endswith('_dashboard.html'):
-                html_path = html_path.replace('.html', '_dashboard.html') if '.html' in html_path else html_path + '_dashboard.html'
+        # v4.2: no auto-rename — user's explicit --output is respected
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         label = '仪表盘' if args.theme == 'dashboard' else 'HTML 报告'
