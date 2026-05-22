@@ -30,9 +30,11 @@ pdf = ["weasyprint>=60"]
 [project.scripts]
 bazi-retrieve = "scripts.retrieve_classical:main"
 bazi-report = "scripts.generate_report:main"
+bazi-doctor = "scripts.doctor:main"
+bazi-evidence = "scripts.evidence:main"
 
 [tool.setuptools]
-packages = []
+packages = ["scripts", "bazi_pro"]
 
 [build-system]
 requires = ["setuptools>=64"]

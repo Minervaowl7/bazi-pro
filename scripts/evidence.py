@@ -162,7 +162,8 @@ def _completeness(refs: list[dict], chain: list[dict]) -> str:
 
 
 # CLI
-if __name__ == "__main__":
+def main():
+    """Demo evidence object"""
     # Demo: 使用内置示例数据
     demo = build_analysis_evidence(
         day_master="丙火",
@@ -196,3 +197,6 @@ if __name__ == "__main__":
         ]
     )
     print(json.dumps(demo, ensure_ascii=False, indent=2))
+
+if __name__ == "__main__":
+    main()
