@@ -102,18 +102,30 @@ class HybridSearcher:
         except Exception:
             return False
 
-    def warmup(self, queries: list[str]) -> dict[str, list[dict]]:
-        """缓存预热：预计算常用查询结果
-
-        Args:
-            queries: 常用查询词列表
-
-        Returns:
-            {query: results} 字典
-        """
+    def warmup(self, queries: list[str], cache_path: str = '') -> dict[str, list[dict]]:
         warm_results = {}
+        if cache_path and os.path.exists(cache_path):
+            try:
+                import json as _json
+                with open(cache_path, 'r', encoding='utf-8') as f:
+                    warm_results = _json.load(f)
+                if warm_results:
+                    return warm_results
+            except Exception:
+                pass
+
         for q in queries:
             warm_results[q] = self.search(q, k=5)
+
+        if cache_path:
+            try:
+                import json as _json
+                os.makedirs(os.path.dirname(cache_path) or '.', exist_ok=True)
+                with open(cache_path, 'w', encoding='utf-8') as f:
+                    _json.dump(warm_results, f, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
+
         return warm_results
 
     def search(self, query_str: str, k: int = 8,

@@ -6,7 +6,7 @@ bazi-pro UI Renderer v4.5
 """
 
 from html import escape
-from bazi_pro.view_model import DashboardVM
+from bazi_pro.view_model import DashboardVM, EvidenceVM
 from bazi_pro.ui.verdict_seal import render_seal_svg, render_seal_with_animation, SEAL_CSS, SEAL_JS
 from bazi_pro.ui.report import render_report as _render_report
 from bazi_pro.ui.replay import render_replay as _render_replay
@@ -267,40 +267,37 @@ def _render_evidence_dossier(vm: DashboardVM, evidence) -> str:
     return cards
 
 
-def _fallback_evidence(vm: DashboardVM) -> list:
-    """当 trace 数据缺失时，从 ViewModel 生成证据卡"""
+def _fallback_evidence(vm: DashboardVM) -> list[EvidenceVM]:
     v = vm.verdict
     ev = []
 
-    # E1: 格局裁决
-    ev.append(type('Evidence', (), {
-        'title': '格局裁决',
-        'claim': f'{v.pattern or "建禄月劫"}，{v.decision or "按正格论"}',
-        'decision': v.decision or '正格',
-        'confidence': 0.82,
-        'rules': ['六层筛查', '从格三要件', '建禄月劫框架'],
-        'counter_evidence': '假从条文有命中但分数不足以推翻（通道B 15.65 vs 通道A 24.17）',
-    })())
+    ev.append(EvidenceVM(
+        stage_id='E1',
+        title='格局裁决',
+        claim=f'{v.pattern or "建禄月劫"}，{v.decision or "按正格论"}',
+        decision=v.decision or '正格',
+        confidence=0.82,
+        rules=['六层筛查', '从格三要件', '建禄月劫框架'],
+        counter_evidence='假从条文有命中但分数不足以推翻（通道B 15.65 vs 通道A 24.17）',
+    ))
 
-    # E2: 喜用神
-    ev.append(type('Evidence', (), {
-        'title': '喜用神裁决',
-        'claim': f'用{"、".join(v.yongshen) if v.yongshen else "木"}，喜{"、".join(v.xishen) if v.xishen else "水金"}，忌{"、".join(v.jishen) if v.jishen else "火土"}',
-        'decision': f'用{v.yongshen[0] if v.yongshen else "木"}',
-        'confidence': 0.80,
-        'rules': ['格局优先', '扶抑辅助', '调候调节'],
-        'counter_evidence': '',
-    })())
+    ev.append(EvidenceVM(
+        stage_id='E2',
+        title='喜用神裁决',
+        claim=f'用{"、".join(v.yongshen) if v.yongshen else "木"}，喜{"、".join(v.xishen) if v.xishen else "水金"}，忌{"、".join(v.jishen) if v.jishen else "火土"}',
+        decision=f'用{v.yongshen[0] if v.yongshen else "木"}',
+        confidence=0.80,
+        rules=['格局优先', '扶抑辅助', '调候调节'],
+    ))
 
-    # E3: 旺衰
-    ev.append(type('Evidence', (), {
-        'title': '旺衰判断',
-        'claim': f'{v.day_master}日主，巳月帝旺得令，午巳双根得地，印比合计得势',
-        'decision': '日主偏旺',
-        'confidence': 0.78,
-        'rules': ['得令·得地·得势', '根气虚实检查'],
-        'counter_evidence': '',
-    })())
+    ev.append(EvidenceVM(
+        stage_id='E3',
+        title='旺衰判断',
+        claim=f'{v.day_master}日主，巳月帝旺得令，午巳双根得地，印比合计得势',
+        decision='日主偏旺',
+        confidence=0.78,
+        rules=['得令·得地·得势', '根气虚实检查'],
+    ))
 
     return ev
 

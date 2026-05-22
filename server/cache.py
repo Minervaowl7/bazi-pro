@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-bazi-pro 缓存层 v4.6
-Redis 优先，未配置时降级为内存 LRU dict
+bazi-pro 缓存层 v5.0
+Redis 优先，未配置时降级为内存 LRU dict（支持 TTL）
 """
 
 import os
@@ -12,7 +12,6 @@ from typing import Optional
 
 
 class LRUDict:
-    """简单的 LRU 字典实现"""
 
     def __init__(self, maxsize: int = 128):
         self.maxsize = maxsize
@@ -20,14 +19,19 @@ class LRUDict:
 
     def get(self, key: str) -> Optional[dict]:
         if key in self._store:
+            entry = self._store[key]
+            if entry['_expires_at'] and time.time() > entry['_expires_at']:
+                self._store.pop(key)
+                return None
             self._store.move_to_end(key)
-            return self._store[key]
+            return entry['value']
         return None
 
-    def set(self, key: str, value: dict) -> None:
+    def set(self, key: str, value: dict, ttl: int = 0) -> None:
+        expires_at = time.time() + ttl if ttl > 0 else None
         if key in self._store:
             self._store.move_to_end(key)
-        self._store[key] = value
+        self._store[key] = {'value': value, '_expires_at': expires_at}
         while len(self._store) > self.maxsize:
             self._store.popitem(last=False)
 
@@ -42,7 +46,6 @@ class LRUDict:
 
 
 class CacheStore:
-    """缓存封装：Redis（可选）或内存 LRU"""
 
     def __init__(self, redis_url: str = '', maxsize: int = 128):
         self._redis = None
@@ -66,8 +69,7 @@ class CacheStore:
                 return json.loads(val) if val else None
             except Exception:
                 pass
-        cached = self._lru.get(key)
-        return cached
+        return self._lru.get(key)
 
     def set(self, key: str, value: dict, ttl: int = 3600) -> None:
         if self._redis:
@@ -76,7 +78,7 @@ class CacheStore:
                 return
             except Exception:
                 pass
-        self._lru.set(key, value)
+        self._lru.set(key, value, ttl=ttl)
 
     def delete(self, key: str) -> None:
         if self._redis:
@@ -92,7 +94,6 @@ class CacheStore:
         return 'redis' if self._redis else 'lru_memory'
 
 
-# 单例
 _cache_instance: Optional[CacheStore] = None
 
 

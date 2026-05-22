@@ -37,7 +37,7 @@ class TraceBuilder:
             "run_id": run_id or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ-demo"),
             "engine": {
                 "name": "bazi-pro",
-                "version": "4.3.0",
+                "version": "5.0.0",
                 "corpus_size": 2964,
                 "corpus_hash": _get_corpus_hash(),
             },

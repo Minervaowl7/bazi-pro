@@ -93,7 +93,7 @@ def _check_examples():
 
 
 def main():
-    print("bazi-pro v4.3 — 环境诊断")
+    print("bazi-pro v5.0 — 环境诊断")
     print("=" * 40)
 
     checks = [
