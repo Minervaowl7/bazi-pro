@@ -279,7 +279,7 @@ def _simple_md_to_html(text: str) -> str:
             tag = 'th' if re.match(r'^[\s\-:]+$', cells[0]) else 'td'
             if tag == 'th':  # skip separator rows
                 continue
-            out.append('<tr>' + ''.join(f'<td>{escape(c)}</td>' for c in cells) + '</tr>')
+            out.append('<tr>' + ''.join(f'<td>{_inline_md(escape(c))}</td>' for c in cells) + '</tr>')
             continue
         elif in_table:
             out.append('</table></div>')

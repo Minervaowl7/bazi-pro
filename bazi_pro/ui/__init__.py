@@ -127,20 +127,14 @@ if(location.search.includes('mode=share'))document.body.classList.add('share-mod
 
 def render_report(vm: DashboardVM, body_html: str = '', appendix_html: str = '',
                   raw_markdown: str = '') -> str:
-    """渲染 Report HTML — 咨询报告（结论先行，v4.4 composer）"""
-    # If raw markdown provided, use composer to generate structured body
+    """渲染 Report HTML — 咨询报告（结论先行，v4.4 composer）
+    body_html 由 render_document_body() 生成，已包含 .content-main + .appendix
+    """
     if raw_markdown and not body_html:
         doc = parse_markdown_to_document(raw_markdown)
         body_html = render_document_body(doc)
-        # Extract appendix from technical sections
-        if doc.appendix_sections:
-            app_parts = []
-            for sec in doc.appendix_sections:
-                app_parts.append(f'<h3>{escape(sec.heading)}</h3>')
-                app_parts.append(_simple_md(sec.raw_md))
-            appendix_html = '\n'.join(app_parts)
 
-    return _render_report(vm, body_html, appendix_html)
+    return _render_report(vm, body_html, '')
 
 
 def _simple_md(text: str) -> str:

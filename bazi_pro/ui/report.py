@@ -36,7 +36,6 @@ def render_report(vm: DashboardVM, body_html: str = '', appendix_html: str = '')
 <div class="content">
 {body_html or '<p style="color:var(--muted);text-align:center">正文数据未加载</p>'}
 </div>
-{appendix_html}
 <div class="disclaimer">
 <p><strong>免责声明</strong></p>
 <p>本报告基于传统命理学理论（参酌《穷通宝鉴》《子平真诠》《三命通会》《滴天髓》《神峰通考》等经典），仅供传统文化学习与参考，不构成任何决策依据。人生在于自身的努力和选择，命理仅为认知自我的辅助工具。</p>

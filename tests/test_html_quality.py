@@ -244,6 +244,33 @@ def test_technical_headings_only_in_appendix(rendered_report):
         "附录应包含技术步骤"
 
 
+# ── v4.4.1: No technical content outside .content-main + .appendix ──
+
+def test_no_technical_content_outside_containers(rendered_report):
+    """技术术语只能在 .content-main 或 .appendix 内出现"""
+    if not rendered_report:
+        pytest.skip("Report 未渲染")
+    
+    # Get positions of main and appendix
+    main_start = rendered_report.find('class="content-main"')
+    main_end = rendered_report.find('class="appendix"')
+    appendix_start = main_end if main_end > 0 else len(rendered_report)
+    appendix_end = rendered_report.find('class="disclaimer"', appendix_start)
+    if appendix_end < 0:
+        appendix_end = len(rendered_report)
+    
+    main = rendered_report[main_start:appendix_start] if main_start > 0 else ''
+    appendix = rendered_report[appendix_start:appendix_end] if appendix_start > 0 else ''
+    
+    # Everything outside main+appendix should be clean
+    outside = (rendered_report[:main_start] if main_start > 0 else '') + \
+              (rendered_report[appendix_end:] if appendix_end > 0 else '')
+    
+    for term in TECHNICAL_HEADINGS_BANNED:
+        assert term not in outside, \
+            f"技术术语 '{term}' 出现在 .content-main 和 .appendix 之外"
+
+
 # ── 运行入口 ──
 
 if __name__ == "__main__":

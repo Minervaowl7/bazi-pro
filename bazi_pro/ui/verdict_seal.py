@@ -11,68 +11,56 @@ from bazi_pro.view_model import DashboardVM, VerdictVM
 
 def render_seal_svg(vm: DashboardVM, size: int = 180) -> str:
     """
-    生成 Verdict Seal SVG
-    圆形朱砂印章：中心主裁决 + 外圈辅文 + 边框纹样
+    生成 Verdict Seal SVG — 只保留中心裁决字，外圈不加文字
+    用神/喜忌通过 caption 显示
     """
     v = vm.verdict
     cx, cy = size / 2, size / 2
     outer_r = size / 2 - 4
     ring_r = outer_r - 14
-    inner_r = ring_r - 16
 
     main_text = _seal_main_text(v)
     sub_text = _seal_sub_text(v)
-    bottom_text = _seal_bottom_text(v)
-
-    # Pillar-derived border pattern
     border_dashes = _seal_border_pattern(vm, ring_r, cx, cy)
+    caption = _seal_caption_text(v)
 
     parts = [
         f'<svg class="verdict-seal-svg" viewBox="0 0 {size} {size}" xmlns="http://www.w3.org/2000/svg">',
-        # Outer ring
         f'<circle cx="{cx}" cy="{cy}" r="{outer_r}" fill="none" stroke="var(--seal-ink, #8a3b2a)" stroke-width="3"/>',
-        # Inner ring
         f'<circle cx="{cx}" cy="{cy}" r="{ring_r}" fill="none" stroke="var(--seal-ink, #8a3b2a)" stroke-width="1.5"/>',
-        # Border pattern (pillar-derived dashes)
         border_dashes,
-        # Main text (center, large)
-        f'<text x="{cx}" y="{cy - 6}" text-anchor="middle" font-size="{_seal_font_size(main_text)}" '
+        f'<text x="{cx}" y="{cy - 4}" text-anchor="middle" font-size="{_seal_font_size(main_text)}" '
         f'font-weight="900" fill="var(--seal-ink, #8a3b2a)" '
         f'font-family="&quot;Noto Serif SC&quot;, &quot;STSong&quot;, serif" '
         f'letter-spacing="4">{escape(main_text)}</text>',
     ]
 
-    # Sub text below main
     if sub_text:
         parts.append(
-            f'<text x="{cx}" y="{cy + 18}" text-anchor="middle" font-size="13" '
+            f'<text x="{cx}" y="{cy + 20}" text-anchor="middle" font-size="13" '
             f'font-weight="600" fill="var(--seal-ink, #8a3b2a)" '
             f'font-family="&quot;Noto Serif SC&quot;, &quot;STSong&quot;, serif" '
             f'letter-spacing="2">{escape(sub_text)}</text>'
         )
 
-    # Bottom arc text
-    if bottom_text:
-        bottom_chars = list(bottom_text)
-        if len(bottom_chars) > 14:
-            bottom_text = bottom_text[:14]
-        radius = outer_r - 10
-        start_angle = math.pi * 1.55 if len(bottom_text) > 6 else math.pi * 1.6
-        angle_step = (2 * math.pi - start_angle * 2 + math.pi) / max(len(bottom_text) - 1, 1) * 0.55
-
-        for i, ch in enumerate(bottom_text):
-            angle = start_angle + i * angle_step
-            x = cx + radius * math.cos(angle)
-            y = cy + radius * math.sin(angle)
-            parts.append(
-                f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="middle" font-size="11" '
-                f'font-weight="500" fill="var(--seal-ink, #8a3b2a)" '
-                f'font-family="&quot;Noto Serif SC&quot;, &quot;STSong&quot;, serif">'
-                f'{escape(ch)}</text>'
-            )
-
     parts.append('</svg>')
-    return '\n'.join(parts)
+    svg = '\n'.join(parts)
+
+    # Caption below seal
+    if caption:
+        svg += f'<div class="seal-caption">{escape(caption)}</div>'
+
+    return svg
+
+
+def _seal_caption_text(v: VerdictVM) -> str:
+    """印章下方 caption"""
+    parts = []
+    if v.yongshen:
+        parts.append('用' + '、'.join(v.yongshen[:2]))
+    if v.xishen:
+        parts.append('喜' + '、'.join(v.xishen[:2]))
+    return ' · '.join(parts) if parts else ''
 
 
 def _seal_main_text(v: VerdictVM) -> str:
@@ -173,6 +161,14 @@ SEAL_CSS = '''
 }
 .verdict-seal-svg:hover {
     transform: scale(1.05);
+}
+.seal-caption {
+    text-align: center;
+    font-size: 13px;
+    color: var(--seal-ink, #8a3b2a);
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-top: 8px;
 }
 @media (prefers-color-scheme: dark) {
     :root { --seal-ink: #c46a4a; }

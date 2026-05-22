@@ -121,27 +121,30 @@ def clean_yongshen(raw: str) -> tuple[str, str]:
 
 
 def clean_xishen_jishen(raw: str) -> list[str]:
-    """清洗喜神/忌神 → 五行标签列表"""
+    """清洗喜神/忌神 → 五行标签列表（只从顶层逗号分段提取，忽略括号内注释）"""
     raw = clean_text(raw)
     if not raw:
         return []
 
-    # 提取五行字符
-    labels = re.findall(r'[木火土金水]', raw)
-    # 也尝试从逗号/顿号分隔中提取
-    if not labels:
-        parts = re.split(r'[，,、]', raw)
-        labels = [p.strip()[:2] for p in parts if p.strip()]
+    # Step 1: 移除所有括号及其内容
+    cleaned = re.sub(r'[（(][^）)]*[）)]', '', raw)
 
-    # 去重保序
+    # Step 2: 按分隔符拆分成顶层段
+    parts = re.split(r'[，,、]', cleaned)
+
+    # Step 3: 每段取首个五行字符作为标签
     seen = set()
     result = []
-    for l in labels:
-        if l not in seen:
-            seen.add(l)
-            result.append(l)
+    for part in parts:
+        part = part.strip()
+        m = re.match(r'^[木火土金水]', part)
+        if m:
+            label = m.group(0)
+            if label not in seen:
+                seen.add(label)
+                result.append(label)
 
-    return result[:3]  # 最多 3 个
+    return result[:3]
 
 
 def build_clean_verdict(raw_pattern: str = '', raw_yongshen: str = '',
