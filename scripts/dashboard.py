@@ -105,6 +105,14 @@ a{color:var(--accent)}
 .card.card-hero{background:transparent;border:none;box-shadow:none;text-align:center;padding:0}
 .card.card-compact{padding:14px 16px}
 .card.card-compact h3{margin-bottom:8px}
+
+/* ── v4.3: Dashboard nav ── */
+.dashboard-nav{display:flex;justify-content:center;gap:16px;margin:24px 0 12px;flex-wrap:wrap}
+.nav-btn{display:inline-block;padding:10px 24px;border:var(--border);border-radius:22px;
+    color:var(--accent);font-size:13px;font-weight:500;text-decoration:none;
+    transition:all .2s ease;background:var(--bg-card)}
+.nav-btn:hover{background:var(--bg-pillar);transform:translateY(-1px);box-shadow:var(--shadow)}
+
 .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);margin:20px 0 24px}
 .pillar{background:var(--bg-pillar);border:2px solid var(--border);
     border-radius:var(--radius);padding:18px 12px;text-align:center;
@@ -699,10 +707,10 @@ function toggleTheme(){{
     </div>
 </div>
 
-<div class="analysis-toggle">
-    <button onclick="var c=document.getElementById('analysis');var b=this;c.classList.toggle('open');b.textContent=c.classList.contains('open')?'▲ 收起详细分析':'▶ 展开详细分析';">▶ 展开详细分析</button>
+<div class="dashboard-nav">
+    <a class="nav-btn" href="#" onclick="alert('完整报告请查看 bazi_report_*.html')">📄 查看完整报告</a>
+    <a class="nav-btn" href="#" onclick="alert('推理回放功能即将上线')">🔍 回放推理链</a>
 </div>
-<div class="analysis-content" id="analysis">{analysis_html}</div>
 
 <div class="footer">
     <p>{escape(report_date)} &nbsp;|&nbsp; bazi-pro v4.3 &nbsp;|&nbsp; Dashboard</p>
