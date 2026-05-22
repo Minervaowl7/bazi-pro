@@ -52,8 +52,8 @@ jobs:
         run: |
           python -m bazi_pro.generate_report --input examples/sample_analysis.md --theme dashboard --format html --output /tmp/dashboard.html
           DASHFILE=$(ls /tmp/dashboard*.html | head -1)
-          grep -q 'ev-card' "$DASHFILE" && echo "✅ Dashboard with evidence"
-          grep -q 'pillar-chart' "$DASHFILE" && echo "✅ Dashboard with pillar chart"
+          grep -q 'evidence-card' "$DASHFILE" && echo "✅ Dashboard with evidence"
+          grep -q 'relation-graph' "$DASHFILE" && echo "✅ Dashboard with relation graph"
 
       - name: Trace validation
         run: |
