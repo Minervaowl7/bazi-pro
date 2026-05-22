@@ -9,6 +9,7 @@ from bazi_pro.view_model import DashboardVM
 from bazi_pro.ui.verdict_seal import render_seal_svg, SEAL_CSS
 from bazi_pro.ui.report import render_report as _render_report
 from bazi_pro.ui.replay import render_replay as _render_replay
+from bazi_pro.ui.report_composer import parse_markdown_to_document, render_document_body
 
 
 def render_dashboard(vm: DashboardVM, *, screenshot_mode: bool = False,
@@ -124,9 +125,28 @@ if(location.search.includes('mode=share'))document.body.classList.add('share-mod
 </html>'''
 
 
-def render_report(vm: DashboardVM, body_html: str = '', appendix_html: str = '') -> str:
-    """渲染 Report HTML — 咨询报告（结论先行）"""
+def render_report(vm: DashboardVM, body_html: str = '', appendix_html: str = '',
+                  raw_markdown: str = '') -> str:
+    """渲染 Report HTML — 咨询报告（结论先行，v4.4 composer）"""
+    # If raw markdown provided, use composer to generate structured body
+    if raw_markdown and not body_html:
+        doc = parse_markdown_to_document(raw_markdown)
+        body_html = render_document_body(doc)
+        # Extract appendix from technical sections
+        if doc.appendix_sections:
+            app_parts = []
+            for sec in doc.appendix_sections:
+                app_parts.append(f'<h3>{escape(sec.heading)}</h3>')
+                app_parts.append(_simple_md(sec.raw_md))
+            appendix_html = '\n'.join(app_parts)
+
     return _render_report(vm, body_html, appendix_html)
+
+
+def _simple_md(text: str) -> str:
+    """极简 markdown→HTML（用于 appendix）"""
+    from bazi_pro.ui.report_composer import _simple_md_to_html
+    return _simple_md_to_html(text)
 
 
 def render_replay(vm: DashboardVM) -> str:

@@ -993,12 +993,11 @@ def main():
             html_content = render_dashboard(vm,
                 report_url=args.report_url, replay_url=args.replay_url)
         elif use_v43 and args.theme == 'report':
-            # ── v4.3 Report engine ──
+            # ── v4.3 Report engine (v4.4 composer)
             from bazi_pro.view_model import build_vm_from_analysis_text
             from bazi_pro.ui import render_report
             vm = build_vm_from_analysis_text(analysis_text)
-            body_html = markdown_to_html(analysis_text)
-            html_content = render_report(vm, body_html=body_html)
+            html_content = render_report(vm, raw_markdown=analysis_text)
         elif args.theme == 'dashboard':
             html_content = generate_dashboard(meta, analysis_text, args.title, report_date, simple_md_to_html)
         else:
