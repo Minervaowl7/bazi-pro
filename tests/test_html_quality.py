@@ -71,6 +71,13 @@ BANNED_WORDS = [
 MARKDOWN_ARTIFACTS = ["**", "__"]  # Markdown 残留（检查不在 code/pre 内的）
 HREF_PLACEHOLDERS = ['href="#"']   # 禁止占位链接
 
+# v4.4: Technical headings forbidden in main content
+TECHNICAL_HEADINGS_BANNED = [
+    "第〇步", "0.2 双通道", "层 0-A", "层0-A",
+    "BM25", "双通道检索", "最高得分", "粗略预检",
+    "计分说明", "权重说明", "评分基准锚",
+]
+
 
 @pytest.mark.parametrize("word", BANNED_WORDS)
 def test_dashboard_no_banned_words(rendered_dashboard, word):
@@ -204,6 +211,37 @@ def test_toc_no_duplicate_close():
             content = rf.read_text(encoding='utf-8', errors='ignore')
             count = content.count('</ol></li>')
             assert count == 0, f"{rf.name} 包含 {count} 处 </ol></li> 重复闭合"
+
+
+# ── v4.4: Technical headings forbidden in main content ──
+
+def test_no_technical_headings_in_main(rendered_report):
+    """Report 正文主体不得包含技术步骤标题"""
+    if not rendered_report:
+        pytest.skip("Report 未渲染")
+    # Extract main content area
+    main_start = rendered_report.find('class="content-main"')
+    main_end = rendered_report.find('class="appendix"')
+    if main_start < 0:
+        pytest.skip("Report 无 content-main 区域")
+    main = rendered_report[main_start:main_end] if main_end > main_start else rendered_report[main_start:]
+
+    for term in TECHNICAL_HEADINGS_BANNED:
+        assert term not in main, f"正文包含技术术语: '{term}'"
+
+
+def test_technical_headings_only_in_appendix(rendered_report):
+    """技术步骤标题只出现在附录中"""
+    if not rendered_report:
+        pytest.skip("Report 未渲染")
+    appendix_start = rendered_report.find('class="appendix"')
+    if appendix_start < 0:
+        return  # No appendix is OK
+    appendix = rendered_report[appendix_start:]
+
+    # Verify 第〇步 IS in appendix (it should be there)
+    assert '第〇步' in appendix or len(appendix) < 100, \
+        "附录应包含技术步骤"
 
 
 # ── 运行入口 ──

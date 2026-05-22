@@ -186,16 +186,32 @@ body{font-family:"Noto Serif SC","STSong",serif;font-size:15px;line-height:1.9;
 
 /* Content (正文) */
 .content{padding:0 64px 40px}
-.content h1,.content h2,.content h3{color:var(--accent);margin:28px 0 10px}
-.content p{margin:10px 0;line-height:1.85}
-.content table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0;
-  border:1px solid var(--border);border-radius:2px}
-.content th{background:var(--surface2);padding:8px 10px;border-bottom:2px solid var(--accent);font-weight:600}
-.content td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:center}
-.content blockquote{border-left:3px solid var(--gold);padding:10px 16px;margin:14px 0;
+.content-main section{margin:28px 0}
+.content-main h2,.content-main h3{color:var(--accent);margin:20px 0 8px}
+.content-main p{margin:10px 0;line-height:1.85;font-size:15px}
+.content-main blockquote{border-left:3px solid var(--gold);padding:10px 16px;margin:14px 0;
   background:var(--surface2);border-radius:0 var(--radius) var(--radius) 0;font-style:italic}
-.content pre{background:var(--bg);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:13px}
-.content hr{border:none;border-top:1px solid var(--border);margin:28px 0;width:40%}
+
+/* v4.4: Table collapse */
+.table-section{position:relative}
+.table-section.collapsed .table-wrapper tbody tr:nth-child(n+7){display:none}
+.table-expand-btn{display:block;width:100%;padding:6px;font-size:12px;color:var(--accent);
+  background:var(--surface2);border:none;border-radius:6px;cursor:pointer;margin-top:4px;font-family:inherit}
+.table-expand-btn:hover{text-decoration:underline}
+
+/* v4.4: Appendix */
+.appendix{margin-top:36px;padding-top:28px;border-top:2px solid var(--border)}
+.appendix h2{font-size:18px;color:var(--muted);margin-bottom:14px;letter-spacing:2px}
+.appendix section{margin:12px 0;padding:10px 0}
+.appendix h3{font-size:15px;color:var(--muted);margin-bottom:6px}
+.appendix p,.appendix li{font-size:13px;color:var(--muted);line-height:1.7}
+.appendix .table-wrapper{font-size:12px;opacity:0.85}
+
+/* v4.4: Classical evidence quote cards */
+.evidence-quote{background:var(--surface2);border-left:3px solid var(--gold);
+  padding:12px 16px;margin:10px 0;border-radius:0 var(--radius) var(--radius) 0;font-style:italic}
+.evidence-quote .quote-source{font-size:12px;color:var(--muted);margin-top:6px;font-style:normal}
+.evidence-quote .quote-relevance{font-size:12px;color:var(--accent);margin-top:4px;font-style:normal}
 
 /* Disclaimer */
 .disclaimer{margin:0 64px;padding:28px 0 40px;border-top:1px solid var(--border);
