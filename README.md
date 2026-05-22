@@ -37,23 +37,24 @@ python scripts/doctor.py
     │
     ▼
 ┌─────────────────────────────────────────────────┐
-│  retrieve_classical.py                          │
-│  BM25 (cache) + Hybrid Search (vector)          │
-│  双通道反事实检索 → 16 条古籍证据               │
+│  古籍检索层                                      │
+│  retrieve_classical.py (BM25 + jieba + 缓存)     │
+│  hybrid_search.py (FAISS + 权威权重)             │
 └─────────────────────────────────────────────────┘
     │
     ▼
 ┌─────────────────────────────────────────────────┐
-│  bazi-pro SKILL.md (解读引擎)                   │
+│  解读引擎层 (SKILL.md 10步执行流)                │
 │  六层格局筛查 → 四层喜用神裁决 → 九步分析        │
-│  evidence.py → 结构化证据链 JSON                 │
+│  evidence.py · trace.py · view_model.py          │
 └─────────────────────────────────────────────────┘
     │
     ▼
 ┌─────────────────────────────────────────────────┐
-│  generate_report.py + dashboard.py              │
-│  Markdown / HTML / PDF / 交互式仪表盘            │
-│  五行雷达图 · 大运时间轴 · 暗色/亮色主题         │
+│  输出与可视化层                                   │
+│  generate_report.py (MD/HTML/PDF)                │
+│  ui/ 子包 (SVG命盘 · 命运河流 · 推理图谱)         │
+│  server/ (FastAPI) · tui/ (Rich 终端)            │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -63,12 +64,16 @@ python scripts/doctor.py
 
 | 模块 | 功能 | 亮点 |
 |------|------|------|
-| `scripts/retrieve_classical.py` | BM25+古籍检索 | pickle 缓存 (3.6x) · `--batch` 批量 · JSON 性能元数据 |
-| `scripts/generate_report.py` | 报告生成 | Markdown/HTML/PDF · `--theme dashboard` 仪表盘 |
-| `scripts/dashboard.py` | 交互式仪表盘 | SVG 雷达图 · 评分色环 · 大运时间轴 · 五行着色 |
-| `scripts/evidence.py` | 证据链对象 | claim + confidence + basis.classics + counter |
-| `scripts/hybrid_search.py` | 融合检索 | BM25+向量+权威权重，缺依赖自动降级 |
-| `scripts/doctor.py` | 环境诊断 | `python scripts/doctor.py` 一键检查 |
+| `bazi_pro/retrieve_classical.py` | BM25+古籍检索 | pickle 缓存 · `--batch` 批量 · JSON 元数据 |
+| `bazi_pro/hybrid_search.py` | 融合检索 | BM25+向量+权威权重 · 匹配词高亮 · CLI 入口 |
+| `bazi_pro/generate_report.py` | 报告生成 | Markdown/HTML/PDF · `--theme dashboard` v5.0 仪表盘 |
+| `bazi_pro/ui/` (子包) | 可视化组件 | 动态SVG命盘 · 命运河流时间轴 · 推理图谱 · 裁决印章 |
+| `bazi_pro/view_model.py` | 共享数据层 | DashboardVM 统一三种输出形态 |
+| `server/` | Web 服务 | FastAPI REST + WebSocket 进度推送 + Redis/LRU 缓存 |
+| `bazi_pro/tui/` | 交互终端 | Rich 彩色表格 + 进度条 + Tab 补全 REPL |
+| `bazi_pro/plugin_api.py` | 插件机制 | on_retrieve / on_evidence / on_render 钩子 |
+| `bazi_pro/archive.py` | 档案系统 | SQLite 存储 + 用户反馈校准 |
+| `bazi_pro/doctor.py` | 环境诊断 | 9 项检查一键运行 |
 
 ---
 
