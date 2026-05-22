@@ -1,0 +1,16 @@
+{
+  "id": "zhenguan_ge",
+  "description": "正官格 — 月令正官透干，财印双全",
+  "scenario": "辛金日主，寅月甲木正官透干，财星生官，印星护官",
+  "input": {
+    "day_master": "辛",
+    "bazi": "庚午 戊寅 辛巳 壬辰",
+    "month_branch": "寅",
+    "expected_pattern": "正官格",
+    "expected_wangshuai": "偏旺"
+  },
+  "must_include": ["正官格", "财生官", "印护官"],
+  "must_not_include": ["七杀格", "从格"],
+  "classical_support": ["ZPZQ_00012"],
+  "notes": "月令寅中甲木正官透干，正官格成立"
+}

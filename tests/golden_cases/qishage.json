@@ -1,0 +1,16 @@
+{
+  "id": "qishage",
+  "description": "七杀格 — 月令七杀透干，食神制杀",
+  "scenario": "甲木日主，申月庚金七杀透干，食神制杀为用",
+  "input": {
+    "day_master": "甲",
+    "bazi": "壬辰 戊申 甲寅 丙寅",
+    "month_branch": "申",
+    "expected_pattern": "七杀格",
+    "expected_wangshuai": "中和偏旺"
+  },
+  "must_include": ["七杀格", "食神制杀"],
+  "must_not_include": ["正官格", "从格"],
+  "classical_support": ["ZPZQ_00025"],
+  "notes": "月令申中庚金七杀透干，食神丙火制杀"
+}

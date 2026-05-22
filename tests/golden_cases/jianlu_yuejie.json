@@ -1,0 +1,16 @@
+{
+  "id": "jianlu_yuejie",
+  "description": "建禄月劫 — 月令比肩，另取财官为用",
+  "scenario": "甲木日主，寅月比肩当令，透庚金七杀取用",
+  "input": {
+    "day_master": "甲",
+    "bazi": "庚午 戊寅 甲子 丙寅",
+    "month_branch": "寅",
+    "expected_pattern": "建禄月劫",
+    "expected_wangshuai": "偏旺"
+  },
+  "must_include": ["建禄月劫", "透官杀"],
+  "must_not_include": ["暗比肩格", "暗劫财格"],
+  "classical_support": ["ZPZQ_00060"],
+  "notes": "v3.5规则：月令比肩不入正格，须用建禄月劫框架"
+}

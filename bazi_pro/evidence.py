@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-命理分析证据链对象 v4.2
+命理分析证据链对象 v5.0
 将八字分析的结构化结论输出为 JSON Evidence Object，支持：
 - 每个 claim 附带古籍依据（classical citation ID）
 - 置信度评分

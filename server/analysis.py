@@ -6,10 +6,21 @@ bazi-pro 异步分析编排 v5.0
 
 import asyncio
 import hashlib
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from bazi_pro.core_rules import (
+    calc_deling,
+    calc_dedi,
+    calc_deshi,
+    judge_wangshuai,
+    calc_element_forces,
+    screen_pattern,
+    derive_yongshen,
+    detect_relations,
+    get_canggan,
+)
+from bazi_pro import GAN_WUXING, ZHI_WUXING, derive_shishen
 from server.cache import get_cache
 from server.ws import manager
 
@@ -53,31 +64,59 @@ async def run_analysis(mcp_json: dict, run_id: str,
                                          f'输入数据缺失: {validation["missing_fields"]}')
             return result
 
+        bazi = mcp_json.get('八字', '')
+        day_master = mcp_json.get('日主', '')
+        bazi_parts = bazi.split()
+        month_zhi = bazi_parts[1][1] if len(bazi_parts) >= 2 and len(bazi_parts[1]) >= 2 else ''
+
         await manager.send_progress(run_id, '2', 'running', '日主旺衰判断中...')
         await asyncio.sleep(0.05)
-        strength = _estimate_strength(mcp_json)
+        strength = _estimate_strength(mcp_json, bazi_parts, month_zhi)
         await manager.send_progress(run_id, '2', 'done',
-                                     f'旺衰倾向: {strength.get("wuxing_quick", {}).get("tendency", "未知")}',
+                                     f'旺衰: {strength.get("wangshuai", {}).get("verdict", "未知")}',
                                      strength)
         result['strength'] = strength
 
+        element_forces = _estimate_elements(mcp_json, bazi_parts, month_zhi)
+
         await manager.send_progress(run_id, '3', 'running', '格局判定中...')
         await asyncio.sleep(0.05)
-        pattern = _estimate_pattern(mcp_json, strength)
+        pattern = _estimate_pattern(mcp_json, bazi_parts,
+                                     strength.get('wangshuai', {}),
+                                     element_forces)
         await manager.send_progress(run_id, '3', 'done',
-                                     f'格局: {pattern.get("name", "未知")}',
+                                     f'格局: {pattern.get("pattern", "未知")}',
                                      pattern)
         result['pattern'] = pattern
 
         await manager.send_progress(run_id, '4', 'running', '十神推导中...')
-        shishen = _derive_shishen(mcp_json)
+        await asyncio.sleep(0.05)
+        shishen = _derive_shishen(mcp_json, bazi_parts)
         await manager.send_progress(run_id, '4', 'done', '十神推导完成', shishen)
         result['shishen'] = shishen
 
+        await manager.send_progress(run_id, '4b', 'running', '喜用神候选推导中...')
+        await asyncio.sleep(0.05)
+        yongshen = _derive_yongshen(day_master, bazi_parts,
+                                     pattern, strength.get('wangshuai', {}),
+                                     element_forces)
+        await manager.send_progress(run_id, '4b', 'done',
+                                     f'用神: {yongshen.get("yongshen", "待定")}',
+                                     yongshen)
+        result['yongshen'] = yongshen
+
         await manager.send_progress(run_id, '5', 'running', '五行力量分析中...')
-        elements = _estimate_elements(mcp_json)
-        await manager.send_progress(run_id, '5', 'done', '五行力量分析完成', elements)
-        result['elements'] = elements
+        await asyncio.sleep(0.05)
+        await manager.send_progress(run_id, '5', 'done', '五行力量分析完成', element_forces)
+        result['elements'] = element_forces
+
+        await manager.send_progress(run_id, '7', 'running', '刑冲合害检测中...')
+        await asyncio.sleep(0.05)
+        relations = _detect_relations(bazi_parts)
+        await manager.send_progress(run_id, '7', 'done',
+                                     f'检测到 {len(relations)} 条刑冲合害关系',
+                                     relations)
+        result['relations'] = relations
 
         await manager.send_progress(run_id, '9', 'done', '全部分析步骤完成')
 
@@ -123,102 +162,97 @@ def _validate_input(mcp_json: dict) -> dict:
     }
 
 
-def _estimate_strength(mcp_json: dict) -> dict:
-    from bazi_pro import GAN_WUXING, count_wuxing_from_bazi, wuxing_pct
-
+def _estimate_strength(mcp_json: dict, bazi_parts: list[str],
+                       month_zhi: str) -> dict:
     day_master = mcp_json.get('日主', '')
-    bazi = mcp_json.get('八字', '')
-    dm_wx = GAN_WUXING.get(day_master, '')
 
-    if not dm_wx or not bazi:
+    if not day_master or not month_zhi or len(bazi_parts) < 2:
         return {
             'day_master': day_master,
-            'level': '待分析',
-            'note': '旺衰分析需由 LLM 按照 SKILL.md 第二步量化三要素完成',
+            'deling': {'status': '', 'score': 0},
+            'dedi': {'score': 0.0, 'details': [], 'level': '不得地'},
+            'deshi': {'score': 0.0, 'details': [], 'level': '不得势'},
+            'wangshuai': {'verdict': '数据不足', 'deling_score': 0,
+                          'dedi_score': 0.0, 'deshi_score': 0.0,
+                          'is_weak': False, 'is_strong': False,
+                          'is_extreme_weak': False, 'is_extreme_strong': False},
         }
 
-    wuxing_counts = count_wuxing_from_bazi(bazi)
-    sheng_map = {'木': '水', '火': '木', '土': '火', '金': '土', '水': '金'}
-    sheng_wo = sheng_map.get(dm_wx, '')
-    tong_wo = dm_wx
-
-    yin_bi = wuxing_counts.get(sheng_wo, 0) + wuxing_counts.get(tong_wo, 0)
-    total = max(1, sum(wuxing_counts.values()))
-    yin_bi_pct = round(yin_bi / total * 100, 1)
-
-    if yin_bi_pct >= 75:
-        tendency = '极偏·印比主导'
-    elif yin_bi_pct >= 60:
-        tendency = '偏旺·印比偏重'
-    elif yin_bi_pct <= 25:
-        tendency = '极偏·克泄耗主导'
-    elif yin_bi_pct <= 40:
-        tendency = '偏弱·克泄耗偏重'
-    else:
-        tendency = '相对平衡'
+    deling_status, deling_score = calc_deling(day_master, month_zhi)
+    dedi = calc_dedi(day_master, bazi_parts)
+    deshi = calc_deshi(day_master, bazi_parts)
+    wangshuai = judge_wangshuai(deling_score, dedi['score'], deshi['score'])
 
     return {
         'day_master': day_master,
-        'wuxing_quick': {
-            'tendency': tendency,
-            'yin_bi_pct': yin_bi_pct,
-            'ke_xie_hao_pct': round(100 - yin_bi_pct, 1),
-            'day_master_wuxing': dm_wx,
-            'sheng_wo_wuxing': sheng_wo,
-        },
-        'note': '⚠️ 粗略预检，忽略藏干中余气/合化修正，精确值见第五步',
+        'deling': {'status': deling_status, 'score': deling_score},
+        'dedi': dedi,
+        'deshi': deshi,
+        'wangshuai': wangshuai,
     }
 
 
-def _estimate_pattern(mcp_json: dict, strength: dict) -> dict:
-    wuxing_quick = strength.get('wuxing_quick', {})
-    tendency = wuxing_quick.get('tendency', '')
-    return {
-        'name': '待LLM分析',
-        'wuxing_hint': tendency,
-        'note': '格局判定需由 LLM 按照 SKILL.md 第三步六层筛查完成',
-    }
-
-
-def _derive_shishen(mcp_json: dict) -> dict:
-    from bazi_pro import derive_shishen
-
+def _estimate_pattern(mcp_json: dict, bazi_parts: list[str],
+                      wangshuai: dict, element_forces: dict) -> dict:
     day_master = mcp_json.get('日主', '')
-    bazi = mcp_json.get('八字', '')
-    if not day_master or not bazi:
+    return screen_pattern(day_master, bazi_parts, wangshuai, element_forces)
+
+
+def _derive_shishen(mcp_json: dict, bazi_parts: list[str]) -> dict:
+    day_master = mcp_json.get('日主', '')
+    if not day_master or not bazi_parts:
         return {'pillars': [], 'note': '日主或八字数据缺失'}
 
-    parts = bazi.split()
     positions = ['年', '月', '日', '时']
     pillars = []
-    for i, token in enumerate(parts):
-        if len(token) >= 1:
-            gan = token[0]
-            pillars.append({
-                'position': positions[i] if i < 4 else '',
-                'gan': gan,
-                'shishen': derive_shishen(day_master, gan),
-            })
-    return {'pillars': pillars, 'note': '十神推导为确定性计算，无需LLM'}
+    for i, token in enumerate(bazi_parts):
+        if len(token) < 2:
+            continue
+        gan, zhi = token[0], token[1]
+        canggan = get_canggan(zhi)
+        pillars.append({
+            'position': positions[i] if i < 4 else '',
+            'gan': gan,
+            'zhi': zhi,
+            'wuxing_gan': GAN_WUXING.get(gan, ''),
+            'wuxing_zhi': ZHI_WUXING.get(zhi, ''),
+            'shishen': derive_shishen(day_master, gan),
+            'canggan': [{'gan': cg, 'qi': ql,
+                          'wuxing': GAN_WUXING.get(cg, ''),
+                          'shishen': derive_shishen(day_master, cg)}
+                         for cg, ql in canggan],
+        })
+    return {'pillars': pillars}
 
 
-def _estimate_elements(mcp_json: dict) -> dict:
-    from bazi_pro import count_wuxing_from_bazi, wuxing_pct
-
-    bazi = mcp_json.get('八字', '')
-    if not bazi:
+def _estimate_elements(mcp_json: dict, bazi_parts: list[str],
+                       month_zhi: str) -> dict:
+    if not bazi_parts or not month_zhi:
         return {
-            '木': 0, '火': 0, '土': 0, '金': 0, '水': 0,
+            'raw': {'木': 0, '火': 0, '土': 0, '金': 0, '水': 0},
+            'percent': {'木': 0, '火': 0, '土': 0, '金': 0, '水': 0},
+            'total': 0,
             'note': '八字数据缺失',
         }
 
-    counts = count_wuxing_from_bazi(bazi)
-    pct = wuxing_pct(counts)
-    return {
-        'counts': counts,
-        'percent': pct,
-        'note': '⚠️ 基于天干地支本气的粗略统计，精确力量需含藏干中余气加权',
-    }
+    return calc_element_forces(bazi_parts, month_zhi)
+
+
+def _derive_yongshen(day_master: str, bazi_parts: list[str],
+                     pattern: dict, wangshuai: dict,
+                     element_forces: dict) -> dict:
+    if not day_master or not bazi_parts:
+        return {'yongshen': '待定', 'xishen': [], 'jishen': [], 'confidence': 0}
+
+    return derive_yongshen(day_master, bazi_parts, pattern,
+                           wangshuai, element_forces)
+
+
+def _detect_relations(bazi_parts: list[str]) -> list[dict]:
+    if not bazi_parts:
+        return []
+
+    return detect_relations(bazi_parts)
 
 
 def _make_cache_key(mcp_json: dict, detail_level: str) -> str:

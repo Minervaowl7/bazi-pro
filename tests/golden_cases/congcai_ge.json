@@ -1,0 +1,16 @@
+{
+  "id": "congcai_ge",
+  "description": "从财格 — 日主极弱无根，财星成势",
+  "scenario": "甲木日主，生于酉月，全局金土成势，日主无根无从",
+  "input": {
+    "day_master": "甲",
+    "bazi": "辛酉 丁酉 甲辰 己巳",
+    "month_branch": "酉",
+    "expected_pattern": "从财格",
+    "expected_wangshuai": "极弱"
+  },
+  "must_include": ["从财格", "顺从财势"],
+  "must_not_include": ["正官格", "身弱"],
+  "classical_support": ["DTM_00030"],
+  "notes": "日主甲木极弱无根，财星成势，从财格"
+}

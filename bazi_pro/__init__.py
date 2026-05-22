@@ -2,6 +2,14 @@
 
 __version__ = "5.0.0"
 
+__all__ = [
+    'retrieve', 'retrieve_batch', 'load_corpus',
+    'build_analysis_evidence', 'new_evidence',
+    'GAN_WUXING', 'ZHI_WUXING', 'GAN_SHISHEN_MAP',
+    'derive_shishen', 'count_wuxing_from_bazi', 'wuxing_pct',
+    'AnalysisEngine',
+]
+
 from bazi_pro.retrieve_classical import retrieve, retrieve_batch, load_corpus
 from bazi_pro.evidence import build_analysis_evidence, new_evidence
 
@@ -117,14 +125,16 @@ class AnalysisEngine:
                 'missing': [f for f, v in [('八字', bazi), ('日主', day_master), ('性别', gender)] if not v],
             }
 
+        from bazi_pro.core_rules import full_analysis as _full_analysis
+        core = _full_analysis(mcp_json)
+
         query = f'{day_master} {bazi} 格局 旺衰 用神'
         retrieval_results = self.retrieve(query, k=8)
 
-        pillars = self._parse_pillars(bazi, day_master)
-        wuxing_counts = count_wuxing_from_bazi(bazi)
-        wuxing_percent = wuxing_pct(wuxing_counts)
-        shishen_map = self._derive_shishen_map(day_master, pillars)
-        wuxing_quick = self._wuxing_quick_check(wuxing_counts, day_master)
+        wangshuai = core.get('wangshuai', {})
+        pattern = core.get('pattern', {})
+        yongshen = core.get('yongshen', {})
+        element_forces = core.get('element_forces', {})
 
         return {
             'status': 'completed',
@@ -134,24 +144,35 @@ class AnalysisEngine:
                 'count': len(retrieval_results),
                 'results': retrieval_results,
             },
-            'pillars': pillars,
-            'shishen': shishen_map,
+            'pillars': core.get('pillars', []),
+            'shishen': {f"{p['position']}干": p.get('shishen', '')
+                        for p in core.get('pillars', []) if p.get('gan')},
+            'deling': core.get('deling', {}),
+            'dedi': core.get('dedi', {}),
+            'deshi': core.get('deshi', {}),
             'strength': {
                 'day_master': day_master,
-                'wuxing_quick': wuxing_quick,
-                'note': '⚠️ 粗略预检，忽略藏干中余气/合化修正，精确值见第五步',
+                'wangshuai': wangshuai,
+                'wuxing_quick': self._wuxing_quick_check(
+                    count_wuxing_from_bazi(bazi), day_master),
             },
             'pattern': {
-                'name': '待LLM分析',
-                'wuxing_hint': wuxing_quick.get('tendency', '平衡'),
-                'note': '格局判定需由 LLM 按照 SKILL.md 第三步六层筛查完成',
+                'name': pattern.get('pattern', '待定'),
+                'layer': pattern.get('layer', -1),
+                'type': pattern.get('type', ''),
+                'confidence': pattern.get('confidence', 0),
+                'reason': pattern.get('reason', ''),
+                'candidates': pattern.get('candidates', []),
+                'yongshen_direction': pattern.get('yongshen_direction', '待定'),
             },
+            'yongshen': yongshen,
             'elements': {
-                'counts': wuxing_counts,
-                'percent': wuxing_percent,
-                'note': '⚠️ 基于天干地支本气的粗略统计，精确力量需含藏干中余气加权',
+                'counts': {k: int(v) for k, v in element_forces.get('raw', {}).items()},
+                'percent': element_forces.get('percent', {}),
+                'note': '基于天干地支本气+藏干加权的五行力量统计',
             },
-            'note': '确定性推导（十神、五行统计）已完成。格局/旺衰/喜用神判断需由 LLM 按照 SKILL.md 执行流完成。',
+            'relations': core.get('relations', []),
+            'note': '确定性推导（十神、藏干、旺衰、格局候选、喜用神候选、刑冲合害）已完成。调候用神需查穷通宝鉴，由LLM补充。',
         }
 
     def generate_report(self, analysis: dict, format: str = 'html') -> str:
