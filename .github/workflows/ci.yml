@@ -21,13 +21,9 @@ jobs:
 
       - name: Version consistency
         run: |
-          python -c "
-          from pathlib import Path
-          assert '4.1.0' in (Path('pyproject.toml').read_text()), 'pyproject version'
-          assert '__version__' in (Path('bazi_pro/__init__.py').read_text()), 'bazi_pro version'
-          assert 'v4.1' in (Path('README.md').read_text()), 'README version'
-          print('✅ Version consistency')
-          "
+          python -c "import bazi_pro; v=bazi_pro.__version__; assert v=='4.2.0', f'version={v}'; print(f'✅ Version: {v}')"
+          python -c "from pathlib import Path; assert 'v4.2' in Path('README.md').read_text(), 'README'; print('✅ README')"
+          python -c "from pathlib import Path; assert '4.2.0' in Path('pyproject.toml').read_text(), 'pyproject'; print('✅ pyproject')" 
 
       - name: Corpus stats
         run: python scripts/retrieve_classical.py --stats
