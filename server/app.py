@@ -6,6 +6,8 @@ API 路由：分析、状态查询、结果获取、仪表盘
 
 import uuid
 import asyncio
+import os
+import time
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -20,14 +22,14 @@ from server.cache import get_cache
 app = FastAPI(
     title="bazi-pro API",
     description="专业八字命理解读引擎 Web 服务",
-    version="4.6.0",
+    version="5.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=os.environ.get('BAZI_CORS_ORIGINS', '*').split(','),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,6 +37,17 @@ app.add_middleware(
 
 # 分析状态存储
 _analysis_tasks: dict[str, dict] = {}
+_TASK_TTL_SECONDS = 7200
+
+
+def _cleanup_expired_tasks() -> None:
+    now = time.time()
+    expired = [
+        rid for rid, info in _analysis_tasks.items()
+        if now - info.get('_created_ts', 0) > _TASK_TTL_SECONDS
+    ]
+    for rid in expired:
+        _analysis_tasks.pop(rid, None)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -183,7 +196,10 @@ async def api_analyze(payload: dict):
     _analysis_tasks[run_id] = {
         'status': 'queued',
         'created_at': datetime.now(timezone.utc).isoformat(),
+        '_created_ts': time.time(),
     }
+
+    _cleanup_expired_tasks()
 
     # 后台启动分析
     asyncio.create_task(_background_analyze(run_id, payload, detail_level))
@@ -233,16 +249,14 @@ async def api_result(run_id: str):
 
 @app.websocket("/ws/{run_id}")
 async def ws_connect(ws: WebSocket, run_id: str):
-    """WebSocket 端点：实时推送分析进度"""
     await manager.connect(run_id, ws)
     try:
         while True:
-            # 保持连接，等待消息
             await ws.receive_text()
     except WebSocketDisconnect:
-        manager.disconnect(run_id)
+        manager.disconnect(run_id, ws)
     except Exception:
-        manager.disconnect(run_id)
+        manager.disconnect(run_id, ws)
 
 
 async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):

@@ -36,8 +36,8 @@ def test_retrieve_classical(case: dict) -> bool:
         print(f"  ✅ 古籍命中: {overlap}")
         return True
     else:
-        print(f"  ⚠️  预期 {expected}，实际未命中（返回 {len(results)} 条）")
-        return True  # soft fail — 检索结果受语料影响
+        print(f"  ❌ 预期 {expected}，实际未命中（返回 {len(results)} 条）")
+        return False
 
 
 def test_evidence_structure(case: dict) -> bool:

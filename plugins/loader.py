@@ -43,8 +43,11 @@ def load_plugin_from_dir(plugin_dir: str) -> Optional[BaziPlugin]:
                 plugin.version = meta.get('version', plugin.version)
                 plugin.description = meta.get('description', plugin.description)
                 return plugin
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.getLogger('bazi_pro.plugins').warning(
+            '插件加载失败 [%s]: %s', meta.get('name', 'unknown'), e
+        )
 
     return None
 
@@ -87,8 +90,11 @@ def load_all_plugins() -> list[BaziPlugin]:
                 plugin = plugin_cls()
                 register_plugin(plugin)
                 plugins.append(plugin)
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+                logging.getLogger('bazi_pro.plugins').warning(
+                    'entry_point 插件加载失败 [%s]: %s', ep.name, e
+                )
     except Exception:
         pass
 
