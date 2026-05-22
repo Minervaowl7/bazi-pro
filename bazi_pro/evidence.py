@@ -121,7 +121,7 @@ def build_analysis_evidence(
             "day_master": day_master,
             "gender": gender,
             "bazi": bazi,
-            "engine": "bazi-pro v4.1",
+            "engine": "bazi-pro v4.2",
             "evidence_chain_completeness": _completeness(classical_refs, evidence_chain)
         },
         "evidence_chain": evidence_chain,
