@@ -912,6 +912,8 @@ def main():
     parser.add_argument('--gender', help='性别（覆盖自动提取）')
     parser.add_argument('--birth', help='出生日期（覆盖自动提取）')
     parser.add_argument('--name', help='姓名/称呼')
+    parser.add_argument('--engine', choices=['v4.3', 'legacy', 'auto'], default='auto',
+                        help='渲染引擎: v4.3(新UI) / legacy(旧版) / auto(自动检测)')
 
     args = parser.parse_args()
 
@@ -966,8 +968,31 @@ def main():
         output_base = os.path.join(os.getcwd(), f'bazi_report_{ts}{ext}')
 
     # --- Generate ---
+    use_v43 = False
+    if args.engine == 'v4.3':
+        use_v43 = True
+    elif args.engine == 'auto':
+        try:
+            from bazi_pro.view_model import build_vm_from_analysis_text
+            use_v43 = True
+        except ImportError:
+            use_v43 = False
+
     if args.format in ('html', 'both') or args.theme == 'dashboard':
-        if args.theme == 'dashboard':
+        if use_v43 and args.theme == 'dashboard':
+            # ── v4.3 Dashboard engine ──
+            from bazi_pro.view_model import build_vm_from_analysis_text
+            from bazi_pro.ui import render_dashboard
+            vm = build_vm_from_analysis_text(analysis_text)
+            html_content = render_dashboard(vm)
+        elif use_v43 and args.theme == 'report':
+            # ── v4.3 Report engine ──
+            from bazi_pro.view_model import build_vm_from_analysis_text
+            from bazi_pro.ui import render_report
+            vm = build_vm_from_analysis_text(analysis_text)
+            body_html = markdown_to_html(analysis_text)
+            html_content = render_report(vm, body_html=body_html)
+        elif args.theme == 'dashboard':
             html_content = generate_dashboard(meta, analysis_text, args.title, report_date, simple_md_to_html)
         else:
             html_content = generate_html_report(meta, analysis_text, args.title, report_date)
@@ -980,7 +1005,8 @@ def main():
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         label = '仪表盘' if args.theme == 'dashboard' else 'HTML 报告'
-        print(f'{label}已保存至: {html_path}')
+        engine_tag = ' [v4.3]' if use_v43 else ''
+        print(f'{label}{engine_tag}已保存至: {html_path}')
 
         if args.pdf:
             success, msg = try_generate_pdf(html_content, html_path)
