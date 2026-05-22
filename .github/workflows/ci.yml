@@ -80,5 +80,5 @@ jobs:
           pip install dist/*.whl
           bazi-retrieve --stats
           bazi-doctor
-          bazi-retrieve "食神 制杀" -k 1 --json | python -c "import sys,json; d=json.load(sys.stdin); assert d["corpus_size"]>=2900, f"corpus={d["corpus_size"]}"; print(f"✅ corpus={d["corpus_size"]}")"
+          bazi-retrieve "食神 制杀" -k 1 --json | python3 -c 'import sys,json; d=json.load(sys.stdin); assert d["corpus_size"]>=2900; print("OK corpus="+str(d["corpus_size"]))' 
           echo "✅ Wheel install OK"
