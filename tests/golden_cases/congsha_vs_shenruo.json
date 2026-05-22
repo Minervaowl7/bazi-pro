@@ -1,0 +1,17 @@
+{
+  "id": "congsha_vs_shenruo",
+  "description": "从杀格 vs 身弱杀重 — 日主有无强根是关键",
+  "scenario": "丙火日主，官杀极重。日坐午火帝旺有根 → 身弱不从，非从杀格",
+  "input": {
+    "day_master": "丙",
+    "month_branch": "戌",
+    "day_branch": "午",
+    "官杀透干": 3,
+    "dedi_score": 2.3,
+    "expected_verdict": "身弱不从杀"
+  },
+  "must_include": ["身弱", "不从", "有根"],
+  "must_not_include": ["从杀格", "从官杀"],
+  "classical_support": ["SFTK_00068", "SFTK_00120"],
+  "notes": "日坐帝旺有强根，即使官杀极重也不从"
+}

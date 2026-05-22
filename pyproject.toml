@@ -1,0 +1,54 @@
+[project]
+name = "bazi-pro"
+version = "5.0.0"
+description = "专业八字命理分析引擎 — BM25+jieba 古籍检索 · 动态SVG命盘 · 命运河流时间轴 · 推理图谱 · Web服务 · 插件机制"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Minervaowl7" }
+]
+keywords = ["bazi", "chinese-metaphysics", "fortune-telling", "classical-chinese", "nlp", "visualization"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+
+dependencies = [
+    "jieba>=0.42.1",
+]
+
+[project.optional-dependencies]
+hybrid = ["sentence-transformers>=2.2", "faiss-cpu>=1.7", "numpy>=1.24"]
+report = ["markdown>=3.5"]
+pdf = ["weasyprint>=60"]
+server = ["fastapi>=0.100", "uvicorn[standard]>=0.20", "redis>=4.5", "websockets>=11.0", "jinja2>=3.1"]
+tui = ["rich>=13.0"]
+all = ["bazi-pro[hybrid,report,pdf,server,tui]"]
+
+[project.scripts]
+bazi-retrieve = "bazi_pro.retrieve_classical:main"
+bazi-report = "bazi_pro.generate_report:main"
+bazi-doctor = "bazi_pro.doctor:main"
+bazi-evidence = "bazi_pro.evidence:main"
+bazi-trace = "bazi_pro.trace:main"
+bazi-server = "server.app:main"
+bazi-tui = "bazi_pro.tui.app:main"
+bazi-hybrid = "bazi_pro.hybrid_search:main"
+
+[tool.setuptools]
+packages = ["bazi_pro", "bazi_pro.ui", "bazi_pro.tui", "server", "plugins"]
+include-package-data = true
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,91 @@
+name: bazi-pro CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install jieba
+
+      - name: Version consistency
+        run: |
+          python -c "import bazi_pro; v=bazi_pro.__version__; assert v=='4.4.1', f'version={v}'; print(f'✅ Version: {v}')"
+          python -c "from pathlib import Path; assert 'v4.4' in Path('README.md').read_text(), 'README'; print('✅ README')"
+          python -c "from pathlib import Path; assert '4.4.1' in Path('pyproject.toml').read_text(), 'pyproject'; print('✅ pyproject')" 
+
+      - name: Corpus stats
+        run: python scripts/retrieve_classical.py --stats
+
+      - name: Basic retrieve
+        run: python scripts/retrieve_classical.py "食神 制杀 身弱" -k 3 --json
+
+      - name: Batch retrieve
+        run: python scripts/retrieve_classical.py --batch "食神" "七杀" "调候" -k 2 --json
+
+      - name: Doctor
+        run: python scripts/doctor.py
+
+      - name: Evidence
+        run: python scripts/evidence.py | python -c "import sys,json; d=json.load(sys.stdin); assert len(d['evidence_chain'])>=3"
+
+      - name: Hybrid status
+        run: python scripts/hybrid_search.py
+
+      - name: Report markdown
+        run: |
+          python -m bazi_pro.generate_report --input examples/sample_analysis.md --output /tmp/report.md
+          test -s /tmp/report.md && echo "✅ Report generated"
+
+      - name: Dashboard
+        run: |
+          python -m bazi_pro.generate_report --input examples/sample_analysis.md --theme dashboard --format html --output /tmp/dashboard.html
+          DASHFILE=$(ls /tmp/dashboard*.html | head -1)
+          grep -q 'evidence-card' "$DASHFILE" && echo "✅ Dashboard with evidence"
+          grep -q 'relation-graph' "$DASHFILE" && echo "✅ Dashboard with graph"
+
+      - name: Trace validation
+        run: |
+          python -m bazi_pro.trace demo > /tmp/trace.json
+          python -m bazi_pro.trace validate /tmp/trace.json
+          python -m bazi_pro.evidence --validate examples/sample_trace.json
+
+      - name: Golden cases
+        run: python tests/run_golden.py
+
+      - name: Package import
+        run: python -c "from bazi_pro.retrieve_classical import main, retrieve, retrieve_batch; from bazi_pro.dashboard import generate_dashboard; from bazi_pro.evidence import build_analysis_evidence; print('✅ All imports OK')"
+
+      - name: Install package
+        run: pip install -e .
+
+      - name: Console scripts
+        run: |
+          bazi-retrieve --stats
+          bazi-retrieve "食神 制杀 身弱" -k 2 --json | python -c "import sys,json; d=json.load(sys.stdin); assert d['corpus_size']>0; print('✅ bazi-retrieve')"
+          bazi-doctor
+          bazi-evidence | python -c "import sys,json; d=json.load(sys.stdin); assert len(d['evidence_chain'])>=3; print('✅ bazi-evidence')"
+
+      - name: Wheel build
+        run: |
+          pip install build
+          python -m build
+          python -m venv /tmp/bazi-wheel-test
+          source /tmp/bazi-wheel-test/bin/activate
+          pip install dist/*.whl
+          bazi-retrieve --stats
+          bazi-doctor
+          set -o pipefail
+          bazi-retrieve "食神 制杀" -k 1 --json | python3 -c 'import sys,json; d=json.load(sys.stdin); assert d["corpus_size"]>=2900; print("OK corpus="+str(d["corpus_size"]))' 
+          echo "✅ Wheel install OK"

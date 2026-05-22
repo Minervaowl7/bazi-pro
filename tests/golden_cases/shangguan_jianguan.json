@@ -1,0 +1,17 @@
+{
+  "id": "shangguan_jianguan_tongguan",
+  "description": "伤官见官有财星通关 — 不可一律判凶",
+  "scenario": "正官格遇伤官透干 + 财星通关 → 伤官生财，财生官，气势流通",
+  "input": {
+    "day_master": "甲",
+    "month_branch": "酉",
+    "pattern": "正官格",
+    "conflict": "伤官见官",
+    "resolution": "财星通关",
+    "expected_verdict": "成中有救，非败格"
+  },
+  "must_include": ["财星通关", "流通", "化解"],
+  "must_not_include": ["伤官见官一律判差", "败格"],
+  "classical_support": ["ZPZ_00032"],
+  "notes": "解读红线第5条：伤官见官一律判差 → 需看财星通关"
+}

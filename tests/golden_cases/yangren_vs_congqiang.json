@@ -1,0 +1,15 @@
+{
+  "id": "yangren_vs_congqiang",
+  "description": "羊刃误判为从强格 — 月支帝旺但印比不足80%",
+  "scenario": "壬水子月帝旺 + 金印重重 → 金水91% → 从强格，不可误判为羊刃格",
+  "input": {
+    "day_master": "壬",
+    "month_branch": "子",
+    "yongshen_family": ["金", "水"],
+    "pattern": "从强格"
+  },
+  "must_include": ["从强", "不可逆势", "顺金水"],
+  "must_not_include": ["羊刃格", "官杀制刃"],
+  "classical_support": ["DTM_00007", "DTM_00080", "DTM_00082"],
+  "notes": "v3.5修复：层0-A从强格检查必须在羊刃格之前"
+}

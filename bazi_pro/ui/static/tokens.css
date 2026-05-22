@@ -1,0 +1,139 @@
+/* ═══════════════════════════════════════════════════════════════════
+   bazi-pro v4.3 — Neo Classical Design Tokens
+   气质: Apple Health + Bloomberg Terminal + 东方命理卷轴
+   关键词: 克制 · 留白 · 层次 · 呼吸感 · 神秘但专业
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surface ── */
+  --neo-bg: #f7f1e8;
+  --neo-surface: #fffaf2;
+  --neo-surface-2: #f1e6d6;
+  --neo-surface-3: #e8d9c4;
+
+  /* ── Ink ── */
+  --neo-ink: #241a14;
+  --neo-ink-soft: #4a3a2a;
+  --neo-muted: #7a6a58;
+  --neo-ghost: #b8a890;
+
+  /* ── Brand ── */
+  --neo-primary: #8a3b2a;      /* 温润朱砂，非亮红 */
+  --neo-primary-glow: #b85c4a;
+  --neo-gold: #b99a5b;         /* 淡金，非土豪金 */
+  --neo-gold-dim: #9a7d42;
+
+  /* ── 五行 (降饱和 40%) ── */
+  --neo-wood: #5f8d72;         /* 苍绿 */
+  --neo-fire: #b85c4a;         /* 朱砂 */
+  --neo-earth: #b98b54;        /* 暖褐 */
+  --neo-metal: #b7aa8b;        /* 砂金 */
+  --neo-water: #4f7896;        /* 藏蓝 */
+
+  /* ── Semantic ── */
+  --neo-good: #4f8d5c;         /* 碧绿 */
+  --neo-warn: #c4873a;         /* 琥珀 */
+  --neo-bad: #b84a4a;          /* 赭红 */
+  --neo-info: #5a7f96;         /* 灰蓝 */
+
+  /* ── 关系图谱 ── */
+  --neo-he: #b8860b;           /* 合 — 暗金实线 */
+  --neo-chong: #c44a3a;        /* 冲 — 暗红断裂 */
+  --neo-xing: #8a5c9e;         /* 刑 — 紫色虚线 */
+  --neo-hai: #9a9a9a;          /* 害 — 灰色点线 */
+  --neo-sanhe: #4a8a7a;        /* 三合/半合 — 青绿 */
+
+  /* ── Geometry ── */
+  --neo-radius-sm: 8px;
+  --neo-radius-md: 16px;
+  --neo-radius-lg: 24px;
+  --neo-radius-xl: 32px;
+
+  /* ── Shadow ── */
+  --neo-shadow-sm: 0 4px 12px rgba(54, 35, 20, 0.04);
+  --neo-shadow-md: 0 8px 28px rgba(54, 35, 20, 0.06);
+  --neo-shadow-lg: 0 16px 48px rgba(54, 35, 20, 0.08);
+  --neo-shadow-xl: 0 24px 64px rgba(54, 35, 20, 0.10);
+
+  /* ── Typography Scale ── */
+  --neo-font-hero: 72px;
+  --neo-font-h1: 28px;
+  --neo-font-h2: 22px;
+  --neo-font-h3: 16px;
+  --neo-font-card-title: 13px;
+  --neo-font-body: 15px;
+  --neo-font-meta: 12px;
+  --neo-font-micro: 10px;
+
+  /* ── Typography Weight ── */
+  --neo-weight-bold: 700;
+  --neo-weight-semi: 600;
+  --neo-weight-regular: 400;
+
+  /* ── Letter Spacing ── */
+  --neo-ls-tight: -0.02em;
+  --neo-ls-normal: 0;
+  --neo-ls-wide: 0.04em;
+  --neo-ls-title: 0.08em;
+
+  /* ── Spacing ── */
+  --neo-space-xs: 4px;
+  --neo-space-sm: 8px;
+  --neo-space-md: 16px;
+  --neo-space-lg: 24px;
+  --neo-space-xl: 40px;
+  --neo-space-2xl: 64px;
+
+  /* ── Border (minimal) ── */
+  --neo-border: 1px solid var(--neo-surface-3);
+  --neo-border-focus: 1px solid var(--neo-gold-dim);
+  --neo-border-card: none;           /* P0-1: card 默认无边框 */
+
+  /* ── Transition ── */
+  --neo-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --neo-duration-fast: 150ms;
+  --neo-duration-normal: 300ms;
+  --neo-duration-slow: 500ms;
+}
+
+/* ── Dark Theme ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --neo-bg: #1a1612;
+    --neo-surface: #221e18;
+    --neo-surface-2: #2a241c;
+    --neo-surface-3: #342e24;
+
+    --neo-ink: #e8dcc8;
+    --neo-ink-soft: #c4b89a;
+    --neo-muted: #8a7a60;
+    --neo-ghost: #5a4a38;
+
+    --neo-primary: #c46a4a;
+    --neo-primary-glow: #d8845a;
+    --neo-gold: #c4a85a;
+    --neo-gold-dim: #a48a42;
+
+    --neo-wood: #7aad8a;
+    --neo-fire: #d8845a;
+    --neo-earth: #c89a6a;
+    --neo-metal: #c4b898;
+    --neo-water: #6a90a8;
+
+    --neo-good: #6aac7a;
+    --neo-warn: #d89a4a;
+    --neo-bad: #d86a5a;
+    --neo-info: #709aac;
+
+    --neo-he: #c89a4a;
+    --neo-chong: #d86a5a;
+    --neo-xing: #9a6aaa;
+    --neo-hai: #8a8a8a;
+    --neo-sanhe: #5a9a86;
+
+    --neo-shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --neo-shadow-md: 0 8px 28px rgba(0, 0, 0, 0.20);
+    --neo-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.25);
+    --neo-shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.30);
+  }
+}
