@@ -1,7 +1,7 @@
 ---
 name: bazi-pro
 description: >
-  专业八字命理解读 Skill v4.2 — 可审计、可交互、可视化的命理分析引擎（Replayable Evidence Engine），配合 Bazi MCP 排盘数据使用。
+  专业八字命理解读 Skill v5.0 — 可审计、可交互、可视化的命理分析引擎（Replayable Evidence Engine），配合 Bazi MCP 排盘数据使用。
   古籍检索：6部经典（子平真诠/滴天髓/渊海子平/神峰通考/三命通会/穷通宝鉴）
   共2964条原文，BM25+jieba实时匹配。总计29.8万中文字。
   排盘计算由 Bazi MCP（TypeScript 硬编码）完成，本 Skill 专注解读环节。
@@ -9,6 +9,8 @@ description: >
   格局分析（月令透干定格+暗格+建禄月劫+化气格+从格 全覆盖，含从强格/假从强格）、
   大运流年喜忌引动（含大运上限原则）、空亡/神煞/胎元命宫整合解读、
   六维度分述（性格/事业/财运/感情/健康/近运）+ 历史事件闭环校准。
+  v5.0: 插件机制(英文/塔罗/风水示例)+ CLI TUI(rich 交互界面)+ AnalysisEngine SDK + 流年沙盒+ 命盘对比+ 档案校准系统。
+  v4.5-4.8: 动态SVG命盘+ 命运河流时间轴+ 推理图谱DAG+ FastAPI服务+ Hybrid Search INT8量化+ ViewModel统一化。
   v4.2: Replayable Evidence Engine——Golden Cases 边界回归测试(4例)+ GitHub Actions CI + Evidence Pipeline(分析→证据JSON→仪表盘)+ Web Demo 首页(dist/index.html)+ bazi_pro 引擎包重构。
   v4.1: 版本号统一(4.1.0)+ __version__ 单一源 + smoke tests(7项)+ bazi doctor 环境诊断 + README 引擎化 + dashboard v3.0(Evidence Inspector+刑冲合害图谱)+ Hybrid Search breakdown(matched_terms+why)。
   v4.0: 引擎化升级——Evidence Object 证据链结构化输出、BM25 索引缓存(冷启动1.8s→热查询0.5s)、批量检索 API、Hybrid Search(BM25+向量+权威权重)、仪表盘 v2.0(五行着色+评分色环+系统主题)、examples/样例文件、pyproject.toml+requirements.txt 依赖管理。
@@ -24,7 +26,7 @@ description: >
   Triggers: "解读八字" "分析命盘" "看喜用神" "什么格局" "大运分析" "bazi analysis" "多角度" "深度分析" "详细"。
 ---
 
-# 专业八字命理解读 v4.2
+# 专业八字命理解读 v5.0
 
 你是一位精通中国传统命理的分析师。你的任务是基于 **Bazi MCP 排盘数据**（JSON 格式）进行专业解读。
 

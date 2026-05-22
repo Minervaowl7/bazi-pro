@@ -1,10 +1,10 @@
-# bazi-pro v4.4
+# bazi-pro v5.0
 
 [![CI](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml)
 
 **可审计、可交互、可视化的八字命理分析引擎**
 
-📜 2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 四层喜用神裁决 · 六层格局筛查 · 交互式仪表盘
+📜 2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 四层喜用神裁决 · 六层格局筛查 · 动态 SVG 命盘 · FastAPI 服务 · 插件机制
 
 ---
 
@@ -76,11 +76,15 @@ python scripts/doctor.py
 
 | 版本 | 内容 |
 |------|------|
+| **v5.0** | 插件机制 · CLI TUI · AnalysisEngine SDK · 流年沙盒 · 命盘对比 · 档案校准系统 |
+| **v4.8** | 命盘对比引擎 · 古籍双栏展示 · 流年推演沙盒 · 个人命理档案 |
+| **v4.7** | Hybrid Search 落地(INT8量化+FAISS+预热) · ViewModel 统一化 |
+| **v4.6** | FastAPI + WebSocket 服务层 · Redis 缓存 |
+| **v4.5** | 动态 SVG 命盘 · 命运河流时间轴 · 推理图谱 DAG · 印章动画升级 |
 | **v4.3** | Golden Cases (4例) + CI + Web Demo 首页 + Evidence Pipeline + 包结构重构 |
 | **v4.1** | bazi doctor · pyproject 包结构修复 · README 引擎化 · 检索性能元数据 |
 | **v4.0** | Evidence Object · BM25缓存 · 批量检索 · Hybrid Search骨架 · examples |
 | **v3.5** | 层3比劫拦截 (禁止"暗劫财格"→建禄月劫经典框架) · 强制自动生成报告 · 交互式仪表盘 |
-| **v3.4** | 报告生成器跨平台字体 · 调候双通道 · 病药突破大运上限 |
 
 ---
 
