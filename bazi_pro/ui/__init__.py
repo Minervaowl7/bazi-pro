@@ -176,8 +176,12 @@ def render_replay(vm: DashboardVM) -> str:
 
 def _render_hero(vm: DashboardVM, seal_svg: str) -> str:
     v = vm.verdict
-    summary = (f'{v.day_master}生巳月，火势得令，官杀透出，宜以印化杀、以水调候。'
-               if v.day_master else '')
+    if v.summary_line:
+        summary = v.summary_line
+    elif v.pattern:
+        summary = f'{v.day_master}日主 · {v.pattern} · 用{v.yongshen[0] if v.yongshen else "—"}'
+    else:
+        summary = ''
     return f'''<div class="hero">
     <div class="bazi">{escape(vm.bazi)}</div>
     <div class="seal-wrap">{seal_svg}</div>

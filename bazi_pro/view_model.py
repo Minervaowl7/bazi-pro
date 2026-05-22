@@ -339,11 +339,23 @@ def build_vm_from_result_json(json_path: str) -> DashboardVM:
     return vm
 
 
-def build_vm_from_analysis_text(text: str) -> DashboardVM:
-    """从分析文本（Markdown）构建 ViewModel — 已废弃，请使用 build_vm_from_result_json()
+def _strip_md(text: str) -> str:
+    """剥离 Markdown 标记（**、*、__、` 等）"""
+    import re
+    # 去粗体/斜体
+    text = re.sub(r'\*{1,3}([^*]+?)\*{1,3}', r'\1', text)
+    text = re.sub(r'_{1,3}([^_]+?)_{1,3}', r'\1', text)
+    # 去行内代码
+    text = re.sub(r'`([^`]+)`', r'\1', text)
+    return text.strip()
 
-    .. deprecated:: 4.7
-        使用 build_vm_from_result_json() 替代。此方法将在 v5.0 移除。
+
+def build_vm_from_analysis_text(text: str) -> DashboardVM:
+    """从分析文本（Markdown）构建 ViewModel
+
+    .. note::
+        v5.0 增强版：增加 _strip_md 清洗所有提取字段，增加大运提取，放宽五行匹配。
+        保留此方法用于 generate_report.py --theme dashboard 的 VM 构建。
     """
     vm = DashboardVM()
 
@@ -358,29 +370,45 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
     ]:
         m = re.search(pattern, text)
         if m:
-            val = m.group(1).strip()
+            val = _strip_md(m.group(1).strip())
             if target == 'verdict':
                 vm.verdict.day_master = val
+                vm.day_master = val
             else:
                 setattr(vm, target, val)
 
-    # Pillars
+    # Qiyun age
+    m = re.search(r'(?:起运(?:年龄)?|起运)[：:]\s*\*{0,2}(\d+)\*{0,2}', text)
+    if m:
+        vm.qiyun_age = m.group(1)
+
+    # Pillars — 兼容两种表格格式
     for m in re.finditer(r'\|\s*(年|月|日|时)\s*\|\s*([甲乙丙丁戊己庚辛壬癸])\s*\|\s*(.+?)\s*\|\s*([子丑寅卯辰巳午未申酉戌亥])\s*\|', text):
+        shishen_raw = _strip_md(m.group(3).strip())
         vm.pillars.append(PillarVM(
             position=m.group(1), gan=m.group(2),
-            shishen=m.group(3).strip(), zhi=m.group(4),
+            shishen=shishen_raw, zhi=m.group(4),
             wuxing_gan=GAN_WUXING.get(m.group(2), ''),
             wuxing_zhi=ZHI_WUXING.get(m.group(4), ''),
         ))
 
-    # Wuxing
-    for m in re.finditer(r'([木火土金水])\s+[🌿🔥⛰️⚜️💧]?\s*[█░]+\s*(\d+\.?\d*)%', text):
-        pct = float(m.group(2))
-        setattr(vm.wuxing, {'木': 'wood', '火': 'fire', '土': 'earth', '金': 'metal', '水': 'water'}[m.group(1)], pct)
+    # Wuxing — 放宽匹配：支持 emoji、ASCII bar、纯数字百分比
+    wx_map = {'木': 'wood', '火': 'fire', '土': 'earth', '金': 'metal', '水': 'water'}
+    for m in re.finditer(r'([木火土金水])\s*(?:[\U0001F300-\U0001FFFF]?\s*[█░]*\s*)?(\d+\.?\d*)\s*%', text):
+        wx_key = wx_map.get(m.group(1))
+        if wx_key:
+            pct = float(m.group(2))
+            setattr(vm.wuxing, wx_key, pct)
 
     # Verdict
-    m = re.search(r'格局命名[：:]\s*(.+?)(?:\n|$)', text)
-    if m: vm.verdict.pattern = m.group(1).strip()
+    m = re.search(r'格局(?:命名|判定)?[：:]\s*[\*_]*(.+?)[\*_]*(?:$|\n)', text)
+    if m:
+        vm.verdict.pattern = _strip_md(m.group(1))
+    else:
+        # 尝试从"格局："行提取
+        m = re.search(r'(?:最终|综合)?格局[：:]\s*(.+?)(?:$|\n)', text)
+        if m:
+            vm.verdict.pattern = _strip_md(m.group(1))
 
     m = re.search(r'(\d+)\s*/\s*100.*?(中[下上]等|上等|下等)', text)
     if m:
@@ -388,7 +416,22 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
         vm.pattern_score_label = m.group(2)
 
     vm.verdict.day_master = vm.verdict.day_master or vm.day_master
-    vm.verdict.decision = '不从，按正格论' if '从格' in text else ''
+    vm.verdict.decision = _strip_md(vm.verdict.decision or '')
+
+    # Dayun extraction
+    for m in re.finditer(
+        r'\|\s*(?:第[一二三四五六七八九十\d]+步|起运前)\s*\|\s*(\d+[-~]\d+岁|\d+[-~]\d+)\s*\|\s*([甲乙丙丁戊己庚辛壬癸]{1,2}[子丑寅卯辰巳午未申酉戌亥])\s*\|\s*(.+?)\s*\|\s*(.{1,4})\s*\|',
+        text
+    ):
+        age_range = m.group(1).strip()
+        gan_zhi = _strip_md(m.group(2))
+        assessment = _strip_md(m.group(4))
+        vm.dayun.append(DayunVM(
+            gan_zhi=gan_zhi,
+            age_range=age_range,
+            shishen=_strip_md(m.group(3)),
+            assessment=assessment if assessment in ('大吉', '吉', '平', '凶', '大凶') else '平',
+        ))
 
     raw_yongshen = ''
     raw_xishen = ''
@@ -398,13 +441,15 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
                       ('jishen', r'忌神[：:]\s*(.+?)(?:[，,\n]|$)')]:
         m = re.search(pat, text)
         if m:
-            val = m.group(1).strip()
+            val = _strip_md(m.group(1).strip())
             if key == 'yongshen': raw_yongshen = val
             elif key == 'xishen': raw_xishen = val
             elif key == 'jishen': raw_jishen = val
-            setattr(vm.verdict, key, [val])  # raw single-item list
+            # 尝试按分隔符拆分
+            items = re.split(r'[、，,]', val)
+            setattr(vm.verdict, key, [x.strip() for x in items if x.strip()])
 
-    # ── v4.3.1: Text cleaning pass ──
+    # Text cleaning pass
     try:
         from bazi_pro.ui.text_cleaner import build_clean_verdict
         cv = build_clean_verdict(
@@ -420,6 +465,6 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
         vm.verdict.jishen = cv.jishen_labels if cv.jishen_labels else vm.verdict.jishen
         vm.verdict.decision = cv.decision or vm.verdict.decision
     except ImportError:
-        pass  # text_cleaner not available, use raw
+        pass
 
     return vm

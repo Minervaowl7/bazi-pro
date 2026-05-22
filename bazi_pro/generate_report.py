@@ -905,8 +905,11 @@ def main():
             try:
                 vm = build_vm_from_analysis_text(analysis_text)
                 html_content = render_dashboard(vm)
-            except Exception:
-                # 降级到遗留仪表盘
+            except Exception as e:
+                # 降级到遗留仪表盘，但输出错误信息
+                import traceback
+                print(f'⚠️ 新版仪表盘构建失败，降级到遗留版本：{e}', file=sys.stderr)
+                traceback.print_exc(file=sys.stderr)
                 html_content = generate_dashboard(meta, analysis_text, args.title, report_date, simple_md_to_html)
         else:
             html_content = generate_html_report(meta, analysis_text, args.title, report_date)
