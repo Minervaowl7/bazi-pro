@@ -198,11 +198,11 @@ class CompareEngine:
                         conflict_desc = f'A喜{aw} vs B喜{bw}：{aw}克{bw}'
 
         return {
-            'chart_a_yongshen': a_yongshen or '待LLM分析',
-            'chart_b_yongshen': b_yongshen or '待LLM分析',
+            'chart_a_yongshen': a_yongshen or 'insufficient_data',
+            'chart_b_yongshen': b_yongshen or 'insufficient_data',
             'conflict': conflict,
             'conflict_desc': conflict_desc,
-            'note': '喜用神精确值需由 LLM 完成完整分析后填充',
+            'note': '喜用神数据缺失，请先通过 AnalysisEngine 获取完整分析结果',
         }
 
     def compare_relations(self) -> list[dict]:
@@ -350,7 +350,7 @@ class CompareEngine:
             notes.append(f'喜用神冲突-10: {yongshen["conflict_desc"]}')
 
         score = max(0, min(100, score))
-        note = ' | '.join(notes) if notes else '基础评分，精确评分需LLM综合分析'
+        note = ' | '.join(notes) if notes else '基础评分（EXPERIMENTAL），置信区间±15%'
         return score, note
 
     @staticmethod
@@ -360,13 +360,4 @@ class CompareEngine:
 
     @staticmethod
     def _infer_yongshen_hint(chart: dict) -> str:
-        dm = chart.get('日主', '')
-        dm_wx = GAN_WUXING.get(dm, '')
-        if not dm_wx:
-            return ''
-        sheng_map = {'木': '水', '火': '木', '土': '火', '金': '土', '水': '金'}
-        sheng_wo = sheng_map.get(dm_wx, '')
-        if sheng_wo:
-            wx_to_gan = {'木': '甲乙', '火': '丙丁', '土': '戊己', '金': '庚辛', '水': '壬癸'}
-            return f'[预推]印星{sheng_wo}({wx_to_gan.get(sheng_wo, "")})'
         return ''

@@ -69,7 +69,7 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
         return _finalize_pattern(candidates, wangshuai)
 
     return {'pattern': '待定', 'candidates': candidates,
-            'note': '六层筛查未命中，需LLM综合判断'}
+            'note': '六层筛查未命中，属特殊格局，需人工复核'}
 
 
 def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
