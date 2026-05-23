@@ -344,6 +344,103 @@ class TestAppEndpoints:
             app_module._analysis_tasks.pop(run_id, None)
 
 
+class TestErrorResponseFormat:
+
+    @pytest.fixture
+    def client(self):
+        from fastapi.testclient import TestClient
+        from server.app import app
+        return TestClient(app)
+
+    def test_api_key_error_format(self, client):
+        import os
+        import importlib
+        import server.app as app_module
+        original = os.environ.get('BAZI_API_KEY', '')
+        os.environ['BAZI_API_KEY'] = 'test-key-err'
+        try:
+            importlib.reload(app_module)
+            from fastapi.testclient import TestClient
+            fresh_client = TestClient(app_module.app)
+            resp = fresh_client.post('/api/analyze', json={
+                '性别': '女', '八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁',
+            })
+            assert resp.status_code == 401
+            data = resp.json()
+            assert 'error' in data
+            assert data['error']['code'] == 'UNAUTHORIZED'
+        finally:
+            os.environ['BAZI_API_KEY'] = original
+            importlib.reload(app_module)
+
+    def test_not_found_error_format(self, client):
+        resp = client.get('/api/status/nonexistent-run-id')
+        assert resp.status_code == 404
+        data = resp.json()
+        assert 'error' in data
+        assert data['error']['code'] == 'NOT_FOUND'
+
+    def test_payload_too_large_error_format(self, client):
+        big_payload = {
+            '性别': '女', '八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁',
+            '阳历': 'x' * 20000,
+        }
+        resp = client.post('/api/analyze', json=big_payload)
+        assert resp.status_code == 413
+        data = resp.json()
+        assert 'error' in data
+        assert data['error']['code'] == 'PAYLOAD_TOO_LARGE'
+
+    def test_rate_limit_error_format(self, client):
+        import server.app as app_module
+        original_max = getattr(app_module, '_RATE_LIMIT_REQUESTS', 30)
+        app_module._RATE_LIMIT_REQUESTS = 2
+        app_module._RATE_LIMIT_WINDOW_SECONDS = 60
+        try:
+            for _ in range(5):
+                client.post('/api/analyze', json={
+                    '性别': '女', '八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁',
+                })
+            resp = client.post('/api/analyze', json={
+                '性别': '女', '八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁',
+            })
+            if resp.status_code == 429:
+                data = resp.json()
+                assert 'error' in data
+                assert data['error']['code'] == 'RATE_LIMITED'
+        finally:
+            app_module._RATE_LIMIT_REQUESTS = original_max
+
+    def test_server_busy_error_format(self, client):
+        import server.app as app_module
+        original_max = app_module._MAX_CONCURRENT_TASKS
+        app_module._MAX_CONCURRENT_TASKS = 2
+        app_module._analysis_tasks.clear()
+        try:
+            for i in range(2):
+                app_module._analysis_tasks[f'filler-{i}'] = {
+                    'status': 'running', '_created_ts': time.time()
+                }
+            resp = client.post('/api/analyze', json={
+                '性别': '女', '八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁',
+            })
+            assert resp.status_code == 503
+            data = resp.json()
+            assert 'error' in data
+            assert data['error']['code'] == 'SERVER_BUSY'
+        finally:
+            app_module._MAX_CONCURRENT_TASKS = original_max
+            app_module._analysis_tasks.clear()
+
+    def test_internal_error_no_traceback(self, client):
+        import server.app as app_module
+        data = resp = client.get('/api/status/nonexistent')
+        assert resp.status_code == 404
+        data = resp.json()
+        assert 'traceback' not in str(data).lower()
+        assert 'exception' not in str(data).lower()
+
+
 class TestEnvironmentConfig:
 
     def test_env_int_override(self, monkeypatch):

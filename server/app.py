@@ -39,6 +39,13 @@ def _get_int_env(name: str, default: int, min_value: int = 1) -> int:
         return default
 
 
+def error_response(status_code: int, code: str, message: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=status_code,
+        content={"error": {"code": code, "message": message}},
+    )
+
+
 app = FastAPI(
     title="bazi-pro API",
     description="专业八字命理解读引擎 Web 服务",
@@ -74,12 +81,21 @@ _API_KEY = os.environ.get('BAZI_API_KEY', '')
 _api_key_scheme = APIKeyHeader(name='X-API-Key', auto_error=False)
 
 
+class _APIKeyError(Exception):
+    pass
+
+
+@app.exception_handler(_APIKeyError)
+async def _api_key_error_handler(request, exc):
+    return error_response(401, "UNAUTHORIZED", "API key 无效或缺失")
+
+
 async def _verify_api_key(api_key: str = Security(_api_key_scheme)):
     if not _API_KEY:
         return True
     if api_key == _API_KEY:
         return True
-    raise HTTPException(status_code=401, detail='Invalid API key')
+    raise _APIKeyError()
 
 
 class _RequestSizeLimitMiddleware:
@@ -91,7 +107,7 @@ class _RequestSizeLimitMiddleware:
         if scope["type"] == "http":
             for name, value in scope.get("headers", []):
                 if name == b"content-length" and int(value) > self.max_body_size:
-                    response = JSONResponse(status_code=413, content={"detail": "Request body too large"})
+                    response = error_response(413, "PAYLOAD_TOO_LARGE", "请求体过大")
                     await response(scope, receive, send)
                     return
         await self.app(scope, receive, send)
@@ -112,7 +128,7 @@ class _RateLimitMiddleware:
             timestamps = self._requests.setdefault(ip, [])
             self._requests[ip] = [t for t in timestamps if now - t < self.window_seconds]
             if len(self._requests[ip]) >= self.max_requests:
-                response = JSONResponse(status_code=429, content={"detail": "Too many requests"})
+                response = error_response(429, "RATE_LIMITED", "请求过于频繁，请稍后重试")
                 await response(scope, receive, send)
                 return
             self._requests[ip].append(now)
@@ -137,8 +153,8 @@ app.add_middleware(
 @app.exception_handler(Exception)
 async def _global_exception_handler(request, exc):
     debug = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
-    detail = str(exc) if debug else "Internal server error"
-    return JSONResponse(status_code=500, content={"detail": detail})
+    message = str(exc) if debug else "服务器内部错误"
+    return error_response(500, "INTERNAL_ERROR", message)
 
 
 _analysis_tasks: dict[str, dict] = {}
@@ -304,7 +320,7 @@ async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_ke
     _cleanup_expired_tasks()
 
     if len(_analysis_tasks) >= _MAX_CONCURRENT_TASKS:
-        raise HTTPException(status_code=503, detail='服务繁忙，请稍后重试')
+        return error_response(503, "SERVER_BUSY", "服务繁忙，请稍后重试")
 
     run_id = uuid.uuid4().hex
     payload_dict = payload.model_dump()
@@ -330,7 +346,7 @@ async def api_status(run_id: str, _auth=Depends(_verify_api_key)):
     """查询分析进度"""
     task = _analysis_tasks.get(run_id)
     if not task:
-        raise HTTPException(status_code=404, detail='run_id 不存在')
+        return error_response(404, "NOT_FOUND", "run_id 不存在")
     safe_task = {k: v for k, v in task.items() if not k.startswith('_')}
     return JSONResponse(safe_task)
 
@@ -340,7 +356,7 @@ async def api_result(run_id: str, _auth=Depends(_verify_api_key)):
     """获取分析结果"""
     task = _analysis_tasks.get(run_id)
     if not task:
-        raise HTTPException(status_code=404, detail='run_id 不存在')
+        return error_response(404, "NOT_FOUND", "run_id 不存在")
 
     if task['status'] == 'failed':
         return JSONResponse({
