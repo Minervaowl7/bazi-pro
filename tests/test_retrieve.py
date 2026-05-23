@@ -110,18 +110,35 @@ def test_report_dashboard():
 
 
 def test_version_consistency():
-    """版本号一致性"""
-    # pyproject.toml
-    ppt = (REPO_ROOT / "pyproject.toml").read_text()
-    assert 'version = "5.0.0"' in ppt
+    r = run(["python3", str(SCRIPTS / "check_version_consistency.py")])
+    assert r.returncode == 0, f"Version check failed: {r.stdout}\n{r.stderr}"
 
-    # bazi_pro/__init__.py
-    init = (REPO_ROOT / "bazi_pro" / "__init__.py").read_text()
-    assert '__version__ = "5.0.0"' in init
 
-    # README
-    readme = (REPO_ROOT / "README.md").read_text()
-    assert "v5.0" in readme
+def test_retrieve_single_json_schema():
+    r = run(["python3", str(SCRIPTS / "retrieve_classical.py"), "食神", "-k", "2", "--json"])
+    assert r.returncode == 0, f"exit={r.returncode} stderr={r.stderr}"
+    data = json.loads(r.stdout)
+    assert "queries" in data, f"Single query output missing 'queries' key: {list(data.keys())}"
+    assert len(data["queries"]) == 1
+    q = data["queries"][0]
+    assert "query" in q
+    assert "results" in q
+    assert "counter_evidence" in q, "Single query output missing counter_evidence"
+    assert isinstance(q["counter_evidence"], list)
+    assert data.get("corpus_size", 0) > 0
+
+
+def test_retrieve_batch_json_schema():
+    r = run(["python3", str(SCRIPTS / "retrieve_classical.py"), "--batch", "食神", "七杀", "-k", "2", "--json"])
+    assert r.returncode == 0, f"exit={r.returncode} stderr={r.stderr}"
+    data = json.loads(r.stdout)
+    assert "queries" in data, f"Batch output missing 'queries' key: {list(data.keys())}"
+    assert len(data["queries"]) == 2
+    for q in data["queries"]:
+        assert "query" in q
+        assert "results" in q
+        assert "counter_evidence" in q, "Batch query item missing counter_evidence"
+        assert isinstance(q["counter_evidence"], list)
 
 
 if __name__ == "__main__":

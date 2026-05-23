@@ -9,22 +9,32 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
                     element_forces: dict) -> dict:
     dm_wx = GAN_WUXING.get(day_master, '')
     if not dm_wx:
-        return {'yongshen': '待定', 'xishen': [], 'jishen': [], 'confidence': 0}
+        return {'yongshen': '待定', 'xishen': [], 'jishen': [], 'confidence': 0,
+                'trace': {'method': 'none', 'reason': '日主五行缺失'}}
 
     pattern_name = pattern_result.get('pattern', '')
     is_weak = wangshuai.get('is_weak', False)
     is_strong = wangshuai.get('is_strong', False)
+    trace = {'pattern_basis': pattern_name, 'wangshuai_basis': wangshuai.get('verdict', ''),
+             'method': '', 'reason': '', 'candidates_considered': []}
 
     yongshen_wx = _pattern_yongshen_wx(pattern_name, dm_wx)
-    if not yongshen_wx:
+    if yongshen_wx:
+        trace['method'] = 'pattern_based'
+        trace['reason'] = f'格局"{pattern_name}"推导用神为{yongshen_wx}'
+    else:
+        trace['method'] = 'wangshuai_fallback'
         if is_weak:
             yongshen_wx = SHENG_MAP.get(dm_wx, '')
+            trace['reason'] = f'身弱，取印星({yongshen_wx})为用'
         elif is_strong:
             ke_wx = KE_MAP.get(dm_wx, '')
             sheng_wx = WO_KE_MAP.get(dm_wx, '')
             yongshen_wx = ke_wx if ke_wx else sheng_wx
+            trace['reason'] = f'身强，取克泄({yongshen_wx})为用'
         else:
             yongshen_wx = SHENG_MAP.get(dm_wx, '')
+            trace['reason'] = f'中和偏弱，取印星({yongshen_wx})为用'
 
     xishen_wx = []
     if yongshen_wx == SHENG_MAP.get(dm_wx, ''):
@@ -52,6 +62,7 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
         'confidence': pattern_result.get('confidence', 0.5),
         'pattern_basis': pattern_name,
         'note': '确定性推导，基于格局+旺衰规则。调候用神需查穷通宝鉴，由LLM补充。',
+        'trace': trace,
     }
 
 

@@ -420,7 +420,11 @@ def main():
                 "cache": out["cache"],
                 "latency_ms": out["latency_ms"],
                 "corpus_size": out["corpus_size"],
-                "queries": [{"query": args.query[0], "results": out["results"]}]
+                "queries": [{
+                    "query": args.query[0],
+                    "results": out["results"],
+                    "counter_evidence": out.get("counter_evidence", []),
+                }],
             }
 
         if args.json:

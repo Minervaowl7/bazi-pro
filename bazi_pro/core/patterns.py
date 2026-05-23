@@ -28,15 +28,18 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
                    wangshuai: dict, element_forces: dict) -> dict:
     dm_wx = GAN_WUXING.get(day_master, '')
     if not dm_wx or len(bazi_parts) < 2:
-        return {'pattern': '数据不足', 'candidates': [], 'note': '日主或八字数据缺失'}
+        return {'pattern': '数据不足', 'candidates': [], 'note': '日主或八字数据缺失',
+                'trace': {'layers_checked': [], 'layers_missed': ['L0', 'L1', 'L2', 'L3']}}
 
     month_zhi = bazi_parts[1][1] if len(bazi_parts[1]) >= 2 else ''
     if not month_zhi:
-        return {'pattern': '数据不足', 'candidates': [], 'note': '月支缺失'}
+        return {'pattern': '数据不足', 'candidates': [], 'note': '月支缺失',
+                'trace': {'layers_checked': [], 'layers_missed': ['L0', 'L1', 'L2', 'L3']}}
 
     pct = element_forces.get('percent', {})
     candidates = []
     gans = [p[0] for p in bazi_parts if len(p) >= 1]
+    trace = {'layers_checked': [], 'layers_missed': [], 'layer_details': {}}
 
     yin_bi_wx = {dm_wx, SHENG_MAP.get(dm_wx, '')}
     yin_bi_pct = sum(pct.get(wx, 0) for wx in yin_bi_wx)
@@ -49,27 +52,53 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
 
     layer0_result = _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                                     wangshuai, pct, yin_bi_pct, ke_xie_hao_pct, gans)
+    trace['layers_checked'].append('L0')
     if layer0_result:
         candidates.append(layer0_result)
-        return _finalize_pattern(candidates, wangshuai)
+        trace['layer_details']['L0'] = {'hit': True, 'reason': layer0_result['reason']}
+        result = _finalize_pattern(candidates, wangshuai)
+        result['trace'] = trace
+        return result
+    trace['layers_missed'].append('L0')
+    trace['layer_details']['L0'] = {'hit': False, 'reason': '无专旺/从格/两行成象匹配'}
 
     layer1_result = _screen_layer1(day_master, month_zhi, gans)
+    trace['layers_checked'].append('L1')
     if layer1_result:
         candidates.append(layer1_result)
-        return _finalize_pattern(candidates, wangshuai)
+        trace['layer_details']['L1'] = {'hit': True, 'reason': layer1_result['reason']}
+        result = _finalize_pattern(candidates, wangshuai)
+        result['trace'] = trace
+        return result
+    trace['layers_missed'].append('L1')
+    trace['layer_details']['L1'] = {'hit': False, 'reason': '月令本气未透干'}
 
     layer2_result = _screen_layer2(day_master, month_zhi, gans)
+    trace['layers_checked'].append('L2')
     if layer2_result:
         candidates.append(layer2_result)
-        return _finalize_pattern(candidates, wangshuai)
+        trace['layer_details']['L2'] = {'hit': True, 'reason': layer2_result['reason']}
+        result = _finalize_pattern(candidates, wangshuai)
+        result['trace'] = trace
+        return result
+    trace['layers_missed'].append('L2')
+    trace['layer_details']['L2'] = {'hit': False, 'reason': '月令中气未透干或本气已透'}
 
     layer3_result = _screen_layer3(day_master, dm_wx, month_zhi, gans)
+    trace['layers_checked'].append('L3')
     if layer3_result:
         candidates.append(layer3_result)
-        return _finalize_pattern(candidates, wangshuai)
+        trace['layer_details']['L3'] = {'hit': True, 'reason': layer3_result['reason']}
+        result = _finalize_pattern(candidates, wangshuai)
+        result['trace'] = trace
+        return result
+    trace['layers_missed'].append('L3')
+    trace['layer_details']['L3'] = {'hit': False, 'reason': '月令本气非比劫且已透干'}
 
-    return {'pattern': '待定', 'candidates': candidates,
-            'note': '六层筛查未命中，属特殊格局，需人工复核'}
+    result = {'pattern': '待定', 'candidates': candidates,
+              'note': '六层筛查未命中，属特殊格局，需人工复核'}
+    result['trace'] = trace
+    return result
 
 
 def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,

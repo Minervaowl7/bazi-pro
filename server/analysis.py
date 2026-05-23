@@ -22,7 +22,6 @@ from bazi_pro.core_rules import (
     screen_pattern,
 )
 from server.cache import get_cache
-from server.schemas import BaziAnalysisRequest
 from server.ws import manager
 
 
@@ -153,31 +152,12 @@ async def _do_retrieve(mcp_json: dict) -> dict:
 
 
 def _validate_input(mcp_json: dict) -> dict:
-    try:
-        BaziAnalysisRequest.model_validate(mcp_json)
-        return {
-            'valid': True,
-            'errors': [],
-            'bazi': mcp_json.get('八字', ''),
-            'day_master': mcp_json.get('日主', ''),
-            'gender': mcp_json.get('性别', ''),
-        }
-    except Exception as e:
-        errors = []
-        if hasattr(e, 'errors'):
-            for err in e.errors():
-                loc = '.'.join(str(x) for x in err.get('loc', []))
-                msg = err.get('msg', str(err))
-                errors.append(f'{loc}: {msg}' if loc else msg)
-        else:
-            errors.append(str(e))
-        return {
-            'valid': False,
-            'errors': errors,
-            'bazi': mcp_json.get('八字', ''),
-            'day_master': mcp_json.get('日主', ''),
-            'gender': mcp_json.get('性别', ''),
-        }
+    from bazi_pro.validation import validate_bazi_input
+    result = validate_bazi_input(mcp_json)
+    result['bazi'] = mcp_json.get('八字', '')
+    result['day_master'] = mcp_json.get('日主', '')
+    result['gender'] = mcp_json.get('性别', '')
+    return result
 
 
 def _estimate_strength(mcp_json: dict, bazi_parts: list[str],

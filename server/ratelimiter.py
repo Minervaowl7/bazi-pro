@@ -3,6 +3,7 @@
 import logging
 import os
 import time
+import uuid
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -58,6 +59,7 @@ class RedisRateLimiter(RateLimiter):
         self._prefix = key_prefix
         self._redis = None
         self._fallback: Optional[MemoryRateLimiter] = None
+        self._degraded = False
         try:
             import redis
             self._redis = redis.from_url(redis_url, decode_responses=True)
@@ -66,6 +68,7 @@ class RedisRateLimiter(RateLimiter):
             logger.warning("RedisRateLimiter init failed: %s, falling back to memory", e)
             self._redis = None
             self._fallback = MemoryRateLimiter(max_requests, window_seconds)
+            self._degraded = True
 
     def _key(self, key: str) -> str:
         return f"{self._prefix}{key}"
@@ -75,26 +78,34 @@ class RedisRateLimiter(RateLimiter):
             try:
                 now = time.time()
                 rkey = self._key(key)
+                member = f"{now}:{uuid.uuid4()}"
                 pipe = self._redis.pipeline()
                 pipe.zremrangebyscore(rkey, 0, now - self.window_seconds)
                 pipe.zcard(rkey)
-                pipe.execute()
-                _, count = pipe.execute()
+                pipe.zadd(rkey, {member: now})
+                pipe.expire(rkey, self.window_seconds + 1)
+                results = pipe.execute()
+                count = results[1]
                 if count >= self.max_requests:
+                    self._redis.zrem(rkey, member)
                     return False
-                self._redis.zadd(rkey, {str(now): now})
-                self._redis.expire(rkey, self.window_seconds + 1)
                 return True
             except Exception as e:
-                logger.warning("Redis rate limit failed: %s, falling back", e)
+                logger.warning("Redis rate limit failed: %s, falling back to memory", e)
+                self._degraded = True
         if self._fallback:
             return self._fallback.is_allowed(key)
-        return True
+        logger.error("Rate limiter has no backend available, denying request")
+        return False
 
     def cleanup(self, now: float) -> int:
         if self._fallback:
             return self._fallback.cleanup(now)
         return 0
+
+    @property
+    def is_degraded(self) -> bool:
+        return self._degraded
 
 
 def create_rate_limiter(max_requests: int = 30,

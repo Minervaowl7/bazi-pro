@@ -20,7 +20,7 @@ from server.analysis import run_analysis
 from server.cache import get_cache
 from server.ratelimiter import RateLimiter, create_rate_limiter
 from server.schemas import BaziAnalysisRequest
-from server.taskstore import MemoryTaskStore, create_task_store
+from server.taskstore import create_task_store
 from server.ws import manager
 
 logger = logging.getLogger("bazi-pro")
@@ -110,7 +110,12 @@ class _RequestSizeLimitMiddleware:
             transfer_encoding = None
             for name, value in scope.get("headers", []):
                 if name == b"content-length":
-                    content_length = int(value)
+                    try:
+                        content_length = int(value)
+                    except (ValueError, TypeError):
+                        response = error_response(400, "BAD_REQUEST", "无效的 Content-Length")
+                        await response(scope, receive, send)
+                        return
                 if name == b"transfer-encoding":
                     transfer_encoding = value.decode("latin-1").lower()
 
@@ -121,30 +126,21 @@ class _RequestSizeLimitMiddleware:
 
             if transfer_encoding and "chunked" in transfer_encoding:
                 received = 0
-                limit_exceeded = False
 
                 async def chunked_receive():
-                    nonlocal received, limit_exceeded
+                    nonlocal received
                     message = await receive()
                     if message.get("type") == "http.request":
                         body = message.get("body", b"")
                         received += len(body)
                         if received > self.max_body_size:
-                            limit_exceeded = True
+                            message["body"] = b""
+                            message["more_body"] = False
                     return message
 
-                async def limited_send(message):
-                    if limit_exceeded and message.get("type") in (
-                        "http.response.start", "http.response.body"
-                    ):
-                        return
-                    await send(message)
+                await self.app(scope, chunked_receive, send)
 
-                await self.app(scope, chunked_receive, limited_send)
-
-                if limit_exceeded:
-                    response = error_response(413, "PAYLOAD_TOO_LARGE", "请求体过大")
-                    await response(scope, receive, send)
+                if received > self.max_body_size:
                     return
                 return
 
@@ -368,7 +364,7 @@ async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_ke
     """
     _cleanup_expired_tasks()
 
-    if isinstance(_task_store, MemoryTaskStore) and len(_task_store) >= _MAX_CONCURRENT_TASKS:
+    if _task_store.count_active() >= _MAX_CONCURRENT_TASKS:
         return error_response(503, "SERVER_BUSY", "服务繁忙，请稍后重试")
 
     run_id = uuid.uuid4().hex
@@ -430,7 +426,7 @@ async def api_result(run_id: str, _auth=Depends(_verify_api_key)):
 async def ws_connect(ws: WebSocket, run_id: str):
     await ws.accept()
     if _API_KEY:
-        api_key = ws.query_params.get('api_key') or ws.headers.get('x-api-key', '')
+        api_key = ws.headers.get('x-api-key', '')
         if api_key != _API_KEY:
             await ws.close(code=4001, reason='Invalid API key')
             return

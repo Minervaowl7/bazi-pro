@@ -50,16 +50,15 @@ from bazi_pro.core.yongshen import _pattern_yongshen_wx, derive_yongshen
 
 
 def full_analysis(mcp_json: dict) -> dict:
+    from bazi_pro.validation import validate_bazi_input
+    validation = validate_bazi_input(mcp_json, require_gender=False)
+    if not validation['valid']:
+        return {'status': 'invalid_input', 'errors': validation['errors']}
+
     bazi = mcp_json.get('八字', '')
     day_master = mcp_json.get('日主', '')
 
-    if not bazi or not day_master:
-        return {'status': 'invalid_input', 'note': '八字或日主缺失'}
-
     bazi_parts = bazi.split()
-    if len(bazi_parts) < 2:
-        return {'status': 'invalid_input', 'note': '八字数据不完整，至少需要年月两柱'}
-
     month_zhi = bazi_parts[1][1] if len(bazi_parts[1]) >= 2 else ''
 
     deling_status, deling_score = calc_deling(day_master, month_zhi)
