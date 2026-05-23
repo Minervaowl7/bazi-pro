@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro Report Composer v4.4
+bazi-pro Report Composer v5.0
 将原始分析 Markdown 解析为结构化咨询报告
 Reader-first: 结论先行，技术步骤进 Appendix
 """

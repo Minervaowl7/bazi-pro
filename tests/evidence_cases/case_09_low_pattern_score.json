@@ -1,0 +1,34 @@
+{
+  "id": "case_09_low_pattern_score",
+  "description": "Low pattern score (<40) case, E2 confidence should be 0.70",
+  "input": {
+    "day_master": "乙木",
+    "gender": "女",
+    "bazi": "庚申 戊子 乙卯 丁丑",
+    "deling_score": -1,
+    "dedi_score": 1.5,
+    "deshi_score": 2.0,
+    "wangshuai": "身弱",
+    "pattern_name": "正财格",
+    "pattern_score": 30,
+    "pattern_tier": "下等",
+    "yongshen": "水",
+    "xishen": "木、火",
+    "jishen": "金",
+    "classical_refs": [
+      {"id": "YHZ_00067", "topic": "格局", "source": "渊海子平", "content": "财多身弱，富屋贫人，反为财所累"},
+      {"id": "SFTK_00088", "topic": "用神", "source": "神峰通考", "content": "身弱财多，须用比劫以分财"}
+    ],
+    "key_features": ["子卯刑", "卯申暗合"],
+    "dayun_summary": [
+      {"ganzhi": "丁亥", "ji": "平偏吉"},
+      {"ganzhi": "丙戌", "ji": "凶"},
+      {"ganzhi": "乙酉", "ji": "凶"}
+    ]
+  },
+  "expected": {
+    "min_chains": 5,
+    "completeness": "High",
+    "must_have_stages": ["E1", "E2", "E3", "E4", "E5"]
+  }
+}

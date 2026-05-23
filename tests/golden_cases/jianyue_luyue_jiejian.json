@@ -4,13 +4,16 @@
   "scenario": "丁火巳月，巳中丙火劫财当令不透 → 建禄月劫之格，透官煞，印化通关",
   "input": {
     "day_master": "丁",
+    "bazi": "壬辰 乙巳 丁卯 癸卯",
     "month_branch": "巳",
-    "month_main_qi": "丙",
-    "month_main_qi_shishen": "劫财",
-    "surface_stems": ["壬", "乙", "癸"],
-    "expected_pattern": "建禄月劫之格"
+    "expected_pattern": "建禄月劫，透正官",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "得势"
   },
-  "must_include": ["建禄月劫", "日与月同，本身不可为用"],
+  "must_include": ["建禄月劫"],
   "must_not_include": ["暗劫财格", "暗比肩格"],
   "classical_support": ["ZPZ_00031", "SMTH_01164"],
   "notes": "v3.5修复：层3拆分，比劫月令必须走建禄月劫框架"

@@ -1,0 +1,27 @@
+{
+  "id": "case_07_minimal_input",
+  "description": "Minimal input with only required fields, no classical refs, no dayun summary, no key features",
+  "input": {
+    "day_master": "己土",
+    "gender": "女",
+    "bazi": "辛未 己亥 己丑 丁卯",
+    "deling_score": 0,
+    "dedi_score": 2.0,
+    "deshi_score": 3.0,
+    "wangshuai": "中和",
+    "pattern_name": "正财格",
+    "pattern_score": 50,
+    "pattern_tier": "中等",
+    "yongshen": "火",
+    "xishen": "土、木",
+    "jishen": "水",
+    "classical_refs": [],
+    "key_features": [],
+    "dayun_summary": []
+  },
+  "expected": {
+    "min_chains": 3,
+    "completeness": "Medium",
+    "must_have_stages": ["E1", "E2", "E3"]
+  }
+}

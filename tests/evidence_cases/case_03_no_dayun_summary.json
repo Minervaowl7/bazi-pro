@@ -1,0 +1,30 @@
+{
+  "id": "case_03_no_dayun_summary",
+  "description": "Analysis with no dayun summary, E4 stage should be absent",
+  "input": {
+    "day_master": "庚金",
+    "gender": "男",
+    "bazi": "壬午 壬子 庚申 丙子",
+    "deling_score": -1,
+    "dedi_score": 3.0,
+    "deshi_score": 2.5,
+    "wangshuai": "身弱",
+    "pattern_name": "伤官格",
+    "pattern_score": 60,
+    "pattern_tier": "中等",
+    "yongshen": "土",
+    "xishen": "金、水",
+    "jishen": "火",
+    "classical_refs": [
+      {"id": "YHZ_00089", "topic": "格局", "source": "渊海子平", "content": "伤官务要伤尽，官星虽出亦无害"},
+      {"id": "SFTK_00045", "topic": "用神", "source": "神峰通考", "content": "伤官用印者，用印以制伤也"}
+    ],
+    "key_features": ["子午冲", "申子半合水"],
+    "dayun_summary": []
+  },
+  "expected": {
+    "min_chains": 4,
+    "completeness": "High",
+    "must_have_stages": ["E1", "E2", "E3", "E5"]
+  }
+}

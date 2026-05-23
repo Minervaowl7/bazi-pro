@@ -1,0 +1,23 @@
+{
+  "id": "guishui_shangguan",
+  "description": "癸水日主伤官格 — 甲木伤官透干",
+  "scenario": "癸水日主，寅月甲木伤官透干",
+  "input": {
+    "day_master": "癸",
+    "bazi": "甲寅 丙寅 癸卯 庚申",
+    "month_branch": "寅",
+    "expected_pattern": "伤官格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 1,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "伤官格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "癸水日主寅月甲木伤官透干"
+}

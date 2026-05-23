@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro 命运河流时间轴 v4.5 — SVG 曲线大运时间轴 + 波峰波谷吉凶表达
+bazi-pro 命运河流时间轴 v5.0 — SVG 曲线大运时间轴 + 波峰波谷吉凶表达
 纯 CSS/SVG 实现，支持键盘导航和色温渐变
 """
 

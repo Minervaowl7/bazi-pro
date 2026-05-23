@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro Replay Viewer v4.3 — 裁决过程回放
+bazi-pro Replay Viewer v5.0 — 裁决过程回放
 三栏布局：主张 · 证据 · 反证
 像法庭回放，不是普通时间线
 """
@@ -63,7 +63,7 @@ def render_replay(vm: DashboardVM) -> str:
 </div>
 
 <footer class="replay-footer">
-    <p>bazi-pro v4.3 · Verdict Replay · 仅供传统文化学习与参考</p>
+    <p>bazi-pro v5.0 · Verdict Replay · 仅供传统文化学习与参考</p>
 </footer>
 
 </div>

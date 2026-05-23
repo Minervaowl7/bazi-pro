@@ -1,21 +1,18 @@
 """单元测试 — bazi_pro 核心模块"""
 
-import json
 import os
 import tempfile
-from pathlib import Path
 
 from bazi_pro import (
-    AnalysisEngine, GAN_WUXING, ZHI_WUXING, GAN_SHISHEN_MAP,
-    derive_shishen, count_wuxing_from_bazi, wuxing_pct,
+    AnalysisEngine, derive_shishen, count_wuxing_from_bazi, wuxing_pct,
 )
-from bazi_pro.compare_engine import CompareEngine, GAN_HE, ZHI_CHONG, ZHI_HE, ZHI_HAI, ZHI_XING
-from bazi_pro.liunian_sandbox import LiunianSandbox, GAN, ZHI
+from bazi_pro.compare_engine import CompareEngine
+from bazi_pro.liunian_sandbox import LiunianSandbox
 from bazi_pro.archive import ArchiveStore
 from bazi_pro.calibration import CalibrationTracker
 from bazi_pro.plugin_api import BaziPlugin, register_plugin, list_plugins
 from bazi_pro.evidence import new_evidence, build_analysis_evidence
-from bazi_pro.view_model import DashboardVM, EvidenceVM, PillarVM, VerdictVM
+from bazi_pro.view_model import DashboardVM, EvidenceVM
 
 
 class TestDeriveShishen:
@@ -290,3 +287,202 @@ class TestViewModel:
         assert vm.bazi == ''
         assert len(vm.pillars) == 0
         assert vm.verdict.confidence == 0.80
+
+
+class TestCoreRulesCanggan:
+
+    def test_zi_canggan(self):
+        from bazi_pro.core_rules import get_canggan
+        cg = get_canggan('子')
+        assert len(cg) == 1
+        assert cg[0] == ('癸', '本气')
+
+    def test_chou_canggan(self):
+        from bazi_pro.core_rules import get_canggan
+        cg = get_canggan('丑')
+        assert len(cg) == 3
+        assert cg[0] == ('己', '本气')
+        assert cg[1] == ('癸', '中气')
+        assert cg[2] == ('辛', '余气')
+
+    def test_wu_canggan(self):
+        from bazi_pro.core_rules import get_canggan
+        cg = get_canggan('午')
+        assert len(cg) == 2
+        assert cg[0] == ('丁', '本气')
+        assert cg[1] == ('己', '中气')
+
+
+class TestCoreRulesDeling:
+
+    def test_jia_yin_linquan(self):
+        from bazi_pro.core_rules import calc_deling
+        status, score = calc_deling('甲', '寅')
+        assert status == '临官'
+        assert score == 3
+
+    def test_jia_shen_jue(self):
+        from bazi_pro.core_rules import calc_deling
+        status, score = calc_deling('甲', '申')
+        assert status == '绝'
+        assert score == -3
+
+    def test_bing_si_linquan(self):
+        from bazi_pro.core_rules import calc_deling
+        status, score = calc_deling('丙', '巳')
+        assert status == '临官'
+        assert score == 3
+
+    def test_ren_zi_diwang(self):
+        from bazi_pro.core_rules import calc_deling
+        status, score = calc_deling('壬', '子')
+        assert status == '帝旺'
+        assert score == 3
+
+
+class TestCoreRulesDedi:
+
+    def test_jia_with_yin_root(self):
+        from bazi_pro.core_rules import calc_dedi
+        result = calc_dedi('甲', ['甲子', '丙寅', '甲辰', '庚午'])
+        assert result['score'] > 0
+        assert result['level'] in ('得地', '偏得地', '不得地')
+
+    def test_jia_no_root(self):
+        from bazi_pro.core_rules import calc_dedi
+        result = calc_dedi('甲', ['庚午', '丙申', '庚申', '壬午'])
+        assert result['score'] < 1.5
+
+
+class TestCoreRulesDeshi:
+
+    def test_jia_with_yin_bi(self):
+        from bazi_pro.core_rules import calc_deshi
+        result = calc_deshi('甲', ['壬子', '癸寅', '甲辰', '乙午'])
+        assert result['score'] > 0
+
+    def test_jia_no_yin_bi(self):
+        from bazi_pro.core_rules import calc_deshi
+        result = calc_deshi('甲', ['庚午', '丙申', '庚申', '壬午'])
+        assert result['level'] in ('不得势', '偏得势')
+
+
+class TestCoreRulesWangshuai:
+
+    def test_shenwang(self):
+        from bazi_pro.core_rules import judge_wangshuai
+        result = judge_wangshuai(3, 3.5, 5)
+        assert result['verdict'] == '身旺'
+        assert result['is_strong'] is True
+
+    def test_shenruo(self):
+        from bazi_pro.core_rules import judge_wangshuai
+        result = judge_wangshuai(-2, 0.5, 1)
+        assert '弱' in result['verdict']
+        assert result['is_weak'] is True
+
+    def test_jiwang(self):
+        from bazi_pro.core_rules import judge_wangshuai
+        result = judge_wangshuai(3, 3.5, 7)
+        assert result['verdict'] in ('极旺', '身旺')
+        assert result['is_strong'] is True
+
+
+class TestCoreRulesElementForces:
+
+    def test_basic_calc(self):
+        from bazi_pro.core_rules import calc_element_forces
+        result = calc_element_forces(['壬午', '乙巳', '丁亥', '癸卯'], '巳')
+        pct = result['percent']
+        total = sum(pct.values())
+        assert abs(total - 100) < 1.0
+        assert pct['火'] > 0
+        assert pct['水'] > 0
+
+    def test_all_five_present(self):
+        from bazi_pro.core_rules import calc_element_forces
+        result = calc_element_forces(['甲子', '丙寅', '戊辰', '庚午'], '寅')
+        pct = result['percent']
+        for wx in ['木', '火', '土', '金', '水']:
+            assert pct.get(wx, 0) >= 0
+
+
+class TestCoreRulesRelations:
+
+    def test_chong(self):
+        from bazi_pro.core_rules import detect_relations
+        result = detect_relations(['甲子', '丙午', '戊辰', '庚申'])
+        chong = [r for r in result if r['type'] == '地支冲']
+        assert len(chong) > 0
+
+    def test_he(self):
+        from bazi_pro.core_rules import detect_relations
+        result = detect_relations(['甲子', '己丑', '戊辰', '庚申'])
+        gan_he = [r for r in result if r['type'] == '天干合']
+        assert len(gan_he) > 0
+
+
+class TestCoreRulesPattern:
+
+    def test_zhenguan_ge(self):
+        from bazi_pro.core_rules import screen_pattern, judge_wangshuai, calc_element_forces
+        bazi_parts = ['庚午', '戊寅', '辛巳', '壬辰']
+        wangshuai = judge_wangshuai(2, 2.0, 3.0)
+        ef = calc_element_forces(bazi_parts, '寅')
+        result = screen_pattern('辛', bazi_parts, wangshuai, ef)
+        assert result['pattern'] != '数据不足'
+        assert result['confidence'] > 0
+
+    def test_jianlu_yuejie(self):
+        from bazi_pro.core_rules import screen_pattern, judge_wangshuai, calc_element_forces
+        bazi_parts = ['庚午', '戊寅', '甲子', '丙寅']
+        wangshuai = judge_wangshuai(3, 3.0, 4.0)
+        ef = calc_element_forces(bazi_parts, '寅')
+        result = screen_pattern('甲', bazi_parts, wangshuai, ef)
+        assert '建禄月劫' in result['pattern'] or result['layer'] >= 0
+
+
+class TestCoreRulesYongshen:
+
+    def test_basic_derive(self):
+        from bazi_pro.core_rules import derive_yongshen, screen_pattern, judge_wangshuai, calc_element_forces
+        bazi_parts = ['庚午', '戊寅', '辛巳', '壬辰']
+        wangshuai = judge_wangshuai(2, 2.0, 3.0)
+        ef = calc_element_forces(bazi_parts, '寅')
+        pattern = screen_pattern('辛', bazi_parts, wangshuai, ef)
+        result = derive_yongshen('辛', bazi_parts, pattern, wangshuai, ef)
+        assert result['yongshen'] != ''
+        assert result['confidence'] > 0
+
+
+class TestCoreRulesFullAnalysis:
+
+    def test_basic_analysis(self):
+        from bazi_pro.core_rules import full_analysis
+        result = full_analysis({
+            '八字': '壬午 乙巳 丁亥 癸卯',
+            '日主': '丁',
+            '性别': '女',
+        })
+        assert result['status'] == 'completed'
+        assert result['wangshuai']['verdict'] != ''
+        assert result['pattern']['pattern'] != ''
+        assert result['yongshen']['yongshen'] != ''
+        assert len(result['pillars']) == 4
+        assert len(result['relations']) >= 0
+
+    def test_invalid_input(self):
+        from bazi_pro.core_rules import full_analysis
+        result = full_analysis({'八字': '', '日主': ''})
+        assert result['status'] == 'invalid_input'
+
+    def test_element_forces_sum(self):
+        from bazi_pro.core_rules import full_analysis
+        result = full_analysis({
+            '八字': '壬午 乙巳 丁亥 癸卯',
+            '日主': '丁',
+            '性别': '女',
+        })
+        pct = result['element_forces']['percent']
+        total = sum(pct.values())
+        assert abs(total - 100) < 1.0

@@ -1,0 +1,23 @@
+{
+  "id": "yinsi_xing",
+  "description": "地支刑 — 寅巳刑",
+  "scenario": "甲木日主，月支寅日支巳，寅巳相刑",
+  "input": {
+    "day_master": "甲",
+    "bazi": "庚午 戊寅 甲巳 丙寅",
+    "month_branch": "寅",
+    "expected_pattern": "比肩格",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "比肩格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "月支寅与日支巳相刑"
+}

@@ -1,0 +1,36 @@
+{
+  "id": "case_10_multiple_key_features",
+  "description": "Multiple key features case with many structural characteristics",
+  "input": {
+    "day_master": "戊土",
+    "gender": "男",
+    "bazi": "甲子 丙寅 戊午 壬子",
+    "deling_score": 1,
+    "dedi_score": 2.5,
+    "deshi_score": 3.5,
+    "wangshuai": "身旺",
+    "pattern_name": "偏印格",
+    "pattern_score": 60,
+    "pattern_tier": "中等",
+    "yongshen": "金",
+    "xishen": "水、木",
+    "jishen": "火",
+    "classical_refs": [
+      {"id": "YHZ_00045", "topic": "刑冲", "source": "渊海子平", "content": "子午冲，水火交战，须调候为急"},
+      {"id": "SFTK_00067", "topic": "刑冲", "source": "神峰通考", "content": "寅午半合火，火旺土燥，宜润泽"}
+    ],
+    "key_features": ["甲己合", "寅午半合火", "子午冲", "子子自刑", "戊癸合", "寅申冲"],
+    "dayun_summary": [
+      {"ganzhi": "丁卯", "ji": "凶"},
+      {"ganzhi": "戊辰", "ji": "平偏吉"},
+      {"ganzhi": "己巳", "ji": "吉"},
+      {"ganzhi": "庚午", "ji": "大吉"},
+      {"ganzhi": "辛未", "ji": "吉"}
+    ]
+  },
+  "expected": {
+    "min_chains": 5,
+    "completeness": "High",
+    "must_have_stages": ["E1", "E2", "E3", "E4", "E5"]
+  }
+}

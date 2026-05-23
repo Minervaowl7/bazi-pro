@@ -1,0 +1,23 @@
+{
+  "id": "zhenguan_zhongqi",
+  "description": "正官格 — 月令正官中气透干",
+  "scenario": "甲木日主，戌月辛金正官中气透干",
+  "input": {
+    "day_master": "甲",
+    "bazi": "壬申 辛戌 甲辰 庚午",
+    "month_branch": "戌",
+    "expected_pattern": "正官格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "正官格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "月支戌中气辛金正官透干"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "jianlu_wuyong",
+  "description": "建禄格 — 甲木寅月建禄，无财官煞食透出",
+  "scenario": "甲木日主，寅月建禄，四天干无比劫外有用神",
+  "input": {
+    "day_master": "甲",
+    "bazi": "甲子 壬寅 甲子 癸亥",
+    "month_branch": "寅",
+    "expected_pattern": "比肩格",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "比肩格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "月支寅本气甲木比肩，四天干无财官煞食透出"
+}

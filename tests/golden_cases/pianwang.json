@@ -1,0 +1,23 @@
+{
+  "id": "pianwang",
+  "description": "偏旺 — 庚金日主，得令得地不得势",
+  "scenario": "庚金日主，申月临官，得地但得势不足",
+  "input": {
+    "day_master": "庚",
+    "bazi": "庚辰 庚申 庚午 丙戌",
+    "month_branch": "申",
+    "expected_pattern": "比肩格",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "火",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "比肩格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "得令+得地+不得势"
+}

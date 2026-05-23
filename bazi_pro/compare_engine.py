@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""
-bazi-pro 命盘对比引擎 v5.0
-双命盘并排对比：四柱、五行、喜用神、合化关系、兼容性评分
-"""
+"""bazi-pro 命盘对比引擎 v5.0 (EXPERIMENTAL)"""
 
 from dataclasses import dataclass, field
-from bazi_pro import GAN_WUXING, ZHI_WUXING, derive_shishen, count_wuxing_from_bazi, wuxing_pct
+from bazi_pro import GAN_WUXING, derive_shishen, count_wuxing_from_bazi, wuxing_pct
+
+EXPERIMENTAL = True
 
 
 GAN_HE = {
@@ -60,6 +59,8 @@ class CompareResult:
     relation_analysis: list[dict] = field(default_factory=list)
     compatibility_score: int = 0
     compatibility_note: str = ''
+    experimental: bool = True
+    compatibility_ci: str = ''
 
 
 class CompareEngine:
@@ -96,6 +97,8 @@ class CompareEngine:
         score, note = self.compatibility_score()
         result.compatibility_score = score
         result.compatibility_note = note
+        result.experimental = True
+        result.compatibility_ci = f'{result.compatibility_score}±15'
         return result
 
     def compare_pillars(self) -> list[dict]:
@@ -195,11 +198,11 @@ class CompareEngine:
                         conflict_desc = f'A喜{aw} vs B喜{bw}：{aw}克{bw}'
 
         return {
-            'chart_a_yongshen': a_yongshen or '待LLM分析',
-            'chart_b_yongshen': b_yongshen or '待LLM分析',
+            'chart_a_yongshen': a_yongshen or 'insufficient_data',
+            'chart_b_yongshen': b_yongshen or 'insufficient_data',
             'conflict': conflict,
             'conflict_desc': conflict_desc,
-            'note': '喜用神精确值需由 LLM 完成完整分析后填充',
+            'note': '喜用神数据缺失，请先通过 AnalysisEngine 获取完整分析结果',
         }
 
     def compare_relations(self) -> list[dict]:
@@ -216,36 +219,42 @@ class CompareEngine:
                     'type': '日主互动',
                     'relation': '相生',
                     'description': f'A日主{a_dm_wx}生B日主{b_dm_wx}',
+                    'confidence_interval': '±15%',
                 })
             elif WUXING_SHENG.get((b_dm_wx, a_dm_wx)):
                 relations.append({
                     'type': '日主互动',
                     'relation': '相生',
                     'description': f'B日主{b_dm_wx}生A日主{a_dm_wx}',
+                    'confidence_interval': '±15%',
                 })
             elif WUXING_KE.get((a_dm_wx, b_dm_wx)):
                 relations.append({
                     'type': '日主互动',
                     'relation': '相克',
                     'description': f'A日主{a_dm_wx}克B日主{b_dm_wx}',
+                    'confidence_interval': '±15%',
                 })
             elif WUXING_KE.get((b_dm_wx, a_dm_wx)):
                 relations.append({
                     'type': '日主互动',
                     'relation': '相克',
                     'description': f'B日主{b_dm_wx}克A日主{a_dm_wx}',
+                    'confidence_interval': '±15%',
                 })
             elif a_dm_wx == b_dm_wx:
                 relations.append({
                     'type': '日主互动',
                     'relation': '比和',
                     'description': f'A与B日主同属{a_dm_wx}',
+                    'confidence_interval': '±15%',
                 })
             else:
                 relations.append({
                     'type': '日主互动',
                     'relation': '平',
                     'description': f'A日主{a_dm_wx} vs B日主{b_dm_wx}',
+                    'confidence_interval': '±15%',
                 })
 
         a_gans = [p[0] for p in a_bz.split() if len(p) >= 1]
@@ -258,6 +267,7 @@ class CompareEngine:
                         'type': '天干合',
                         'relation': '合化',
                         'description': f'A{ag}合B{bg}→化{he_result}',
+                        'confidence_interval': '±15%',
                     })
 
         a_zhis = [p[1] for p in a_bz.split() if len(p) >= 2]
@@ -270,6 +280,7 @@ class CompareEngine:
                         'type': '地支冲',
                         'relation': '冲',
                         'description': f'A{az}冲B{bz}',
+                        'confidence_interval': '±15%',
                     })
                 if pair in ZHI_HE:
                     he_wx = ZHI_HE[pair]
@@ -277,18 +288,21 @@ class CompareEngine:
                         'type': '地支合',
                         'relation': '合',
                         'description': f'A{az}合B{bz}→化{he_wx}',
+                        'confidence_interval': '±15%',
                     })
                 if pair in ZHI_HAI:
                     relations.append({
                         'type': '地支害',
                         'relation': '害',
                         'description': f'A{az}害B{bz}',
+                        'confidence_interval': '±15%',
                     })
                 if pair in ZHI_XING:
                     relations.append({
                         'type': '地支刑',
                         'relation': '刑',
                         'description': f'A{az}刑B{bz}',
+                        'confidence_interval': '±15%',
                     })
 
         return relations
@@ -336,7 +350,7 @@ class CompareEngine:
             notes.append(f'喜用神冲突-10: {yongshen["conflict_desc"]}')
 
         score = max(0, min(100, score))
-        note = ' | '.join(notes) if notes else '基础评分，精确评分需LLM综合分析'
+        note = ' | '.join(notes) if notes else '基础评分（EXPERIMENTAL），置信区间±15%'
         return score, note
 
     @staticmethod
@@ -346,13 +360,4 @@ class CompareEngine:
 
     @staticmethod
     def _infer_yongshen_hint(chart: dict) -> str:
-        dm = chart.get('日主', '')
-        dm_wx = GAN_WUXING.get(dm, '')
-        if not dm_wx:
-            return ''
-        sheng_map = {'木': '水', '火': '木', '土': '火', '金': '土', '水': '金'}
-        sheng_wo = sheng_map.get(dm_wx, '')
-        if sheng_wo:
-            wx_to_gan = {'木': '甲乙', '火': '丙丁', '土': '戊己', '金': '庚辛', '水': '壬癸'}
-            return f'[预推]印星{sheng_wo}({wx_to_gan.get(sheng_wo, "")})'
         return ''

@@ -4,13 +4,16 @@
   "scenario": "丙火日主，官杀极重。日坐午火帝旺有根 → 身弱不从，非从杀格",
   "input": {
     "day_master": "丙",
+    "bazi": "壬子 庚戌 丙午 壬子",
     "month_branch": "戌",
-    "day_branch": "午",
-    "官杀透干": 3,
-    "dedi_score": 2.3,
-    "expected_verdict": "身弱不从杀"
+    "expected_pattern": "暗食神格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "木",
+    "expected_deling_score": -2,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
   },
-  "must_include": ["身弱", "不从", "有根"],
+  "must_include": ["食神"],
   "must_not_include": ["从杀格", "从官杀"],
   "classical_support": ["SFTK_00068", "SFTK_00120"],
   "notes": "日坐帝旺有强根，即使官杀极重也不从"

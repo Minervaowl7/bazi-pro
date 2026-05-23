@@ -1,0 +1,23 @@
+{
+  "id": "jitu_piancai",
+  "description": "己土日主偏财格 — 壬水偏财透干",
+  "scenario": "己土日主，亥月壬水偏财透干",
+  "input": {
+    "day_master": "己",
+    "bazi": "壬申 甲亥 己未 丙寅",
+    "month_branch": "亥",
+    "expected_pattern": "正财格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "火",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "正财格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "己土日主亥月壬水偏财透干"
+}

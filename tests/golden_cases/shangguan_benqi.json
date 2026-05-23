@@ -1,0 +1,23 @@
+{
+  "id": "shangguan_benqi",
+  "description": "伤官格 — 月令伤官本气透干",
+  "scenario": "甲木日主，午月丁火伤官透干",
+  "input": {
+    "day_master": "甲",
+    "bazi": "丁卯 丙午 甲寅 壬申",
+    "month_branch": "午",
+    "expected_pattern": "伤官格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": -2,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "伤官格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "月支午本气丁火伤官透干"
+}

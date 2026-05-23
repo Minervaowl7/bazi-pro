@@ -1,4 +1,4 @@
-"""Trace format smoke tests for v4.3"""
+"""Trace format smoke tests for v5.0"""
 
 import json
 import subprocess

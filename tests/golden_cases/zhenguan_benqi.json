@@ -1,0 +1,23 @@
+{
+  "id": "zhenguan_benqi",
+  "description": "正官格 — 月令正官本气透干",
+  "scenario": "辛金日主，申月庚金正官透干，正官格成立",
+  "input": {
+    "day_master": "辛",
+    "bazi": "庚午 甲申 辛酉 戊子",
+    "month_branch": "申",
+    "expected_pattern": "劫财格",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "火",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "劫财格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "月支申本气庚金正官透干"
+}

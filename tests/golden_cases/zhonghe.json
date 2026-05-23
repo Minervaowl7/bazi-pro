@@ -1,0 +1,23 @@
+{
+  "id": "zhonghe",
+  "description": "中和 — 庚金日主，得令不足，力量均衡",
+  "scenario": "庚金日主，辰月养地，力量均衡",
+  "input": {
+    "day_master": "庚",
+    "bazi": "甲辰 戊辰 庚申 壬午",
+    "month_branch": "辰",
+    "expected_pattern": "偏印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "偏印格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "得令不足，力量均衡"
+}

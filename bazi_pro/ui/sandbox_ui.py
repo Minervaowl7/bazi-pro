@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro 流年沙盒 UI v4.8
+bazi-pro 流年沙盒 UI v5.0
 年份滑块 + 动态五行可视化 + 关键年份书签
 """
 

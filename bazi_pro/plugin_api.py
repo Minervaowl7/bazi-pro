@@ -4,52 +4,97 @@ bazi-pro 插件 API v5.0
 抽象基类 + 插件发现与加载机制
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Optional
 
+logger = logging.getLogger('bazi_pro.plugins')
+
+PLUGIN_WHITELIST: set[str] = set()
+
+_READONLY_HOOKS: set[str] = {'on_retrieve', 'on_evidence'}
+_WRITABLE_HOOKS: set[str] = {'on_render'}
+
+_modification_log: list[dict] = []
+
 
 class BaziPlugin(ABC):
-    """八字分析插件基类
 
-    所有插件必须继承此类并实现钩子方法。
-    插件只能读取、过滤、增强、装饰输出，不得修改核心数据。
-    """
-
-    # 插件元数据（子类必须覆盖）
     name: str = ''
     version: str = '1.0.0'
     description: str = ''
+    permissions: list[str] = []
 
     @abstractmethod
     def on_retrieve(self, query: str, results: list[dict]) -> list[dict]:
-        """检索后钩子：过滤/增强/重排检索结果"""
         ...
 
     @abstractmethod
     def on_evidence(self, evidence: dict) -> dict:
-        """证据构建后钩子：添加/修改/移除证据"""
         ...
 
     @abstractmethod
     def on_render(self, html: str, vm) -> str:
-        """渲染后钩子：注入/修改 HTML 输出"""
         ...
 
 
-# ── 插件注册表 ──
+_HOOK_DATA_ARG: dict[str, int] = {
+    'on_retrieve': 1,
+    'on_evidence': 0,
+    'on_render': 0,
+}
+
 _registry: dict[str, BaziPlugin] = {}
 
 
 def register_plugin(plugin: BaziPlugin) -> None:
-    """注册插件"""
+    if PLUGIN_WHITELIST and plugin.name not in PLUGIN_WHITELIST:
+        raise ValueError(
+            f'Plugin "{plugin.name}" not in whitelist; '
+            f'allowed: {PLUGIN_WHITELIST}'
+        )
     _registry[plugin.name] = plugin
+    logger.info(
+        'Plugin registered: name=%s version=%s permissions=%s',
+        plugin.name, plugin.version, plugin.permissions,
+    )
 
 
 def get_plugin(name: str) -> Optional[BaziPlugin]:
-    """获取已注册插件"""
     return _registry.get(name)
 
 
 def list_plugins() -> list[str]:
-    """列出所有已注册插件名称"""
     return list(_registry.keys())
+
+
+def invoke_hook(plugin: BaziPlugin, hook_name: str, *args):
+    if hook_name not in _READONLY_HOOKS and hook_name not in _WRITABLE_HOOKS:
+        raise ValueError(f'Unknown hook: {hook_name}')
+
+    method = getattr(plugin, hook_name, None)
+    if method is None:
+        data_idx = _HOOK_DATA_ARG.get(hook_name, 0)
+        return args[data_idx] if data_idx < len(args) else None
+
+    data_idx = _HOOK_DATA_ARG.get(hook_name, 0)
+    original = args[data_idx] if data_idx < len(args) else None
+    result = method(*args)
+
+    if hook_name in _READONLY_HOOKS:
+        if result is not original:
+            logger.warning(
+                'Plugin %s returned a different object from read-only hook %s; '
+                'using original data',
+                plugin.name, hook_name,
+            )
+            return original
+
+    if hook_name in _WRITABLE_HOOKS:
+        if result != original:
+            _modification_log.append({
+                'plugin': plugin.name,
+                'hook': hook_name,
+            })
+
+    return result

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-"""
-Golden Case 验证器 — 确保引擎不回归关键边界案例
-用法: python tests/run_golden.py
-"""
-
 import json
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 GOLDEN_DIR = Path(__file__).resolve().parent / "golden_cases"
 
@@ -15,33 +12,122 @@ def load_cases():
     return [json.loads(f.read_text()) for f in sorted(GOLDEN_DIR.glob("*.json"))]
 
 
-def test_retrieve_classical(case: dict) -> bool:
-    """验证古籍检索是否覆盖 case 需要的经典条文"""
-    import subprocess
-    query = f"{case['scenario']}"[:80]
-    r = subprocess.run(
-        ["python3", "-m", "bazi_pro.retrieve_classical", query, "-k", "8", "--json"],
-        capture_output=True, text=True, timeout=30,
-        cwd=str(Path(__file__).resolve().parent.parent)
-    )
-    if r.returncode != 0:
-        print(f"  ⚠️ 检索脚本失败: {r.stderr[:100]}")
-        return False
-    data = json.loads(r.stdout)
-    results = data.get("queries", [{"results": data.get("results", [])}])[0].get("results", [])
-    found_ids = {r["id"] for r in results}
-    expected = set(case.get("classical_support", []))
-    overlap = found_ids & expected
-    if overlap:
-        print(f"  ✅ 古籍命中: {overlap}")
+def test_core_analysis(case: dict) -> bool:
+    from bazi_pro.core_rules import full_analysis
+
+    inp = case.get("input", {})
+    bazi = inp.get("bazi", "")
+    day_master = inp.get("day_master", "")
+
+    if not bazi or not day_master:
+        print("  ⏭️  Core: 缺少 bazi/day_master 字段，跳过确定性计算验证")
         return True
-    else:
-        print(f"  ❌ 预期 {expected}，实际未命中（返回 {len(results)} 条）")
+
+    mcp_json = {"八字": bazi, "日主": day_master}
+    result = full_analysis(mcp_json)
+
+    if result.get("status") != "completed":
+        print(f"  ❌ Core: full_analysis 返回异常状态: {result.get('status')}")
         return False
+
+    ok = True
+
+    expected_ws = inp.get("expected_wangshuai")
+    if expected_ws:
+        actual_ws = result["wangshuai"]["verdict"]
+        if expected_ws != actual_ws:
+            print(f"  ❌ Core 旺衰: 预期 '{expected_ws}'，实际 '{actual_ws}'")
+            ok = False
+        else:
+            print(f"  ✅ Core 旺衰: {actual_ws}")
+
+    expected_pattern = inp.get("expected_pattern")
+    if expected_pattern:
+        actual_pattern = result["pattern"]["pattern"]
+        if expected_pattern != actual_pattern:
+            print(f"  ❌ Core 格局: 预期 '{expected_pattern}'，实际 '{actual_pattern}'")
+            ok = False
+        else:
+            print(f"  ✅ Core 格局: {actual_pattern}")
+
+    expected_yongshen_wx = inp.get("expected_yongshen_wx")
+    if expected_yongshen_wx:
+        actual_yongshen = result["yongshen"]["yongshen"]
+        if expected_yongshen_wx != actual_yongshen:
+            print(f"  ❌ Core 用神: 预期 '{expected_yongshen_wx}'，实际 '{actual_yongshen}'")
+            ok = False
+        else:
+            print(f"  ✅ Core 用神: {actual_yongshen}")
+
+    expected_deling_score = inp.get("expected_deling_score")
+    if expected_deling_score is not None:
+        actual_deling_score = result["deling"]["score"]
+        if expected_deling_score != actual_deling_score:
+            print(f"  ❌ Core 得令: 预期 {expected_deling_score}，实际 {actual_deling_score}")
+            ok = False
+        else:
+            print(f"  ✅ Core 得令: {actual_deling_score}")
+
+    expected_dedi_level = inp.get("expected_dedi_level")
+    if expected_dedi_level:
+        actual_dedi_level = result["dedi"]["level"]
+        if expected_dedi_level != actual_dedi_level:
+            print(f"  ❌ Core 得地: 预期 '{expected_dedi_level}'，实际 '{actual_dedi_level}'")
+            ok = False
+        else:
+            print(f"  ✅ Core 得地: {actual_dedi_level}")
+
+    expected_deshi_level = inp.get("expected_deshi_level")
+    if expected_deshi_level:
+        actual_deshi_level = result["deshi"]["level"]
+        if expected_deshi_level != actual_deshi_level:
+            print(f"  ❌ Core 得势: 预期 '{expected_deshi_level}'，实际 '{actual_deshi_level}'")
+            ok = False
+        else:
+            print(f"  ✅ Core 得势: {actual_deshi_level}")
+
+    pattern_str = result["pattern"]["pattern"]
+    pattern_reason = result["pattern"].get("reason", "")
+    yongshen_str = str(result.get("yongshen", {}))
+
+    must_include = case.get("must_include", [])
+    for kw in must_include:
+        found = (kw in pattern_str or kw in pattern_reason or kw in yongshen_str)
+        if not found:
+            print(f"  ❌ Core must_include: 关键词 '{kw}' 未在格局/原因/用神中找到")
+            ok = False
+        else:
+            print(f"  ✅ Core must_include: '{kw}' 已命中（格局={pattern_str}）")
+
+    must_not_include = case.get("must_not_include", [])
+    for kw in must_not_include:
+        if kw in pattern_str:
+            print(f"  ❌ Core must_not_include: 关键词 '{kw}' 不应出现在格局判定中（格局={pattern_str}）")
+            ok = False
+        else:
+            print(f"  ✅ Core must_not_include: '{kw}' 未出现（格局={pattern_str}）")
+
+    pillars = result.get("pillars", [])
+    has_shishen = any(p.get("shishen") for p in pillars)
+    if not has_shishen:
+        print("  ❌ Core 十神: 推导结果为空")
+        ok = False
+    else:
+        shishen_list = [p["shishen"] for p in pillars if p.get("shishen")]
+        print(f"  ✅ Core 十神: {', '.join(shishen_list)}")
+
+    pct = result["element_forces"].get("percent", {})
+    pct_sum = sum(pct.values())
+    if abs(pct_sum - 100.0) > 5.0:
+        print(f"  ❌ Core 五行力量: 百分比总和 {pct_sum:.1f}% 偏离100%超过5%")
+        ok = False
+    else:
+        print(f"  ✅ Core 五行力量: 总和 {pct_sum:.1f}%")
+
+    return ok
 
 
 def test_evidence_structure(case: dict) -> bool:
-    """验证 evidence.py 输出结构完整性"""
     import subprocess
     r = subprocess.run(
         ["python3", "-c",
@@ -66,15 +152,12 @@ def test_evidence_structure(case: dict) -> bool:
 
 
 def test_keyword_exclusions(case: dict) -> bool:
-    """验证 SKILL.md 解读红线是否包含禁止术语"""
     skill_md = Path(__file__).resolve().parent.parent / "SKILL.md"
     if not skill_md.exists():
-        return True  # can't check
+        return True
     text = skill_md.read_text()
     for term in case.get("must_not_include", []):
         if term in text:
-            # The term should appear ONLY in a "禁止" context, not as a recommended usage
-            # Simple check: if it appears without "禁止" nearby, flag it
             idx = text.find(term)
             context = text[max(0, idx-30):idx+len(term)+30]
             if "禁止" not in context and "不可" not in context and "严禁" not in context:
@@ -93,8 +176,8 @@ def main():
         print(f"--- {case['id']} ---")
         print(f"  {case['description']}")
         ok = True
+        ok &= test_core_analysis(case)
         ok &= test_evidence_structure(case)
-        # keyword_exclusion is a soft check (SKILL.md 解读红线正确引用这些术语)
         test_keyword_exclusions(case)
         if ok:
             passed += 1

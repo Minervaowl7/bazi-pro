@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 bazi doctor — 环境诊断工具
-检查 bazi-pro v4.3 运行环境，列出各组件状态
+检查 bazi-pro v5.0 运行环境，列出各组件状态
 """
 
 import sys

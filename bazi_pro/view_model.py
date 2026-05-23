@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro ViewModel v4.7 — 共享数据层
+bazi-pro ViewModel v5.0 — 共享数据层
 Dashboard / Report / Replay 三种输出形态共用同一个 ViewModel
 标准构建路径: result.json → build_vm_from_result_json() → DashboardVM
 过渡方案: build_vm_from_analysis_text() — 已废弃
@@ -232,7 +232,7 @@ def build_vm_from_trace(trace: dict) -> DashboardVM:
 
 
 def build_vm_from_result_json(json_path: str) -> DashboardVM:
-    """从 .artifacts/result.json 构建 ViewModel — 标准构建路径（v4.7）
+    """从 .artifacts/result.json 构建 ViewModel — 标准构建路径（v5.0）
 
     result.json 由 SKILL.md Step 10 隐式输出，包含完整的结构化分析数据。
     """

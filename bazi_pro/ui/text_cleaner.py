@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro Text Cleaner v4.3.1 — 统一输出编辑层
+bazi-pro Text Cleaner v5.0 — 统一输出编辑层
 所有 UI 文案必经清洗：去 Markdown 残留、括号闭合、label/note 拆分
 """
 

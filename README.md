@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml)
 
-**可审计、可交互、可视化的八字命理分析引擎**
+**可审计、可交互、可视化的八字命理分析引擎（Beta）**
 
 📜 2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 四层喜用神裁决 · 六层格局筛查 · 动态 SVG 命盘 · FastAPI 服务 · 插件机制
 
@@ -58,6 +58,8 @@ python scripts/doctor.py
 └─────────────────────────────────────────────────┘
 ```
 
+⚠️ 本项目处于 Beta 阶段，确定性计算核心已实现但仍在持续完善中。compare_engine 和 liunian_sandbox 标记为 EXPERIMENTAL。
+
 ---
 
 ## 核心模块
@@ -81,6 +83,7 @@ python scripts/doctor.py
 
 | 版本 | 内容 |
 |------|------|
+| **v5.0** | 确定性计算核心 (core/) · 72 Golden Cases · Pydantic API Schema · CORS/安全加固 · counter_evidence 通道 |
 | **v5.0** | 插件机制 · CLI TUI · AnalysisEngine SDK · 流年沙盒 · 命盘对比 · 档案校准系统 |
 | **v4.8** | 命盘对比引擎 · 古籍双栏展示 · 流年推演沙盒 · 个人命理档案 |
 | **v4.7** | Hybrid Search 落地(INT8量化+FAISS+预热) · ViewModel 统一化 |

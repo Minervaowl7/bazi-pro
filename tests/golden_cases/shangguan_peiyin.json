@@ -1,0 +1,20 @@
+{
+  "id": "shangguan_peiyin",
+  "description": "伤官配印 — 伤官格印星制伤为贵格",
+  "scenario": "庚金日主，子月伤官当令，印星戊土制伤",
+  "input": {
+    "day_master": "庚",
+    "bazi": "戊戌 甲子 庚申 丙戌",
+    "month_branch": "子",
+    "expected_pattern": "暗伤官格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": -2,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": ["伤官"],
+  "must_not_include": ["从格"],
+  "classical_support": ["ZPZQ_00050"],
+  "notes": "月支子本气癸伤官不透干，暗伤官格"
+}

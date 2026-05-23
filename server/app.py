@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro FastAPI 应用 v4.6
+bazi-pro FastAPI 应用 v5.0
 API 路由：分析、状态查询、结果获取、仪表盘
 """
 
@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from server.ws import manager
 from server.analysis import run_analysis
 from server.cache import get_cache
+from server.schemas import BaziAnalysisRequest
 
 app = FastAPI(
     title="bazi-pro API",
@@ -27,13 +28,69 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+_cors_origins_str = os.environ.get('BAZI_CORS_ORIGINS', '*')
+if _cors_origins_str == '*':
+    _cors_origins = ['*']
+    _cors_credentials = False
+else:
+    _cors_origins = [o.strip() for o in _cors_origins_str.split(',')]
+    _cors_credentials = True
+# Browsers reject credentials with wildcard origin; use specific origins for credentialed requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get('BAZI_CORS_ORIGINS', '*').split(','),
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=_cors_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class _RequestSizeLimitMiddleware:
+    def __init__(self, app, max_body_size=10240):
+        self.app = app
+        self.max_body_size = max_body_size
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            for name, value in scope.get("headers", []):
+                if name == b"content-length" and int(value) > self.max_body_size:
+                    response = JSONResponse(status_code=413, content={"detail": "Request body too large"})
+                    await response(scope, receive, send)
+                    return
+        await self.app(scope, receive, send)
+
+
+class _RateLimitMiddleware:
+    def __init__(self, app, max_requests=30, window_seconds=60):
+        self.app = app
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._requests: dict[str, list[float]] = {}
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            client = scope.get("client")
+            ip = client[0] if client else "unknown"
+            now = time.time()
+            timestamps = self._requests.setdefault(ip, [])
+            self._requests[ip] = [t for t in timestamps if now - t < self.window_seconds]
+            if len(self._requests[ip]) >= self.max_requests:
+                response = JSONResponse(status_code=429, content={"detail": "Too many requests"})
+                await response(scope, receive, send)
+                return
+            self._requests[ip].append(now)
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(_RequestSizeLimitMiddleware, max_body_size=10240)
+app.add_middleware(_RateLimitMiddleware, max_requests=30, window_seconds=60)
+
+
+@app.exception_handler(Exception)
+async def _global_exception_handler(request, exc):
+    debug = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
+    detail = str(exc) if debug else "Internal server error"
+    return JSONResponse(status_code=500, content={"detail": detail})
 
 # 分析状态存储
 _analysis_tasks: dict[str, dict] = {}
@@ -91,7 +148,7 @@ textarea{width:100%;min-height:200px;background:var(--surface2);color:var(--ink)
 <div class="container">
 <div class="hero">
 <h1>bazi-pro</h1>
-<p>专业八字命理解读引擎 · AI Agent Skill v4.6</p>
+<p>专业八字命理解读引擎 · AI Agent Skill v5.0</p>
 </div>
 
 <div class="card">
@@ -178,7 +235,7 @@ async function pollStatus(runId) {
 
 
 @app.post("/api/analyze")
-async def api_analyze(payload: dict):
+async def api_analyze(payload: BaziAnalysisRequest):
     """接收 MCP JSON，启动后台分析
 
     请求体示例:
@@ -191,7 +248,8 @@ async def api_analyze(payload: dict):
     }
     """
     run_id = uuid.uuid4().hex[:12]
-    detail_level = payload.pop('detail_level', 'standard')
+    payload_dict = payload.model_dump()
+    detail_level = payload_dict.pop('detail_level', 'standard')
 
     _analysis_tasks[run_id] = {
         'status': 'queued',
@@ -201,8 +259,7 @@ async def api_analyze(payload: dict):
 
     _cleanup_expired_tasks()
 
-    # 后台启动分析
-    asyncio.create_task(_background_analyze(run_id, payload, detail_level))
+    asyncio.create_task(_background_analyze(run_id, payload_dict, detail_level))
 
     return JSONResponse({
         'run_id': run_id,
@@ -270,7 +327,8 @@ async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
         cache.set(f'result:{run_id}', result, ttl=7200)
     except Exception as e:
         _analysis_tasks[run_id]['status'] = 'failed'
-        _analysis_tasks[run_id]['error'] = str(e)
+        debug = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
+        _analysis_tasks[run_id]['error'] = str(e) if debug else "Internal server error"
 
 
 if __name__ == '__main__':

@@ -1,0 +1,23 @@
+{
+  "id": "runxia_ge",
+  "description": "润下格 — 壬水日主，水行专旺",
+  "scenario": "壬水日主，全局水行成势，润下格",
+  "input": {
+    "day_master": "壬",
+    "bazi": "壬子 癸亥 壬子 壬子",
+    "month_branch": "亥",
+    "expected_pattern": "润下格",
+    "expected_wangshuai": "身旺",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "润下格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "日主水行占比极高，润下格"
+}

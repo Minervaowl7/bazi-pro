@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro 推理图谱 DAG v4.5 — 纯 SVG 节点-边图 + 置信度热力图 + zoom/pan
+bazi-pro 推理图谱 DAG v5.0 — 纯 SVG 节点-边图 + 置信度热力图 + zoom/pan
 展示旺衰→格局→喜用的推理链和证据支持/反证关系
 """
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro 命盘对比视图 v4.8
+bazi-pro 命盘对比视图 v5.0
 双列 HTML 布局，并排展示两个命盘的对比结果
 """
 

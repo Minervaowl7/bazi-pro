@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
-八字命理仪表盘生成器 v3.0 — Evidence Inspector + 刑冲合害关系图谱
+八字命理仪表盘生成器 v5.0 — Evidence Inspector + 刑冲合害关系图谱
 零外部依赖，纯 HTML+CSS+SVG
-v3.0: Evidence Inspector(可展开证据面板) + 刑冲合害图(SVG节点关系网)
-v2.0: 天干五行着色、评分分级色环、五行横向条、系统主题检测
 """
 
 import re
@@ -713,7 +711,7 @@ function toggleTheme(){{
 </div>
 
 <div class="footer">
-    <p>{escape(report_date)} &nbsp;|&nbsp; bazi-pro v4.3 &nbsp;|&nbsp; Dashboard</p>
+    <p>{escape(report_date)} &nbsp;|&nbsp; bazi-pro v5.0 &nbsp;|&nbsp; Dashboard</p>
     <p style="margin-top:4px">仅供传统文化学习与参考，不构成任何决策依据</p>
 </div>
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bazi-pro HTML Quality Regression Tests v4.3
+bazi-pro HTML Quality Regression Tests v5.0
 防止 UI 回退：占位文案 · summary 长度 · TOC 有效性 · 必需模块
 """
 

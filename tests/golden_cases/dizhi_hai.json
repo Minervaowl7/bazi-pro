@@ -1,0 +1,23 @@
+{
+  "id": "dizhi_hai",
+  "description": "地支害 — 子未害",
+  "scenario": "壬水日主，日支子时支未，子未相害",
+  "input": {
+    "day_master": "壬",
+    "bazi": "庚戌 戊子 壬子 辛未",
+    "month_branch": "子",
+    "expected_pattern": "建禄月劫，透七杀",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "建禄月劫"
+  ],
+  "must_not_include": [
+    "待定"
+  ],
+  "notes": "日支子与时支未相害"
+}
