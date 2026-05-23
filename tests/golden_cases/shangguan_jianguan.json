@@ -1,10 +1,10 @@
 {
-  "id": "shangguan_jianguan_tongguan",
-  "description": "伤官见官有财星通关 — 不可一律判凶",
-  "scenario": "正官格遇伤官透干 + 财星通关 → 伤官生财，财生官，气势流通",
+  "id": "shangguan_jianguan",
+  "description": "伤官见官 — 甲日主丁火伤官透出庚金七杀也透",
+  "scenario": "甲日主，丁火伤官透出，庚金七杀也透，伤官见官格局",
   "input": {
     "day_master": "甲",
-    "bazi": "辛酉 丁酉 甲辰 己巳",
+    "bazi": "辛酉 丁酉 甲辰 庚午",
     "month_branch": "酉",
     "expected_pattern": "正官格",
     "expected_wangshuai": "身弱",
@@ -13,8 +13,23 @@
     "expected_dedi_level": "不得地",
     "expected_deshi_level": "不得势"
   },
-  "must_include": ["正官格"],
-  "must_not_include": ["伤官见官一律判差", "败格"],
-  "classical_support": ["ZPZ_00032"],
-  "notes": "解读红线第5条：伤官见官一律判差 → 需看财星通关"
+  "must_include": [
+    "正官格"
+  ],
+  "must_not_include": [
+    "败格"
+  ],
+  "rationale": "甲日主，丁火伤官透出，庚金七杀也透，伤官见官格局",
+  "classical_support": "ZPZ_00032",
+  "expected_relations": [
+    {
+      "type": "地支刑"
+    },
+    {
+      "type": "地支合"
+    },
+    {
+      "type": "地支合"
+    }
+  ]
 }

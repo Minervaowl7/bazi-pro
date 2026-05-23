@@ -1,0 +1,35 @@
+{
+  "id": "hehua_chengli",
+  "description": "合化成立 — 甲己合化土，月令子水不支持化土",
+  "scenario": "甲己合化土，月令子水不支持化土，合而不化",
+  "input": {
+    "day_master": "己",
+    "bazi": "甲己 甲子 己丑 甲子",
+    "month_branch": "子",
+    "expected_pattern": "暗偏财格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "火",
+    "expected_deling_score": -3,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "暗偏财格"
+  ],
+  "must_not_include": [
+    "化土格"
+  ],
+  "rationale": "甲己合化土，月令子水不支持化土，合而不化",
+  "classical_support": "",
+  "expected_relations": [
+    {
+      "type": "天干合"
+    },
+    {
+      "type": "天干合"
+    },
+    {
+      "type": "天干合"
+    }
+  ]
+}

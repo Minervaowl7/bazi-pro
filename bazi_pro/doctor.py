@@ -4,10 +4,11 @@ bazi doctor — 环境诊断工具
 检查 bazi-pro v5.0 运行环境，列出各组件状态
 """
 
+import importlib.util
 import sys
 import os
+import re
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from pathlib import Path
 
 
 def _check_python():
@@ -17,11 +18,9 @@ def _check_python():
 
 
 def _check_jieba():
-    try:
-        import jieba
+    if importlib.util.find_spec("jieba"):
         return True, "installed"
-    except ImportError:
-        return False, "missing (pip install jieba)"
+    return False, "missing (pip install jieba)"
 
 
 def _check_corpus(corpus_path: str = None):
@@ -34,7 +33,7 @@ def _check_corpus(corpus_path: str = None):
     if not corpus_path or not os.path.exists(corpus_path):
         return False, "missing"
     with open(corpus_path) as f:
-        count = sum(1 for l in f if l.strip() and not l.startswith("#"))
+        count = sum(1 for line in f if line.strip() and not line.startswith("#"))
     return True, f"{count} entries"
 
 
@@ -52,36 +51,27 @@ def _check_bm25_cache(corpus_path: str = None):
 
 
 def _check_dashboard():
-    try:
-        from bazi_pro.dashboard import generate_dashboard
+    if importlib.util.find_spec("bazi_pro.dashboard"):
         return True, "OK"
-    except ImportError:
-        return False, "missing"
+    return False, "missing"
 
 
 def _check_markdown():
-    try:
-        import markdown
+    if importlib.util.find_spec("markdown"):
         return True, "installed"
-    except ImportError:
-        return True, "stdlib fallback"  # OK, we have fallback
+    return True, "stdlib fallback"
 
 
 def _check_weasyprint():
-    try:
-        import weasyprint
+    if importlib.util.find_spec("weasyprint"):
         return True, "installed"
-    except ImportError:
-        return False, "PDF disabled"
+    return False, "PDF disabled"
 
 
 def _check_hybrid():
-    try:
-        import numpy, faiss
-        from sentence_transformers import SentenceTransformer
+    if importlib.util.find_spec("numpy") and importlib.util.find_spec("faiss") and importlib.util.find_spec("sentence_transformers"):
         return True, "ready"
-    except ImportError:
-        return False, "downgraded to BM25-only"
+    return False, "downgraded to BM25-only"
 
 
 def _check_examples():
@@ -92,11 +82,127 @@ def _check_examples():
     return False, "missing"
 
 
+def check_pyproject_packages():
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    pyproject_path = os.path.join(project_root, "pyproject.toml")
+    if not os.path.exists(pyproject_path):
+        return "FAIL", "pyproject.toml not found"
+    with open(pyproject_path) as f:
+        content = f.read()
+    if "[tool.setuptools.packages.find]" in content:
+        return "PASS", "auto-discovery configured"
+    if "[tool.setuptools.packages]" in content:
+        if "bazi_pro.core" in content:
+            return "WARN", "manual list but bazi_pro.core included"
+        return "FAIL", "manual list missing bazi_pro.core"
+    return "WARN", "no package config found"
+
+
+def check_core_imports():
+    results = []
+    specs = [
+        ("bazi_pro.core", "full_analysis"),
+        ("bazi_pro.core_rules", "full_analysis"),
+        ("bazi_pro", "AnalysisEngine"),
+    ]
+    for mod_name, attr in specs:
+        if importlib.util.find_spec(mod_name):
+            results.append((f"{mod_name}.{attr}", "PASS"))
+        else:
+            results.append((f"{mod_name}.{attr}", "FAIL (import error)"))
+    any_fail = any("FAIL" in r[1] for r in results)
+    detail = "; ".join(f"{name}: {status}" for name, status in results)
+    return ("FAIL" if any_fail else "PASS"), detail
+
+
+def check_analysis_engine():
+    try:
+        from bazi_pro import AnalysisEngine  # noqa: F401
+        engine = AnalysisEngine()
+        result = engine.analyze({"八字": "壬午 乙巳 丁亥 癸卯", "日主": "丁", "性别": "女"})
+        if result.get("status") != "completed":
+            return "FAIL", f"analyze returned status={result.get('status')}"
+        required_keys = ["core_analysis", "pattern", "yongshen", "element_forces", "relations"]
+        missing = [k for k in required_keys if k not in result]
+        if missing:
+            return "FAIL", f"missing keys: {missing}"
+        pattern_name = result.get("pattern", {}).get("name", "")
+        if pattern_name == "待LLM分析":
+            return "FAIL", "pattern name is LLM placeholder"
+        return "PASS", f"pattern={pattern_name}"
+    except Exception as e:
+        return "FAIL", str(e)
+
+
+def check_golden_cases_count():
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    golden_dir = os.path.join(project_root, "tests", "golden_cases")
+    if not os.path.isdir(golden_dir):
+        return "WARN", "golden_cases directory not found"
+    count = len([f for f in os.listdir(golden_dir) if f.endswith(".json")])
+    if count < 12:
+        return "WARN", f"{count} (critical minimum: 12)"
+    if count < 50:
+        return "WARN", f"{count} (recommended: 50+)"
+    return "PASS", f"{count}"
+
+
+def check_no_llm_placeholder():
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    found = []
+    for search_dir in ["bazi_pro", "server"]:
+        dir_path = os.path.join(project_root, search_dir)
+        if not os.path.isdir(dir_path):
+            continue
+        for root, dirs, files in os.walk(dir_path):
+            for fname in files:
+                if not fname.endswith(".py"):
+                    continue
+                fpath = os.path.join(root, fname)
+                if fpath == os.path.abspath(__file__):
+                    continue
+                try:
+                    with open(fpath, encoding="utf-8") as f:
+                        for i, line in enumerate(f, 1):
+                            if "待LLM分析" in line:
+                                rel = os.path.relpath(fpath, project_root)
+                                found.append(f"{rel}:{i}")
+                except Exception:
+                    pass
+    if found:
+        return "FAIL", f'found "待LLM分析" in {" ".join(found)}'
+    return "PASS", "no LLM placeholders found"
+
+
+def check_circular_deps():
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    core_dir = os.path.join(project_root, "bazi_pro", "core")
+    if not os.path.isdir(core_dir):
+        return "FAIL", "bazi_pro/core/ not found"
+    found = []
+    for root, dirs, files in os.walk(core_dir):
+        for fname in files:
+            if not fname.endswith(".py"):
+                continue
+            fpath = os.path.join(root, fname)
+            try:
+                with open(fpath, encoding="utf-8") as f:
+                    for i, line in enumerate(f, 1):
+                        if re.search(r"from\s+bazi_pro\s+import", line):
+                            rel = os.path.relpath(fpath, project_root)
+                            found.append(f"{rel}:{i}")
+            except Exception:
+                pass
+    if found:
+        return "FAIL", "circular import in " + " ".join(found)
+    return "PASS", "no circular deps in bazi_pro/core/"
+
+
 def main():
     print("bazi-pro v5.0 — 环境诊断")
     print("=" * 40)
 
-    checks = [
+    env_checks = [
         ("Python", *_check_python()),
         ("jieba", *_check_jieba()),
         ("Corpus", *_check_corpus()),
@@ -108,17 +214,42 @@ def main():
         ("Examples", *_check_examples()),
     ]
 
-    for name, ok, detail in checks:
+    for name, ok, detail in env_checks:
         icon = "✅" if ok else "⚠️ "
         print(f"  {icon} {name}: {detail}")
 
     print()
-    all_ok = all(ok for _, ok, _ in checks)
-    if all_ok:
-        print("✅ 环境就绪")
+    print("一致性检查")
+    print("-" * 40)
+
+    consistency_checks = [
+        ("pyproject packages", check_pyproject_packages()),
+        ("core imports", check_core_imports()),
+        ("analysis engine", check_analysis_engine()),
+        ("golden cases count", check_golden_cases_count()),
+        ("no LLM placeholder", check_no_llm_placeholder()),
+        ("circular deps", check_circular_deps()),
+    ]
+
+    any_fail = False
+    for name, (status, detail) in consistency_checks:
+        if status == "PASS":
+            tag = "[PASS]"
+        elif status == "WARN":
+            tag = "[WARN]"
+        else:
+            tag = "[FAIL]"
+            any_fail = True
+        print(f"  {tag} {name}: {detail}")
+
+    print()
+    if any_fail:
+        print("❌ 存在 FAIL 项，请修复")
+        return 1
     else:
-        print("⚠️  部分组件缺失，详见上方标注")
+        print("✅ 所有检查通过（可能有 WARN 项）")
+        return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

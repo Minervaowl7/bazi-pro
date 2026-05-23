@@ -1,0 +1,35 @@
+{
+  "id": "caiwang_shenruo",
+  "description": "财旺身弱 — 甲日主己土正财多透身弱财旺",
+  "scenario": "甲日主，己土正财多透，身弱财旺",
+  "input": {
+    "day_master": "甲",
+    "bazi": "己未 丙寅 甲辰 己巳",
+    "month_branch": "寅",
+    "expected_pattern": "比肩格",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "比肩格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "rationale": "甲日主，己土正财多透，身弱财旺",
+  "classical_support": "",
+  "expected_relations": [
+    {
+      "type": "天干合"
+    },
+    {
+      "type": "天干合"
+    },
+    {
+      "type": "地支害"
+    }
+  ]
+}

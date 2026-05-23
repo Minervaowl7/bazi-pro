@@ -1,4 +1,4 @@
-from bazi_pro import derive_shishen
+from bazi_pro.core.constants import derive_shishen
 
 SHISHEN_WUXING_REL = {
     '比肩': '同我', '劫财': '同我',

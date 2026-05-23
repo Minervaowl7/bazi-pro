@@ -1,0 +1,29 @@
+{
+  "id": "han_nuan_tiaohou",
+  "description": "寒暖燥湿调候 — 壬水子月全盘水寒无火",
+  "scenario": "壬日主生于子月，全盘水寒无火，调候为急",
+  "input": {
+    "day_master": "壬",
+    "bazi": "壬子 壬子 壬子 壬寅",
+    "month_branch": "子",
+    "expected_pattern": "润下格",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "润下格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "rationale": "壬日主生于子月，全盘水寒无火，调候为急",
+  "classical_support": "",
+  "expected_relations": [
+    {
+      "type": "无特殊关系"
+    }
+  ]
+}

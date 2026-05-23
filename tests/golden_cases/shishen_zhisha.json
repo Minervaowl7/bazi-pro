@@ -1,0 +1,29 @@
+{
+  "id": "shishen_zhisha",
+  "description": "食神制杀 — 戊日主甲木七杀透出丙火食神也透",
+  "scenario": "戊日主，甲木七杀透出，丙火食神也透，食神制杀格局",
+  "input": {
+    "day_master": "戊",
+    "bazi": "甲子 丙寅 戊辰 甲寅",
+    "month_branch": "寅",
+    "expected_pattern": "七杀格",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": 2,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "七杀格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "rationale": "戊日主，甲木七杀透出，丙火食神也透，食神制杀格局",
+  "classical_support": "",
+  "expected_relations": [
+    {
+      "type": "无特殊关系"
+    }
+  ]
+}
