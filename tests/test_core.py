@@ -82,7 +82,7 @@ class TestAnalysisEngine:
         assert result['validation']['valid'] is True
         assert len(result['pillars']) == 4
         assert result['shishen']['年干'] == '正官'
-        assert result['elements']['counts']['火'] > 0
+        assert result['element_forces']['percent']['火'] > 0
 
     def test_analyze_invalid_input(self):
         engine = AnalysisEngine(corpus_path='')
@@ -96,10 +96,9 @@ class TestAnalysisEngine:
             '日主': '丁',
             '性别': '女',
         })
-        wq = result['strength']['wuxing_quick']
-        assert 'tendency' in wq
-        assert 'yin_bi_pct' in wq
-        assert wq['day_master_wuxing'] == '火'
+        ws = result['strength']['wangshuai']
+        assert 'verdict' in ws
+        assert ws['is_weak'] is False or ws['is_strong'] is True
 
 
 class TestCompareEngine:

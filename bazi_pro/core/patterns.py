@@ -1,4 +1,4 @@
-from bazi_pro import GAN_WUXING, derive_shishen
+from bazi_pro.core.constants import GAN_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.branches import JIANLU_MAP, YANGREN_MAP
 from bazi_pro.core.ten_gods import _count_shishen_categories, _get_yongshen_direction

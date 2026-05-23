@@ -24,7 +24,7 @@ from bazi_pro.core.patterns import (
 )
 from bazi_pro.core.yongshen import derive_yongshen, _pattern_yongshen_wx
 
-from bazi_pro import GAN_WUXING, ZHI_WUXING, derive_shishen
+from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING, derive_shishen
 
 
 def full_analysis(mcp_json: dict) -> dict:

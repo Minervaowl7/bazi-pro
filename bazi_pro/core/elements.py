@@ -1,4 +1,4 @@
-from bazi_pro import GAN_WUXING
+from bazi_pro.core.constants import GAN_WUXING
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.branches import CANGGAN_WEIGHT
 

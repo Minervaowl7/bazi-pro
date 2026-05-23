@@ -1,4 +1,4 @@
-from bazi_pro import GAN_WUXING
+from bazi_pro.core.constants import GAN_WUXING
 from bazi_pro.core.patterns import PATTERN_YONGSHEN
 from bazi_pro.core.ten_gods import SHISHEN_WUXING_REL
 from bazi_pro.core.stems import SHENG_MAP, KE_MAP, WO_KE_MAP

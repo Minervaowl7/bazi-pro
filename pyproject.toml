@@ -46,8 +46,10 @@ bazi-tui = "bazi_pro.tui.app:main"
 bazi-hybrid = "bazi_pro.hybrid_search:main"
 
 [tool.setuptools]
-packages = ["bazi_pro", "bazi_pro.core", "bazi_pro.ui", "bazi_pro.tui", "server", "plugins"]
 include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["bazi_pro*", "server*", "plugins*"]
 
 [build-system]
 requires = ["setuptools>=64"]
