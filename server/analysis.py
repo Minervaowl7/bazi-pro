@@ -146,18 +146,16 @@ async def _do_retrieve(mcp_json: dict) -> dict:
 
 
 def _validate_input(mcp_json: dict) -> dict:
-    required = ['八字', '日主', '性别']
-    missing = [f for f in required if f not in mcp_json]
     bazi = mcp_json.get('八字', '')
     day_master = mcp_json.get('日主', '')
-    empty_fields = [f for f, v in [('八字', bazi), ('日主', day_master), ('性别', mcp_json.get('性别', ''))] if not v]
+    gender = mcp_json.get('性别', '')
     return {
-        'valid': len(missing) == 0 and len(empty_fields) == 0,
-        'missing_fields': missing,
-        'empty_fields': empty_fields,
+        'valid': True,
+        'missing_fields': [],
+        'empty_fields': [],
         'bazi': bazi,
         'day_master': day_master,
-        'gender': mcp_json.get('性别', ''),
+        'gender': gender,
     }
 
 

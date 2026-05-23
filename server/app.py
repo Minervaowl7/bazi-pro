@@ -117,6 +117,7 @@ async def _global_exception_handler(request, exc):
 
 _analysis_tasks: dict[str, dict] = {}
 _TASK_TTL_SECONDS = 7200
+_MAX_CONCURRENT_TASKS = 1000
 
 
 def _cleanup_expired_tasks() -> None:
@@ -286,6 +287,9 @@ async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_ke
 
     _cleanup_expired_tasks()
 
+    if len(_analysis_tasks) >= _MAX_CONCURRENT_TASKS:
+        raise HTTPException(status_code=503, detail='服务繁忙，请稍后重试')
+
     asyncio.create_task(_background_analyze(run_id, payload_dict, detail_level))
 
     return JSONResponse({
@@ -333,7 +337,16 @@ async def api_result(run_id: str, _auth=Depends(_verify_api_key)):
 
 @app.websocket("/ws/{run_id}")
 async def ws_connect(ws: WebSocket, run_id: str):
-    await manager.connect(run_id, ws)
+    await ws.accept()
+    if _API_KEY:
+        api_key = ws.query_params.get('api_key') or ws.headers.get('x-api-key', '')
+        if api_key != _API_KEY:
+            await ws.close(code=4001, reason='Invalid API key')
+            return
+    if run_id not in _analysis_tasks:
+        await ws.close(code=4004, reason='run_id not found')
+        return
+    manager._add(run_id, ws)
     try:
         while True:
             await ws.receive_text()

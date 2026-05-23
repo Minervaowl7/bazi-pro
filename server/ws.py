@@ -18,6 +18,9 @@ class ConnectionManager:
 
     async def connect(self, run_id: str, ws: WebSocket) -> None:
         await ws.accept()
+        self._add(run_id, ws)
+
+    def _add(self, run_id: str, ws: WebSocket) -> None:
         if run_id not in self._connections:
             self._connections[run_id] = []
         self._connections[run_id].append(ws)

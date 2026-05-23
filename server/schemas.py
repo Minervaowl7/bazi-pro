@@ -36,6 +36,26 @@ class BaziPillars(BaseModel):
         return f"{self.year} {self.month} {self.day} {self.hour}"
 
 
+class DayunItem(BaseModel):
+    age_range: str = Field(default="", description="年龄段，如 3-12")
+    gan: str = Field(..., min_length=1, max_length=1, description="大运天干")
+    zhi: str = Field(..., min_length=1, max_length=1, description="大运地支")
+
+    @field_validator('gan')
+    @classmethod
+    def validate_gan(cls, v: str) -> str:
+        if v not in TIANGAN:
+            raise ValueError(f'大运天干 "{v}" 不合法')
+        return v
+
+    @field_validator('zhi')
+    @classmethod
+    def validate_zhi(cls, v: str) -> str:
+        if v not in DIZHI:
+            raise ValueError(f'大运地支 "{v}" 不合法')
+        return v
+
+
 class BaziAnalysisRequest(BaseModel):
     性别: str = Field(..., description="性别", min_length=1)
     八字: str = Field(..., description="四柱八字，空格分隔", min_length=1)
@@ -44,7 +64,7 @@ class BaziAnalysisRequest(BaseModel):
     阳历: Optional[str] = Field(default="", description="阳历日期")
     农历: Optional[str] = Field(default="", description="农历日期")
     生肖: Optional[str] = Field(default="", description="生肖")
-    大运: Optional[list] = Field(default=None, description="大运列表")
+    大运: Optional[list[DayunItem]] = Field(default=None, description="大运列表", max_length=12)
 
     @field_validator('八字')
     @classmethod
