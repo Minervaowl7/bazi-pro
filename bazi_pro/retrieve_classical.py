@@ -71,12 +71,15 @@ except ImportError:
     _HAS_JIEBA = False
 
 
+class OptionalDependencyMissingError(RuntimeError):
+    pass
+
+
 def tokenize(text: str) -> list[str]:
     if _HAS_JIEBA:
         tokens = jieba.lcut(text)
     else:
-        print("[FATAL] jieba not installed. pip install jieba", file=sys.stderr)
-        sys.exit(1)
+        raise OptionalDependencyMissingError("jieba not installed. Please install jieba.")
     return [t.strip() for t in tokens if t.strip() and len(t.strip()) >= 1]
 
 
@@ -324,51 +327,54 @@ def main():
     parser.add_argument("--cache-info", action="store_true", help="缓存信息")
     args = parser.parse_args()
 
-    if args.stats:
-        entries = load_corpus(args.corpus)
-        topics = Counter(e['topic'] for e in entries)
-        print(f"语料库: {args.corpus}\n总条数: {len(entries)}\n主题分布:")
-        for t, c in topics.most_common():
-            print(f"  {t}: {c}")
-        return
+    try:
+        if args.stats:
+            entries = load_corpus(args.corpus)
+            topics = Counter(e['topic'] for e in entries)
+            print(f"语料库: {args.corpus}\n总条数: {len(entries)}\n主题分布:")
+            for t, c in topics.most_common():
+                print(f"  {t}: {c}")
+            return
 
-    if args.cache_info:
-        cf = _cache_path(args.corpus)
-        if os.path.exists(cf):
-            print(f"缓存: {cf}\n大小: {os.path.getsize(cf)/1024:.1f} KB")
+        if args.cache_info:
+            cf = _cache_path(args.corpus)
+            if os.path.exists(cf):
+                print(f"缓存: {cf}\n大小: {os.path.getsize(cf)/1024:.1f} KB")
+            else:
+                print("缓存不存在，首次检索时构建")
+            return
+
+        if not args.query:
+            print("用法: retrieve_classical.py '<查询>' [-k 8] [--json] [--batch] [--stats] [--cache-info]")
+            return
+
+        if args.batch:
+            out = retrieve_batch(args.corpus, args.query, args.k, force_rebuild=args.rebuild)
         else:
-            print("缓存不存在，首次检索时构建")
-        return
+            out = retrieve(args.corpus, args.query[0], args.k, force_rebuild=args.rebuild)
+            out = {
+                "mode": out["mode"],
+                "cache": out["cache"],
+                "latency_ms": out["latency_ms"],
+                "corpus_size": out["corpus_size"],
+                "queries": [{"query": args.query[0], "results": out["results"]}]
+            }
 
-    if not args.query:
-        print("用法: retrieve_classical.py '<查询>' [-k 8] [--json] [--batch] [--stats] [--cache-info]")
-        return
-
-    if args.batch:
-        out = retrieve_batch(args.corpus, args.query, args.k, force_rebuild=args.rebuild)
-    else:
-        out = retrieve(args.corpus, args.query[0], args.k, force_rebuild=args.rebuild)
-        # Wrap single query in batch format for consistent JSON
-        out = {
-            "mode": out["mode"],
-            "cache": out["cache"],
-            "latency_ms": out["latency_ms"],
-            "corpus_size": out["corpus_size"],
-            "queries": [{"query": args.query[0], "results": out["results"]}]
-        }
-
-    if args.json:
-        print(json.dumps(out, ensure_ascii=False, indent=2))
-    else:
-        print(f"[{out['mode']}] cache={out['cache']} latency={out['latency_ms']}ms corpus={out['corpus_size']}")
-        for q in out["queries"]:
-            if len(out["queries"]) > 1:
-                print(f"\n--- {q['query']} ---")
-            if not q["results"]:
-                print("  (未命中)")
-            for r in q["results"]:
-                print(f"  [{r['id']}] ({r['score']:.4f}) @{r['topic']} —《{r['source']}》")
-                print(f"    {r['content']}")
+        if args.json:
+            print(json.dumps(out, ensure_ascii=False, indent=2))
+        else:
+            print(f"[{out['mode']}] cache={out['cache']} latency={out['latency_ms']}ms corpus={out['corpus_size']}")
+            for q in out["queries"]:
+                if len(out["queries"]) > 1:
+                    print(f"\n--- {q['query']} ---")
+                if not q["results"]:
+                    print("  (未命中)")
+                for r in q["results"]:
+                    print(f"  [{r['id']}] ({r['score']:.4f}) @{r['topic']} —《{r['source']}》")
+                    print(f"    {r['content']}")
+    except OptionalDependencyMissingError as e:
+        print(f"[FATAL] {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

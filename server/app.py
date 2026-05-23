@@ -372,7 +372,7 @@ async def ws_connect(ws: WebSocket, run_id: str):
     if run_id not in _analysis_tasks:
         await ws.close(code=4004, reason='run_id not found')
         return
-    manager._add(run_id, ws)
+    manager.add_accepted(run_id, ws)
     try:
         while True:
             await ws.receive_text()
