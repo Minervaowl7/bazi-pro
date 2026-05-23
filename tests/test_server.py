@@ -342,3 +342,42 @@ class TestAppEndpoints:
             assert '_secret' not in data
         finally:
             app_module._analysis_tasks.pop(run_id, None)
+
+
+class TestEnvironmentConfig:
+
+    def test_env_int_override(self, monkeypatch):
+        import importlib
+        import server.app as app_module
+
+        monkeypatch.setenv("BAZI_MAX_CONCURRENT_TASKS", "5")
+        reloaded = importlib.reload(app_module)
+        try:
+            assert reloaded._MAX_CONCURRENT_TASKS == 5
+        finally:
+            monkeypatch.delenv("BAZI_MAX_CONCURRENT_TASKS", raising=False)
+            importlib.reload(app_module)
+
+    def test_env_invalid_value_fallback(self, monkeypatch):
+        import importlib
+        import server.app as app_module
+
+        monkeypatch.setenv("BAZI_MAX_CONCURRENT_TASKS", "invalid")
+        reloaded = importlib.reload(app_module)
+        try:
+            assert reloaded._MAX_CONCURRENT_TASKS == 1000
+        finally:
+            monkeypatch.delenv("BAZI_MAX_CONCURRENT_TASKS", raising=False)
+            importlib.reload(app_module)
+
+    def test_env_too_small_value_fallback(self, monkeypatch):
+        import importlib
+        import server.app as app_module
+
+        monkeypatch.setenv("BAZI_RATE_LIMIT_REQUESTS", "0")
+        reloaded = importlib.reload(app_module)
+        try:
+            assert reloaded._RATE_LIMIT_REQUESTS == 30
+        finally:
+            monkeypatch.delenv("BAZI_RATE_LIMIT_REQUESTS", raising=False)
+            importlib.reload(app_module)

@@ -24,6 +24,21 @@ from server.schemas import BaziAnalysisRequest
 
 logger = logging.getLogger("bazi-pro")
 
+
+def _get_int_env(name: str, default: int, min_value: int = 1) -> int:
+    raw = os.environ.get(name)
+    if raw is None or raw == "":
+        return default
+    try:
+        value = int(raw)
+        if value < min_value:
+            raise ValueError
+        return value
+    except (ValueError, TypeError):
+        logger.warning("Invalid %s=%r, using default %s", name, raw, default)
+        return default
+
+
 app = FastAPI(
     title="bazi-pro API",
     description="专业八字命理解读引擎 Web 服务",
@@ -104,14 +119,18 @@ class _RateLimitMiddleware:
         await self.app(scope, receive, send)
 
 
+_MAX_PAYLOAD_BYTES = _get_int_env("BAZI_MAX_PAYLOAD_BYTES", 10240)
+_RATE_LIMIT_REQUESTS = _get_int_env("BAZI_RATE_LIMIT_REQUESTS", 30)
+_RATE_LIMIT_WINDOW_SECONDS = _get_int_env("BAZI_RATE_LIMIT_WINDOW_SECONDS", 60)
+
 app.add_middleware(
     _RequestSizeLimitMiddleware,
-    max_body_size=int(os.environ.get('BAZI_MAX_PAYLOAD_BYTES', '10240')),
+    max_body_size=_MAX_PAYLOAD_BYTES,
 )
 app.add_middleware(
     _RateLimitMiddleware,
-    max_requests=int(os.environ.get('BAZI_RATE_LIMIT_REQUESTS', '30')),
-    window_seconds=int(os.environ.get('BAZI_RATE_LIMIT_WINDOW_SECONDS', '60')),
+    max_requests=_RATE_LIMIT_REQUESTS,
+    window_seconds=_RATE_LIMIT_WINDOW_SECONDS,
 )
 
 
@@ -123,8 +142,8 @@ async def _global_exception_handler(request, exc):
 
 
 _analysis_tasks: dict[str, dict] = {}
-_TASK_TTL_SECONDS = int(os.environ.get('BAZI_TASK_TTL_SECONDS', '7200'))
-_MAX_CONCURRENT_TASKS = int(os.environ.get('BAZI_MAX_CONCURRENT_TASKS', '1000'))
+_TASK_TTL_SECONDS = _get_int_env("BAZI_TASK_TTL_SECONDS", 7200)
+_MAX_CONCURRENT_TASKS = _get_int_env("BAZI_MAX_CONCURRENT_TASKS", 1000)
 
 
 def _cleanup_expired_tasks() -> None:
@@ -370,7 +389,7 @@ async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
         result = await run_analysis(mcp_json, run_id, detail_level)
         _analysis_tasks[run_id]['status'] = result.get('status', 'completed')
         cache = get_cache()
-        cache.set(f'result:{run_id}', result, ttl=7200)
+        cache.set(f'result:{run_id}', result, ttl=_TASK_TTL_SECONDS)
     except Exception as e:
         _analysis_tasks[run_id]['status'] = 'failed'
         debug = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
