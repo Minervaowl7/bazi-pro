@@ -288,15 +288,25 @@ def retrieve_batch(corpus_path: str, queries: list[str], k: int = 8,
 # ---------- resolve corpus ----------
 
 def _resolve_corpus() -> str:
+    try:
+        from importlib.resources import files
+        data_dir = files("bazi_pro.data")
+        corpus = data_dir.joinpath("classical_corpus.md")
+        if corpus.is_file():
+            return str(corpus)
+    except Exception:
+        pass
+
     script_dir = os.path.dirname(os.path.abspath(__file__))
     for candidate in [
+        os.path.join(script_dir, "data", "classical_corpus.md"),
         os.path.join(script_dir, "..", "references", "classical_corpus.md"),
         os.path.join(os.environ.get("SKILL_DIR", ""), "references", "classical_corpus.md"),
         os.path.join(os.path.expanduser("~"), ".hermes", "skills", "bazi-pro", "references", "classical_corpus.md"),
     ]:
         if os.path.exists(candidate):
             return candidate
-    return os.path.join(script_dir, "..", "references", "classical_corpus.md")
+    return os.path.join(script_dir, "data", "classical_corpus.md")
 
 
 # ---------- main (for CLI + pyproject entry point) ----------

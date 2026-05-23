@@ -27,6 +27,7 @@ def _check_jieba():
 def _check_corpus(corpus_path: str = None):
     if not corpus_path:
         candidates = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "classical_corpus.md"),
             os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "classical_corpus.md"),
             os.path.join(os.path.expanduser("~"), ".hermes", "skills", "bazi-pro", "references", "classical_corpus.md"),
         ]
@@ -35,7 +36,11 @@ def _check_corpus(corpus_path: str = None):
         return False, "missing"
     with open(corpus_path) as f:
         count = sum(1 for line in f if line.strip() and not line.startswith("#"))
-    return True, f"{count} entries"
+    is_fallback = "references" in corpus_path
+    detail = f"{count} entries"
+    if is_fallback:
+        detail += " (fallback: using references/ not package data)"
+    return True, detail
 
 
 def _check_bm25_cache(corpus_path: str = None):
@@ -97,7 +102,7 @@ def check_pyproject_packages():
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     pyproject_path = os.path.join(project_root, "pyproject.toml")
     if not os.path.exists(pyproject_path):
-        return "FAIL", "pyproject.toml not found"
+        return "WARN", "pyproject.toml not found (wheel install — skip)"
     with open(pyproject_path) as f:
         content = f.read()
     if "[tool.setuptools.packages.find]" in content:
@@ -186,7 +191,7 @@ def check_golden_cases_count():
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     golden_dir = os.path.join(project_root, "tests", "golden_cases")
     if not os.path.isdir(golden_dir):
-        return "FAIL", "golden_cases directory not found"
+        return "WARN", "golden_cases directory not found (wheel install — skip)"
     count = len([f for f in os.listdir(golden_dir) if f.endswith(".json")])
     if count < 12:
         return "FAIL", f"{count} (critical minimum: 12)"
@@ -246,6 +251,18 @@ def check_circular_deps():
     return "PASS", "no circular deps in bazi_pro/core/"
 
 
+def check_corpus_in_package():
+    try:
+        from importlib.resources import files
+        data_dir = files("bazi_pro.data")
+        corpus = data_dir.joinpath("classical_corpus.md")
+        if corpus.is_file():
+            return "PASS", "classical_corpus.md in bazi_pro.data"
+        return "WARN", "classical_corpus.md not found in bazi_pro.data (using fallback path)"
+    except Exception as e:
+        return "WARN", f"importlib.resources check failed: {e}"
+
+
 def main():
     print("bazi-pro v5.0 — 环境诊断")
     print("=" * 40)
@@ -278,6 +295,7 @@ def main():
         ("golden cases count", check_golden_cases_count()),
         ("no LLM placeholder", check_no_llm_placeholder()),
         ("circular deps", check_circular_deps()),
+        ("corpus in package", check_corpus_in_package()),
     ]
 
     any_fail = False

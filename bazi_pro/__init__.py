@@ -195,7 +195,16 @@ class AnalysisEngine:
         import os
         if self._corpus_path:
             return self._corpus_path
+        try:
+            from importlib.resources import files
+            data_dir = files("bazi_pro.data")
+            corpus = data_dir.joinpath("classical_corpus.md")
+            if corpus.is_file():
+                return str(corpus)
+        except Exception:
+            pass
         candidates = [
+            os.path.join(os.path.dirname(__file__), 'data', 'classical_corpus.md'),
             os.path.join(os.path.dirname(__file__), '..', 'references', 'classical_corpus.md'),
         ]
         for p in candidates:

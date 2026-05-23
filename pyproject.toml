@@ -51,6 +51,9 @@ include-package-data = true
 [tool.setuptools.packages.find]
 include = ["bazi_pro*", "server*", "plugins*"]
 
+[tool.setuptools.package-data]
+"bazi_pro.data" = ["*.md"]
+
 [build-system]
 requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"

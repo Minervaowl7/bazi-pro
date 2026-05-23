@@ -134,12 +134,11 @@ async def run_analysis(mcp_json: dict, run_id: str,
 async def _do_retrieve(mcp_json: dict) -> dict:
     def _sync():
         try:
-            from bazi_pro.retrieve_classical import retrieve
+            from bazi_pro.retrieve_classical import retrieve, _resolve_corpus
             day_master = mcp_json.get('日主', '')
             bazi = mcp_json.get('八字', '')
             query = f'{day_master} {bazi} 格局 旺衰'
-            corpus = str(Path(__file__).resolve().parent.parent /
-                         'references' / 'classical_corpus.md')
+            corpus = _resolve_corpus()
             return retrieve(corpus, query, k=5)
         except Exception as e:
             return {'mode': 'fallback', 'error': str(e), 'results': []}

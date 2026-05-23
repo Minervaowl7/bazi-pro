@@ -111,6 +111,9 @@ bazi-hybrid
 | 命盘对比 | `bazi_pro.compare_engine` | 置信区间 ±15%，不返回伪精确分数 |
 | 流年沙盒 | `bazi_pro.liunian_sandbox` | 依赖 AnalysisEngine 结果 |
 | 向量融合检索 | `bazi_pro.hybrid_search` | 需要 sentence-transformers + FAISS |
+| 调候用神 | SKILL.md Layer 3 | 需查《穷通宝鉴》调候表，当前未编码为确定性规则，由 LLM 补充 |
+| 格局最终裁决 | SKILL.md Layer 3 | 多候选格局置信度接近时，由 LLM 裁决并引用古籍佐证 |
+| 分维度解读 | SKILL.md Step 8 | 性格/事业/财运/感情/健康/近运的文字解读，由 LLM 完成 |
 
 ---
 
@@ -135,7 +138,7 @@ bazi-hybrid
 
 | 版本 | 内容 |
 |------|------|
-| **v5.0** | 确定性计算核心 (core/)：十神推导、藏干展开、五行力量、旺衰判定、格局筛查、喜用神推导、刑冲合害 · 83 Golden Cases 全通过 · Pydantic API Schema · CORS/安全加固 · counter_evidence 通道 · 插件机制 · CLI TUI · AnalysisEngine SDK · 流年沙盒 · 命盘对比 · 档案校准系统 |
+| **v5.0** | 确定性计算核心 (core/)：十神推导、藏干展开、五行力量、旺衰判定、格局筛查、喜用神推导、刑冲合害 · 83 Golden Cases 全通过 · Pydantic API Schema · CORS/安全加固 · counter_evidence 通道 · 插件机制 · CLI TUI · AnalysisEngine SDK · ⚠️流年沙盒/命盘对比为EXPERIMENTAL · 档案校准系统 |
 | **v4.8** | 命盘对比引擎 · 古籍双栏展示 · 流年推演沙盒 · 个人命理档案 |
 | **v4.7** | Hybrid Search 落地(INT8量化+FAISS+预热) · ViewModel 统一化 |
 | **v4.6** | FastAPI + WebSocket 服务层 · Redis 缓存 |
