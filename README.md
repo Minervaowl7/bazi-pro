@@ -104,6 +104,7 @@ bazi-hybrid
 | 刑冲合害 | `bazi_pro.core.relations.detect_relations` | `tests/test_core.py` |
 | 古籍检索 | `bazi_pro.retrieve_classical.retrieve` | `tests/test_core.py` |
 | 83 Golden Cases | `tests/run_golden.py` | 83/83 通过 |
+| 24 Analysis Golden Cases | `tests/test_analysis_golden.py` | 24/24 通过 |
 
 ### ⚠️ 实验能力 (EXPERIMENTAL)
 | 能力 | 代码入口 | 说明 |
@@ -114,6 +115,44 @@ bazi-hybrid
 | 调候用神 | SKILL.md Layer 3 | 需查《穷通宝鉴》调候表，当前未编码为确定性规则，由 LLM 补充 |
 | 格局最终裁决 | SKILL.md Layer 3 | 多候选格局置信度接近时，由 LLM 裁决并引用古籍佐证 |
 | 分维度解读 | SKILL.md Step 8 | 性格/事业/财运/感情/健康/近运的文字解读，由 LLM 完成 |
+
+### 🧪 Beta 能力
+| 能力 | 代码入口 | 说明 |
+|------|---------|------|
+| Web API | `server/app.py` | FastAPI REST + WebSocket，统一错误响应，环境变量可配置 |
+| 报告/仪表盘 | `bazi_pro/generate_report.py` | Markdown/HTML/PDF 输出，Dashboard 可视化 |
+
+---
+
+## Web API 环境变量
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `BAZI_API_KEY` | (空) | 设置后启用 API 鉴权。REST 使用 `X-API-Key` header；WebSocket 使用 `?api_key=` 或 `x-api-key` header |
+| `BAZI_CORS_ORIGINS` | (空) | 逗号分隔的允许 Origin 列表。默认不启用 CORS |
+| `BAZI_MAX_PAYLOAD_BYTES` | `10240` | 请求体最大字节数 |
+| `BAZI_TASK_TTL_SECONDS` | `7200` | 分析任务缓存 TTL（秒） |
+| `BAZI_MAX_CONCURRENT_TASKS` | `1000` | 最大并发分析任务数 |
+| `BAZI_RATE_LIMIT_REQUESTS` | `30` | 每个 IP 在窗口期内最大请求数 |
+| `BAZI_RATE_LIMIT_WINDOW_SECONDS` | `60` | Rate limit 窗口期（秒） |
+
+API 错误响应统一格式：
+
+```json
+{"error": {"code": "UNAUTHORIZED", "message": "API key 无效或缺失"}}
+```
+
+错误码：`UNAUTHORIZED` / `NOT_FOUND` / `PAYLOAD_TOO_LARGE` / `RATE_LIMITED` / `INTERNAL_ERROR` / `SERVER_BUSY`。422 Pydantic 校验错误保留 FastAPI 默认格式。
+
+---
+
+## CI / 测试
+
+- **Python 版本矩阵**：3.10 / 3.11 / 3.12
+- **全量 pytest**：`python -m pytest -q`
+- **Build 验证**：`python -m build`
+- **Twine 检查**：`twine check dist/*`
+- **Wheel 安装冒烟测试**：从非源码目录安装并运行 CLI
 
 ---
 
