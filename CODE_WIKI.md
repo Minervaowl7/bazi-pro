@@ -674,7 +674,7 @@ evidence = build_analysis_evidence(
 | `test_html_quality.py` | HTML 输出质量检查 |
 | `test_trace.py` | Trace schema 校验测试 |
 | `run_golden.py` | Golden Cases 边界回归测试 |
-| `golden_cases/*.json` | 4 例边界案例：从杀 vs 身弱、羊刃 vs 从强、伤官见官、建禄月劫 |
+| `golden_cases/*.json` | 83 例边界案例：从杀 vs 身弱、羊刃 vs 从强、伤官见官、建禄月劫 等 |
 
 ### 8.3 Golden Cases（边界回归测试）
 

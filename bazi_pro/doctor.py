@@ -4,7 +4,6 @@ bazi doctor — 环境诊断工具
 检查 bazi-pro v5.0 运行环境，列出各组件状态
 """
 
-import importlib.util
 import sys
 import os
 import re
@@ -18,9 +17,11 @@ def _check_python():
 
 
 def _check_jieba():
-    if importlib.util.find_spec("jieba"):
+    try:
+        import jieba  # noqa: F401
         return True, "installed"
-    return False, "missing (pip install jieba)"
+    except ImportError:
+        return False, "missing (pip install jieba)"
 
 
 def _check_corpus(corpus_path: str = None):
@@ -51,27 +52,37 @@ def _check_bm25_cache(corpus_path: str = None):
 
 
 def _check_dashboard():
-    if importlib.util.find_spec("bazi_pro.dashboard"):
+    try:
+        from bazi_pro.dashboard import generate_dashboard  # noqa: F401
         return True, "OK"
-    return False, "missing"
+    except ImportError:
+        return False, "missing"
 
 
 def _check_markdown():
-    if importlib.util.find_spec("markdown"):
+    try:
+        import markdown  # noqa: F401
         return True, "installed"
-    return True, "stdlib fallback"
+    except ImportError:
+        return True, "stdlib fallback"
 
 
 def _check_weasyprint():
-    if importlib.util.find_spec("weasyprint"):
+    try:
+        import weasyprint  # noqa: F401
         return True, "installed"
-    return False, "PDF disabled"
+    except ImportError:
+        return False, "PDF disabled"
 
 
 def _check_hybrid():
-    if importlib.util.find_spec("numpy") and importlib.util.find_spec("faiss") and importlib.util.find_spec("sentence_transformers"):
+    try:
+        import numpy  # noqa: F401
+        import faiss  # noqa: F401
+        import sentence_transformers  # noqa: F401
         return True, "ready"
-    return False, "downgraded to BM25-only"
+    except ImportError:
+        return False, "downgraded to BM25-only"
 
 
 def _check_examples():
@@ -106,10 +117,15 @@ def check_core_imports():
         ("bazi_pro", "AnalysisEngine"),
     ]
     for mod_name, attr in specs:
-        if importlib.util.find_spec(mod_name):
-            results.append((f"{mod_name}.{attr}", "PASS"))
-        else:
-            results.append((f"{mod_name}.{attr}", "FAIL (import error)"))
+        try:
+            mod = __import__(mod_name, fromlist=[attr])
+            obj = getattr(mod, attr, None)
+            if obj is None:
+                results.append((f"{mod_name}.{attr}", "FAIL (attribute missing)"))
+            else:
+                results.append((f"{mod_name}.{attr}", "PASS"))
+        except ImportError as e:
+            results.append((f"{mod_name}.{attr}", f"FAIL (import error: {e})"))
     any_fail = any("FAIL" in r[1] for r in results)
     detail = "; ".join(f"{name}: {status}" for name, status in results)
     return ("FAIL" if any_fail else "PASS"), detail
@@ -117,19 +133,51 @@ def check_core_imports():
 
 def check_analysis_engine():
     try:
-        from bazi_pro import AnalysisEngine  # noqa: F401
-        engine = AnalysisEngine()
+        from bazi_pro import AnalysisEngine
+        engine = AnalysisEngine(corpus_path='')
         result = engine.analyze({"八字": "壬午 乙巳 丁亥 癸卯", "日主": "丁", "性别": "女"})
         if result.get("status") != "completed":
             return "FAIL", f"analyze returned status={result.get('status')}"
-        required_keys = ["core_analysis", "pattern", "yongshen", "element_forces", "relations"]
+        required_keys = ["core_analysis", "pattern", "yongshen", "element_forces", "relations",
+                         "elements", "quick_element_counts", "quick_element_pct"]
         missing = [k for k in required_keys if k not in result]
         if missing:
             return "FAIL", f"missing keys: {missing}"
         pattern_name = result.get("pattern", {}).get("name", "")
         if pattern_name == "待LLM分析":
             return "FAIL", "pattern name is LLM placeholder"
-        return "PASS", f"pattern={pattern_name}"
+        ws = result.get("core_analysis", {}).get("wangshuai", {})
+        verdict = ws.get("verdict", "")
+        if not verdict:
+            return "FAIL", "wangshuai verdict is empty"
+        if '旺' in verdict and not ws.get("is_strong"):
+            return "FAIL", f"wangshuai verdict='{verdict}' but is_strong=False"
+        if '弱' in verdict and not ws.get("is_weak"):
+            return "FAIL", f"wangshuai verdict='{verdict}' but is_weak=False"
+        return "PASS", f"pattern={pattern_name}, wangshuai={verdict}"
+    except Exception as e:
+        return "FAIL", str(e)
+
+
+def check_full_analysis_smoke():
+    try:
+        from bazi_pro.core_rules import full_analysis
+        result = full_analysis({"八字": "壬午 乙巳 丁亥 癸卯", "日主": "丁"})
+        if result.get("status") != "completed":
+            return "FAIL", f"full_analysis returned status={result.get('status')}"
+        required_keys = ["deling", "dedi", "deshi", "wangshuai", "element_forces",
+                         "relations", "pattern", "yongshen", "pillars"]
+        missing = [k for k in required_keys if k not in result]
+        if missing:
+            return "FAIL", f"missing keys: {missing}"
+        ws = result["wangshuai"]
+        if not ws.get("verdict"):
+            return "FAIL", "wangshuai verdict is empty"
+        if ws.get("is_extreme_strong") and ws.get("verdict") != "极旺":
+            return "FAIL", f"is_extreme_strong=True but verdict='{ws['verdict']}'"
+        if ws.get("is_extreme_weak") and ws.get("verdict") != "极弱":
+            return "FAIL", f"is_extreme_weak=True but verdict='{ws['verdict']}'"
+        return "PASS", f"wangshuai={ws['verdict']}, pattern={result['pattern']['pattern']}"
     except Exception as e:
         return "FAIL", str(e)
 
@@ -138,10 +186,10 @@ def check_golden_cases_count():
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     golden_dir = os.path.join(project_root, "tests", "golden_cases")
     if not os.path.isdir(golden_dir):
-        return "WARN", "golden_cases directory not found"
+        return "FAIL", "golden_cases directory not found"
     count = len([f for f in os.listdir(golden_dir) if f.endswith(".json")])
     if count < 12:
-        return "WARN", f"{count} (critical minimum: 12)"
+        return "FAIL", f"{count} (critical minimum: 12)"
     if count < 50:
         return "WARN", f"{count} (recommended: 50+)"
     return "PASS", f"{count}"
@@ -226,6 +274,7 @@ def main():
         ("pyproject packages", check_pyproject_packages()),
         ("core imports", check_core_imports()),
         ("analysis engine", check_analysis_engine()),
+        ("full_analysis smoke", check_full_analysis_smoke()),
         ("golden cases count", check_golden_cases_count()),
         ("no LLM placeholder", check_no_llm_placeholder()),
         ("circular deps", check_circular_deps()),

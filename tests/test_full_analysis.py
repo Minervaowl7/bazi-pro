@@ -131,7 +131,7 @@ class TestFullAnalysisBoundary:
     def test_extreme_strong(self):
         result = full_analysis({"八字": "壬子 壬子 壬子 壬子", "日主": "壬"})
         assert result["status"] == "completed"
-        assert result["wangshuai"]["is_strong"] is True
+        assert result["wangshuai"]["is_extreme_strong"] is True
         assert result["deling"]["score"] == 3
 
     def test_extreme_weak(self):
@@ -144,3 +144,56 @@ class TestFullAnalysisBoundary:
         assert result["status"] == "completed"
         assert result["pattern"]["pattern"] != ""
         assert result["pattern"]["confidence"] > 0
+
+    def test_congqiang_pattern(self):
+        result = full_analysis({"八字": "壬子 壬子 壬子 壬子", "日主": "壬"})
+        assert result["status"] == "completed"
+        assert result["wangshuai"]["is_extreme_strong"] is True
+        pat = result["pattern"]["pattern"]
+        assert '从强' in pat or '专旺' in pat or '润下' in pat
+
+    def test_congcai_or_congsha_pattern(self):
+        result = full_analysis({"八字": "庚午 丙戌 甲申 壬申", "日主": "甲"})
+        assert result["status"] == "completed"
+        if result["wangshuai"]["is_extreme_weak"]:
+            pat = result["pattern"]["pattern"]
+            assert '从' in pat or '七杀' in pat
+
+
+class TestAnalysisEngineReturnContract:
+
+    EXPECTED_TOP_LEVEL_KEYS = {
+        'status', 'detail_level', 'validation', 'core_analysis',
+        'pillars', 'shishen', 'deling', 'dedi', 'deshi',
+        'strength', 'pattern', 'yongshen', 'element_forces',
+        'elements', 'quick_element_counts', 'quick_element_pct',
+        'relations', 'retrieval', 'note',
+    }
+
+    @classmethod
+    def setup_class(cls):
+        cls.result = AnalysisEngine(corpus_path='').analyze({
+            '八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁', '性别': '女',
+        })
+
+    def test_top_level_keys_stable(self):
+        actual_keys = set(self.result.keys())
+        missing = self.EXPECTED_TOP_LEVEL_KEYS - actual_keys
+        extra = actual_keys - self.EXPECTED_TOP_LEVEL_KEYS
+        assert not missing, f"Missing keys: {missing}"
+        assert not extra, f"Unexpected extra keys: {extra}"
+
+    def test_backward_compat_elements_counts(self):
+        assert self.result['elements']['counts'] == self.result['quick_element_counts']['counts']
+
+    def test_backward_compat_elements_percent(self):
+        assert self.result['elements']['percent'] == self.result['quick_element_pct']['percent']
+
+    def test_backward_compat_strength_wuxing_quick(self):
+        wq = self.result['strength']['wuxing_quick']
+        assert 'counts' in wq
+        assert 'percent' in wq
+        assert wq['counts'] == self.result['quick_element_counts']['counts']
+
+    def test_retrieval_has_warnings_field(self):
+        assert 'warnings' in self.result['retrieval']

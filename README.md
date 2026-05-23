@@ -127,7 +127,7 @@ bazi-hybrid
 | `bazi_pro/tui/` | 交互终端 | Rich 彩色表格 + 进度条 + Tab 补全 REPL |
 | `bazi_pro/plugin_api.py` | 插件机制 | on_retrieve / on_evidence / on_render 钩子 |
 | `bazi_pro/archive.py` | 档案系统 | SQLite 存储 + 用户反馈校准 |
-| `bazi_pro/doctor.py` | 环境诊断 | 15 项检查一键运行 |
+| `bazi_pro/doctor.py` | 环境诊断 | 16 项检查一键运行 |
 
 ---
 

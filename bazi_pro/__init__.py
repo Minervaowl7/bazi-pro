@@ -52,15 +52,22 @@ class AnalysisEngine:
     def __init__(self, corpus_path: str = '', use_hybrid: bool = True):
         self._corpus_path = corpus_path
         self._use_hybrid = use_hybrid
+        self._retrieval_warnings: list[str] = []
 
     def retrieve(self, query: str, k: int = 5) -> list[dict]:
         corpus = self._resolve_corpus()
+        self._retrieval_warnings = []
+        if not corpus:
+            self._retrieval_warnings.append('corpus path not found')
+            return []
         try:
             result = retrieve(corpus, query, k=k)
             return result.get('results', [])
-        except SystemExit:
+        except SystemExit as e:
+            self._retrieval_warnings.append(f'retrieval SystemExit: {e}')
             return []
-        except Exception:
+        except Exception as e:
+            self._retrieval_warnings.append(f'retrieval error: {type(e).__name__}: {e}')
             return []
 
     def analyze(self, mcp_json: dict, detail_level: str = 'standard') -> dict:
@@ -131,6 +138,10 @@ class AnalysisEngine:
             'strength': {
                 'day_master': day_master,
                 'wangshuai': wangshuai,
+                'wuxing_quick': {
+                    'counts': quick_counts,
+                    'percent': quick_pct,
+                },
             },
             'pattern': pattern_structured,
             'yongshen': yongshen,
@@ -138,6 +149,10 @@ class AnalysisEngine:
                 'raw': {k: round(v, 2) for k, v in element_forces.get('raw', {}).items()},
                 'percent': element_forces.get('percent', {}),
                 'total': element_forces.get('total', 0),
+            },
+            'elements': {
+                'counts': quick_counts,
+                'percent': quick_pct,
             },
             'quick_element_counts': {
                 'counts': quick_counts,
@@ -151,6 +166,7 @@ class AnalysisEngine:
             'retrieval': {
                 'count': len(retrieval_results),
                 'results': retrieval_results,
+                'warnings': list(self._retrieval_warnings),
             },
             'note': '确定性推导（十神、藏干、旺衰、格局候选、喜用神候选、刑冲合害）已完成。调候用神需查穷通宝鉴，由LLM补充。',
         }

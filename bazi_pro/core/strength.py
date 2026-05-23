@@ -60,7 +60,7 @@ def calc_deshi(day_master: str, bazi_parts: list[str]) -> dict:
         if len(part) < 1:
             continue
         gan = part[0]
-        if gan == day_master:
+        if i == day_idx:
             continue
         ss = derive_shishen(day_master, gan)
         if ss in ('比肩', '劫财', '正印', '偏印'):
@@ -98,7 +98,11 @@ def calc_deshi(day_master: str, bazi_parts: list[str]) -> dict:
 
 
 def judge_wangshuai(deling_score: int, dedi_score: float, deshi_score: float) -> dict:
-    if deling_score >= 2 and dedi_score >= 3 and deshi_score >= 4:
+    if deling_score >= 3 and dedi_score >= 3 and deshi_score >= 6:
+        verdict = '极旺'
+    elif deling_score <= -2 and dedi_score < 1.5 and deshi_score == 0:
+        verdict = '极弱'
+    elif deling_score >= 2 and dedi_score >= 3 and deshi_score >= 4:
         verdict = '身旺'
     elif deling_score >= 2 and dedi_score >= 3 and deshi_score < 4:
         verdict = '偏旺'
@@ -112,10 +116,6 @@ def judge_wangshuai(deling_score: int, dedi_score: float, deshi_score: float) ->
         verdict = '中和偏弱'
     elif 0 <= deling_score <= 1 and dedi_score < 1.5 and deshi_score < 2:
         verdict = '身弱'
-    elif deling_score <= -2 and dedi_score < 1.5 and deshi_score == 0:
-        verdict = '极弱'
-    elif deling_score >= 3 and dedi_score >= 3 and deshi_score >= 6:
-        verdict = '极旺'
     else:
         verdict = '中和'
 

@@ -383,8 +383,24 @@ class TestCoreRulesWangshuai:
     def test_jiwang(self):
         from bazi_pro.core_rules import judge_wangshuai
         result = judge_wangshuai(3, 3.5, 7)
-        assert result['verdict'] in ('极旺', '身旺')
+        assert result['verdict'] == '极旺'
+        assert result['is_extreme_strong'] is True
         assert result['is_strong'] is True
+
+    def test_jiruo(self):
+        from bazi_pro.core_rules import judge_wangshuai
+        result = judge_wangshuai(-2, 1.0, 0)
+        assert result['verdict'] == '极弱'
+        assert result['is_extreme_weak'] is True
+        assert result['is_weak'] is True
+
+    def test_wangshuai_flags(self):
+        from bazi_pro.core_rules import judge_wangshuai
+        result = judge_wangshuai(2, 3.5, 5)
+        assert result['is_strong'] is True
+        assert result['is_extreme_strong'] is False
+        assert result['is_weak'] is False
+        assert result['is_extreme_weak'] is False
 
 
 class TestCoreRulesElementForces:
