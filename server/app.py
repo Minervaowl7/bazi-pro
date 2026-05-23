@@ -8,17 +8,21 @@ import uuid
 import asyncio
 import os
 import time
+import logging
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends, Security
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 
 from server.ws import manager
 from server.analysis import run_analysis
 from server.cache import get_cache
 from server.schemas import BaziAnalysisRequest
+
+logger = logging.getLogger("bazi-pro")
 
 app = FastAPI(
     title="bazi-pro API",
@@ -28,21 +32,39 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-_cors_origins_str = os.environ.get('BAZI_CORS_ORIGINS', '*')
-if _cors_origins_str == '*':
+_cors_origins_str = os.environ.get('BAZI_CORS_ORIGINS', '')
+if not _cors_origins_str:
+    _cors_origins = []
+    _cors_credentials = False
+elif _cors_origins_str == '*':
     _cors_origins = ['*']
     _cors_credentials = False
 else:
     _cors_origins = [o.strip() for o in _cors_origins_str.split(',')]
     _cors_credentials = True
-# Browsers reject credentials with wildcard origin; use specific origins for credentialed requests
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
     allow_credentials=_cors_credentials,
-    allow_methods=["*"],
+    allow_methods=["POST", "GET"],
     allow_headers=["*"],
 )
+
+if not _cors_origins:
+    logger.warning("BAZI_CORS_ORIGINS not set — CORS disabled. Set BAZI_CORS_ORIGINS=* or comma-separated origins.")
+
+
+_API_KEY = os.environ.get('BAZI_API_KEY', '')
+_api_key_scheme = APIKeyHeader(name='X-API-Key', auto_error=False)
+
+
+async def _verify_api_key(api_key: str = Security(_api_key_scheme)):
+    if not _API_KEY:
+        return True
+    if api_key == _API_KEY:
+        return True
+    raise HTTPException(status_code=401, detail='Invalid API key')
 
 
 class _RequestSizeLimitMiddleware:
@@ -92,7 +114,7 @@ async def _global_exception_handler(request, exc):
     detail = str(exc) if debug else "Internal server error"
     return JSONResponse(status_code=500, content={"detail": detail})
 
-# 分析状态存储
+
 _analysis_tasks: dict[str, dict] = {}
 _TASK_TTL_SECONDS = 7200
 
@@ -178,16 +200,21 @@ async function startAnalysis() {
 
     try {
         var mcpData = JSON.parse(document.getElementById('mcpInput').value);
+        var headers = {'Content-Type': 'application/json'};
         var resp = await fetch('/api/analyze', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: headers,
             body: JSON.stringify(mcpData)
         });
         var data = await resp.json();
+        if (resp.status !== 200 && resp.status !== 202) {
+            status.textContent = '错误: ' + (data.detail || JSON.stringify(data));
+            btn.disabled = false;
+            return;
+        }
         var runId = data.run_id;
         status.textContent = '分析已启动 (ID: ' + runId + ')，正在连接 WebSocket...';
 
-        // 连接 WebSocket
         var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
         ws = new WebSocket(protocol + '//' + location.host + '/ws/' + runId);
         ws.onmessage = function(e) {
@@ -235,7 +262,7 @@ async function pollStatus(runId) {
 
 
 @app.post("/api/analyze")
-async def api_analyze(payload: BaziAnalysisRequest):
+async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_key)):
     """接收 MCP JSON，启动后台分析
 
     请求体示例:
@@ -247,7 +274,7 @@ async def api_analyze(payload: BaziAnalysisRequest):
         "detail_level": "standard"
     }
     """
-    run_id = uuid.uuid4().hex[:12]
+    run_id = uuid.uuid4().hex
     payload_dict = payload.model_dump()
     detail_level = payload_dict.pop('detail_level', 'standard')
 
@@ -269,16 +296,17 @@ async def api_analyze(payload: BaziAnalysisRequest):
 
 
 @app.get("/api/status/{run_id}")
-async def api_status(run_id: str):
+async def api_status(run_id: str, _auth=Depends(_verify_api_key)):
     """查询分析进度"""
     task = _analysis_tasks.get(run_id)
     if not task:
         raise HTTPException(status_code=404, detail='run_id 不存在')
-    return JSONResponse(task)
+    safe_task = {k: v for k, v in task.items() if not k.startswith('_')}
+    return JSONResponse(safe_task)
 
 
 @app.get("/api/result/{run_id}")
-async def api_result(run_id: str):
+async def api_result(run_id: str, _auth=Depends(_verify_api_key)):
     """获取分析结果"""
     task = _analysis_tasks.get(run_id)
     if not task:
@@ -291,7 +319,6 @@ async def api_result(run_id: str):
             'run_id': run_id,
         })
 
-    # 从缓存获取结果
     cache = get_cache()
     result = cache.get(f'result:{run_id}')
     if result:
@@ -322,13 +349,13 @@ async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
     try:
         result = await run_analysis(mcp_json, run_id, detail_level)
         _analysis_tasks[run_id]['status'] = result.get('status', 'completed')
-        # 缓存结果
         cache = get_cache()
         cache.set(f'result:{run_id}', result, ttl=7200)
     except Exception as e:
         _analysis_tasks[run_id]['status'] = 'failed'
         debug = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
         _analysis_tasks[run_id]['error'] = str(e) if debug else "Internal server error"
+        logger.error("Analysis failed for run_id=%s: %s", run_id, e)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,39 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+import re
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
+
+
+TIANGAN = set('甲乙丙丁戊己庚辛壬癸')
+DIZHI = set('子丑寅卯辰巳午未申酉戌亥')
+BAZI_PATTERN = re.compile(
+    r'^[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]'
+    r'\s+[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]'
+    r'\s+[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]'
+    r'\s+[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]$'
+)
+
+
+class BaziPillars(BaseModel):
+    year: str = Field(..., min_length=2, max_length=2, description="年柱，如 壬午")
+    month: str = Field(..., min_length=2, max_length=2, description="月柱，如 乙巳")
+    day: str = Field(..., min_length=2, max_length=2, description="日柱，如 丁亥")
+    hour: str = Field(..., min_length=2, max_length=2, description="时柱，如 癸卯")
+
+    @field_validator('year', 'month', 'day', 'hour')
+    @classmethod
+    def validate_pillar(cls, v: str) -> str:
+        if len(v) != 2:
+            raise ValueError(f'柱 "{v}" 必须为2字符（天干+地支）')
+        if v[0] not in TIANGAN:
+            raise ValueError(f'天干 "{v[0]}" 不合法，必须为 甲乙丙丁戊己庚辛壬癸 之一')
+        if v[1] not in DIZHI:
+            raise ValueError(f'地支 "{v[1]}" 不合法，必须为 子丑寅卯辰巳午未申酉戌亥 之一')
+        return v
+
+    def to_bazi_string(self) -> str:
+        return f"{self.year} {self.month} {self.day} {self.hour}"
 
 
 class BaziAnalysisRequest(BaseModel):
@@ -13,6 +45,31 @@ class BaziAnalysisRequest(BaseModel):
     农历: Optional[str] = Field(default="", description="农历日期")
     生肖: Optional[str] = Field(default="", description="生肖")
     大运: Optional[list] = Field(default=None, description="大运列表")
+
+    @field_validator('八字')
+    @classmethod
+    def validate_bazi(cls, v: str) -> str:
+        v = v.strip()
+        if not BAZI_PATTERN.match(v):
+            raise ValueError(
+                '八字格式不合法，必须为4组天干地支以空格分隔，如 "壬午 乙巳 丁亥 癸卯"'
+            )
+        return v
+
+    @field_validator('日主')
+    @classmethod
+    def validate_day_master(cls, v: str) -> str:
+        v = v.strip()
+        if v not in TIANGAN:
+            raise ValueError(f'日主 "{v}" 不合法，必须为 甲乙丙丁戊己庚辛壬癸 之一')
+        return v
+
+    @field_validator('性别')
+    @classmethod
+    def validate_gender(cls, v: str) -> str:
+        if v not in ('男', '女', '其他'):
+            raise ValueError('性别必须为 男/女/其他 之一')
+        return v
 
 
 class AnalysisResponse(BaseModel):
