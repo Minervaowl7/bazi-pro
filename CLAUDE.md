@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `bazi-pro` v5.0 is an AI Agent skill and Python SDK for interpreting Chinese Bazi / 八字 charts. It does **not** calculate the chart — Bazi MCP or another deterministic calculator produces the chart JSON. This repository handles interpretation, classical-text retrieval (BM25 + Hybrid Search), interactive visualization (SVG charts, timelines, DAG graphs), report generation (HTML/MD/PDF), a FastAPI web server, plugin system, and TUI.
 
+The deterministic computation core (`bazi_pro/core/`) handles all 命理 calculations: 十神, 藏干, 五行力量, 旺衰, 格局候选, 喜用神候选, 刑冲合害. The LLM only interprets these results — it never computes them. `AnalysisEngine.analyze()` calls `full_analysis()` and returns structured deterministic results.
+
 ## Key files
 
 | File | Role |
@@ -14,6 +16,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `ROADMAP.md` | v4.5→v5.0 upgrade roadmap (all phases completed) |
 | `CODE_WIKI.md` | Full architecture doc: modules, classes, data flow, dependencies |
 | `bazi_pro/__init__.py` | `__version__` (single source) + `AnalysisEngine` SDK class |
+| `bazi_pro/core/constants.py` | Canonical constants: GAN_WUXING, ZHI_WUXING, GAN_SHISHEN_MAP, derive_shishen |
+| `bazi_pro/core/stems.py` | 天干五合、五行相生相克映射 |
+| `bazi_pro/core/branches.py` | 地支藏干、十二长生、刑冲合害关系表 |
+| `bazi_pro/core/hidden_stems.py` | 藏干展开 (get_canggan) |
+| `bazi_pro/core/ten_gods.py` | 十神关系、旺衰方向辅助函数 |
+| `bazi_pro/core/relations.py` | 刑冲合害检测 (detect_relations) |
+| `bazi_pro/core/elements.py` | 五行力量计算 (calc_element_forces) — 含藏干权重、月令权重 |
+| `bazi_pro/core/strength.py` | 得令/得地/得势 + 旺衰综合判定 |
+| `bazi_pro/core/patterns.py` | 六层格局筛查 (screen_pattern) |
+| `bazi_pro/core/yongshen.py` | 四层喜用神推导 (derive_yongshen) |
+| `bazi_pro/core/__init__.py` | full_analysis() 主入口 + 全部 re-export |
+| `bazi_pro/core_rules.py` | 向后兼容代理 — re-export from bazi_pro.core |
 | `bazi_pro/retrieve_classical.py` | BM25 + jieba retriever over 2964 classical entries; pickle cache |
 | `bazi_pro/hybrid_search.py` | BM25 + vector (FAISS) + authority weights fusion search; CLI entry |
 | `bazi_pro/generate_report.py` | Report generator: Markdown/HTML/PDF with Chinese aesthetics |
@@ -21,11 +35,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `bazi_pro/evidence.py` | Evidence chain: structured claim + confidence + basis JSON |
 | `bazi_pro/trace.py` | `TraceBuilder` + schema validator for analysis trace |
 | `bazi_pro/view_model.py` | Shared data layer: `DashboardVM` / `PillarVM` / `VerdictVM` etc. |
-| `bazi_pro/doctor.py` | Environment diagnostic: 9 checks (Python, jieba, corpus, cache, hybrid...) |
+| `bazi_pro/doctor.py` | Environment diagnostic: 15 checks (Python, jieba, corpus, cache, hybrid...) |
 | `bazi_pro/archive.py` | SQLite archive store for historical analyses |
 | `bazi_pro/calibration.py` | User feedback tracker + evidence weight adjustment |
-| `bazi_pro/compare_engine.py` | Dual-chart comparison engine (pillars, wuxing, compatibility) |
-| `bazi_pro/liunian_sandbox.py` | Year-by-year luck sandbox (2020-2040 slider) |
+| `bazi_pro/compare_engine.py` | Dual-chart comparison engine (EXPERIMENTAL) (pillars, wuxing, compatibility) |
+| `bazi_pro/liunian_sandbox.py` | Year-by-year luck sandbox (EXPERIMENTAL) (2020-2040 slider) |
 | `bazi_pro/plugin_api.py` | `BaziPlugin` ABC (on_retrieve / on_evidence / on_render hooks) |
 | `bazi_pro/ui/__init__.py` | Unified UI entry: `render_dashboard()` / `render_report()` / `render_replay()` |
 | `bazi_pro/ui/pillar_chart.py` | Dynamic SVG bazi chart — calligraphy fonts, particle animations, pulse ring |
@@ -144,7 +158,7 @@ python scripts/generate_report.py --input analysis.md --output report.md --pdf
 ### Environment & diagnostics
 
 ```bash
-python scripts/doctor.py                  # 9-check diagnostic
+python scripts/doctor.py                  # 15-check diagnostic
 python -m bazi_pro.trace demo > trace.json
 python -m bazi_pro.trace validate trace.json
 ```

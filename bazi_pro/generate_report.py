@@ -14,7 +14,6 @@ import argparse
 import textwrap
 from datetime import datetime
 from html import escape
-from pathlib import Path
 from bazi_pro.dashboard import generate_dashboard
 from bazi_pro.ui import render_dashboard          # 新版仪表盘 v5.0
 from bazi_pro.view_model import build_vm_from_analysis_text
@@ -151,7 +150,6 @@ def simple_md_to_html(text: str) -> str:
     in_ul = False
     in_ol = False
     in_blockquote = False
-    pending_blank = False
     code_lang = ''
 
     def flush_inlines(s: str) -> str:
@@ -331,7 +329,7 @@ def simple_md_to_html(text: str) -> str:
         # Blank line
         if not line.strip():
             close_lists()
-            pending_blank = True
+            _ = True
             i += 1
             continue
 
@@ -781,9 +779,9 @@ def generate_enhanced_markdown(meta: dict, body_text: str,
     """生成增强版 Markdown 报告（含元数据头和页脚）"""
     lines = [
         f'# {report_title}',
-        f'',
+        '',
         f'*专业命理解读报告 — {report_date}*',
-        f'',
+        '',
     ]
 
     if meta:
@@ -914,7 +912,7 @@ def main():
         html_path = output_base if args.format in ('html', 'both') else (
             output_base.rsplit('.', 1)[0] + '.html'
         )
-        # v4.2: no auto-rename — user's explicit --output is respected
+        # v5.0: no auto-rename — user's explicit --output is respected
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         label = '仪表盘' if args.theme == 'dashboard' else 'HTML 报告'

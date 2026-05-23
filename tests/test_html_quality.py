@@ -244,7 +244,7 @@ def test_technical_headings_only_in_appendix(rendered_report):
         "附录应包含技术步骤"
 
 
-# ── v4.4.1: No technical content outside .content-main + .appendix ──
+# ── v5.0: No technical content outside .content-main + .appendix ──
 
 def test_no_technical_content_outside_containers(rendered_report):
     """技术术语只能在 .content-main 或 .appendix 内出现"""
