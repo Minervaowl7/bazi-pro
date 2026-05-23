@@ -16,8 +16,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install deps
-        run: pip install jieba
+      - name: Install package
+        run: pip install -e .
 
       - name: Version consistency
         run: |
@@ -66,11 +66,16 @@ jobs:
       - name: Golden cases
         run: python tests/run_golden.py
 
+      - name: Pytest
+        run: |
+          pip install pytest
+          python -m pytest tests/test_core.py tests/test_full_analysis.py -v
+
+      - name: Doctor consistency
+        run: python -m bazi_pro.doctor
+
       - name: Package import
         run: python -c "from bazi_pro.retrieve_classical import main, retrieve, retrieve_batch; from bazi_pro.dashboard import generate_dashboard; from bazi_pro.evidence import build_analysis_evidence; print('✅ All imports OK')"
-
-      - name: Install package
-        run: pip install -e .
 
       - name: Console scripts
         run: |

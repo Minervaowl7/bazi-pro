@@ -103,7 +103,7 @@ bazi-hybrid
 | 喜用神推导 | `bazi_pro.core.yongshen.derive_yongshen` | `tests/test_core.py` |
 | 刑冲合害 | `bazi_pro.core.relations.detect_relations` | `tests/test_core.py` |
 | 古籍检索 | `bazi_pro.retrieve_classical.retrieve` | `tests/test_core.py` |
-| 72 Golden Cases | `tests/run_golden.py` | 72/72 通过 |
+| 83 Golden Cases | `tests/run_golden.py` | 83/83 通过 |
 
 ### ⚠️ 实验能力 (EXPERIMENTAL)
 | 能力 | 代码入口 | 说明 |
@@ -127,7 +127,7 @@ bazi-hybrid
 | `bazi_pro/tui/` | 交互终端 | Rich 彩色表格 + 进度条 + Tab 补全 REPL |
 | `bazi_pro/plugin_api.py` | 插件机制 | on_retrieve / on_evidence / on_render 钩子 |
 | `bazi_pro/archive.py` | 档案系统 | SQLite 存储 + 用户反馈校准 |
-| `bazi_pro/doctor.py` | 环境诊断 | 9 项检查一键运行 |
+| `bazi_pro/doctor.py` | 环境诊断 | 15 项检查一键运行 |
 
 ---
 
@@ -135,7 +135,7 @@ bazi-hybrid
 
 | 版本 | 内容 |
 |------|------|
-| **v5.0** | 确定性计算核心 (core/)：十神推导、藏干展开、五行力量、旺衰判定、格局筛查、喜用神推导、刑冲合害 · 72 Golden Cases 全通过 · Pydantic API Schema · CORS/安全加固 · counter_evidence 通道 · 插件机制 · CLI TUI · AnalysisEngine SDK · 流年沙盒 · 命盘对比 · 档案校准系统 |
+| **v5.0** | 确定性计算核心 (core/)：十神推导、藏干展开、五行力量、旺衰判定、格局筛查、喜用神推导、刑冲合害 · 83 Golden Cases 全通过 · Pydantic API Schema · CORS/安全加固 · counter_evidence 通道 · 插件机制 · CLI TUI · AnalysisEngine SDK · 流年沙盒 · 命盘对比 · 档案校准系统 |
 | **v4.8** | 命盘对比引擎 · 古籍双栏展示 · 流年推演沙盒 · 个人命理档案 |
 | **v4.7** | Hybrid Search 落地(INT8量化+FAISS+预热) · ViewModel 统一化 |
 | **v4.6** | FastAPI + WebSocket 服务层 · Redis 缓存 |

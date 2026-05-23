@@ -177,7 +177,7 @@ python scripts/retrieve_classical.py "火炎土燥 调候 壬癸" -k 5 --json
 ### Test suite
 
 ```bash
-python tests/run_golden.py                # 4 golden-case boundary regression tests
+python tests/run_golden.py                # 83 golden-case boundary regression tests
 python -m pytest tests/test_html_quality.py -v  # UI rendering quality checks
 python -m pytest tests/test_retrieve.py -v      # Core command smoke tests
 python -m pytest tests/test_trace.py -v         # Trace schema validation
@@ -310,7 +310,7 @@ When bumping the version, update ALL of these:
 
 3. **历史校准容易后见之明**：Step 9 的"历史事件闭环校准"可能形成"怎么都能解释通"的闭环。建议将它视为**置信度校验**而非**结论调整**。
 
-4. **测试集不足**：现有 4 个 golden cases 覆盖边界格局判定（从杀 vs 身弱、羊刃 vs 从强 等），但缺少：节气交界前后日柱、23 点子时两种流派、夏令时/时区、真太阳时输入、MCP 缺字段降级路径。
+4. **测试集持续扩充**：现有 83 个 golden cases 覆盖边界格局判定（从杀 vs 身弱、羊刃 vs 从强、建禄月劫、伤官见官、从格系列、刑冲合害、调候等），但缺少：节气交界前后日柱、23 点子时两种流派、夏令时/时区、真太阳时输入、MCP 缺字段降级路径。
 
 ### 中优先级
 

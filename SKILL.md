@@ -11,7 +11,7 @@ description: >
   六维度分述（性格/事业/财运/感情/健康/近运）+ 历史事件闭环校准。
   v5.0: 插件机制(英文/塔罗/风水示例)+ CLI TUI(rich 交互界面)+ AnalysisEngine SDK + 流年沙盒+ 命盘对比+ 档案校准系统。
   v4.5-4.8: 动态SVG命盘+ 命运河流时间轴+ 推理图谱DAG+ FastAPI服务+ Hybrid Search INT8量化+ ViewModel统一化。
-  v4.2: Replayable Evidence Engine——Golden Cases 边界回归测试(4例)+ GitHub Actions CI + Evidence Pipeline(分析→证据JSON→仪表盘)+ Web Demo 首页(dist/index.html)+ bazi_pro 引擎包重构。
+  v4.2: Replayable Evidence Engine——Golden Cases 边界回归测试(83例)+ GitHub Actions CI + Evidence Pipeline(分析→证据JSON→仪表盘)+ Web Demo 首页(dist/index.html)+ bazi_pro 引擎包重构。
   v4.1: 版本号统一(4.1.0)+ __version__ 单一源 + smoke tests(7项)+ bazi doctor 环境诊断 + README 引擎化 + dashboard v3.0(Evidence Inspector+刑冲合害图谱)+ Hybrid Search breakdown(matched_terms+why)。
   v4.0: 引擎化升级——Evidence Object 证据链结构化输出、BM25 索引缓存(冷启动1.8s→热查询0.5s)、批量检索 API、Hybrid Search(BM25+向量+权威权重)、仪表盘 v2.0(五行着色+评分色环+系统主题)、examples/样例文件、pyproject.toml+requirements.txt 依赖管理。
   v3.5: 层3暗格比劫拦截——月令本气为比肩/劫财时禁止生造"暗劫财格"等非经典术语，强制使用《子平真诠》"建禄月劫"框架（另寻财官煞食透干取用）。v3.4.1: 报告生成器跨平台字体修复（Linux/WSL 环境下 emoji→文本降级、中文字体栈修正 Noto Serif CJK SC、等宽字体 DejaVu Sans Mono、@font-face emoji 声明、PDF 渲染错误日志）。
