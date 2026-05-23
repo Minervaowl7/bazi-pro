@@ -131,6 +131,11 @@ class AnalysisEngine:
         query = f'{day_master} {bazi} 格局 旺衰 用神'
         retrieval_results = self.retrieve(query, k=8)
 
+        wangshuai = core.get('wangshuai', {})
+        pattern = core.get('pattern', {})
+        yongshen = core.get('yongshen', {})
+        element_forces = core.get('element_forces', {})
+
         return {
             'status': 'completed',
             'detail_level': detail_level,
@@ -139,7 +144,6 @@ class AnalysisEngine:
                 'count': len(retrieval_results),
                 'results': retrieval_results,
             },
-            'core': core,
             'pillars': core.get('pillars', []),
             'shishen': {f"{p['position']}干": p.get('shishen', '')
                         for p in core.get('pillars', []) if p.get('gan')},
@@ -148,12 +152,27 @@ class AnalysisEngine:
             'deshi': core.get('deshi', {}),
             'strength': {
                 'day_master': day_master,
-                'wangshuai': core.get('wangshuai', {}),
+                'wangshuai': wangshuai,
+                'wuxing_quick': self._wuxing_quick_check(
+                    count_wuxing_from_bazi(bazi), day_master),
             },
-            'element_forces': core.get('element_forces', {}),
+            'pattern': {
+                'name': pattern.get('pattern', '待定'),
+                'layer': pattern.get('layer', -1),
+                'type': pattern.get('type', ''),
+                'confidence': pattern.get('confidence', 0),
+                'reason': pattern.get('reason', ''),
+                'candidates': pattern.get('candidates', []),
+                'yongshen_direction': pattern.get('yongshen_direction', '待定'),
+            },
+            'yongshen': yongshen,
+            'elements': {
+                'counts': {k: int(v) for k, v in element_forces.get('raw', {}).items()},
+                'percent': element_forces.get('percent', {}),
+                'note': '基于天干地支本气+藏干加权的五行力量统计',
+            },
             'relations': core.get('relations', []),
-            'pattern': core.get('pattern', {}),
-            'yongshen': core.get('yongshen', {}),
+            'note': '确定性推导（十神、藏干、旺衰、格局候选、喜用神候选、刑冲合害）已完成。调候用神需查穷通宝鉴，由LLM补充。',
         }
 
     def generate_report(self, analysis: dict, format: str = 'html') -> str:
