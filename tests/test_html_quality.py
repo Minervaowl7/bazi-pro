@@ -28,7 +28,7 @@ def sample_trace():
 def rendered_dashboard():
     """渲染一份 Dashboard 用于检查"""
     try:
-        from bazi_pro.view_model import DashboardVM
+        from bazi_pro.view_model import DashboardVM, PillarVM
         from bazi_pro.ui import render_dashboard
         vm = DashboardVM()
         vm.verdict.day_master = "丁火"
@@ -39,6 +39,12 @@ def rendered_dashboard():
         vm.verdict.jishen = ["火", "土"]
         vm.verdict.confidence = 0.80
         vm.bazi = "壬午 乙巳 丁亥 癸卯"
+        vm.pillars = [
+            PillarVM(position="年", gan="壬", zhi="午", wuxing_gan="水", wuxing_zhi="火", shishen="正官"),
+            PillarVM(position="月", gan="乙", zhi="巳", wuxing_gan="木", wuxing_zhi="火", shishen="偏印"),
+            PillarVM(position="日", gan="丁", zhi="亥", wuxing_gan="火", wuxing_zhi="水", shishen="比肩"),
+            PillarVM(position="时", gan="癸", zhi="卯", wuxing_gan="水", wuxing_zhi="木", shishen="七杀"),
+        ]
         return render_dashboard(vm)
     except Exception:
         return ""
@@ -112,7 +118,7 @@ def test_evidence_summary_length(rendered_dashboard):
 
 DASHBOARD_REQUIRED = [
     ("verdict-seal-svg", "Verdict Seal"),
-    pytest.param("pillars", "四柱命盘", marks=pytest.mark.xfail(reason="Dashboard HTML 模板重构后 pillars DOM 结构变更，待模板与测试对齐")),
+    ("pillar-chart", "四柱命盘"),
     ("verdict-row", "用神裁决行"),
     ("证据链审查", "证据链模块"),
     ("五行账簿", "Element Balance Ledger"),

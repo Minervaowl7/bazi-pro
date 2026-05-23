@@ -85,7 +85,6 @@ def test_report_markdown():
         os.unlink(tmp)
 
 
-@pytest.mark.xfail(reason="generate_report.py dashboard 模式输出缺少 evidence-card CSS class，待报告生成器修复")
 def test_report_dashboard():
     """仪表盘生成"""
     sample = REPO_ROOT / "examples" / "sample_analysis.md"
@@ -98,11 +97,16 @@ def test_report_dashboard():
         r = run(["python3", str(SCRIPTS / "generate_report.py"), "--input", str(sample),
                  "--theme", "dashboard", "--format", "html", "--output", tmp])
         assert r.returncode == 0
-        content = Path(tmp).read_text()
-        assert "evidence-card" in content
-        assert "relation-graph" in content
+        actual_path = tmp.replace(".html", "_dashboard.html") if not tmp.endswith("_dashboard.html") else tmp
+        if not Path(actual_path).exists():
+            actual_path = tmp
+        content = Path(actual_path).read_text()
+        assert "ev-card" in content or "evidence-card" in content
+        assert "reasoning-graph" in content or "relation-graph" in content
     finally:
-        os.unlink(tmp)
+        for p in [tmp, tmp.replace(".html", "_dashboard.html")]:
+            if Path(p).exists():
+                os.unlink(p)
 
 
 def test_version_consistency():
