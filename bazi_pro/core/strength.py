@@ -1,6 +1,6 @@
+from bazi_pro.core.branches import CANGGAN_WEIGHT, DELING_SCORE, SHIER_CHANGSHENG
 from bazi_pro.core.constants import GAN_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
-from bazi_pro.core.branches import CANGGAN_WEIGHT, SHIER_CHANGSHENG, DELING_SCORE
 
 
 def calc_deling(day_master: str, month_zhi: str) -> tuple[str, int]:

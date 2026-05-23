@@ -2,7 +2,8 @@
 """bazi-pro 流年沙盒 v5.0 (EXPERIMENTAL)"""
 
 from dataclasses import dataclass, field
-from bazi_pro import GAN_WUXING, ZHI_WUXING, derive_shishen, count_wuxing_from_bazi, wuxing_pct
+
+from bazi_pro import GAN_WUXING, ZHI_WUXING, count_wuxing_from_bazi, derive_shishen, wuxing_pct
 from bazi_pro.core_rules import full_analysis
 
 EXPERIMENTAL = True

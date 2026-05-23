@@ -10,13 +10,14 @@ __all__ = [
     'AnalysisEngine',
 ]
 
-from bazi_pro.retrieve_classical import retrieve, retrieve_batch, load_corpus
-from bazi_pro.evidence import build_analysis_evidence, new_evidence
-
-
 from bazi_pro.core.constants import (
-    GAN_WUXING, ZHI_WUXING, GAN_SHISHEN_MAP, derive_shishen,
+    GAN_SHISHEN_MAP,
+    GAN_WUXING,
+    ZHI_WUXING,
+    derive_shishen,
 )
+from bazi_pro.evidence import build_analysis_evidence, new_evidence
+from bazi_pro.retrieve_classical import load_corpus, retrieve, retrieve_batch
 
 
 def count_wuxing_from_bazi(bazi_str: str) -> dict[str, int]:

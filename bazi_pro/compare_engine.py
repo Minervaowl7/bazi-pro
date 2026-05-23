@@ -2,7 +2,8 @@
 """bazi-pro 命盘对比引擎 v5.0 (EXPERIMENTAL)"""
 
 from dataclasses import dataclass, field
-from bazi_pro import GAN_WUXING, derive_shishen, count_wuxing_from_bazi, wuxing_pct
+
+from bazi_pro import GAN_WUXING, count_wuxing_from_bazi, derive_shishen, wuxing_pct
 
 EXPERIMENTAL = True
 

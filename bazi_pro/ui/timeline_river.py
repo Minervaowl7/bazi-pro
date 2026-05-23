@@ -4,8 +4,7 @@ bazi-pro 命运河流时间轴 v5.0 — SVG 曲线大运时间轴 + 波峰波谷
 纯 CSS/SVG 实现，支持键盘导航和色温渐变
 """
 
-import json
-from bazi_pro.view_model import DashboardVM, DayunVM
+from bazi_pro.view_model import DashboardVM
 
 # 当前年份（用于光标定位）
 CURRENT_YEAR = 2026

@@ -1,11 +1,11 @@
 """Smoke tests for bazi-pro v5.0 — 核心命令可用性验证"""
 
-import sys
-import os
 import json
+import os
 import subprocess
-import pytest
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO_ROOT / "scripts"

@@ -13,33 +13,72 @@
   python3 retrieve_classical.py --cache-info
 """
 
-import sys
-import re
-import os
+import hashlib
 import json
 import math
-import time
-import hashlib
+import os
 import pickle
+import platform
+import re
+import sys
+import tempfile
+import time
 from collections import Counter
-
 
 # ---------- Cache ----------
 
+_CACHE_VERSION = 2
+
+
 def _cache_dir():
-    d = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".cache")
-    os.makedirs(d, exist_ok=True)
+    env_dir = os.environ.get("BAZI_CACHE_DIR", "")
+    if env_dir:
+        d = os.path.expanduser(env_dir)
+    else:
+        if platform.system() == "Windows":
+            base = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+            d = os.path.join(base, "bazi-pro", "cache")
+        elif platform.system() == "Darwin":
+            d = os.path.expanduser("~/Library/Caches/bazi-pro")
+        else:
+            xdg = os.environ.get("XDG_CACHE_HOME", "")
+            base = xdg if xdg else os.path.expanduser("~/.cache")
+            d = os.path.join(base, "bazi-pro")
+    try:
+        os.makedirs(d, exist_ok=True)
+    except OSError:
+        d = os.path.join(tempfile.gettempdir(), "bazi-pro-cache")
+        os.makedirs(d, exist_ok=True)
     return d
 
 
 def _corpus_hash(corpus_path: str) -> str:
     stat = os.stat(corpus_path)
     raw = f"{corpus_path}:{stat.st_mtime}:{stat.st_size}".encode()
-    return hashlib.md5(raw).hexdigest()[:12]
+    return hashlib.sha256(raw).hexdigest()[:16]
 
 
 def _cache_path(corpus_path: str) -> str:
     return os.path.join(_cache_dir(), f"bm25_{_corpus_hash(corpus_path)}.pkl")
+
+
+def _acquire_lock(lock_path: str):
+    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR)
+    try:
+        import fcntl
+        fcntl.flock(fd, fcntl.LOCK_EX)
+    except (ImportError, AttributeError):
+        pass
+    return fd
+
+
+def _release_lock(fd):
+    try:
+        import fcntl
+        fcntl.flock(fd, fcntl.LOCK_UN)
+    except (ImportError, AttributeError):
+        pass
+    os.close(fd)
 
 
 # ---------- Corpus loader ----------
@@ -158,21 +197,45 @@ def get_bm25(corpus_path: str, entries: list[dict],
              force_rebuild: bool = False) -> tuple[BM25, bool]:
     """获取 BM25 索引，返回 (bm25, cache_hit)"""
     cache_file = _cache_path(corpus_path)
+    lock_file = cache_file + ".lock"
 
     if not force_rebuild and os.path.exists(cache_file):
         try:
             with open(cache_file, "rb") as f:
-                bm25 = pickle.load(f)
-            if bm25.N == len(entries):
-                return bm25, True
+                data = pickle.load(f)
+            if isinstance(data, dict) and data.get("_version") == _CACHE_VERSION:
+                bm25 = data["bm25"]
+                if bm25.N == len(entries):
+                    return bm25, True
         except Exception:
             pass
 
     tokenized = [build_query(e) for e in entries]
     bm25 = BM25(tokenized)
     try:
-        with open(cache_file, "wb") as f:
-            pickle.dump(bm25, f, protocol=pickle.HIGHEST_PROTOCOL)
+        fd = _acquire_lock(lock_file)
+        try:
+            cache_data = {
+                "_version": _CACHE_VERSION,
+                "_python": platform.python_version(),
+                "_corpus_hash": _corpus_hash(corpus_path),
+                "bm25": bm25,
+            }
+            dir_name = os.path.dirname(cache_file)
+            fd_tmp, tmp_path = tempfile.mkstemp(dir=dir_name, suffix=".pkl")
+            try:
+                with os.fdopen(fd_tmp, "wb") as f:
+                    pickle.dump(cache_data, f, protocol=pickle.HIGHEST_PROTOCOL)
+                os.replace(tmp_path, cache_file)
+            except Exception:
+                os.unlink(tmp_path) if os.path.exists(tmp_path) else None
+                raise
+        finally:
+            _release_lock(fd)
+            try:
+                os.unlink(lock_file)
+            except OSError:
+                pass
     except Exception as e:
         print(f"[WARN] cache write failed: {e}", file=sys.stderr)
     return bm25, False

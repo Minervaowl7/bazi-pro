@@ -37,8 +37,10 @@ def test_trace_builder():
 
 def test_validate_invalid():
     """validate_trace 拒绝非法 trace"""
+    import json as _json
+    import tempfile
+
     from bazi_pro.trace import validate_trace
-    import tempfile, json as _json
     bad = {"schema_version": "wrong"}
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         _json.dump(bad, f)

@@ -5,8 +5,9 @@ bazi-pro Report Renderer v5.0 — 咨询报告
 """
 
 from html import escape
-from bazi_pro.view_model import DashboardVM
+
 from bazi_pro.ui.verdict_seal import render_seal_svg
+from bazi_pro.view_model import DashboardVM
 
 
 def render_report(vm: DashboardVM, body_html: str = '', appendix_html: str = '') -> str:

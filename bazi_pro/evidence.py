@@ -184,8 +184,9 @@ def main():
         return
 
     if args.trace_out:
-        from bazi_pro.trace import demo_trace
         import json as _json
+
+        from bazi_pro.trace import demo_trace
         trace = demo_trace()
         with open(args.trace_out, "w", encoding="utf-8") as f:
             _json.dump(trace, f, ensure_ascii=False, indent=2)

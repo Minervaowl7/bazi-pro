@@ -4,10 +4,11 @@ bazi-pro HTML Quality Regression Tests v5.0
 防止 UI 回退：占位文案 · summary 长度 · TOC 有效性 · 必需模块
 """
 
-import sys
 import re
-import pytest
+import sys
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -28,8 +29,8 @@ def sample_trace():
 def rendered_dashboard():
     """渲染一份 Dashboard 用于检查"""
     try:
-        from bazi_pro.view_model import DashboardVM, PillarVM
         from bazi_pro.ui import render_dashboard
+        from bazi_pro.view_model import DashboardVM, PillarVM
         vm = DashboardVM()
         vm.verdict.day_master = "丁火"
         vm.verdict.pattern = "建禄月劫"
@@ -54,8 +55,8 @@ def rendered_dashboard():
 def rendered_report():
     """渲染一份 Report 用于检查"""
     try:
-        from bazi_pro.view_model import DashboardVM
         from bazi_pro.ui import render_report
+        from bazi_pro.view_model import DashboardVM
         vm = DashboardVM()
         vm.verdict.day_master = "丁火"
         vm.verdict.pattern = "建禄月劫"
@@ -156,8 +157,8 @@ def test_report_required_sections(rendered_report, marker, label):
 def test_replay_has_three_columns():
     """Replay Viewer 有三栏布局"""
     try:
-        from bazi_pro.view_model import DashboardVM
         from bazi_pro.ui import render_replay
+        from bazi_pro.view_model import DashboardVM
         vm = DashboardVM()
         html = render_replay(vm)
         assert "replay-layout" in html, "缺少三栏布局容器"
@@ -175,8 +176,8 @@ def test_replay_has_three_columns():
 def test_dashboard_screenshot_mode():
     """Screenshot 模式移除交互控件"""
     try:
-        from bazi_pro.view_model import DashboardVM
         from bazi_pro.ui import render_dashboard
+        from bazi_pro.view_model import DashboardVM
         vm = DashboardVM()
         vm.verdict.day_master = "丁火"
         html = render_dashboard(vm, screenshot_mode=True)
@@ -256,7 +257,7 @@ def test_no_technical_content_outside_containers(rendered_report):
     """技术术语只能在 .content-main 或 .appendix 内出现"""
     if not rendered_report:
         pytest.skip("Report 未渲染")
-    
+
     # Get positions of main and appendix
     main_start = rendered_report.find('class="content-main"')
     main_end = rendered_report.find('class="appendix"')
@@ -264,14 +265,14 @@ def test_no_technical_content_outside_containers(rendered_report):
     appendix_end = rendered_report.find('class="disclaimer"', appendix_start)
     if appendix_end < 0:
         appendix_end = len(rendered_report)
-    
-    main = rendered_report[main_start:appendix_start] if main_start > 0 else ''
-    appendix = rendered_report[appendix_start:appendix_end] if appendix_start > 0 else ''
-    
+
+    _main = rendered_report[main_start:appendix_start] if main_start > 0 else ''
+    _appendix = rendered_report[appendix_start:appendix_end] if appendix_start > 0 else ''
+
     # Everything outside main+appendix should be clean
     outside = (rendered_report[:main_start] if main_start > 0 else '') + \
               (rendered_report[appendix_end:] if appendix_end > 0 else '')
-    
+
     for term in TECHNICAL_HEADINGS_BANNED:
         assert term not in outside, \
             f"技术术语 '{term}' 出现在 .content-main 和 .appendix 之外"

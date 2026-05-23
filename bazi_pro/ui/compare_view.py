@@ -5,6 +5,7 @@ bazi-pro 命盘对比视图 v5.0
 """
 
 from html import escape
+
 from bazi_pro.compare_engine import CompareResult
 
 

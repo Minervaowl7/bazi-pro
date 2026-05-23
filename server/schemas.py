@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import re
-from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
+from pydantic import BaseModel, Field, field_validator
 
 TIANGAN = set('甲乙丙丁戊己庚辛壬癸')
 DIZHI = set('子丑寅卯辰巳午未申酉戌亥')

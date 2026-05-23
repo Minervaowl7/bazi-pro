@@ -1,5 +1,5 @@
+from bazi_pro.core.branches import ZHI_CHONG, ZHI_HAI, ZHI_HE, ZHI_SANHE, ZHI_XING
 from bazi_pro.core.stems import GAN_HE
-from bazi_pro.core.branches import ZHI_CHONG, ZHI_HE, ZHI_HAI, ZHI_XING, ZHI_SANHE
 
 
 def detect_relations(bazi_parts: list[str]) -> list[dict]:

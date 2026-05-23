@@ -5,17 +5,15 @@ bazi-pro 交互式 TUI v5.0
 """
 
 import os
-import sys
-from pathlib import Path
 
 try:
+    from rich import box
     from rich.console import Console
-    from rich.table import Table
+    from rich.layout import Layout  # noqa: F401
     from rich.panel import Panel
     from rich.progress import Progress, SpinnerColumn, TextColumn
-    from rich.layout import Layout
-    from rich.syntax import Syntax
-    from rich import box
+    from rich.syntax import Syntax  # noqa: F401
+    from rich.table import Table
     _RICH_AVAILABLE = True
 except ImportError:
     _RICH_AVAILABLE = False
@@ -72,7 +70,7 @@ class BaziTUI:
         title = Panel.fit(
             "[bold gold1]bazi-pro v5.0[/bold gold1]\n"
             "[dim]专业八字命理解读引擎 · 交互式终端界面[/dim]\n"
-            f"[dim]语料库: 2964 条古籍原文 | 6 部经典 | BM25 + Hybrid Search[/dim]",
+            "[dim]语料库: 2964 条古籍原文 | 6 部经典 | BM25 + Hybrid Search[/dim]",
             border_style="gold1",
             padding=(1, 3),
         )

@@ -4,23 +4,24 @@ bazi-pro FastAPI 应用 v5.0
 API 路由：分析、状态查询、结果获取、仪表盘
 """
 
-import uuid
 import asyncio
+import logging
 import os
 import time
-import logging
+import uuid
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends, Security
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import Depends, FastAPI, Security, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import APIKeyHeader
 
-from server.ws import manager
 from server.analysis import run_analysis
 from server.cache import get_cache
+from server.ratelimiter import RateLimiter, create_rate_limiter
 from server.schemas import BaziAnalysisRequest
+from server.taskstore import MemoryTaskStore, create_task_store
+from server.ws import manager
 
 logger = logging.getLogger("bazi-pro")
 
@@ -48,7 +49,7 @@ def error_response(status_code: int, code: str, message: str) -> JSONResponse:
 
 app = FastAPI(
     title="bazi-pro API",
-    description="专业八字命理解读引擎 Web 服务",
+    description="专业八字命理解读引擎 Web 服务\n\n⚠️ 免责声明：本服务仅供传统文化学习与参考，分析结果不构成任何决策依据。命理解释包含规则推导、古籍检索和 LLM 辅助解释，请勿将模型输出视为确定性事实。",
     version="5.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -105,39 +106,79 @@ class _RequestSizeLimitMiddleware:
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
+            content_length = None
+            transfer_encoding = None
             for name, value in scope.get("headers", []):
-                if name == b"content-length" and int(value) > self.max_body_size:
+                if name == b"content-length":
+                    content_length = int(value)
+                if name == b"transfer-encoding":
+                    transfer_encoding = value.decode("latin-1").lower()
+
+            if content_length is not None and content_length > self.max_body_size:
+                response = error_response(413, "PAYLOAD_TOO_LARGE", "请求体过大")
+                await response(scope, receive, send)
+                return
+
+            if transfer_encoding and "chunked" in transfer_encoding:
+                received = 0
+                limit_exceeded = False
+
+                async def chunked_receive():
+                    nonlocal received, limit_exceeded
+                    message = await receive()
+                    if message.get("type") == "http.request":
+                        body = message.get("body", b"")
+                        received += len(body)
+                        if received > self.max_body_size:
+                            limit_exceeded = True
+                    return message
+
+                async def limited_send(message):
+                    if limit_exceeded and message.get("type") in (
+                        "http.response.start", "http.response.body"
+                    ):
+                        return
+                    await send(message)
+
+                await self.app(scope, chunked_receive, limited_send)
+
+                if limit_exceeded:
                     response = error_response(413, "PAYLOAD_TOO_LARGE", "请求体过大")
                     await response(scope, receive, send)
                     return
+                return
+
         await self.app(scope, receive, send)
 
 
 class _RateLimitMiddleware:
-    def __init__(self, app, max_requests=30, window_seconds=60):
+    def __init__(self, app, rate_limiter: RateLimiter):
         self.app = app
-        self.max_requests = max_requests
-        self.window_seconds = window_seconds
-        self._requests: dict[str, list[float]] = {}
+        self._limiter = rate_limiter
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
             client = scope.get("client")
             ip = client[0] if client else "unknown"
-            now = time.time()
-            timestamps = self._requests.setdefault(ip, [])
-            self._requests[ip] = [t for t in timestamps if now - t < self.window_seconds]
-            if len(self._requests[ip]) >= self.max_requests:
+            api_key = ""
+            for name, value in scope.get("headers", []):
+                if name == b"x-api-key":
+                    api_key = value.decode("latin-1")
+            key = f"{ip}:{api_key}" if api_key else ip
+            if not self._limiter.is_allowed(key):
                 response = error_response(429, "RATE_LIMITED", "请求过于频繁，请稍后重试")
                 await response(scope, receive, send)
                 return
-            self._requests[ip].append(now)
         await self.app(scope, receive, send)
 
 
 _MAX_PAYLOAD_BYTES = _get_int_env("BAZI_MAX_PAYLOAD_BYTES", 10240)
 _RATE_LIMIT_REQUESTS = _get_int_env("BAZI_RATE_LIMIT_REQUESTS", 30)
 _RATE_LIMIT_WINDOW_SECONDS = _get_int_env("BAZI_RATE_LIMIT_WINDOW_SECONDS", 60)
+_rate_limiter = create_rate_limiter(
+    max_requests=_RATE_LIMIT_REQUESTS,
+    window_seconds=_RATE_LIMIT_WINDOW_SECONDS,
+)
 
 app.add_middleware(
     _RequestSizeLimitMiddleware,
@@ -145,8 +186,7 @@ app.add_middleware(
 )
 app.add_middleware(
     _RateLimitMiddleware,
-    max_requests=_RATE_LIMIT_REQUESTS,
-    window_seconds=_RATE_LIMIT_WINDOW_SECONDS,
+    rate_limiter=_rate_limiter,
 )
 
 
@@ -157,19 +197,13 @@ async def _global_exception_handler(request, exc):
     return error_response(500, "INTERNAL_ERROR", message)
 
 
-_analysis_tasks: dict[str, dict] = {}
+_task_store = create_task_store()
 _TASK_TTL_SECONDS = _get_int_env("BAZI_TASK_TTL_SECONDS", 7200)
 _MAX_CONCURRENT_TASKS = _get_int_env("BAZI_MAX_CONCURRENT_TASKS", 1000)
 
 
 def _cleanup_expired_tasks() -> None:
-    now = time.time()
-    expired = [
-        rid for rid, info in _analysis_tasks.items()
-        if now - info.get('_created_ts', 0) > _TASK_TTL_SECONDS
-    ]
-    for rid in expired:
-        _analysis_tasks.pop(rid, None)
+    _task_store.cleanup_expired(_TASK_TTL_SECONDS)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -220,6 +254,10 @@ textarea{width:100%;min-height:200px;background:var(--surface2);color:var(--ink)
 <h2>上传八字 JSON 数据</h2>
 <p style="font-size:13px;color:var(--muted);margin-bottom:12px">粘贴 Bazi MCP 返回的 JSON 数据（含八字、日主、性别等字段）</p>
 <textarea id="mcpInput" placeholder='{"性别":"女","阳历":"2002-05-19 06:14","农历":"壬午年四月初八","八字":"壬午 乙巳 丁亥 癸卯","日主":"丁","生肖":"马"}'></textarea>
+<div style="margin-top:8px">
+<label style="font-size:13px;color:var(--muted)">API Key（如服务端已设置鉴权，请填写）</label>
+<input id="apiKeyInput" type="password" placeholder="留空则不发送" style="width:100%;padding:8px;background:var(--surface2);color:var(--ink);border:1px solid var(--border);border-radius:8px;margin-top:4px;font-size:13px" />
+</div>
 <button class="btn" id="analyzeBtn" onclick="startAnalysis()">开始分析</button>
 <div class="status-bar" id="statusBar">等待输入...</div>
 <div class="result-box" id="resultBox"></div>
@@ -229,10 +267,20 @@ textarea{width:100%;min-height:200px;background:var(--surface2);color:var(--ink)
 <a href="/docs">API 文档 (Swagger)</a> |
 <a href="/redoc">API 文档 (ReDoc)</a>
 </div>
+<p style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted)">⚠️ 免责声明：本服务仅供传统文化学习与参考，分析结果不构成任何决策依据。输出包含规则推导、古籍检索和 LLM 辅助解释，请勿视为确定性事实。</p>
 </div>
 
 <script>
 let ws = null;
+function getApiKey() {
+    return document.getElementById('apiKeyInput').value.trim();
+}
+function authHeaders() {
+    var h = {'Content-Type': 'application/json'};
+    var key = getApiKey();
+    if (key) h['X-API-Key'] = key;
+    return h;
+}
 async function startAnalysis() {
     var btn = document.getElementById('analyzeBtn');
     var status = document.getElementById('statusBar');
@@ -243,15 +291,15 @@ async function startAnalysis() {
 
     try {
         var mcpData = JSON.parse(document.getElementById('mcpInput').value);
-        var headers = {'Content-Type': 'application/json'};
         var resp = await fetch('/api/analyze', {
             method: 'POST',
-            headers: headers,
+            headers: authHeaders(),
             body: JSON.stringify(mcpData)
         });
         var data = await resp.json();
         if (resp.status !== 200 && resp.status !== 202) {
-            status.textContent = '错误: ' + (data.detail || JSON.stringify(data));
+            var errMsg = data.error ? data.error.message : (data.detail || JSON.stringify(data));
+            status.textContent = '错误: ' + errMsg;
             btn.disabled = false;
             return;
         }
@@ -259,7 +307,8 @@ async function startAnalysis() {
         status.textContent = '分析已启动 (ID: ' + runId + ')，正在连接 WebSocket...';
 
         var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        ws = new WebSocket(protocol + '//' + location.host + '/ws/' + runId);
+        var wsUrl = protocol + '//' + location.host + '/ws/' + runId;
+        ws = new WebSocket(wsUrl, [], {headers: {'x-api-key': getApiKey()}});
         ws.onmessage = function(e) {
             var msg = JSON.parse(e.data);
             status.textContent = 'Step ' + msg.step + ': ' + msg.summary;
@@ -279,7 +328,7 @@ async function startAnalysis() {
 }
 
 async function fetchResult(runId) {
-    var resp = await fetch('/api/result/' + runId);
+    var resp = await fetch('/api/result/' + runId, {headers: authHeaders()});
     var data = await resp.json();
     var result = document.getElementById('resultBox');
     result.textContent = JSON.stringify(data, null, 2);
@@ -289,7 +338,7 @@ async function fetchResult(runId) {
 
 async function pollStatus(runId) {
     var interval = setInterval(async function() {
-        var resp = await fetch('/api/status/' + runId);
+        var resp = await fetch('/api/status/' + runId, {headers: authHeaders()});
         var data = await resp.json();
         document.getElementById('statusBar').textContent = '状态: ' + data.status;
         if (data.status === 'completed' || data.status === 'failed') {
@@ -319,18 +368,18 @@ async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_ke
     """
     _cleanup_expired_tasks()
 
-    if len(_analysis_tasks) >= _MAX_CONCURRENT_TASKS:
+    if isinstance(_task_store, MemoryTaskStore) and len(_task_store) >= _MAX_CONCURRENT_TASKS:
         return error_response(503, "SERVER_BUSY", "服务繁忙，请稍后重试")
 
     run_id = uuid.uuid4().hex
     payload_dict = payload.model_dump()
     detail_level = payload_dict.pop('detail_level', 'standard')
 
-    _analysis_tasks[run_id] = {
+    _task_store.create(run_id, {
         'status': 'queued',
         'created_at': datetime.now(timezone.utc).isoformat(),
         '_created_ts': time.time(),
-    }
+    })
 
     asyncio.create_task(_background_analyze(run_id, payload_dict, detail_level))
 
@@ -344,7 +393,7 @@ async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_ke
 @app.get("/api/status/{run_id}")
 async def api_status(run_id: str, _auth=Depends(_verify_api_key)):
     """查询分析进度"""
-    task = _analysis_tasks.get(run_id)
+    task = _task_store.get(run_id)
     if not task:
         return error_response(404, "NOT_FOUND", "run_id 不存在")
     safe_task = {k: v for k, v in task.items() if not k.startswith('_')}
@@ -354,7 +403,7 @@ async def api_status(run_id: str, _auth=Depends(_verify_api_key)):
 @app.get("/api/result/{run_id}")
 async def api_result(run_id: str, _auth=Depends(_verify_api_key)):
     """获取分析结果"""
-    task = _analysis_tasks.get(run_id)
+    task = _task_store.get(run_id)
     if not task:
         return error_response(404, "NOT_FOUND", "run_id 不存在")
 
@@ -385,7 +434,7 @@ async def ws_connect(ws: WebSocket, run_id: str):
         if api_key != _API_KEY:
             await ws.close(code=4001, reason='Invalid API key')
             return
-    if run_id not in _analysis_tasks:
+    if not _task_store.get(run_id):
         await ws.close(code=4004, reason='run_id not found')
         return
     manager.add_accepted(run_id, ws)
@@ -400,19 +449,26 @@ async def ws_connect(ws: WebSocket, run_id: str):
 
 async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
     """后台执行分析"""
-    _analysis_tasks[run_id]['status'] = 'running'
+    _task_store.update(run_id, {'status': 'running'})
     try:
         result = await run_analysis(mcp_json, run_id, detail_level)
-        _analysis_tasks[run_id]['status'] = result.get('status', 'completed')
+        _task_store.update(run_id, {'status': result.get('status', 'completed')})
         cache = get_cache()
         cache.set(f'result:{run_id}', result, ttl=_TASK_TTL_SECONDS)
     except Exception as e:
-        _analysis_tasks[run_id]['status'] = 'failed'
+        _task_store.update(run_id, {'status': 'failed'})
         debug = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
-        _analysis_tasks[run_id]['error'] = str(e) if debug else "Internal server error"
+        _task_store.update(run_id, {'error': str(e) if debug else "Internal server error"})
         logger.error("Analysis failed for run_id=%s: %s", run_id, e)
 
 
-if __name__ == '__main__':
+def main():
     import uvicorn
-    uvicorn.run(app, host='0.0.0.0', port=8800, log_level='info')
+    host = os.environ.get("BAZI_HOST", "0.0.0.0")
+    port = _get_int_env("BAZI_PORT", 8800)
+    log_level = os.environ.get("BAZI_LOG_LEVEL", "info")
+    uvicorn.run(app, host=host, port=port, log_level=log_level)
+
+
+if __name__ == '__main__':
+    main()

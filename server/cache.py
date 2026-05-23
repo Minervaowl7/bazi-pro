@@ -5,10 +5,10 @@ Redis 优先，未配置时降级为内存 LRU dict（支持 TTL）
 降级状态通过 backend 属性和 _degraded_reason 暴露
 """
 
-import os
 import json
-import time
 import logging
+import os
+import time
 from collections import OrderedDict
 from typing import Optional
 

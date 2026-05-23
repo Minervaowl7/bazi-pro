@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import yaml
-import pytest
 from pathlib import Path
+
+import pytest
+import yaml
 
 from bazi_pro.core import full_analysis
 

@@ -7,12 +7,9 @@ Dashboard / Report / Replay 三种输出形态共用同一个 ViewModel
 """
 
 import json
-import warnings
-
+import re
 from dataclasses import dataclass, field
 from typing import Optional
-import re
-
 
 # ═══════════════════════════════════════════════════════════════════
 # Core data types

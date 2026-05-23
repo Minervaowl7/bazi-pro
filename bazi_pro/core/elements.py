@@ -1,6 +1,6 @@
+from bazi_pro.core.branches import CANGGAN_WEIGHT
 from bazi_pro.core.constants import GAN_WUXING
 from bazi_pro.core.hidden_stems import get_canggan
-from bazi_pro.core.branches import CANGGAN_WEIGHT
 
 
 def calc_element_forces(bazi_parts: list[str], month_zhi: str) -> dict:

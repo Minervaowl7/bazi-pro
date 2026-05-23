@@ -6,22 +6,23 @@ bazi-pro 异步分析编排 v5.0
 
 import asyncio
 import hashlib
+import json
 from datetime import datetime, timezone
-from pathlib import Path
 
+from bazi_pro import GAN_WUXING, ZHI_WUXING, derive_shishen
 from bazi_pro.core_rules import (
-    calc_deling,
     calc_dedi,
+    calc_deling,
     calc_deshi,
-    judge_wangshuai,
     calc_element_forces,
-    screen_pattern,
     derive_yongshen,
     detect_relations,
     get_canggan,
+    judge_wangshuai,
+    screen_pattern,
 )
-from bazi_pro import GAN_WUXING, ZHI_WUXING, derive_shishen
 from server.cache import get_cache
+from server.schemas import BaziAnalysisRequest
 from server.ws import manager
 
 
@@ -41,16 +42,15 @@ async def run_analysis(mcp_json: dict, run_id: str,
         'status': 'completed',
         'detail_level': detail_level,
         'started_at': datetime.now(timezone.utc).isoformat(),
+        'disclaimer': '本分析仅供传统文化学习与参考，不构成任何决策依据。',
+        'source_attribution': {
+            '规则推导': '十神、藏干、旺衰、格局筛查(L0-3)、喜用神、刑冲合害',
+            '古籍检索': 'BM25 检索 6 部经典 2964 条条文',
+            'LLM辅助解释': '调候用神、多候选格局裁决、分维度解读（需外部 LLM）',
+        },
     }
 
     try:
-        await manager.send_progress(run_id, '0', 'running', '古籍条文检索中...')
-        retrieval = await _do_retrieve(mcp_json)
-        await manager.send_progress(run_id, '0', 'done',
-                                     f'检索完成，命中 {len(retrieval.get("results", []))} 条',
-                                     retrieval)
-        result['retrieval'] = retrieval
-
         await manager.send_progress(run_id, '1', 'running', '数据校验中...')
         await asyncio.sleep(0.05)
         validation = _validate_input(mcp_json)
@@ -59,15 +59,22 @@ async def run_analysis(mcp_json: dict, run_id: str,
 
         if not validation['valid']:
             result['status'] = 'invalid_input'
-            result['missing'] = validation['missing_fields']
+            result['errors'] = validation.get('errors', [])
             await manager.send_progress(run_id, 'error', 'failed',
-                                         f'输入数据缺失: {validation["missing_fields"]}')
+                                         f'输入数据校验失败: {validation.get("errors", [])}')
             return result
 
         bazi = mcp_json.get('八字', '')
         day_master = mcp_json.get('日主', '')
         bazi_parts = bazi.split()
         month_zhi = bazi_parts[1][1] if len(bazi_parts) >= 2 and len(bazi_parts[1]) >= 2 else ''
+
+        await manager.send_progress(run_id, '0', 'running', '古籍条文检索中...')
+        retrieval = await _do_retrieve(mcp_json)
+        await manager.send_progress(run_id, '0', 'done',
+                                     f'检索完成，命中 {len(retrieval.get("results", []))} 条',
+                                     retrieval)
+        result['retrieval'] = retrieval
 
         await manager.send_progress(run_id, '2', 'running', '日主旺衰判断中...')
         await asyncio.sleep(0.05)
@@ -134,7 +141,7 @@ async def run_analysis(mcp_json: dict, run_id: str,
 async def _do_retrieve(mcp_json: dict) -> dict:
     def _sync():
         try:
-            from bazi_pro.retrieve_classical import retrieve, _resolve_corpus
+            from bazi_pro.retrieve_classical import _resolve_corpus, retrieve
             day_master = mcp_json.get('日主', '')
             bazi = mcp_json.get('八字', '')
             query = f'{day_master} {bazi} 格局 旺衰'
@@ -146,17 +153,31 @@ async def _do_retrieve(mcp_json: dict) -> dict:
 
 
 def _validate_input(mcp_json: dict) -> dict:
-    bazi = mcp_json.get('八字', '')
-    day_master = mcp_json.get('日主', '')
-    gender = mcp_json.get('性别', '')
-    return {
-        'valid': True,
-        'missing_fields': [],
-        'empty_fields': [],
-        'bazi': bazi,
-        'day_master': day_master,
-        'gender': gender,
-    }
+    try:
+        BaziAnalysisRequest.model_validate(mcp_json)
+        return {
+            'valid': True,
+            'errors': [],
+            'bazi': mcp_json.get('八字', ''),
+            'day_master': mcp_json.get('日主', ''),
+            'gender': mcp_json.get('性别', ''),
+        }
+    except Exception as e:
+        errors = []
+        if hasattr(e, 'errors'):
+            for err in e.errors():
+                loc = '.'.join(str(x) for x in err.get('loc', []))
+                msg = err.get('msg', str(err))
+                errors.append(f'{loc}: {msg}' if loc else msg)
+        else:
+            errors.append(str(e))
+        return {
+            'valid': False,
+            'errors': errors,
+            'bazi': mcp_json.get('八字', ''),
+            'day_master': mcp_json.get('日主', ''),
+            'gender': mcp_json.get('性别', ''),
+        }
 
 
 def _estimate_strength(mcp_json: dict, bazi_parts: list[str],
@@ -252,6 +273,19 @@ def _detect_relations(bazi_parts: list[str]) -> list[dict]:
     return detect_relations(bazi_parts)
 
 
+_ANALYSIS_VERSION = "v2"
+
+
 def _make_cache_key(mcp_json: dict, detail_level: str) -> str:
-    raw = f'{mcp_json.get("八字", "")}|{detail_level}'
-    return f'bazi:{hashlib.md5(raw.encode()).hexdigest()[:12]}'
+    key_data = {
+        "八字": mcp_json.get("八字", ""),
+        "日主": mcp_json.get("日主", ""),
+        "性别": mcp_json.get("性别", ""),
+        "阳历": mcp_json.get("阳历", ""),
+        "农历": mcp_json.get("农历", ""),
+        "大运": mcp_json.get("大运", []),
+        "detail_level": detail_level,
+        "analysis_version": _ANALYSIS_VERSION,
+    }
+    raw = json.dumps(key_data, sort_keys=True, ensure_ascii=False)
+    return f'bazi:{hashlib.sha256(raw.encode()).hexdigest()[:32]}'

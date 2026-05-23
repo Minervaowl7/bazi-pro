@@ -5,9 +5,6 @@ bazi-pro WebSocket 管理 v5.0
 支持同一 run_id 多连接
 """
 
-import json
-import asyncio
-from typing import Optional
 from fastapi import WebSocket
 
 

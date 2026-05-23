@@ -1,8 +1,8 @@
+from bazi_pro.core.branches import JIANLU_MAP, YANGREN_MAP
 from bazi_pro.core.constants import GAN_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
-from bazi_pro.core.branches import JIANLU_MAP, YANGREN_MAP
-from bazi_pro.core.ten_gods import _count_shishen_categories, _get_yongshen_direction
 from bazi_pro.core.stems import SHENG_MAP
+from bazi_pro.core.ten_gods import _count_shishen_categories, _get_yongshen_direction
 
 PATTERN_YONGSHEN = {
     '正官格': {'用神': ['财星', '印星'], '忌神': ['伤官', '七杀']},

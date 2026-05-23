@@ -6,14 +6,16 @@ bazi-pro UI Renderer v5.0
 """
 
 from html import escape
-from bazi_pro.view_model import DashboardVM, EvidenceVM
-from bazi_pro.ui.verdict_seal import render_seal_svg, render_seal_with_animation, SEAL_CSS, SEAL_JS
-from bazi_pro.ui.report import render_report as _render_report
-from bazi_pro.ui.replay import render_replay as _render_replay
-from bazi_pro.ui.report_composer import parse_markdown_to_document, render_document_body
+
 from bazi_pro.ui.pillar_chart import render_pillar_chart
-from bazi_pro.ui.timeline_river import render_timeline_river
 from bazi_pro.ui.reasoning_graph import render_reasoning_graph
+from bazi_pro.ui.replay import render_replay as _render_replay
+from bazi_pro.ui.report import render_report as _render_report
+from bazi_pro.ui.report_composer import parse_markdown_to_document, render_document_body
+from bazi_pro.ui.timeline_river import render_timeline_river
+from bazi_pro.ui.verdict_seal import SEAL_CSS, SEAL_JS, render_seal_with_animation
+from bazi_pro.ui.verdict_seal import render_seal_svg as render_seal_svg
+from bazi_pro.view_model import DashboardVM, EvidenceVM
 
 
 def render_dashboard(vm: DashboardVM, *, screenshot_mode: bool = False,

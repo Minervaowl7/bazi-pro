@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-import pytest
 import time
+
+import pytest
 from pydantic import ValidationError
 
 from server.schemas import BaziAnalysisRequest, BaziPillars, DayunItem
@@ -193,6 +194,7 @@ class TestAppEndpoints:
     @pytest.fixture
     def client(self):
         from fastapi.testclient import TestClient
+
         from server.app import app
         return TestClient(app)
 
@@ -245,8 +247,9 @@ class TestAppEndpoints:
         assert resp.status_code == 404
 
     def test_api_key_enforced(self, client):
-        import os
         import importlib
+        import os
+
         import server.app as app_module
         original = os.environ.get('BAZI_API_KEY', '')
         os.environ['BAZI_API_KEY'] = 'test-secret-key'
@@ -279,30 +282,29 @@ class TestAppEndpoints:
         assert resp.status_code == 413
 
     def test_max_concurrent_tasks(self, client):
-        import os
-        import importlib
         import server.app as app_module
         original_max = app_module._MAX_CONCURRENT_TASKS
         app_module._MAX_CONCURRENT_TASKS = 2
-        app_module._analysis_tasks.clear()
+        app_module._task_store.clear()
         try:
             for i in range(2):
-                app_module._analysis_tasks[f'filler-{i}'] = {
+                app_module._task_store.create(f'filler-{i}', {
                     'status': 'running', '_created_ts': time.time()
-                }
-            count_before = len(app_module._analysis_tasks)
+                })
+            count_before = len(app_module._task_store)
             resp = client.post('/api/analyze', json={
                 '性别': '女', '八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁',
             })
             assert resp.status_code == 503
-            assert len(app_module._analysis_tasks) == count_before
+            assert len(app_module._task_store) == count_before
         finally:
             app_module._MAX_CONCURRENT_TASKS = original_max
-            app_module._analysis_tasks.clear()
+            app_module._task_store.clear()
 
     def test_ws_api_key_rejected(self, client):
-        import os
         import importlib
+        import os
+
         import server.app as app_module
         original = os.environ.get('BAZI_API_KEY', '')
         os.environ['BAZI_API_KEY'] = 'ws-test-key'
@@ -328,12 +330,12 @@ class TestAppEndpoints:
     def test_status_strips_internal_fields(self, client):
         import server.app as app_module
         run_id = 'test-internal-strip'
-        app_module._analysis_tasks[run_id] = {
+        app_module._task_store.create(run_id, {
             'status': 'running',
             '_created_ts': time.time(),
             '_secret': 'hidden',
             'visible_field': 'ok',
-        }
+        })
         try:
             resp = client.get(f'/api/status/{run_id}')
             data = resp.json()
@@ -341,7 +343,7 @@ class TestAppEndpoints:
             assert '_created_ts' not in data
             assert '_secret' not in data
         finally:
-            app_module._analysis_tasks.pop(run_id, None)
+            app_module._task_store.delete(run_id)
 
 
 class TestErrorResponseFormat:
@@ -349,12 +351,14 @@ class TestErrorResponseFormat:
     @pytest.fixture
     def client(self):
         from fastapi.testclient import TestClient
+
         from server.app import app
         return TestClient(app)
 
     def test_api_key_error_format(self, client):
-        import os
         import importlib
+        import os
+
         import server.app as app_module
         original = os.environ.get('BAZI_API_KEY', '')
         os.environ['BAZI_API_KEY'] = 'test-key-err'
@@ -393,9 +397,9 @@ class TestErrorResponseFormat:
 
     def test_rate_limit_error_format(self, client):
         import server.app as app_module
-        original_max = getattr(app_module, '_RATE_LIMIT_REQUESTS', 30)
-        app_module._RATE_LIMIT_REQUESTS = 2
-        app_module._RATE_LIMIT_WINDOW_SECONDS = 60
+        from server.ratelimiter import MemoryRateLimiter
+        original_limiter = app_module._rate_limiter
+        app_module._rate_limiter = MemoryRateLimiter(max_requests=2, window_seconds=60)
         try:
             for _ in range(5):
                 client.post('/api/analyze', json={
@@ -409,18 +413,18 @@ class TestErrorResponseFormat:
                 assert 'error' in data
                 assert data['error']['code'] == 'RATE_LIMITED'
         finally:
-            app_module._RATE_LIMIT_REQUESTS = original_max
+            app_module._rate_limiter = original_limiter
 
     def test_server_busy_error_format(self, client):
         import server.app as app_module
         original_max = app_module._MAX_CONCURRENT_TASKS
         app_module._MAX_CONCURRENT_TASKS = 2
-        app_module._analysis_tasks.clear()
+        app_module._task_store.clear()
         try:
             for i in range(2):
-                app_module._analysis_tasks[f'filler-{i}'] = {
+                app_module._task_store.create(f'filler-{i}', {
                     'status': 'running', '_created_ts': time.time()
-                }
+                })
             resp = client.post('/api/analyze', json={
                 '性别': '女', '八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁',
             })
@@ -430,10 +434,9 @@ class TestErrorResponseFormat:
             assert data['error']['code'] == 'SERVER_BUSY'
         finally:
             app_module._MAX_CONCURRENT_TASKS = original_max
-            app_module._analysis_tasks.clear()
+            app_module._task_store.clear()
 
     def test_internal_error_no_traceback(self, client):
-        import server.app as app_module
         data = resp = client.get('/api/status/nonexistent')
         assert resp.status_code == 404
         data = resp.json()
@@ -445,6 +448,7 @@ class TestEnvironmentConfig:
 
     def test_env_int_override(self, monkeypatch):
         import importlib
+
         import server.app as app_module
 
         monkeypatch.setenv("BAZI_MAX_CONCURRENT_TASKS", "5")
@@ -457,6 +461,7 @@ class TestEnvironmentConfig:
 
     def test_env_invalid_value_fallback(self, monkeypatch):
         import importlib
+
         import server.app as app_module
 
         monkeypatch.setenv("BAZI_MAX_CONCURRENT_TASKS", "invalid")
@@ -469,12 +474,13 @@ class TestEnvironmentConfig:
 
     def test_env_too_small_value_fallback(self, monkeypatch):
         import importlib
+
         import server.app as app_module
 
-        monkeypatch.setenv("BAZI_RATE_LIMIT_REQUESTS", "0")
+        monkeypatch.setenv("BAZI_MAX_PAYLOAD_BYTES", "0")
         reloaded = importlib.reload(app_module)
         try:
-            assert reloaded._RATE_LIMIT_REQUESTS == 30
+            assert reloaded._MAX_PAYLOAD_BYTES == 10240
         finally:
-            monkeypatch.delenv("BAZI_RATE_LIMIT_REQUESTS", raising=False)
+            monkeypatch.delenv("BAZI_MAX_PAYLOAD_BYTES", raising=False)
             importlib.reload(app_module)

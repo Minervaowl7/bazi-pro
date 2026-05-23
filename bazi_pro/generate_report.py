@@ -6,18 +6,18 @@
      cat analysis.md | python3 generate_report.py > report.html
 """
 
-import sys
+import argparse
+import json
 import os
 import re
-import json
-import argparse
+import sys
 import textwrap
 from datetime import datetime
 from html import escape
-from bazi_pro.dashboard import generate_dashboard
-from bazi_pro.ui import render_dashboard          # 新版仪表盘 v5.0
-from bazi_pro.view_model import build_vm_from_analysis_text
 
+from bazi_pro.dashboard import generate_dashboard
+from bazi_pro.ui import render_dashboard  # 新版仪表盘 v5.0
+from bazi_pro.view_model import build_vm_from_analysis_text
 
 # ---------------------------------------------------------------------------
 # Metadata extraction

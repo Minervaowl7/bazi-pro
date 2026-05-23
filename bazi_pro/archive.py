@@ -4,7 +4,6 @@ bazi-pro 个人命理档案系统 v5.0
 SQLite 本地存储历史分析记录（线程安全）
 """
 
-import os
 import json
 import sqlite3
 import threading

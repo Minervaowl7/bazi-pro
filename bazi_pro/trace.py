@@ -5,13 +5,11 @@ TraceBuilder: 逐步构建可回放的分析 trace JSON
 Validator: 校验 trace schema 完整性
 """
 
-import json
-import os
 import hashlib
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
-
 
 SCHEMA_VERSION = "trace.v1"
 CORPUS_HASH = None  # lazy load

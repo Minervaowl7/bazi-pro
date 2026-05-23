@@ -13,8 +13,8 @@ def load_cases():
 
 
 def test_core_analysis(case: dict) -> bool:
-    from bazi_pro.core_rules import full_analysis
     from bazi_pro.core.constants import derive_shishen
+    from bazi_pro.core_rules import full_analysis
 
     inp = case.get("input", {})
     bazi = inp.get("bazi", "")
@@ -54,11 +54,11 @@ def test_core_analysis(case: dict) -> bool:
             ok = False
     if verdict == '极旺':
         if not ws.get("is_extreme_strong"):
-            print(f"  ❌ Core 旺衰标志: verdict='极旺' 但 is_extreme_strong=False")
+            print("  ❌ Core 旺衰标志: verdict='极旺' 但 is_extreme_strong=False")
             ok = False
     if verdict == '极弱':
         if not ws.get("is_extreme_weak"):
-            print(f"  ❌ Core 旺衰标志: verdict='极弱' 但 is_extreme_weak=False")
+            print("  ❌ Core 旺衰标志: verdict='极弱' 但 is_extreme_weak=False")
             ok = False
 
     expected_pattern = inp.get("expected_pattern")

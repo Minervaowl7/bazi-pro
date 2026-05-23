@@ -4,9 +4,10 @@ bazi doctor — 环境诊断工具
 检查 bazi-pro v5.0 运行环境，列出各组件状态
 """
 
-import sys
 import os
 import re
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -82,8 +83,8 @@ def _check_weasyprint():
 
 def _check_hybrid():
     try:
-        import numpy  # noqa: F401
         import faiss  # noqa: F401
+        import numpy  # noqa: F401
         import sentence_transformers  # noqa: F401
         return True, "ready"
     except ImportError:

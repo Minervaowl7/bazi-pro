@@ -4,7 +4,7 @@
 
 **确定性命理计算核心 + LLM 解释框架（Beta）**
 
-📜 2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 四层喜用神裁决 · 六层格局筛查 · 动态 SVG 命盘 · FastAPI 服务 · 插件机制
+📜 2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 四层格局筛查 · 喜用神推导 · 动态 SVG 命盘 · FastAPI 服务 · 插件机制
 
 ---
 
@@ -73,7 +73,7 @@ bazi-hybrid
     ▼
 ┌─────────────────────────────────────────────────┐
 │  解读引擎层 (SKILL.md 10步执行流)                │
-│  六层格局筛查 → 四层喜用神裁决 → 九步分析        │
+│  四层格局筛查 → 喜用神推导 → 九步分析             │
 │  evidence.py · trace.py · view_model.py          │
 └─────────────────────────────────────────────────┘
     │
@@ -99,12 +99,16 @@ bazi-hybrid
 | 藏干展开 | `bazi_pro.core.hidden_stems.get_canggan` | `tests/test_core.py` |
 | 五行力量 | `bazi_pro.core.elements.calc_element_forces` | `tests/test_core.py` |
 | 旺衰判定 | `bazi_pro.core.strength.judge_wangshuai` | `tests/test_core.py` |
-| 格局筛查 | `bazi_pro.core.patterns.screen_pattern` | `tests/test_core.py` |
+| 格局筛查 (Layer 0-3) | `bazi_pro.core.patterns.screen_pattern` | `tests/test_core.py` |
 | 喜用神推导 | `bazi_pro.core.yongshen.derive_yongshen` | `tests/test_core.py` |
 | 刑冲合害 | `bazi_pro.core.relations.detect_relations` | `tests/test_core.py` |
 | 古籍检索 | `bazi_pro.retrieve_classical.retrieve` | `tests/test_core.py` |
 | 83 Golden Cases | `tests/run_golden.py` | 83/83 通过 |
 | 24 Analysis Golden Cases | `tests/test_analysis_golden.py` | 24/24 通过 |
+
+> **格局筛查说明**：当前代码实现 Layer 0-3（建禄月劫、阳刃、从格、正格常规），Layer 4-5（调候用神、多候选裁决）依赖 LLM 补充，未编码为确定性规则。
+>
+> **Golden Cases 说明**：覆盖十神推导、旺衰判定、格局筛查、喜用神推导等确定性规则；不覆盖命理争议点（如调候用神取舍、特殊格局认定分歧），不代表结果绝对正确。
 
 ### ⚠️ 实验能力 (EXPERIMENTAL)
 | 能力 | 代码入口 | 说明 |
@@ -112,8 +116,7 @@ bazi-hybrid
 | 命盘对比 | `bazi_pro.compare_engine` | 置信区间 ±15%，不返回伪精确分数 |
 | 流年沙盒 | `bazi_pro.liunian_sandbox` | 依赖 AnalysisEngine 结果 |
 | 向量融合检索 | `bazi_pro.hybrid_search` | 需要 sentence-transformers + FAISS |
-| 调候用神 | SKILL.md Layer 3 | 需查《穷通宝鉴》调候表，当前未编码为确定性规则，由 LLM 补充 |
-| 格局最终裁决 | SKILL.md Layer 3 | 多候选格局置信度接近时，由 LLM 裁决并引用古籍佐证 |
+| 格局 Layer 4-5 | SKILL.md | 调候用神查表、多候选格局裁决，当前未编码为确定性规则，由 LLM 补充 |
 | 分维度解读 | SKILL.md Step 8 | 性格/事业/财运/感情/健康/近运的文字解读，由 LLM 完成 |
 
 ### 🧪 Beta 能力
@@ -128,13 +131,18 @@ bazi-hybrid
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `BAZI_API_KEY` | (空) | 设置后启用 API 鉴权。REST 使用 `X-API-Key` header；WebSocket 使用 `?api_key=` 或 `x-api-key` header |
+| `BAZI_API_KEY` | (空) | 设置后启用 API 鉴权。REST 使用 `X-API-Key` header；WebSocket 使用 `x-api-key` header |
 | `BAZI_CORS_ORIGINS` | (空) | 逗号分隔的允许 Origin 列表。默认不启用 CORS |
-| `BAZI_MAX_PAYLOAD_BYTES` | `10240` | 请求体最大字节数 |
+| `BAZI_MAX_PAYLOAD_BYTES` | `10240` | 请求体最大字节数（含 chunked body） |
 | `BAZI_TASK_TTL_SECONDS` | `7200` | 分析任务缓存 TTL（秒） |
 | `BAZI_MAX_CONCURRENT_TASKS` | `1000` | 最大并发分析任务数 |
-| `BAZI_RATE_LIMIT_REQUESTS` | `30` | 每个 IP 在窗口期内最大请求数 |
+| `BAZI_RATE_LIMIT_REQUESTS` | `30` | 每个 IP+API key 在窗口期内最大请求数 |
 | `BAZI_RATE_LIMIT_WINDOW_SECONDS` | `60` | Rate limit 窗口期（秒） |
+| `BAZI_HOST` | `0.0.0.0` | 服务监听地址 |
+| `BAZI_PORT` | `8800` | 服务监听端口 |
+| `BAZI_LOG_LEVEL` | `info` | 日志级别 |
+| `BAZI_CACHE_DIR` | (平台缓存目录) | BM25 索引缓存目录，默认 `~/.cache/bazi-pro` (Linux) |
+| `REDIS_URL` | (空) | 设置后使用 Redis 作为缓存/任务存储/限流后端 |
 
 API 错误响应统一格式：
 
@@ -150,9 +158,11 @@ API 错误响应统一格式：
 
 - **Python 版本矩阵**：3.10 / 3.11 / 3.12
 - **全量 pytest**：`python -m pytest -q`
+- **Ruff lint**：`ruff check server/ bazi_pro/ tests/`
 - **Build 验证**：`python -m build`
 - **Twine 检查**：`twine check dist/*`
 - **Wheel 安装冒烟测试**：从非源码目录安装并运行 CLI
+- **Console scripts 检查**：所有 entry point 可 import 且 callable
 
 ---
 
@@ -197,4 +207,6 @@ API 错误响应统一格式：
 
 ## 许可
 
-MIT License — 仅供传统文化学习与参考，不构成决策依据。
+MIT License — 仅供传统文化学习与参考，不构成任何决策依据。
+
+⚠️ **免责声明**：bazi-pro 的分析结果包含三类来源：(1) 确定性规则推导（十神、旺衰、格局筛查 L0-3、喜用神等），(2) 古籍检索（BM25 检索 6 部经典条文），(3) LLM 辅助解释（调候用神、多候选裁决、分维度解读）。其中 LLM 输出为概率性生成，不代表确定性事实。请勿将任何分析结果用于人生重大决策。

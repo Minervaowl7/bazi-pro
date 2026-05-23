@@ -8,8 +8,6 @@ Reader-first: 结论先行，技术步骤进 Appendix
 import re
 from dataclasses import dataclass, field
 from html import escape
-from typing import Optional
-
 
 # ═══════════════════════════════════════════════════════════════════
 # Document Model
@@ -112,7 +110,7 @@ def classify_section(heading: str, content: str = '') -> bool:
 def is_table_heavy(content: str) -> bool:
     """判断内容是否以表格为主（用于后续 card 转换）"""
     lines = content.split('\n')
-    table_lines = sum(1 for l in lines if l.strip().startswith('|'))
+    table_lines = sum(1 for line in lines if line.strip().startswith('|'))
     return table_lines >= 3 and table_lines > len(lines) * 0.3
 
 

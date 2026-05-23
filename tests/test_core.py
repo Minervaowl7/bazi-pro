@@ -4,14 +4,17 @@ import os
 import tempfile
 
 from bazi_pro import (
-    AnalysisEngine, derive_shishen, count_wuxing_from_bazi, wuxing_pct,
+    AnalysisEngine,
+    count_wuxing_from_bazi,
+    derive_shishen,
+    wuxing_pct,
 )
-from bazi_pro.compare_engine import CompareEngine
-from bazi_pro.liunian_sandbox import LiunianSandbox
 from bazi_pro.archive import ArchiveStore
 from bazi_pro.calibration import CalibrationTracker
-from bazi_pro.plugin_api import BaziPlugin, register_plugin, list_plugins
-from bazi_pro.evidence import new_evidence, build_analysis_evidence
+from bazi_pro.compare_engine import CompareEngine
+from bazi_pro.evidence import build_analysis_evidence, new_evidence
+from bazi_pro.liunian_sandbox import LiunianSandbox
+from bazi_pro.plugin_api import BaziPlugin, list_plugins, register_plugin
 from bazi_pro.view_model import DashboardVM, EvidenceVM
 
 
@@ -440,7 +443,7 @@ class TestCoreRulesRelations:
 class TestCoreRulesPattern:
 
     def test_zhenguan_ge(self):
-        from bazi_pro.core_rules import screen_pattern, judge_wangshuai, calc_element_forces
+        from bazi_pro.core_rules import calc_element_forces, judge_wangshuai, screen_pattern
         bazi_parts = ['庚午', '戊寅', '辛巳', '壬辰']
         wangshuai = judge_wangshuai(2, 2.0, 3.0)
         ef = calc_element_forces(bazi_parts, '寅')
@@ -449,7 +452,7 @@ class TestCoreRulesPattern:
         assert result['confidence'] > 0
 
     def test_jianlu_yuejie(self):
-        from bazi_pro.core_rules import screen_pattern, judge_wangshuai, calc_element_forces
+        from bazi_pro.core_rules import calc_element_forces, judge_wangshuai, screen_pattern
         bazi_parts = ['庚午', '戊寅', '甲子', '丙寅']
         wangshuai = judge_wangshuai(3, 3.0, 4.0)
         ef = calc_element_forces(bazi_parts, '寅')
@@ -460,7 +463,7 @@ class TestCoreRulesPattern:
 class TestCoreRulesYongshen:
 
     def test_basic_derive(self):
-        from bazi_pro.core_rules import derive_yongshen, screen_pattern, judge_wangshuai, calc_element_forces
+        from bazi_pro.core_rules import calc_element_forces, derive_yongshen, judge_wangshuai, screen_pattern
         bazi_parts = ['庚午', '戊寅', '辛巳', '壬辰']
         wangshuai = judge_wangshuai(2, 2.0, 3.0)
         ef = calc_element_forces(bazi_parts, '寅')

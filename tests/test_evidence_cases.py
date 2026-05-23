@@ -1,11 +1,10 @@
-import json
 import glob
+import json
 import os
 
 import pytest
 
 from bazi_pro.evidence import build_analysis_evidence
-
 
 EVIDENCE_CASES_DIR = os.path.join(os.path.dirname(__file__), "evidence_cases")
 

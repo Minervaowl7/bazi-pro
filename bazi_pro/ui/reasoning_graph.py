@@ -4,8 +4,7 @@ bazi-pro 推理图谱 DAG v5.0 — 纯 SVG 节点-边图 + 置信度热力图 + 
 展示旺衰→格局→喜用的推理链和证据支持/反证关系
 """
 
-import math
-from bazi_pro.view_model import DashboardVM, EvidenceVM, TraceStageVM
+from bazi_pro.view_model import DashboardVM, TraceStageVM
 
 # 节点布局位置（分层）
 NODE_LAYERS = {
@@ -248,8 +247,8 @@ def render_reasoning_graph(vm: 'DashboardVM') -> str:
     legend_y = 20
     svg_parts.append(f'<g class="graph-legend" transform="translate({legend_x},{legend_y})">')
     svg_parts.append(
-        f'<rect x="-10" y="-8" width="170" height="95" rx="6" '
-        f'fill="var(--neo-surface-2, #222)" stroke="var(--neo-border, #444)" stroke-width="1"/>'
+        '<rect x="-10" y="-8" width="170" height="95" rx="6" '
+        'fill="var(--neo-surface-2, #222)" stroke="var(--neo-border, #444)" stroke-width="1"/>'
     )
     legend_items = [
         ('done', '已完成'), ('partial', '进行中'),
