@@ -290,10 +290,12 @@ class TestAppEndpoints:
                 app_module._analysis_tasks[f'filler-{i}'] = {
                     'status': 'running', '_created_ts': time.time()
                 }
+            count_before = len(app_module._analysis_tasks)
             resp = client.post('/api/analyze', json={
                 '性别': '女', '八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁',
             })
             assert resp.status_code == 503
+            assert len(app_module._analysis_tasks) == count_before
         finally:
             app_module._MAX_CONCURRENT_TASKS = original_max
             app_module._analysis_tasks.clear()

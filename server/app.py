@@ -104,8 +104,15 @@ class _RateLimitMiddleware:
         await self.app(scope, receive, send)
 
 
-app.add_middleware(_RequestSizeLimitMiddleware, max_body_size=10240)
-app.add_middleware(_RateLimitMiddleware, max_requests=30, window_seconds=60)
+app.add_middleware(
+    _RequestSizeLimitMiddleware,
+    max_body_size=int(os.environ.get('BAZI_MAX_PAYLOAD_BYTES', '10240')),
+)
+app.add_middleware(
+    _RateLimitMiddleware,
+    max_requests=int(os.environ.get('BAZI_RATE_LIMIT_REQUESTS', '30')),
+    window_seconds=int(os.environ.get('BAZI_RATE_LIMIT_WINDOW_SECONDS', '60')),
+)
 
 
 @app.exception_handler(Exception)
@@ -116,8 +123,8 @@ async def _global_exception_handler(request, exc):
 
 
 _analysis_tasks: dict[str, dict] = {}
-_TASK_TTL_SECONDS = 7200
-_MAX_CONCURRENT_TASKS = 1000
+_TASK_TTL_SECONDS = int(os.environ.get('BAZI_TASK_TTL_SECONDS', '7200'))
+_MAX_CONCURRENT_TASKS = int(os.environ.get('BAZI_MAX_CONCURRENT_TASKS', '1000'))
 
 
 def _cleanup_expired_tasks() -> None:
@@ -275,6 +282,11 @@ async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_ke
         "detail_level": "standard"
     }
     """
+    _cleanup_expired_tasks()
+
+    if len(_analysis_tasks) >= _MAX_CONCURRENT_TASKS:
+        raise HTTPException(status_code=503, detail='服务繁忙，请稍后重试')
+
     run_id = uuid.uuid4().hex
     payload_dict = payload.model_dump()
     detail_level = payload_dict.pop('detail_level', 'standard')
@@ -284,11 +296,6 @@ async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_ke
         'created_at': datetime.now(timezone.utc).isoformat(),
         '_created_ts': time.time(),
     }
-
-    _cleanup_expired_tasks()
-
-    if len(_analysis_tasks) >= _MAX_CONCURRENT_TASKS:
-        raise HTTPException(status_code=503, detail='服务繁忙，请稍后重试')
 
     asyncio.create_task(_background_analyze(run_id, payload_dict, detail_level))
 
