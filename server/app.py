@@ -19,9 +19,9 @@ from fastapi.security import APIKeyHeader
 
 from server.analysis import run_analysis
 from server.cache import get_cache
-from server.ratelimiter import RateLimiter, create_rate_limiter
+from server.ratelimiter import MemoryRateLimiter, RateLimiter, RedisRateLimiter, create_rate_limiter
 from server.schemas import BaziAnalysisRequest
-from server.taskstore import create_task_store
+from server.taskstore import MemoryTaskStore, RedisTaskStore, create_task_store
 from server.ws import manager
 
 logger = logging.getLogger("bazi-pro")
@@ -202,7 +202,7 @@ async def _global_exception_handler(request, exc):
 async def _validation_error_handler(request, exc):
     errors = []
     for err in exc.errors():
-        loc = ".".join(str(l) for l in err.get("loc", []))
+        loc = ".".join(str(part) for part in err.get("loc", []))
         errors.append({"field": loc, "message": err.get("msg", ""), "type": err.get("type", "")})
     return JSONResponse(
         status_code=422,
@@ -220,7 +220,6 @@ def _cleanup_expired_tasks() -> None:
 
 
 def _backend_name(store) -> str:
-    from server.taskstore import MemoryTaskStore, RedisTaskStore
     if isinstance(store, RedisTaskStore):
         if store.is_degraded:
             return "redis(degraded)"
@@ -231,7 +230,6 @@ def _backend_name(store) -> str:
 
 
 def _ratelimiter_backend_name(limiter) -> str:
-    from server.ratelimiter import MemoryRateLimiter, RedisRateLimiter
     if isinstance(limiter, RedisRateLimiter):
         if limiter.is_degraded:
             return "redis(degraded)"
@@ -251,8 +249,6 @@ async def api_health():
         "task_store_backend": _backend_name(_task_store),
         "rate_limiter_backend": _ratelimiter_backend_name(_rate_limiter),
     }
-    from server.taskstore import RedisTaskStore
-    from server.ratelimiter import RedisRateLimiter
     degraded_reasons = []
     if isinstance(_task_store, RedisTaskStore) and _task_store.is_degraded:
         degraded_reasons.append("task_store: redis degraded, using memory fallback")

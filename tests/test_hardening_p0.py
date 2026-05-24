@@ -103,7 +103,7 @@ class TestCacheKeyCorrectness:
         assert key1 != key2
 
     def test_canonical_json_compact_separators(self):
-        from server.analysis import _make_cache_key, _ANALYSIS_VERSION
+        from server.analysis import _ANALYSIS_VERSION, _make_cache_key
         data = {"八字": "壬午 乙巳 丁亥 癸卯", "日主": "丁", "性别": "女"}
         payload = {
             "八字": "壬午 乙巳 丁亥 癸卯",
@@ -365,6 +365,7 @@ class TestRateLimiterKeyIncludesApiKey:
 class TestNoDirectAnalysisTasksReference:
     def test_app_does_not_use_analysis_tasks_dict(self):
         import inspect
+
         from server import app as app_module
         source = inspect.getsource(app_module)
         assert "_analysis_tasks" not in source
