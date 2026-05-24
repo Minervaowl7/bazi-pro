@@ -6,7 +6,7 @@
     "day_master": "丙",
     "bazi": "丙午 甲午 丙午 丁巳",
     "month_branch": "午",
-    "expected_pattern": "劫财格",
+    "expected_pattern": "建禄月劫，无财官煞食透出",
     "expected_wangshuai": "极旺",
     "expected_yongshen_wx": "水",
     "expected_deling_score": 3,
@@ -14,10 +14,12 @@
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "劫财格"
+    "建禄月劫，无财官煞食透出"
   ],
   "must_not_include": [
-    "从格"
+    "从格",
+    "暗比肩格",
+    "暗劫财格"
   ],
   "notes": "日主火行占比极高，炎上格"
 }

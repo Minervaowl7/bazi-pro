@@ -6,7 +6,7 @@
     "day_master": "甲",
     "bazi": "甲子 壬寅 甲子 癸亥",
     "month_branch": "寅",
-    "expected_pattern": "比肩格",
+    "expected_pattern": "建禄月劫，无财官煞食透出",
     "expected_wangshuai": "偏旺",
     "expected_yongshen_wx": "金",
     "expected_deling_score": 3,
@@ -14,10 +14,12 @@
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "比肩格"
+    "建禄月劫，无财官煞食透出"
   ],
   "must_not_include": [
-    "从格"
+    "从格",
+    "暗比肩格",
+    "暗劫财格"
   ],
   "notes": "月支寅本气甲木比肩，四天干无财官煞食透出"
 }

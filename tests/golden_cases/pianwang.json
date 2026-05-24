@@ -6,7 +6,7 @@
     "day_master": "庚",
     "bazi": "庚辰 庚申 庚午 丙戌",
     "month_branch": "申",
-    "expected_pattern": "比肩格",
+    "expected_pattern": "建禄月劫，透七杀",
     "expected_wangshuai": "偏旺",
     "expected_yongshen_wx": "火",
     "expected_deling_score": 3,
@@ -14,10 +14,12 @@
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "比肩格"
+    "建禄月劫，透七杀"
   ],
   "must_not_include": [
-    "从格"
+    "从格",
+    "暗比肩格",
+    "暗劫财格"
   ],
   "notes": "得令+得地+不得势"
 }

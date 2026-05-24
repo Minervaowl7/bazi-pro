@@ -6,7 +6,7 @@
     "day_master": "己",
     "bazi": "辛丑 辛未 己未 丁卯",
     "month_branch": "未",
-    "expected_pattern": "比肩格",
+    "expected_pattern": "建禄月劫，透食神",
     "expected_wangshuai": "中和",
     "expected_yongshen_wx": "火",
     "expected_deling_score": 1,
@@ -14,10 +14,12 @@
     "expected_deshi_level": "偏得势"
   },
   "must_include": [
-    "比肩格"
+    "建禄月劫，透食神"
   ],
   "must_not_include": [
-    "从格"
+    "从格",
+    "暗比肩格",
+    "暗劫财格"
   ],
   "notes": "年支丑与日支未相冲"
 }

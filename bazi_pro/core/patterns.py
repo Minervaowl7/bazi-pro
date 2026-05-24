@@ -172,6 +172,10 @@ def _screen_layer1(day_master, month_zhi, gans):
     benqi_gan = canggan[0][0]
     if benqi_gan in gans:
         ss = derive_shishen(day_master, benqi_gan)
+        if ss in ('比肩', '劫财'):
+            return _build_jianlu_yuejie(day_master, dm_wx='', month_zhi=month_zhi,
+                                        gans=gans, benqi_ss=ss, benqi_gan=benqi_gan,
+                                        layer=1, layer_type='月令本气比劫透干')
         pattern_name = f'{ss}格' if ss else '未知格'
         return {
             'layer': 1, 'type': '月令本气透干', 'pattern': pattern_name,
@@ -191,6 +195,10 @@ def _screen_layer2(day_master, month_zhi, gans):
         return None
     if zhongqi_gan in gans:
         ss = derive_shishen(day_master, zhongqi_gan)
+        if ss in ('比肩', '劫财'):
+            return _build_jianlu_yuejie(day_master, dm_wx='', month_zhi=month_zhi,
+                                        gans=gans, benqi_ss=ss, benqi_gan=zhongqi_gan,
+                                        layer=2, layer_type='月令中气比劫透干')
         pattern_name = f'{ss}格' if ss else '未知格'
         return {
             'layer': 2, 'type': '月令中气透干', 'pattern': pattern_name,
@@ -198,6 +206,31 @@ def _screen_layer2(day_master, month_zhi, gans):
             'yongshen_direction': _get_yongshen_direction(ss),
         }
     return None
+
+
+def _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans,
+                          benqi_ss, benqi_gan, layer, layer_type):
+    tou_gan_ss = []
+    for g in gans:
+        if g != day_master:
+            ss = derive_shishen(day_master, g)
+            if ss in ('正官', '七杀', '正财', '偏财', '食神', '伤官'):
+                tou_gan_ss.append(ss)
+    if tou_gan_ss:
+        main_ss = tou_gan_ss[0]
+        return {
+            'layer': layer, 'type': layer_type, 'pattern': f'建禄月劫，透{main_ss}',
+            'confidence': 0.70,
+            'reason': f'月令{benqi_gan}为{benqi_ss}，比劫不入正格，透{main_ss}取用',
+            'yongshen_direction': _get_yongshen_direction(main_ss),
+        }
+    else:
+        return {
+            'layer': layer, 'type': layer_type, 'pattern': '建禄月劫，无财官煞食透出',
+            'confidence': 0.50,
+            'reason': f'月令{benqi_gan}为{benqi_ss}，比劫不入正格，四天干无财官煞食透出',
+            'yongshen_direction': '待定',
+        }
 
 
 def _screen_layer3(day_master, dm_wx, month_zhi, gans):
@@ -208,27 +241,9 @@ def _screen_layer3(day_master, dm_wx, month_zhi, gans):
     benqi_ss = derive_shishen(day_master, benqi_gan)
 
     if benqi_ss in ('比肩', '劫财'):
-        tou_gan_ss = []
-        for g in gans:
-            if g != day_master:
-                ss = derive_shishen(day_master, g)
-                if ss in ('正官', '七杀', '正财', '偏财', '食神', '伤官'):
-                    tou_gan_ss.append(ss)
-        if tou_gan_ss:
-            main_ss = tou_gan_ss[0]
-            return {
-                'layer': 3, 'type': '建禄月劫', 'pattern': f'建禄月劫，透{main_ss}',
-                'confidence': 0.70,
-                'reason': f'月令本气{benqi_gan}为{benqi_ss}，透{main_ss}取用',
-                'yongshen_direction': _get_yongshen_direction(main_ss),
-            }
-        else:
-            return {
-                'layer': 3, 'type': '建禄月劫', 'pattern': '建禄月劫，无财官煞食透出',
-                'confidence': 0.50,
-                'reason': f'月令本气{benqi_gan}为{benqi_ss}，四天干无财官煞食透出',
-                'yongshen_direction': '待定',
-            }
+        return _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans,
+                                    benqi_ss=benqi_ss, benqi_gan=benqi_gan,
+                                    layer=3, layer_type='建禄月劫')
 
     if benqi_ss and benqi_gan not in gans:
         return {
