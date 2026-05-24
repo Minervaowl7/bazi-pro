@@ -92,11 +92,12 @@ class TestCacheKey:
         key2 = _make_cache_key(mcp2, "standard")
         assert key1 == key2
 
-    def test_key_length_at_least_32(self):
+    def test_key_format_bazi_v5_prefix(self):
         mcp = {"性别": "女", "八字": "壬午 乙巳 丁亥 癸卯", "日主": "丁"}
         key = _make_cache_key(mcp, "standard")
-        hash_part = key.split(":")[1]
-        assert len(hash_part) >= 32
+        assert key.startswith("bazi:v5:")
+        hash_part = key[len("bazi:v5:"):]
+        assert len(hash_part) == 24
 
     def test_different_detail_level_different_key(self):
         mcp = {"性别": "女", "八字": "壬午 乙巳 丁亥 癸卯", "日主": "丁"}

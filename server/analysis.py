@@ -253,7 +253,7 @@ def _detect_relations(bazi_parts: list[str]) -> list[dict]:
     return detect_relations(bazi_parts)
 
 
-_ANALYSIS_VERSION = "v2"
+_ANALYSIS_VERSION = "v5"
 
 
 def _make_cache_key(mcp_json: dict, detail_level: str) -> str:
@@ -267,5 +267,5 @@ def _make_cache_key(mcp_json: dict, detail_level: str) -> str:
         "detail_level": detail_level,
         "analysis_version": _ANALYSIS_VERSION,
     }
-    raw = json.dumps(key_data, sort_keys=True, ensure_ascii=False)
-    return f'bazi:{hashlib.sha256(raw.encode()).hexdigest()[:32]}'
+    raw = json.dumps(key_data, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return "bazi:v5:%s" % hashlib.sha256(raw.encode()).hexdigest()[:24]

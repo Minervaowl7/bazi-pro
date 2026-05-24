@@ -9,23 +9,7 @@ from typing import Optional
 
 logger = logging.getLogger("bazi-pro.taskstore")
 
-_LUA_ATOMIC_UPDATE = """
-local current = redis.call('GET', KEYS[1])
-if not current then
-    return 0
-end
-local data = cjson.decode(current)
-for k, v in pairs(ARGV) do
-    if k ~= 1 then
-        local key = ARGV[1]
-        if k == 2 then
-            data[ARGV[k]] = cjson.decode(ARGV[k+1])
-        end
-    end
-end
-redis.call('SET', KEYS[1], cjson.encode(data))
-return 1
-"""
+_ACTIVE_STATUSES = frozenset({"queued", "running"})
 
 
 class TaskStore(ABC):
@@ -86,7 +70,7 @@ class MemoryTaskStore(TaskStore):
 
     def count_active(self) -> int:
         return sum(1 for t in self._tasks.values()
-                   if t.get("status") in ("running", "pending"))
+                   if t.get("status") in _ACTIVE_STATUSES)
 
     def count_running(self) -> int:
         return self.count_by_status("running")
@@ -109,6 +93,8 @@ class MemoryTaskStore(TaskStore):
 
 
 class RedisTaskStore(TaskStore):
+    _INDEX_KEY = "bazi:task_index:active"
+    _RUNNING_KEY = "bazi:task_index:running"
 
     def __init__(self, redis_url: str, key_prefix: str = "bazi:task:",
                  default_ttl: int = 7200):
@@ -121,7 +107,6 @@ class RedisTaskStore(TaskStore):
             import redis as _redis
             self._redis = _redis.from_url(redis_url, decode_responses=True)
             self._redis.ping()
-            self._update_script = self._redis.register_script(_LUA_ATOMIC_UPDATE)
         except Exception as e:
             logger.warning("RedisTaskStore init failed: %s, falling back to memory", e)
             self._redis = None
@@ -138,17 +123,22 @@ class RedisTaskStore(TaskStore):
     def create(self, run_id: str, data: dict) -> None:
         if self._redis:
             try:
-                self._redis.setex(
+                pipe = self._redis.pipeline()
+                pipe.setex(
                     self._key(run_id),
                     self._default_ttl,
                     json.dumps(data, ensure_ascii=False),
                 )
+                self._update_index(pipe, run_id, data.get("status", ""))
+                pipe.execute()
+                return
             except Exception as e:
                 logger.error("RedisTaskStore.create failed: %s", e)
                 self._degraded = True
                 if self._fallback:
                     self._fallback.create(run_id, data)
-        elif self._fallback:
+                return
+        if self._fallback:
             self._fallback.create(run_id, data)
 
     def get(self, run_id: str) -> Optional[dict]:
@@ -170,30 +160,34 @@ class RedisTaskStore(TaskStore):
                 if current:
                     current.update(updates)
                     ttl = self._redis.ttl(self._key(run_id))
-                    if ttl and ttl > 0:
-                        self._redis.setex(
-                            self._key(run_id),
-                            ttl,
-                            json.dumps(current, ensure_ascii=False),
-                        )
-                    else:
-                        self._redis.setex(
-                            self._key(run_id),
-                            self._default_ttl,
-                            json.dumps(current, ensure_ascii=False),
-                        )
+                    effective_ttl = ttl if ttl and ttl > 0 else self._default_ttl
+                    pipe = self._redis.pipeline()
+                    pipe.setex(
+                        self._key(run_id),
+                        effective_ttl,
+                        json.dumps(current, ensure_ascii=False),
+                    )
+                    self._update_index(pipe, run_id, current.get("status", ""))
+                    pipe.execute()
+                return
             except Exception as e:
                 logger.error("RedisTaskStore.update failed: %s", e)
                 self._degraded = True
                 if self._fallback:
                     self._fallback.update(run_id, updates)
-        elif self._fallback:
+                return
+        if self._fallback:
             self._fallback.update(run_id, updates)
 
     def delete(self, run_id: str) -> None:
         if self._redis:
             try:
-                self._redis.delete(self._key(run_id))
+                pipe = self._redis.pipeline()
+                pipe.delete(self._key(run_id))
+                pipe.srem(self._INDEX_KEY, run_id)
+                pipe.srem(self._RUNNING_KEY, run_id)
+                pipe.execute()
+                return
             except Exception as e:
                 logger.error("RedisTaskStore.delete failed: %s", e)
         elif self._fallback:
@@ -202,6 +196,9 @@ class RedisTaskStore(TaskStore):
     def count_by_status(self, status: str) -> int:
         if self._redis:
             try:
+                if status == "running":
+                    self._reconcile_index(self._RUNNING_KEY)
+                    return self._redis.scard(self._RUNNING_KEY)
                 count = 0
                 for key in self._redis.scan_iter(f"{self._prefix}*"):
                     val = self._redis.get(key)
@@ -220,14 +217,8 @@ class RedisTaskStore(TaskStore):
     def count_active(self) -> int:
         if self._redis:
             try:
-                count = 0
-                for key in self._redis.scan_iter(f"{self._prefix}*"):
-                    val = self._redis.get(key)
-                    if val:
-                        data = json.loads(val)
-                        if data.get("status") in ("running", "pending"):
-                            count += 1
-                return count
+                self._reconcile_index(self._INDEX_KEY)
+                return self._redis.scard(self._INDEX_KEY)
             except Exception as e:
                 logger.error("RedisTaskStore.count_active failed: %s", e)
                 return 0
@@ -236,14 +227,49 @@ class RedisTaskStore(TaskStore):
         return 0
 
     def count_running(self) -> int:
-        return self.count_by_status("running")
+        if self._redis:
+            try:
+                self._reconcile_index(self._RUNNING_KEY)
+                return self._redis.scard(self._RUNNING_KEY)
+            except Exception as e:
+                logger.error("RedisTaskStore.count_running failed: %s", e)
+                return 0
+        if self._fallback:
+            return self._fallback.count_running()
+        return 0
 
     def cleanup_expired(self, ttl_seconds: int) -> int:
         if self._redis:
-            return 0
+            try:
+                return self._reconcile_index(self._INDEX_KEY)
+            except Exception as e:
+                logger.error("RedisTaskStore.cleanup_expired failed: %s", e)
+                return 0
         if self._fallback:
             return self._fallback.cleanup_expired(ttl_seconds)
         return 0
+
+    def _update_index(self, pipe, run_id: str, status: str) -> None:
+        if status in _ACTIVE_STATUSES:
+            pipe.sadd(self._INDEX_KEY, run_id)
+            if status == "running":
+                pipe.sadd(self._RUNNING_KEY, run_id)
+            else:
+                pipe.srem(self._RUNNING_KEY, run_id)
+        else:
+            pipe.srem(self._INDEX_KEY, run_id)
+            pipe.srem(self._RUNNING_KEY, run_id)
+
+    def _reconcile_index(self, index_key: str) -> int:
+        members = self._redis.smembers(index_key)
+        removed = 0
+        for task_id in members:
+            if not self._redis.exists(self._key(task_id)):
+                self._redis.srem(index_key, task_id)
+                self._redis.srem(self._RUNNING_KEY, task_id)
+                self._redis.srem(self._INDEX_KEY, task_id)
+                removed += 1
+        return removed
 
 
 def create_task_store() -> TaskStore:

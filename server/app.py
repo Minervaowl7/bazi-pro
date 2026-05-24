@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, Security, WebSocket, WebSocketDisconnect
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import APIKeyHeader
@@ -126,21 +127,25 @@ class _RequestSizeLimitMiddleware:
 
             if transfer_encoding and "chunked" in transfer_encoding:
                 received = 0
+                exceeded = False
 
                 async def chunked_receive():
-                    nonlocal received
+                    nonlocal received, exceeded
                     message = await receive()
                     if message.get("type") == "http.request":
                         body = message.get("body", b"")
                         received += len(body)
                         if received > self.max_body_size:
+                            exceeded = True
                             message["body"] = b""
                             message["more_body"] = False
                     return message
 
                 await self.app(scope, chunked_receive, send)
 
-                if received > self.max_body_size:
+                if exceeded:
+                    resp = error_response(413, "PAYLOAD_TOO_LARGE", "请求体过大")
+                    await resp(scope, receive, send)
                     return
                 return
 
@@ -193,6 +198,18 @@ async def _global_exception_handler(request, exc):
     return error_response(500, "INTERNAL_ERROR", message)
 
 
+@app.exception_handler(RequestValidationError)
+async def _validation_error_handler(request, exc):
+    errors = []
+    for err in exc.errors():
+        loc = ".".join(str(l) for l in err.get("loc", []))
+        errors.append({"field": loc, "message": err.get("msg", ""), "type": err.get("type", "")})
+    return JSONResponse(
+        status_code=422,
+        content={"error": {"code": "VALIDATION_ERROR", "message": "请求校验失败", "details": {"errors": errors}}},
+    )
+
+
 _task_store = create_task_store()
 _TASK_TTL_SECONDS = _get_int_env("BAZI_TASK_TTL_SECONDS", 7200)
 _MAX_CONCURRENT_TASKS = _get_int_env("BAZI_MAX_CONCURRENT_TASKS", 1000)
@@ -200,6 +217,50 @@ _MAX_CONCURRENT_TASKS = _get_int_env("BAZI_MAX_CONCURRENT_TASKS", 1000)
 
 def _cleanup_expired_tasks() -> None:
     _task_store.cleanup_expired(_TASK_TTL_SECONDS)
+
+
+def _backend_name(store) -> str:
+    from server.taskstore import MemoryTaskStore, RedisTaskStore
+    if isinstance(store, RedisTaskStore):
+        if store.is_degraded:
+            return "redis(degraded)"
+        return "redis"
+    if isinstance(store, MemoryTaskStore):
+        return "memory"
+    return type(store).__name__
+
+
+def _ratelimiter_backend_name(limiter) -> str:
+    from server.ratelimiter import MemoryRateLimiter, RedisRateLimiter
+    if isinstance(limiter, RedisRateLimiter):
+        if limiter.is_degraded:
+            return "redis(degraded)"
+        return "redis"
+    if isinstance(limiter, MemoryRateLimiter):
+        return "memory"
+    return type(limiter).__name__
+
+
+@app.get("/api/health")
+async def api_health():
+    """健康检查：返回版本、后端状态、降级信息"""
+    cache = get_cache()
+    health = {
+        "version": app.version,
+        "cache_backend": cache.backend,
+        "task_store_backend": _backend_name(_task_store),
+        "rate_limiter_backend": _ratelimiter_backend_name(_rate_limiter),
+    }
+    from server.taskstore import RedisTaskStore
+    from server.ratelimiter import RedisRateLimiter
+    degraded_reasons = []
+    if isinstance(_task_store, RedisTaskStore) and _task_store.is_degraded:
+        degraded_reasons.append("task_store: redis degraded, using memory fallback")
+    if isinstance(_rate_limiter, RedisRateLimiter) and _rate_limiter.is_degraded:
+        degraded_reasons.append("rate_limiter: redis degraded, using memory fallback")
+    if degraded_reasons:
+        health["degraded"] = degraded_reasons
+    return JSONResponse(health)
 
 
 @app.get("/", response_class=HTMLResponse)
