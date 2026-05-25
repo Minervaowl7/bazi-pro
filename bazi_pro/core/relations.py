@@ -1,4 +1,4 @@
-from bazi_pro.core.branches import ZHI_CHONG, ZHI_HAI, ZHI_HE, ZHI_HUIFANG, ZHI_SANHE, ZHI_XING
+from bazi_pro.core.branches import ZHI_BANHE, ZHI_CHONG, ZHI_HAI, ZHI_HE, ZHI_HUIFANG, ZHI_SANHE, ZHI_XING
 from bazi_pro.core.disease import _find_shishen_instances, _severity
 from bazi_pro.core.stems import GAN_HE
 
@@ -125,6 +125,16 @@ def detect_relations(bazi_parts: list[str]) -> list[dict]:
             relations.append({
                 'type': '三合局', 'elements': sorted(group),
                 'result': f'{" ".join(sorted(group))} 三合成{he_wx}局',
+                'hua_wuxing': he_wx,
+            })
+
+    # 半合局：两字即可成半合，气势弱于三合局
+    # 《三命通会》："若三字缺一则化不成局"——半合为待局，大运流年补全可成
+    for group, he_wx in ZHI_BANHE:
+        if group.issubset(zhi_set):
+            relations.append({
+                'type': '半合局', 'elements': sorted(group),
+                'result': f'{" ".join(sorted(group))} 半合{he_wx}局',
                 'hua_wuxing': he_wx,
             })
 

@@ -11,6 +11,7 @@ from bazi_pro.core.branches import (
     ZHI_CHONG,
     ZHI_HAI,
     ZHI_HE,
+    ZHI_HUIFANG,
     ZHI_SANHE,
     ZHI_XING,
 )
@@ -125,7 +126,7 @@ __all__ = [
     'full_analysis',
     'GAN_HE', 'WUXING_SHENG', 'WUXING_KE', 'SHENG_MAP', 'KE_MAP', 'WO_KE_MAP', 'WO_SHENG_MAP',
     'ZHI_CANGGAN', 'CANGGAN_WEIGHT', 'SHIER_CHANGSHENG', 'DELING_SCORE',
-    'ZHI_HE', 'ZHI_CHONG', 'ZHI_HAI', 'ZHI_XING', 'ZHI_SANHE', 'ZHI_BANHE',
+    'ZHI_HE', 'ZHI_CHONG', 'ZHI_HAI', 'ZHI_XING', 'ZHI_SANHE', 'ZHI_BANHE', 'ZHI_HUIFANG',
     'JIANLU_MAP', 'YANGREN_MAP',
     'get_canggan',
     'SHISHEN_WUXING_REL', '_count_shishen_categories', '_get_yongshen_direction',

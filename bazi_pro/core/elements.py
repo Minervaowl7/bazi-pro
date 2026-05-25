@@ -1,4 +1,4 @@
-from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_HE, ZHI_HUIFANG, ZHI_SANHE
+from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_BANHE, ZHI_HE, ZHI_HUIFANG, ZHI_SANHE
 from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.stems import GAN_HE
@@ -25,11 +25,11 @@ def _gan_he_hua_wuxing(gan1: str, gan2: str, month_zhi: str,
     # 条件1：月令为化神旺地
     if month_zhi in required_months:
         return hua_wx
-    # 条件2：地支有化神强根（本气或中气）
-    for part in bazi_parts:
-        if len(part) < 2:
-            continue
-        for cg, ql in get_canggan(part[1]):
+    # 条件2：时支为化神旺地
+    # 《三命通会》："若不得月中旺气，只时上旺气，亦可"
+    hour_zhi = bazi_parts[3][1] if len(bazi_parts) >= 4 and len(bazi_parts[3]) >= 2 else ''
+    if hour_zhi:
+        for cg, ql in get_canggan(hour_zhi):
             if GAN_WUXING.get(cg, '') == hua_wx and ql in ('本气', '中气'):
                 return hua_wx
     return ''
@@ -43,7 +43,7 @@ def _detect_hehua(bazi_parts: list[str], month_zhi: str) -> dict:
           'zhi_sanhe': [{'zhis': [...], 'hua_wx': '水'}, ...],
           'zhi_huifang': [{'zhis': [...], 'hui_wx': '木'}, ...] }
     """
-    result = {'gan_he': [], 'zhi_sanhe': [], 'zhi_huifang': []}
+    result = {'gan_he': [], 'zhi_sanhe': [], 'zhi_banhe': [], 'zhi_huifang': []}
     gans = [p[0] for p in bazi_parts if len(p) >= 1]
     zhis = [p[1] for p in bazi_parts if len(p) >= 2]
 
@@ -66,6 +66,15 @@ def _detect_hehua(bazi_parts: list[str], month_zhi: str) -> dict:
                 'zhis': sorted(group),
                 'hua_wx': he_wx,
                 'type': '三合局',
+            })
+
+    # 半合局（两字即可成局，气势弱于三合）
+    for group, he_wx in ZHI_BANHE:
+        if group.issubset(zhi_set):
+            result['zhi_banhe'].append({
+                'zhis': sorted(group),
+                'hua_wx': he_wx,
+                'type': '半合局',
             })
 
     # 会方
@@ -132,6 +141,17 @@ def calc_element_forces(bazi_parts: list[str], month_zhi: str) -> dict:
             zhi_wx = ZHI_WUXING.get(zhi, '')
             if zhi_wx and zhi_wx != hua_wx and zhi_wx in forces_adjusted:
                 transfer = forces[zhi_wx] * 0.5
+                forces_adjusted[zhi_wx] -= transfer
+                forces_adjusted[hua_wx] += transfer
+
+    # 半合局力量修正：转化率20%，弱于三合局(50%)
+    # 《三命通会》："若三字缺一则化不成局"——半合为待局
+    for item in hehua['zhi_banhe']:
+        hua_wx = item['hua_wx']
+        for zhi in item['zhis']:
+            zhi_wx = ZHI_WUXING.get(zhi, '')
+            if zhi_wx and zhi_wx != hua_wx and zhi_wx in forces_adjusted:
+                transfer = forces[zhi_wx] * 0.2
                 forces_adjusted[zhi_wx] -= transfer
                 forces_adjusted[hua_wx] += transfer
 

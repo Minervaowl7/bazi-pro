@@ -13,14 +13,14 @@ PATTERN_YONGSHEN = {
     '偏印格': {'用神': ['财星', '官星(身弱时)'], '忌神': ['食神(枭夺食)']},
     '食神格': {'用神': ['比劫', '财星'], '忌神': ['偏印']},
     '伤官格': {'用神': ['印星', '财星'], '忌神': ['官星(见官)']},
-    '建禄格': {'用神': ['官杀', '食伤'], '忌神': ['比劫']},
-    '月劫格': {'用神': ['官杀', '食伤'], '忌神': ['比劫']},
+    '建禄格': {'用神': ['官杀', '财星', '食伤'], '忌神': ['比劫']},
+    '月劫格': {'用神': ['官杀', '财星', '食伤'], '忌神': ['比劫']},
     '羊刃格': {'用神': ['官杀'], '忌神': ['财星(无制时)']},
     '从强格': {'用神': ['印比'], '忌神': ['官杀', '财星']},
     '假从强格': {'用神': ['印比'], '忌神': ['官杀', '财星']},
     '从财格': {'用神': ['食伤', '财星'], '忌神': ['比劫', '印星']},
     '从官杀格': {'用神': ['官杀', '财星'], '忌神': ['比劫', '印星']},
-    '从儿格': {'用神': ['比劫(生食伤)'], '忌神': ['印星', '官杀']},
+    '从儿格': {'用神': ['食伤', '财星'], '忌神': ['印星', '官杀']},
     '从势格': {'用神': ['最强之势'], '忌神': ['逆势五行']},
     '化气格': {'用神': ['化神五行'], '忌神': ['克化神五行']},
 }
@@ -53,7 +53,8 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
     ke_xie_hao_pct = sum(pct.get(wx, 0) for wx in ke_xie_hao_wx)
 
     layer0_result = _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
-                                    wangshuai, pct, yin_bi_pct, ke_xie_hao_pct, gans)
+                                    wangshuai, pct, yin_bi_pct, ke_xie_hao_pct, gans,
+                                    element_forces)
     trace['layers_checked'].append('L0')
     if layer0_result:
         candidates.append(layer0_result)
@@ -104,8 +105,32 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
 
 
 def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
-                   wangshuai, pct, yin_bi_pct, ke_xie_hao_pct, gans):
+                   wangshuai, pct, yin_bi_pct, ke_xie_hao_pct, gans,
+                   element_forces=None):
     dm_pct = pct.get(dm_wx, 0)
+
+    # 化气格：日干参与天干合化且化神成势
+    # 《滴天髓》专论化象，《三命通会》："大凡化气，只取日干而言配合之神"
+    # 注意：月令为建禄或羊刃时，标准格局框架优先于化气格
+    jianlu_zhi = JIANLU_MAP.get(day_master, '')
+    yangren_zhi = YANGREN_MAP.get(day_master, '')
+    is_jianlu_yangren_month = month_zhi in (jianlu_zhi, yangren_zhi)
+    if element_forces and not is_jianlu_yangren_month:
+        hehua = element_forces.get('hehua', {})
+        for item in hehua.get('gan_he', []):
+            if day_master in item['gans']:
+                hua_wx = item['hua_wx']
+                hua_pct = pct.get(hua_wx, 0)
+                if hua_pct >= 60:
+                    hua_names = {'土': '化土格', '金': '化金格', '水': '化水格',
+                                 '木': '化木格', '火': '化火格'}
+                    return {
+                        'layer': 0, 'type': '化气格',
+                        'pattern': hua_names.get(hua_wx, f'化{hua_wx}格'),
+                        'confidence': 0.80,
+                        'reason': f'日主{day_master}参与合化，化神{hua_wx}占比{hua_pct}%≥60%',
+                        'yongshen_direction': f'化神{hua_wx}',
+                    }
 
     if dm_pct >= 80:
         zhuanwang_names = {'木': '曲直格', '火': '炎上格', '土': '稼穑格', '金': '从革格', '水': '润下格'}
@@ -124,10 +149,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
 
     # 假从强格：印比成势但未满足极旺三要件全齐
     # 《滴天髓》："真从之象有几人，假从亦可发其身"
-    # 注意：月支为建禄或羊刃时，建禄月劫框架优先，假从强格不在此触发
-    jianlu_zhi = JIANLU_MAP.get(day_master, '')
-    yangren_zhi = YANGREN_MAP.get(day_master, '')
-    is_jianlu_yangren_month = month_zhi in (jianlu_zhi, yangren_zhi)
+    # 注意：月支为建禄或羊刃时，建禄月劫框架优先（变量已在上文化气格检测中定义）
     if yin_bi_pct >= 80 and wangshuai.get('is_strong', False) and not is_jianlu_yangren_month:
         return {
             'layer': 0, 'type': '假从强格', 'pattern': '假从强格',
@@ -145,26 +167,68 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                 'yongshen_direction': '顺两行气势',
             }
 
+    # 检查地支藏干是否有日主比劫本气根（破从格）
+    # 《渊海子平》："命逢根气，命殞无猜"
+    has_bijie_benqi_root = False
+    for part in bazi_parts:
+        if len(part) < 2:
+            continue
+        for cg, ql in get_canggan(part[1]):
+            if GAN_WUXING.get(cg, '') == dm_wx and ql == '本气':
+                has_bijie_benqi_root = True
+                break
+        if has_bijie_benqi_root:
+            break
+
     if wangshuai.get('is_extreme_weak', False) and ke_xie_hao_pct >= 60:
         shishen_counts = _count_shishen_categories(day_master, gans, bazi_parts)
-        if shishen_counts.get('财星', 0) >= 3 and shishen_counts.get('比劫', 0) == 0:
+        bijie_free = shishen_counts.get('比劫', 0) == 0 and not has_bijie_benqi_root
+        if shishen_counts.get('财星', 0) >= 3 and bijie_free:
             return {
                 'layer': 0, 'type': '从财格', 'pattern': '从财格',
                 'confidence': 0.80, 'reason': '日主极弱，财星成势，无比劫印星',
                 'yongshen_direction': '食伤生财',
             }
-        if shishen_counts.get('官杀', 0) >= 3 and shishen_counts.get('比劫', 0) == 0:
+        if shishen_counts.get('官杀', 0) >= 3 and bijie_free:
             return {
                 'layer': 0, 'type': '从官杀格', 'pattern': '从官杀格',
                 'confidence': 0.80, 'reason': '日主极弱，官杀成势，无比劫印星',
                 'yongshen_direction': '财生官',
             }
-        if shishen_counts.get('食伤', 0) >= 3 and shishen_counts.get('比劫', 0) == 0:
+
+    # 从儿格：食伤成势 + 财星承接
+    # 《滴天髓》："从儿不管身强弱，只要吾儿又得儿"
+    # 不要求极弱，但日主不可身旺有强根
+    if ke_xie_hao_pct >= 60:
+        shishen_counts = _count_shishen_categories(day_master, gans, bazi_parts)
+        bijie_free = shishen_counts.get('比劫', 0) == 0 and not has_bijie_benqi_root
+        yin_free = shishen_counts.get('印星', 0) == 0
+        if (shishen_counts.get('食伤', 0) >= 3 and bijie_free and yin_free
+                and shishen_counts.get('财星', 0) >= 1
+                and not wangshuai.get('is_strong', False)):
             return {
                 'layer': 0, 'type': '从儿格', 'pattern': '从儿格',
-                'confidence': 0.80, 'reason': '日主极弱，食伤成势，无比劫印星',
-                'yongshen_direction': '比劫生食伤',
+                'confidence': 0.80,
+                'reason': '食伤成势，财星承接（吾儿又得儿），日主无强根',
+                'yongshen_direction': '食伤生财',
             }
+
+    # 从势格：日主极弱，克泄耗多类混杂，无单一主导
+    # 《滴天髓》："五阴从势无情义"
+    if wangshuai.get('is_extreme_weak', False) and ke_xie_hao_pct >= 60:
+        shishen_counts = _count_shishen_categories(day_master, gans, bazi_parts)
+        bijie_free = shishen_counts.get('比劫', 0) == 0 and not has_bijie_benqi_root
+        if bijie_free:
+            ke_xie_types = [cat for cat in ['财星', '官杀', '食伤']
+                           if shishen_counts.get(cat, 0) >= 1]
+            no_dominance = all(shishen_counts.get(cat, 0) < 3 for cat in ke_xie_types)
+            if len(ke_xie_types) >= 2 and no_dominance:
+                return {
+                    'layer': 0, 'type': '从势格', 'pattern': '从势格',
+                    'confidence': 0.65,
+                    'reason': f'日主极弱，克泄耗{",".join(ke_xie_types)}混杂无单一主导，从势格',
+                    'yongshen_direction': '顺势而为',
+                }
 
     if month_zhi == JIANLU_MAP.get(day_master, ''):
         return None
