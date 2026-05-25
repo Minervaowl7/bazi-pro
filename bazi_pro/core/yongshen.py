@@ -201,6 +201,19 @@ def _pattern_yongshen_wx(pattern_name: str, dm_wx: str,
         '克我': lambda w: KE_MAP.get(w, ''),
     }
 
+    # 建禄月劫格特殊处理：用神由"透X"决定
+    # 《子平真诠》："建禄月劫，无官煞则用食伤，食伤亦无则用财"
+    if '建禄格' in pattern_name or '月劫格' in pattern_name or '羊刃格' in pattern_name:
+        if '透' in pattern_name:
+            tou_ss = pattern_name.split('透')[-1]
+            rel = SHISHEN_WUXING_REL.get(tou_ss, '')
+            if rel:
+                return _REL_TO_WX.get(rel, lambda w: '')(dm_wx)
+        # 无透干：身强取官杀，身弱取印比
+        if is_strong:
+            return KE_MAP.get(dm_wx, '')
+        return SHENG_MAP.get(dm_wx, '')
+
     _WEAK_PREFERRED = {'生我', '同我'}
     _STRONG_PREFERRED = {'克我', '我生', '我克'}
 
