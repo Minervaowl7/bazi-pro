@@ -293,7 +293,7 @@ def _screen_layer2(day_master, month_zhi, gans):
 
 
 def _classify_bijie_pattern(day_master: str, month_zhi: str, benqi_ss: str) -> str:
-    if benqi_ss == '比肩':
+    if month_zhi == JIANLU_MAP.get(day_master, ''):
         return '建禄格'
     if month_zhi == YANGREN_MAP.get(day_master, ''):
         return '羊刃格'

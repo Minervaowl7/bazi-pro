@@ -191,7 +191,7 @@ def _pattern_yongshen_wx(pattern_name: str, dm_wx: str,
     if '从官杀' in pattern_name:
         return KE_MAP.get(dm_wx, '')
     if '从儿' in pattern_name:
-        return dm_wx
+        return WO_SHENG_MAP.get(dm_wx, '')
 
     _REL_TO_WX = {
         '同我': lambda w: w,
