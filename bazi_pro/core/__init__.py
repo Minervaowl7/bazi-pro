@@ -79,10 +79,12 @@ def full_analysis(mcp_json: dict) -> dict:
 
     # Augment jishen with disease sources not already present
     if disease['has_disease']:
+        yong_wx = yongshen.get('yongshen', '')
+        xi_wx = set(yongshen.get('xishen', []))
         existing_jishen = set(yongshen.get('jishen', []))
         for item in disease['items']:
             d_wx = item.get('disease_element', '')
-            if d_wx and d_wx not in existing_jishen:
+            if d_wx and d_wx not in existing_jishen and d_wx != yong_wx and d_wx not in xi_wx:
                 existing_jishen.add(d_wx)
         yongshen['jishen'] = list(existing_jishen)
         yongshen['jishen_gan'] = [WUXING_TO_GAN.get(w, '') for w in yongshen['jishen']]

@@ -38,14 +38,9 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
             yongshen_wx = SHENG_MAP.get(dm_wx, '')
             trace['reason'] = f'中和偏弱，取印星({yongshen_wx})为用'
 
-    xishen_wx = []
-    if yongshen_wx == SHENG_MAP.get(dm_wx, ''):
-        xishen_wx.append(dm_wx)
-    elif yongshen_wx == dm_wx:
-        xishen_wx.append(SHENG_MAP.get(dm_wx, ''))
-
     jishen_wx = _derive_jishen(pattern_name, dm_wx, yongshen_wx, is_weak, is_strong,
                                pattern_type=pattern_type)
+    xishen_wx = _derive_xishen(pattern_name, dm_wx, yongshen_wx, jishen_wx)
 
     return {
         'yongshen': yongshen_wx,
@@ -59,6 +54,48 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
         'note': '确定性推导，基于格局+旺衰规则。调候用神需查穷通宝鉴，由LLM补充。',
         'trace': trace,
     }
+
+
+def _derive_xishen(pattern_name: str, dm_wx: str, yongshen_wx: str,
+                   jishen_wx: list[str]) -> list[str]:
+    """
+    推导喜神五行。
+
+    优先从格局用神表的第二候选推导；
+    若无第二候选，用通用逻辑（生用神的五行），但排除忌神。
+    """
+    _REL_TO_WX = {
+        '同我': dm_wx,
+        '生我': SHENG_MAP.get(dm_wx, ''),
+        '我生': WO_SHENG_MAP.get(dm_wx, ''),
+        '我克': WO_KE_MAP.get(dm_wx, ''),
+        '克我': KE_MAP.get(dm_wx, ''),
+    }
+
+    # 从格局用神表取第二候选作为喜神
+    for ss_name, info in PATTERN_YONGSHEN.items():
+        if ss_name in pattern_name:
+            yong_list = info.get('用神', [])
+            if len(yong_list) >= 2:
+                for candidate in yong_list[1:]:
+                    base = candidate.split('(')[0].strip()
+                    rel = SHISHEN_WUXING_REL.get(base, '')
+                    wx = _REL_TO_WX.get(rel, '')
+                    if wx and wx != yongshen_wx and wx not in jishen_wx:
+                        return [wx]
+            break
+
+    # 通用逻辑：生用神的五行（排除忌神）
+    if yongshen_wx == SHENG_MAP.get(dm_wx, ''):
+        xi = dm_wx
+    elif yongshen_wx == dm_wx:
+        xi = SHENG_MAP.get(dm_wx, '')
+    else:
+        xi = SHENG_MAP.get(yongshen_wx, '')
+
+    if xi and xi != yongshen_wx and xi not in jishen_wx:
+        return [xi]
+    return []
 
 
 def _derive_jishen(pattern_name: str, dm_wx: str, yongshen_wx: str,
