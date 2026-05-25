@@ -3,7 +3,6 @@ from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.stems import GAN_HE
 
-
 # 月令旺地：天干合化成功需要的月支条件
 _HE_HUA_YUELING = {
     frozenset({'甲', '己'}): {'辰', '戌', '丑', '未'},  # 甲己合化土
