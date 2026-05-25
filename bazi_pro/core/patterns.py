@@ -245,6 +245,8 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                 'confidence': 0.85, 'reason': f'月支羊刃但印比{yin_bi_pct}%≥80%，从强格优先',
                 'yongshen_direction': '印比',
             }
+        # 羊刃月但不从强 → 交给后续层处理(建禄月劫框架)
+        return None
 
     return None
 
@@ -332,6 +334,12 @@ def _screen_layer3(day_master, dm_wx, month_zhi, gans):
         return None
     benqi_gan = canggan[0][0]
     benqi_ss = derive_shishen(day_master, benqi_gan)
+
+    # 羊刃月: 即使本气非比劫，仍以羊刃格论（如戊午月本气丁=正印）
+    if month_zhi == YANGREN_MAP.get(day_master, ''):
+        return _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans,
+                                    benqi_ss='劫财', benqi_gan=benqi_gan,
+                                    layer=3, layer_type='羊刃月令')
 
     if benqi_ss in ('比肩', '劫财'):
         return _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans,
