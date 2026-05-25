@@ -33,6 +33,21 @@ jobs:
       - name: Version consistency
         run: python scripts/check_version_consistency.py
 
+      - name: Output schema validation
+        run: python tests/validate_output_schema.py
+
+      - name: Parallel audit (A: data tables)
+        run: python scripts/audit_data_tables.py
+
+      - name: Parallel audit (B: logic chain)
+        run: python scripts/audit_logic_chain.py
+
+      - name: Parallel audit (C: SKILL contract)
+        run: python scripts/audit_skill_consistency.py
+
+      - name: Parallel audit (D: golden cases)
+        run: python scripts/audit_golden_cases.py
+
       - name: Pytest (full suite)
         run: python -m pytest -q
 
