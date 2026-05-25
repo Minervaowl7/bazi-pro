@@ -77,9 +77,9 @@ def main():
         print(f"\n✅ All version checks passed for {version}")
         sys.exit(0)
     else:
-        print(f"\n❌ Version consistency check failed")
+        print("\n❌ Version consistency check failed")
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

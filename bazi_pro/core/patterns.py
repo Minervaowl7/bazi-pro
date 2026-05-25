@@ -38,6 +38,9 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
         return {'pattern': '数据不足', 'candidates': [], 'note': '月支缺失',
                 'trace': {'layers_checked': [], 'layers_missed': ['L0', 'L1', 'L2', 'L3']}}
 
+    # 格局阈值使用修正前百分比(percent)，非修正后(percent_adjusted)。
+    # 合化修正改变了五行分布，但格局框架应在"原局基础力量"上判定；
+    # 化气格单独通过 element_forces.hehua 检测，不受此影响。
     pct = element_forces.get('percent', {})
     candidates = []
     gans = [p[0] for p in bazi_parts if len(p) >= 1]
@@ -115,7 +118,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
     jianlu_zhi = JIANLU_MAP.get(day_master, '')
     yangren_zhi = YANGREN_MAP.get(day_master, '')
     is_jianlu_yangren_month = month_zhi in (jianlu_zhi, yangren_zhi)
-    if element_forces and not is_jianlu_yangren_month:
+    if element_forces is not None and not is_jianlu_yangren_month:
         hehua = element_forces.get('hehua', {})
         for item in hehua.get('gan_he', []):
             if day_master in item['gans']:
@@ -157,6 +160,8 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
             'yongshen_direction': '印比',
         }
 
+    # 两行成象格：克泄耗≥85%且至少2个五行各有势力
+    # 若克泄耗仅1行主导(pct>5的不足2个)，自然掉入下方从格检查
     if ke_xie_hao_pct >= 85:
         two_wx = [wx for wx in ['木', '火', '土', '金', '水']
                    if wx not in {dm_wx, SHENG_MAP.get(dm_wx, '')} and pct.get(wx, 0) > 5]

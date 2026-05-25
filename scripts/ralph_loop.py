@@ -12,11 +12,10 @@ Ralph Wiggum Loop — bazi-pro 持续测试看护器
 """
 
 import argparse
+import random
 import subprocess
 import sys
 import time
-import random
-import os
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent

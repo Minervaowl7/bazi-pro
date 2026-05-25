@@ -15,7 +15,7 @@ from bazi_pro.core.branches import (
     ZHI_SANHE,
     ZHI_XING,
 )
-from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING, derive_shishen
+from bazi_pro.core.constants import GAN_WUXING, WUXING_TO_GAN, ZHI_WUXING, derive_shishen
 from bazi_pro.core.disease import detect_disease
 from bazi_pro.core.elements import calc_element_forces
 from bazi_pro.core.hidden_stems import get_canggan
@@ -84,9 +84,8 @@ def full_analysis(mcp_json: dict) -> dict:
             d_wx = item.get('disease_element', '')
             if d_wx and d_wx not in existing_jishen:
                 existing_jishen.add(d_wx)
-        wx_to_gan = {'木': '甲乙', '火': '丙丁', '土': '戊己', '金': '庚辛', '水': '壬癸'}
         yongshen['jishen'] = list(existing_jishen)
-        yongshen['jishen_gan'] = [wx_to_gan.get(w, '') for w in yongshen['jishen']]
+        yongshen['jishen_gan'] = [WUXING_TO_GAN.get(w, '') for w in yongshen['jishen']]
 
     pillars = []
     positions = ['年', '月', '日', '时']
@@ -127,7 +126,7 @@ __all__ = [
     'GAN_HE', 'WUXING_SHENG', 'WUXING_KE', 'SHENG_MAP', 'KE_MAP', 'WO_KE_MAP', 'WO_SHENG_MAP',
     'ZHI_CANGGAN', 'CANGGAN_WEIGHT', 'SHIER_CHANGSHENG', 'DELING_SCORE',
     'ZHI_HE', 'ZHI_CHONG', 'ZHI_HAI', 'ZHI_XING', 'ZHI_SANHE', 'ZHI_BANHE', 'ZHI_HUIFANG',
-    'JIANLU_MAP', 'YANGREN_MAP',
+    'JIANLU_MAP', 'YANGREN_MAP', 'WUXING_TO_GAN',
     'get_canggan',
     'SHISHEN_WUXING_REL', '_count_shishen_categories', '_get_yongshen_direction',
     'detect_relations', 'detect_shishen_relations', 'detect_disease',

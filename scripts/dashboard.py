@@ -4,8 +4,8 @@
 零外部依赖，纯 HTML+CSS+SVG
 """
 
-import re
 import math
+import re
 from html import escape
 
 GAN_WUXING = {
@@ -251,7 +251,7 @@ def _draw_radar_svg(wuxing: dict) -> str:
     labels = ['木', '火', '土', '金', '水']
     values = [wuxing.get(k, 0) for k in labels]
     cx, cy, r = 180, 180, 130
-    parts = [f'<svg class="radar-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">']
+    parts = ['<svg class="radar-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">']
     for level in range(1, 6):
         lr = r * level / 5
         pts = []
@@ -453,7 +453,7 @@ def _relation_graph_svg(pillars: list[dict], relations: list[dict]) -> str:
               '刑': 'var(--xing-color)', '害': 'var(--hai-color)',
               '半合': 'var(--sanhe-color)', '暗合': 'var(--he-color)'}
 
-    parts = [f'<svg class="relation-graph" viewBox="0 0 480 340" xmlns="http://www.w3.org/2000/svg">']
+    parts = ['<svg class="relation-graph" viewBox="0 0 480 340" xmlns="http://www.w3.org/2000/svg">']
 
     # Edges
     for i, rel in enumerate(relations):

@@ -599,3 +599,53 @@ class TestDiseaseDetection:
         names = [item['name'] for item in result['items']]
         # 乙=偏印透干 → 印星有根 → 官杀混杂被化解
         assert '官杀混杂' not in names
+
+
+class TestCoreRulesZhonghe:
+
+    def test_zhonghe_verdict(self):
+        """deling=1, dedi=2.0, deshi=3.0 应返回 中和"""
+        from bazi_pro.core_rules import judge_wangshuai
+        result = judge_wangshuai(1, 2.0, 3.0)
+        assert result['verdict'] == '中和'
+        assert result['is_weak'] is False
+        assert result['is_strong'] is False
+
+    def test_zhonghe_pianwang_verdict(self):
+        """deling=2, dedi=2.0, deshi=3.0 应返回 中和偏旺"""
+        from bazi_pro.core_rules import judge_wangshuai
+        result = judge_wangshuai(2, 2.0, 3.0)
+        assert result['verdict'] == '中和偏旺'
+        assert result['is_strong'] is True
+
+
+class TestElementForcesHehua:
+
+    def test_percent_adjusted_field_exists(self):
+        """calc_element_forces 应返回 percent_adjusted 字段"""
+        from bazi_pro.core_rules import calc_element_forces
+        result = calc_element_forces(['甲子', '己丑', '戊辰', '庚申'], '丑')
+        assert 'percent_adjusted' in result
+        assert 'hehua' in result
+        assert isinstance(result['percent_adjusted'], dict)
+
+    def test_hehua_structure(self):
+        """hehua 子结构应包含 gan_he, zhi_sanhe, zhi_banhe, zhi_huifang"""
+        from bazi_pro.core_rules import calc_element_forces
+        result = calc_element_forces(['甲子', '己丑', '戊辰', '庚申'], '丑')
+        hehua = result['hehua']
+        for key in ['gan_he', 'zhi_sanhe', 'zhi_banhe', 'zhi_huifang']:
+            assert key in hehua, f"Missing hehua key: {key}"
+            assert isinstance(hehua[key], list)
+
+    def test_gan_he_adjusts_forces(self):
+        """甲己合土应改变 percent_adjusted 中的土金分配"""
+        from bazi_pro.core_rules import calc_element_forces
+        result = calc_element_forces(['甲子', '己丑', '戊辰', '庚申'], '丑')
+        raw = result['percent']
+        adj = result['percent_adjusted']
+        # 甲己合化土成立（丑月），土力应增加
+        assert adj.get('土', 0) > 0
+        # 至少有一种五行的 adjusted 与 raw 不同
+        diffs = [abs(adj.get(w, 0) - raw.get(w, 0)) for w in ['木', '火', '土', '金', '水']]
+        assert sum(diffs) > 0.01, "合化应导致至少一个五行的百分比变化"

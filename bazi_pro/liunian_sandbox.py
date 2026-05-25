@@ -4,7 +4,8 @@
 from dataclasses import dataclass, field
 
 from bazi_pro import GAN_WUXING, ZHI_WUXING, count_wuxing_from_bazi, derive_shishen, wuxing_pct
-from bazi_pro.core_rules import full_analysis
+from bazi_pro.core import full_analysis
+from bazi_pro.core.stems import SHENG_MAP
 
 EXPERIMENTAL = True
 
@@ -122,12 +123,11 @@ class LiunianSandbox:
             zhi_wx = ZHI_WUXING.get(zhi, '')
             dm_wx = GAN_WUXING.get(self.day_master, '')
             if zhi_wx and dm_wx:
-                sheng_map = {'木': '水', '火': '木', '土': '火', '金': '土', '水': '金'}
                 if zhi_wx == dm_wx:
                     yd.shen_trigger.append(f'地支{zhi}({zhi_wx})→比肩力量')
-                elif sheng_map.get(zhi_wx) == dm_wx:
+                elif SHENG_MAP.get(zhi_wx) == dm_wx:
                     yd.shen_trigger.append(f'地支{zhi}({zhi_wx})→印星力量')
-                elif sheng_map.get(dm_wx) == zhi_wx:
+                elif SHENG_MAP.get(dm_wx) == zhi_wx:
                     yd.shen_trigger.append(f'地支{zhi}({zhi_wx})→食伤力量')
 
         yd.wuxing_shift = self._calc_wuxing_shift(gan, zhi)

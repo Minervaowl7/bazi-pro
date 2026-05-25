@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """从古籍语料库提取案例创建 Golden 测试用例"""
-import json, os, sys
+import json
+import os
 
 new_cases = [
     {

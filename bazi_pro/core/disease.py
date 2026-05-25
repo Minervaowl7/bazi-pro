@@ -5,35 +5,10 @@ from bazi_pro.core.constants import GAN_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP
 
-# 五行相生：生我方 (印星五行)
-_SHENG_WO = {v: k for k, v in SHENG_MAP.items()}  # 被生者→生者
-
 
 def _get_transparent_gans(bazi_parts: list[str]) -> set[str]:
     """返回所有透干（天干）的干集合。"""
     return {p[0] for p in bazi_parts if len(p) >= 1}
-
-
-def _has_root(gan: str, bazi_parts: list[str], min_weight: float = 0.3) -> tuple[bool, str]:
-    """
-    判断某天干是否在地支中有根气。
-    返回 (has_root, best_position_desc)。
-    min_weight: 余气=0.3, 中气=0.6, 本气=1.0
-    """
-    gan_wx = GAN_WUXING.get(gan, '')
-    best_weight = 0.0
-    best_desc = ''
-    for part in bazi_parts:
-        if len(part) < 2:
-            continue
-        zhi = part[1]
-        for cg, ql in get_canggan(zhi):
-            if GAN_WUXING.get(cg, '') == gan_wx:
-                w = CANGGAN_WEIGHT.get(ql, 0)
-                if w > best_weight:
-                    best_weight = w
-                    best_desc = f'{zhi}({ql})'
-    return best_weight >= min_weight, best_desc
 
 
 def _find_shishen_instances(
@@ -100,20 +75,6 @@ def _severity(disease_instances: list[dict]) -> str:
 def _best_instance(instances: list[dict]) -> dict:
     """返回根气最强的一条实例。"""
     return max(instances, key=lambda x: x['root_weight'])
-
-
-def _medicine_for(disease_element: str, dm_wx: str) -> tuple[str, str]:
-    """
-    推导病的药方五行。
-    枭神夺食/食神制杀逢枭: 财星克偏印 -> 药=我克之五行
-    伤官见官: 印星化伤官 -> 药=生我之五行
-    官杀混杂: 食伤制杀 -> 药=我生之五行
-    比劫争财: 官杀制比劫 -> 药=克我之五行
-    """
-    # 财星克印星: 财=我克, 印=生我
-    # 药方 = 克制病源的五行
-    ke_disease = KE_MAP.get(disease_element, '')
-    return ke_disease, f'财星({ke_disease})制枭' if ke_disease else ''
 
 
 def detect_disease(

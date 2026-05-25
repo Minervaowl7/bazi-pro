@@ -1,4 +1,4 @@
-from bazi_pro.core.constants import GAN_WUXING
+from bazi_pro.core.constants import GAN_WUXING, WUXING_TO_GAN
 from bazi_pro.core.patterns import PATTERN_YONGSHEN
 from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP, WO_SHENG_MAP
 from bazi_pro.core.ten_gods import SHISHEN_WUXING_REL
@@ -50,15 +50,13 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
     elif is_strong:
         jishen_wx = [dm_wx, SHENG_MAP.get(dm_wx, '')] if yongshen_wx != dm_wx else []
 
-    wx_to_gan = {'木': '甲乙', '火': '丙丁', '土': '戊己', '金': '庚辛', '水': '壬癸'}
-
     return {
         'yongshen': yongshen_wx,
-        'yongshen_gan': wx_to_gan.get(yongshen_wx, ''),
+        'yongshen_gan': WUXING_TO_GAN.get(yongshen_wx, ''),
         'xishen': xishen_wx,
-        'xishen_gan': [wx_to_gan.get(w, '') for w in xishen_wx],
+        'xishen_gan': [WUXING_TO_GAN.get(w, '') for w in xishen_wx],
         'jishen': jishen_wx,
-        'jishen_gan': [wx_to_gan.get(w, '') for w in jishen_wx],
+        'jishen_gan': [WUXING_TO_GAN.get(w, '') for w in jishen_wx],
         'confidence': pattern_result.get('confidence', 0.5),
         'pattern_basis': pattern_name,
         'note': '确定性推导，基于格局+旺衰规则。调候用神需查穷通宝鉴，由LLM补充。',

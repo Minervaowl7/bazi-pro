@@ -17,8 +17,8 @@ def load_cases():
 
 
 def test_core_analysis(case: dict) -> bool:
+    from bazi_pro.core import full_analysis
     from bazi_pro.core.constants import derive_shishen
-    from bazi_pro.core_rules import full_analysis
 
     inp = case.get("input", {})
     bazi = inp.get("bazi", "")

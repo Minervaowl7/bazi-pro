@@ -6,19 +6,17 @@
      cat analysis.md | python3 generate_report.py > report.html
 """
 
-import sys
+import argparse
+import json
 import os
 import re
-import json
-import argparse
+import sys
 import textwrap
 from datetime import datetime
 from html import escape
-from pathlib import Path
-import sys, os
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from dashboard import generate_dashboard
-
 
 # ---------------------------------------------------------------------------
 # Metadata extraction
@@ -850,9 +848,9 @@ def generate_enhanced_markdown(meta: dict, body_text: str,
     """生成增强版 Markdown 报告（含元数据头和页脚）"""
     lines = [
         f'# {report_title}',
-        f'',
+        '',
         f'*专业命理解读报告 — {report_date}*',
-        f'',
+        '',
     ]
 
     if meta:
@@ -987,15 +985,15 @@ def main():
     if args.format in ('html', 'both') or args.theme == 'dashboard':
         if use_v43 and args.theme == 'dashboard':
             # ── v4.3 Dashboard engine ──
-            from bazi_pro.view_model import build_vm_from_analysis_text
             from bazi_pro.ui import render_dashboard
+            from bazi_pro.view_model import build_vm_from_analysis_text
             vm = build_vm_from_analysis_text(analysis_text)
             html_content = render_dashboard(vm,
                 report_url=args.report_url, replay_url=args.replay_url)
         elif use_v43 and args.theme == 'report':
             # ── v4.3 Report engine (v4.4 composer)
-            from bazi_pro.view_model import build_vm_from_analysis_text
             from bazi_pro.ui import render_report
+            from bazi_pro.view_model import build_vm_from_analysis_text
             vm = build_vm_from_analysis_text(analysis_text)
             html_content = render_report(vm, raw_markdown=analysis_text)
         elif args.theme == 'dashboard':
@@ -1029,4 +1027,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from bazi_pro import AnalysisEngine
-from bazi_pro.core_rules import full_analysis
+from bazi_pro.core import full_analysis
 
 GOLDEN_DIR = Path(__file__).resolve().parent / "golden_cases"
 

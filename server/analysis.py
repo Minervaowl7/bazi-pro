@@ -10,7 +10,7 @@ import json
 from datetime import datetime, timezone
 
 from bazi_pro import GAN_WUXING, ZHI_WUXING, derive_shishen
-from bazi_pro.core_rules import (
+from bazi_pro.core import (
     calc_dedi,
     calc_deling,
     calc_deshi,
