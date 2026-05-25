@@ -49,6 +49,7 @@ from bazi_pro.core.ten_gods import (
     _count_shishen_categories,
     _get_yongshen_direction,
 )
+from bazi_pro.core.tiaohou import lookup_tiaohou
 from bazi_pro.core.yongshen import _pattern_yongshen_wx, derive_yongshen
 
 
@@ -76,6 +77,7 @@ def full_analysis(mcp_json: dict) -> dict:
     pattern = screen_pattern(day_master, bazi_parts, wangshuai, element_forces)
     yongshen = derive_yongshen(day_master, bazi_parts, pattern, wangshuai, element_forces)
     disease = detect_disease(day_master, bazi_parts, element_forces)
+    tiaohou = lookup_tiaohou(day_master, month_zhi)
 
     # Augment jishen with disease sources not already present
     if disease['has_disease']:
@@ -118,6 +120,7 @@ def full_analysis(mcp_json: dict) -> dict:
         'pattern': pattern,
         'yongshen': yongshen,
         'disease': disease,
+        'tiaohou': tiaohou,
         'pillars': pillars,
     }
 
@@ -131,7 +134,7 @@ __all__ = [
     'JIANLU_MAP', 'YANGREN_MAP', 'WUXING_TO_GAN',
     'get_canggan',
     'SHISHEN_WUXING_REL', '_count_shishen_categories', '_get_yongshen_direction',
-    'detect_relations', 'detect_shishen_relations', 'detect_disease',
+    'detect_relations', 'detect_shishen_relations', 'detect_disease', 'lookup_tiaohou',
     'calc_element_forces',
     'calc_deling', 'calc_dedi', 'calc_deshi', 'judge_wangshuai',
     'PATTERN_YONGSHEN', 'screen_pattern',

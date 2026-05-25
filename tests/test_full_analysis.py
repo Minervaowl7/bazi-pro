@@ -36,7 +36,7 @@ class TestFullAnalysisOutput:
 
     def test_has_required_top_level_keys(self):
         for key in ["deling", "dedi", "deshi", "wangshuai", "element_forces",
-                     "relations", "pattern", "yongshen", "disease", "pillars"]:
+                     "relations", "pattern", "yongshen", "disease", "tiaohou", "pillars"]:
             assert key in self.result, f"Missing key: {key}"
 
     def test_wangshuai_structure(self):

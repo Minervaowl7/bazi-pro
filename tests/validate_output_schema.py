@@ -23,6 +23,7 @@ TOP_LEVEL = {
     "pattern": dict,
     "yongshen": dict,
     "disease": dict,
+    "tiaohou": dict,
     "pillars": list,
 }
 
