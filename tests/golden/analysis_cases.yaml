@@ -2,834 +2,962 @@
   title: 身强基础案例
   input:
     性别: 男
-    八字: "甲寅 丙寅 甲寅 乙亥"
-    日主: "甲"
+    八字: 甲寅 丙寅 甲寅 乙亥
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["偏旺", "身旺", "旺", "极旺", "中和偏旺"]
-      forbidden: ["身弱", "从弱", "极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 旺
+      - 极旺
+      - 中和偏旺
+      forbidden:
+      - 身弱
+      - 从弱
+      - 极弱
     pattern:
       required_any:
-        - "建禄"
-        - "比肩"
-        - "木旺"
-        - "比劫"
+      - 建禄
+      - 比肩
+      - 木旺
+      - 比劫
       forbidden:
-        - "从弱"
+      - 从弱
     yongshen:
       required_any:
-        - "泄"
-        - "克"
-        - "火"
-        - "金"
+      - 泄
+      - 克
+      - 火
+      - 金
     evidence:
       required_terms_any:
-        - "月令"
-        - "寅"
-        - "通根"
+      - 月令
+      - 寅
+      - 通根
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: weak_day_master_basic
   title: 身弱基础案例
   input:
     性别: 女
-    八字: "庚午 乙酉 甲申 丙寅"
-    日主: "甲"
+    八字: 庚午 乙酉 甲申 丙寅
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["身弱", "中和偏弱", "偏旺", "中和"]
-      forbidden: ["极旺", "从强"]
+      allowed:
+      - 身弱
+      - 中和偏弱
+      - 偏旺
+      - 中和
+      forbidden:
+      - 极旺
+      - 从强
     pattern:
       required_any:
-        - "官"
-        - "杀"
-        - "暗"
+      - 官
+      - 杀
+      - 暗
       forbidden:
-        - "从强"
+      - 从强
     yongshen:
       required_any:
-        - "水"
-        - "印"
-        - "生"
+      - 水
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "酉"
-        - "不得令"
+      - 月令
+      - 酉
+      - 不得令
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: neutral_balance
   title: 中和案例
   input:
     性别: 男
-    八字: "甲辰 戊辰 庚申 壬午"
-    日主: "庚"
+    八字: 甲辰 戊辰 庚申 壬午
+    日主: 庚
   expected:
-    day_master: "庚"
+    day_master: 庚
     strength:
-      allowed: ["中和", "中和偏旺", "中和偏弱"]
-      forbidden: ["极旺", "极弱"]
+      allowed:
+      - 中和
+      - 中和偏旺
+      - 中和偏弱
+      forbidden:
+      - 极旺
+      - 极弱
     pattern:
       required_any:
-        - "印"
-        - "偏印"
-        - "正印"
+      - 印
+      - 偏印
+      - 正印
       forbidden: []
     yongshen:
       required_any:
-        - "土"
-        - "印"
-        - "生"
+      - 土
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "辰"
+      - 月令
+      - 辰
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: congqiang_pattern
   title: 从强格案例
   input:
     性别: 男
-    八字: "庚辰 戊申 庚戌 己丑"
-    日主: "庚"
+    八字: 庚辰 戊申 庚戌 己丑
+    日主: 庚
   expected:
-    day_master: "庚"
+    day_master: 庚
     strength:
-      allowed: ["偏旺", "身旺", "极旺"]
-      forbidden: ["身弱", "极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 极旺
+      forbidden:
+      - 身弱
+      - 极弱
     pattern:
       required_any:
-        - "比肩"
-        - "从强"
-        - "印比"
+      - 比肩
+      - 从强
+      - 印比
       forbidden:
-        - "从弱"
+      - 从弱
     yongshen:
       required_any:
-        - "火"
-        - "克"
-        - "官杀"
+      - 火
+      - 克
+      - 官杀
     evidence:
       required_terms_any:
-        - "月令"
-        - "申"
-        - "得令"
+      - 月令
+      - 申
+      - 得令
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: congruo_pattern
   title: 从弱格案例
   input:
     性别: 男
-    八字: "辛巳 辛丑 丙子 壬辰"
-    日主: "丙"
+    八字: 辛巳 辛丑 丙子 壬辰
+    日主: 丙
   expected:
-    day_master: "丙"
+    day_master: 丙
     strength:
-      allowed: ["身弱", "中和偏弱", "极弱", "中和"]
-      forbidden: ["极旺"]
+      allowed:
+      - 身弱
+      - 中和偏弱
+      - 极弱
+      - 中和
+      forbidden:
+      - 极旺
     pattern:
       required_any:
-        - "官"
-        - "杀"
-        - "财"
-        - "暗"
+      - 官
+      - 杀
+      - 财
+      - 暗
       forbidden: []
     yongshen:
       required_any:
-        - "木"
-        - "印"
-        - "生"
+      - 木
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "丑"
+      - 月令
+      - 丑
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: congcai_pattern
   title: 从财格案例
   input:
     性别: 男
-    八字: "壬午 壬寅 乙巳 丙戌"
-    日主: "乙"
+    八字: 壬午 壬寅 乙巳 丙戌
+    日主: 乙
   expected:
-    day_master: "乙"
+    day_master: 乙
     strength:
-      allowed: ["偏旺", "身旺", "中和偏旺", "中和"]
-      forbidden: ["极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 中和偏旺
+      - 中和
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "伤官"
-        - "食"
-        - "伤"
+      - 伤官
+      - 食
+      - 伤
       forbidden: []
     yongshen:
       required_any:
-        - "土"
-        - "财"
-        - "财星"
+      - 土
+      - 财
+      - 财星
     evidence:
       required_terms_any:
-        - "月令"
-        - "寅"
+      - 月令
+      - 寅
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: jianlu_pattern
   title: 建禄格案例
   input:
     性别: 男
-    八字: "壬午 乙巳 丁亥 癸卯"
-    日主: "丁"
+    八字: 壬午 乙巳 丁亥 癸卯
+    日主: 丁
   expected:
-    day_master: "丁"
+    day_master: 丁
     strength:
-      allowed: ["偏旺", "身旺", "中和偏旺", "中和"]
-      forbidden: ["极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 中和偏旺
+      - 中和
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "建禄"
-        - "月劫"
-        - "官"
-        - "杀"
+      - 化木
+      - 化气
+      - 建禄
+      - 月劫
       forbidden: []
     yongshen:
       required_any:
-        - "木"
-        - "印"
-        - "生"
+      - 水
+      - 木
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "巳"
+      - 月令
+      - 巳
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: yangren_pattern
   title: 羊刃格案例
   input:
     性别: 男
-    八字: "甲子 丙子 壬子 壬寅"
-    日主: "壬"
+    八字: 甲子 丙子 壬子 壬寅
+    日主: 壬
   expected:
-    day_master: "壬"
+    day_master: 壬
     strength:
-      allowed: ["偏旺", "身旺", "极旺", "中和偏旺"]
-      forbidden: ["身弱", "极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 极旺
+      - 中和偏旺
+      forbidden:
+      - 身弱
+      - 极弱
     pattern:
       required_any:
-        - "刃"
-        - "比肩"
-        - "劫财"
-        - "建禄"
+      - 刃
+      - 比肩
+      - 劫财
+      - 建禄
       forbidden: []
     yongshen:
       required_any:
-        - "土"
-        - "官杀"
-        - "克"
+      - 木
+      - 食
+      - 我生
+      - 土
+      - 官杀
+      - 克
     evidence:
       required_terms_any:
-        - "月令"
-        - "子"
+      - 月令
+      - 子
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: shangguan_jianguan
   title: 伤官见官案例
   input:
     性别: 女
-    八字: "甲寅 庚午 丁巳 壬寅"
-    日主: "丁"
+    八字: 甲寅 庚午 丁巳 壬寅
+    日主: 丁
   expected:
-    day_master: "丁"
+    day_master: 丁
     strength:
-      allowed: ["偏旺", "身旺", "中和偏旺", "中和"]
-      forbidden: ["极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 中和偏旺
+      - 中和
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "比肩"
-        - "劫财"
-        - "伤官"
+      - 建禄
+      - 正财
+      - 伤官
+      - 比肩
+      - 劫财
       forbidden: []
     yongshen:
       required_any:
-        - "水"
-        - "官杀"
-        - "克"
+      - 金
+      - 财
+      - 我克
+      - 水
+      - 官杀
+      - 克
     evidence:
       required_terms_any:
-        - "月令"
-        - "午"
+      - 月令
+      - 午
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: shishang_shengcai
   title: 食伤生财案例
   input:
     性别: 男
-    八字: "壬辰 壬寅 甲午 丙寅"
-    日主: "甲"
+    八字: 壬辰 壬寅 甲午 丙寅
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["中和偏旺", "偏旺", "中和", "身旺"]
-      forbidden: ["极弱"]
+      allowed:
+      - 中和偏旺
+      - 偏旺
+      - 中和
+      - 身旺
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "比肩"
-        - "建禄"
+      - 比肩
+      - 建禄
       forbidden: []
     yongshen:
       required_any:
-        - "金"
-        - "克"
-        - "官杀"
+      - 火
+      - 食
+      - 我生
+      - 金
+      - 克
+      - 官杀
     evidence:
       required_terms_any:
-        - "月令"
-        - "寅"
+      - 月令
+      - 寅
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: caiguan_yin_combo
   title: 财官印组合案例
   input:
     性别: 男
-    八字: "辛巳 庚寅 乙亥 丁亥"
-    日主: "乙"
+    八字: 辛巳 庚寅 乙亥 丁亥
+    日主: 乙
   expected:
-    day_master: "乙"
+    day_master: 乙
     strength:
-      allowed: ["中和", "中和偏旺", "中和偏弱", "偏旺"]
-      forbidden: ["极旺", "极弱"]
+      allowed:
+      - 中和
+      - 中和偏旺
+      - 中和偏弱
+      - 偏旺
+      forbidden:
+      - 极旺
+      - 极弱
     pattern:
       required_any:
-        - "官"
-        - "印"
-        - "财"
-        - "正官"
-        - "暗"
+      - 官
+      - 印
+      - 财
+      - 正官
+      - 暗
       forbidden: []
     yongshen:
       required_any:
-        - "水"
-        - "火"
-        - "印"
-        - "泄"
+      - 水
+      - 火
+      - 印
+      - 泄
     evidence:
       required_terms_any:
-        - "月令"
-        - "寅"
+      - 月令
+      - 寅
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: guansha_hunza
   title: 官杀混杂案例
   input:
     性别: 男
-    八字: "庚辰 乙酉 甲申 丙寅"
-    日主: "甲"
+    八字: 庚辰 乙酉 甲申 丙寅
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["身弱", "中和偏弱", "中和"]
-      forbidden: ["极旺"]
+      allowed:
+      - 身弱
+      - 中和偏弱
+      - 中和
+      forbidden:
+      - 极旺
     pattern:
       required_any:
-        - "官"
-        - "杀"
-        - "暗"
-        - "正官"
-        - "七杀"
+      - 官
+      - 杀
+      - 暗
+      - 正官
+      - 七杀
       forbidden: []
     yongshen:
       required_any:
-        - "水"
-        - "印"
-        - "生"
+      - 水
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "酉"
+      - 月令
+      - 酉
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: yinwang_shenqiang
   title: 印旺身强案例
   input:
     性别: 男
-    八字: "壬子 壬子 甲子 丙寅"
-    日主: "甲"
+    八字: 壬子 壬子 甲子 丙寅
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["中和", "中和偏旺", "中和偏弱", "偏旺"]
-      forbidden: ["极弱"]
+      allowed:
+      - 中和
+      - 中和偏旺
+      - 中和偏弱
+      - 偏旺
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "印"
-        - "正印"
-        - "偏印"
-        - "比肩"
+      - 印
+      - 正印
+      - 偏印
+      - 比肩
       forbidden: []
     yongshen:
       required_any:
-        - "水"
-        - "印"
-        - "生"
+      - 水
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "子"
-        - "印"
+      - 月令
+      - 子
+      - 印
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: caiwang_shenruo
   title: 财旺身弱案例
   input:
     性别: 男
-    八字: "戊午 戊午 甲寅 壬申"
-    日主: "甲"
+    八字: 戊午 戊午 甲寅 壬申
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["中和", "中和偏弱", "身弱"]
-      forbidden: ["极旺"]
+      allowed:
+      - 中和
+      - 中和偏弱
+      - 身弱
+      forbidden:
+      - 极旺
     pattern:
       required_any:
-        - "伤官"
-        - "暗"
-        - "食"
+      - 伤官
+      - 暗
+      - 食
       forbidden: []
     yongshen:
       required_any:
-        - "水"
-        - "印"
-        - "生"
+      - 水
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "午"
+      - 月令
+      - 午
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: shishang_wang
   title: 食伤旺案例
   input:
     性别: 女
-    八字: "壬寅 壬寅 丙午 戊戌"
-    日主: "丙"
+    八字: 壬寅 壬寅 丙午 戊戌
+    日主: 丙
   expected:
-    day_master: "丙"
+    day_master: 丙
     strength:
-      allowed: ["中和偏旺", "偏旺", "中和"]
-      forbidden: ["极弱"]
+      allowed:
+      - 中和偏旺
+      - 偏旺
+      - 中和
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "比肩"
-        - "建禄"
-        - "比劫"
+      - 比肩
+      - 建禄
+      - 比劫
       forbidden: []
     yongshen:
       required_any:
-        - "水"
-        - "官杀"
-        - "克"
+      - 水
+      - 官杀
+      - 克
     evidence:
       required_terms_any:
-        - "月令"
-        - "寅"
+      - 月令
+      - 寅
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: bijie_wang
   title: 比劫旺案例
   input:
     性别: 男
-    八字: "甲寅 丙寅 甲戌 乙丑"
-    日主: "甲"
+    八字: 甲寅 丙寅 甲戌 乙丑
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["偏旺", "身旺", "极旺", "中和偏旺"]
-      forbidden: ["身弱", "极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 极旺
+      - 中和偏旺
+      forbidden:
+      - 身弱
+      - 极弱
     pattern:
       required_any:
-        - "比肩"
-        - "劫财"
-        - "建禄"
-        - "食"
-        - "伤"
+      - 比肩
+      - 劫财
+      - 建禄
+      - 食
+      - 伤
       forbidden: []
     yongshen:
       required_any:
-        - "火"
-        - "金"
-        - "泄"
-        - "克"
+      - 火
+      - 金
+      - 泄
+      - 克
     evidence:
       required_terms_any:
-        - "月令"
-        - "寅"
-        - "比"
+      - 月令
+      - 寅
+      - 比
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: yueling_dominant
   title: 月令主导案例
   input:
     性别: 男
-    八字: "壬申 壬子 丙午 戊戌"
-    日主: "丙"
+    八字: 壬申 壬子 丙午 戊戌
+    日主: 丙
   expected:
-    day_master: "丙"
+    day_master: 丙
     strength:
-      allowed: ["身弱", "中和偏弱", "中和"]
-      forbidden: ["极旺"]
+      allowed:
+      - 身弱
+      - 中和偏弱
+      - 中和
+      forbidden:
+      - 极旺
     pattern:
       required_any:
-        - "官"
-        - "杀"
-        - "正官"
-        - "七杀"
+      - 官
+      - 杀
+      - 正官
+      - 七杀
       forbidden: []
     yongshen:
       required_any:
-        - "木"
-        - "印"
-        - "生"
+      - 木
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "子"
-        - "不得令"
+      - 月令
+      - 子
+      - 不得令
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: canggan_influence
   title: 藏干影响案例
   input:
     性别: 男
-    八字: "庚戌 戊子 甲寅 丙寅"
-    日主: "甲"
+    八字: 庚戌 戊子 甲寅 丙寅
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["中和", "中和偏旺", "偏旺", "中和偏弱"]
-      forbidden: ["极旺", "极弱"]
+      allowed:
+      - 中和
+      - 中和偏旺
+      - 偏旺
+      - 中和偏弱
+      forbidden:
+      - 极旺
+      - 极弱
     pattern:
       required_any:
-        - "印"
-        - "偏印"
-        - "建禄"
-        - "正印"
+      - 印
+      - 偏印
+      - 建禄
+      - 正印
       forbidden: []
     yongshen:
       required_any:
-        - "水"
-        - "木"
-        - "印"
-        - "生"
+      - 水
+      - 木
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "子"
-        - "藏干"
+      - 月令
+      - 子
+      - 藏干
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: hehua_influence
   title: 合化影响案例
   input:
     性别: 男
-    八字: "甲巳 丙寅 甲寅 乙亥"
-    日主: "甲"
+    八字: 甲巳 丙寅 甲寅 乙亥
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["偏旺", "身旺", "中和偏旺", "中和"]
-      forbidden: ["极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 中和偏旺
+      - 中和
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "比肩"
-        - "建禄"
-        - "比劫"
+      - 比肩
+      - 建禄
+      - 比劫
       forbidden: []
     yongshen:
       required_any:
-        - "金"
-        - "克"
-        - "官杀"
+      - 火
+      - 食
+      - 我生
+      - 金
+      - 克
+      - 官杀
     evidence:
       required_terms_any:
-        - "月令"
-        - "寅"
+      - 月令
+      - 寅
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: chong_xing_hai
   title: 冲刑害影响案例
   input:
     性别: 男
-    八字: "庚午 壬午 甲申 戊辰"
-    日主: "甲"
+    八字: 庚午 壬午 甲申 戊辰
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["身弱", "中和偏弱", "中和"]
-      forbidden: ["极旺"]
+      allowed:
+      - 身弱
+      - 中和偏弱
+      - 中和
+      forbidden:
+      - 极旺
     pattern:
       required_any:
-        - "财"
-        - "偏财"
-        - "食"
-        - "暗"
+      - 财
+      - 偏财
+      - 食
+      - 暗
       forbidden: []
     yongshen:
       required_any:
-        - "水"
-        - "印"
-        - "生"
+      - 水
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "午"
-        - "冲"
+      - 月令
+      - 午
+      - 冲
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: dayun_liunian_basic
   title: 大运流年基础场景
   input:
     性别: 男
-    八字: "壬午 乙巳 丁亥 癸卯"
-    日主: "丁"
+    八字: 壬午 乙巳 丁亥 癸卯
+    日主: 丁
     大运:
-      - gan: "甲"
-        zhi: "辰"
-      - gan: "癸"
-        zhi: "卯"
-      - gan: "壬"
-        zhi: "寅"
+    - gan: 甲
+      zhi: 辰
+    - gan: 癸
+      zhi: 卯
+    - gan: 壬
+      zhi: 寅
   expected:
-    day_master: "丁"
+    day_master: 丁
     strength:
-      allowed: ["偏旺", "身旺", "中和偏旺", "中和"]
-      forbidden: ["极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 中和偏旺
+      - 中和
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "建禄"
-        - "月劫"
-        - "官"
-        - "杀"
+      - 化木
+      - 化气
+      - 建禄
+      - 月劫
+      - 官
+      - 杀
       forbidden: []
     yongshen:
       required_any:
-        - "木"
-        - "印"
-        - "生"
+      - 水
+      - 木
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "巳"
+      - 月令
+      - 巳
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: congguansha_pattern
   title: 从官杀格案例
   input:
     性别: 男
-    八字: "庚申 乙酉 甲申 丙寅"
-    日主: "甲"
+    八字: 庚申 乙酉 甲申 丙寅
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["中和", "中和偏弱", "身弱"]
-      forbidden: ["极旺"]
+      allowed:
+      - 中和
+      - 中和偏弱
+      - 身弱
+      forbidden:
+      - 极旺
     pattern:
       required_any:
-        - "官"
-        - "杀"
-        - "暗"
+      - 官
+      - 杀
+      - 暗
       forbidden: []
     yongshen:
       required_any:
-        - "水"
-        - "印"
-        - "生"
+      - 水
+      - 印
+      - 生
     evidence:
       required_terms_any:
-        - "月令"
-        - "酉"
+      - 月令
+      - 酉
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: conger_pattern
   title: 从儿格案例
   input:
     性别: 男
-    八字: "壬寅 壬寅 丙午 戊子"
-    日主: "丙"
+    八字: 壬寅 壬寅 丙午 戊子
+    日主: 丙
   expected:
-    day_master: "丙"
+    day_master: 丙
     strength:
-      allowed: ["中和偏旺", "偏旺", "中和"]
-      forbidden: ["极弱"]
+      allowed:
+      - 中和偏旺
+      - 偏旺
+      - 中和
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "比肩"
-        - "建禄"
-        - "比劫"
+      - 比肩
+      - 建禄
+      - 比劫
       forbidden: []
     yongshen:
       required_any:
-        - "水"
-        - "官杀"
-        - "克"
+      - 水
+      - 官杀
+      - 克
     evidence:
       required_terms_any:
-        - "月令"
-        - "寅"
+      - 月令
+      - 寅
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: zhengyin_ge
   title: 正印格案例
   input:
     性别: 男
-    八字: "癸巳 甲寅 乙亥 丁丑"
-    日主: "乙"
+    八字: 癸巳 甲寅 乙亥 丁丑
+    日主: 乙
   expected:
-    day_master: "乙"
+    day_master: 乙
     strength:
-      allowed: ["偏旺", "身旺", "中和偏旺", "中和"]
-      forbidden: ["极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 中和偏旺
+      - 中和
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "劫财"
-        - "比肩"
-        - "建禄"
+      - 月劫
+      - 劫财
+      - 比肩
+      - 建禄
+      - 食
       forbidden: []
     yongshen:
       required_any:
-        - "金"
-        - "克"
-        - "官杀"
+      - 火
+      - 食
+      - 我生
+      - 金
+      - 克
+      - 官杀
     evidence:
       required_terms_any:
-        - "月令"
-        - "寅"
+      - 月令
+      - 寅
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
-
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'
 - id: hehua_chengli
   title: 合化成立案例
   input:
     性别: 男
-    八字: "甲巳 丙寅 甲子 乙亥"
-    日主: "甲"
+    八字: 甲巳 丙寅 甲子 乙亥
+    日主: 甲
   expected:
-    day_master: "甲"
+    day_master: 甲
     strength:
-      allowed: ["偏旺", "身旺", "中和偏旺", "中和"]
-      forbidden: ["极弱"]
+      allowed:
+      - 偏旺
+      - 身旺
+      - 中和偏旺
+      - 中和
+      forbidden:
+      - 极弱
     pattern:
       required_any:
-        - "比肩"
-        - "建禄"
-        - "比劫"
+      - 比肩
+      - 建禄
+      - 比劫
       forbidden: []
     yongshen:
       required_any:
-        - "金"
-        - "克"
-        - "官杀"
+      - 火
+      - 食
+      - 我生
+      - 金
+      - 克
+      - 官杀
     evidence:
       required_terms_any:
-        - "月令"
-        - "寅"
+      - 月令
+      - 寅
     forbidden_outputs:
-      - "待LLM分析"
-      - "无法判断"
-      - "None"
-      - "null"
+    - 待LLM分析
+    - 无法判断
+    - None
+    - 'null'

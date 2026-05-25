@@ -12,8 +12,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 pip install -e .                              # Minimal install (core + retrieval)
 pip install -e ".[all]"                       # Full install (hybrid, report, pdf, server, tui)
 
-# Primary test suite — 83 golden-case boundary regression tests
+# Primary test suite — 98 golden-case boundary regression tests
 python tests/run_golden.py
+
+# Full audit pipeline (schema + 4 specialized audits)
+python scripts/audit_all.py
 
 # Environment diagnostic (15 checks)
 python scripts/doctor.py
@@ -42,7 +45,7 @@ Bazi MCP JSON input
        │
        ▼
 ┌─────────────────────────────────────────┐
-│  Deterministic Core (bazi_pro/core/)    │  ← 11 modules, pure data transforms
+│  Deterministic Core (bazi_pro/core/)    │  ← 13 modules, pure data transforms
 │  full_analysis() → dict                 │     NO LLM logic here ever
 └─────────────────────────────────────────┘
        │
@@ -90,8 +93,21 @@ When bumping version, update ALL of: `bazi_pro/__init__.py` (single source), `py
 - **Python 3.12+ importlib** — `importlib.util` and `importlib.metadata` must be explicitly imported (not auto-available as `importlib.util`). The plugin loader requires both.
 - **Corpus exists in two places** — `bazi_pro/data/classical_corpus.md` (package data, CRLF on Windows) and `references/classical_corpus.md` (LF). They're content-identical. The package data copy is authoritative for installed usage.
 - **`core_rules.py` is a deprecated shim** — it re-exports everything from `bazi_pro.core` with a DeprecationWarning. Internal code should import from `bazi_pro.core` directly.
-- **Golden tests check terminology patterns**, not computation correctness — they verify that prohibited terms don't appear in wrong contexts and that core engine outputs match expected values for 83 boundary cases.
+- **Golden tests check terminology patterns**, not computation correctness — they verify that prohibited terms don't appear in wrong contexts and that core engine outputs match expected values for 98 boundary cases.
 - **`json` module** — if you need it in a function, import at module top level. Scoped imports inside conditional branches cause `UnboundLocalError` when another branch references the same name.
+- **建禄格 vs 月劫格 vs 羊刃格** — `_classify_bijie_pattern` must check `JIANLU_MAP`/`YANGREN_MAP` against month_zhi, not just benqi_ss. 阴干无羊刃（only 甲卯丙午戊午庚酉壬子）.
+- **从格用神方向** — 从强/专旺格用印星(生我), 从财格用财星(我克), 从官杀格用官杀(克我), 从儿格用食伤(我生). 忌神是逆势五行, 不是扶抑格逻辑.
+- **`percent` vs `percent_adjusted`** — `calc_element_forces()` returns both. Pattern screening uses `percent` (raw); 化气格 uses `percent_adjusted` (hehua-corrected). This is by design.
+- **建禄月劫格用神** — 由格局名中的"透X"决定, 不是盲取 PATTERN_YONGSHEN 表第一候选. "透食神"→食伤为用, "透正官"→官杀为用.
+
+## Agent guardrails
+
+See `AGENTS.md` for the full list. Key rules:
+- `bazi_pro/core/` modules import only from `bazi_pro.core.*` (no circular deps)
+- Every new core function needs a test
+- Golden case count can never decrease (currently 98)
+- Script wrappers use `sys.exit(main())`
+- `full_analysis()` return keys changes need `TestAnalysisEngineReturnContract` update
 
 ## Plugin system
 
