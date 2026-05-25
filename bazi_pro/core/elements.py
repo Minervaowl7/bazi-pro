@@ -1,4 +1,4 @@
-from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_BANHE, ZHI_HE, ZHI_HUIFANG, ZHI_SANHE
+from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_BANHE, ZHI_HUIFANG, ZHI_SANHE
 from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.stems import GAN_HE
