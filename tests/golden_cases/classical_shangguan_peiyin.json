@@ -1,0 +1,25 @@
+{
+  "id": "classical_shangguan_peiyin",
+  "description": "古籍案例·伤官用煞印—己未 丙子 庚子 丙子（蔡贵妃）",
+  "source": "ZPZ_00141",
+  "scenario": "庚金日主子月，伤官用煞印",
+  "input": {
+    "day_master": "庚",
+    "bazi": "己未 丙子 庚子 丙子",
+    "month_branch": "子",
+    "expected_pattern": "暗伤官格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土"
+  },
+  "must_include": [
+    "伤官"
+  ],
+  "must_not_include": [
+    "从格",
+    "七杀格"
+  ],
+  "classical_support": [
+    "ZPZ_00141"
+  ],
+  "notes": "《子平真诠》：伤多身弱，赖煞生印以帮身制伤"
+}

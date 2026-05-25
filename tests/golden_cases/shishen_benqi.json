@@ -1,0 +1,23 @@
+{
+  "id": "shishen_benqi",
+  "description": "食神格 — 月令食神本气透干",
+  "scenario": "甲木日主，巳月丙火食神透干",
+  "input": {
+    "day_master": "甲",
+    "bazi": "丙寅 癸巳 甲寅 庚午",
+    "month_branch": "巳",
+    "expected_pattern": "食神格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "木",
+    "expected_deling_score": -1,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "食神格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "月支巳本气丙火食神透干"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "classical_yangren_yinzhong",
+  "description": "古籍案例·四戊午从强—戊午 戊午 戊午 戊午",
+  "source": "ZPZ_00161",
+  "scenario": "四戊午，全局火土一气",
+  "input": {
+    "day_master": "戊",
+    "bazi": "戊午 戊午 戊午 戊午",
+    "month_branch": "午",
+    "expected_pattern": "从强格",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "火"
+  },
+  "must_include": [
+    "从强"
+  ],
+  "must_not_include": [
+    "羊刃格",
+    "建禄"
+  ],
+  "classical_support": [
+    "ZPZ_00161"
+  ],
+  "notes": "四戊午火土一气，印比合计>80%，从强格。土未达80%故非稼穑"
+}

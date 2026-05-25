@@ -1,0 +1,25 @@
+{
+  "id": "classical_shishen_shengcai",
+  "description": "古籍案例·食神生财—戊子 丁巳 甲辰 丙寅",
+  "source": "YHZ_00068",
+  "scenario": "甲木日主巳月，食伤生财归禄",
+  "input": {
+    "day_master": "甲",
+    "bazi": "戊子 丁巳 甲辰 丙寅",
+    "month_branch": "巳",
+    "expected_pattern": "食神格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "木"
+  },
+  "must_include": [
+    "食神格"
+  ],
+  "must_not_include": [
+    "从格",
+    "伤官格"
+  ],
+  "classical_support": [
+    "YHZ_00068"
+  ],
+  "notes": "《渊海子平》：食伤生财格，归禄于寅，早年食伤运发"
+}

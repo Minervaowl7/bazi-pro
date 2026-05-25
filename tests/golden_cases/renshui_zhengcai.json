@@ -1,0 +1,23 @@
+{
+  "id": "renshui_zhengcai",
+  "description": "壬水日主正财格 — 丁火正财透干",
+  "scenario": "壬水日主，午月丁火正财透干",
+  "input": {
+    "day_master": "壬",
+    "bazi": "丁卯 丙午 壬寅 甲辰",
+    "month_branch": "午",
+    "expected_pattern": "木火成象格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "成象格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "壬水日主午月丁火正财透干"
+}

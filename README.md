@@ -1,0 +1,212 @@
+# bazi-pro v5.0
+
+[![CI](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml)
+
+**确定性命理计算核心 + LLM 解释框架（Beta）**
+
+📜 2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 四层格局筛查 · 喜用神推导 · 动态 SVG 命盘 · FastAPI 服务 · 插件机制
+
+---
+
+## 安装
+
+```bash
+# 最小安装（核心分析 + 古籍检索）
+pip install -e .
+
+# 完整安装（含向量检索、报告、PDF、服务端、TUI）
+pip install -e ".[all]"
+
+# 按需安装
+pip install -e ".[server]"    # FastAPI 服务端
+pip install -e ".[report]"    # Markdown/HTML 报告
+pip install -e ".[pdf]"       # PDF 生成
+pip install -e ".[hybrid]"    # 向量融合检索
+pip install -e ".[tui]"       # Rich 终端界面
+```
+
+## 30秒体验
+
+```bash
+git clone git@github.com:Minervaowl7/bazi-pro.git
+cd bazi-pro
+pip install -e .
+
+# 检索古籍（核心功能，无需 extra）
+python scripts/retrieve_classical.py "食神 制杀 身弱" -k 3 --json
+
+# 生成报告（需要 [report]）
+python scripts/generate_report.py --input examples/sample_analysis.md --output report.md
+
+# 交互式仪表盘（需要 [report]）
+python scripts/generate_report.py --input examples/sample_analysis.md --theme dashboard --format html --output dashboard.html
+
+# 环境诊断
+python scripts/doctor.py
+```
+
+```bash
+# FastAPI 服务端（需要 [server]）
+bazi-server
+
+# Rich 终端界面（需要 [tui]）
+bazi-tui
+
+# 向量融合检索（需要 [hybrid]）
+bazi-hybrid
+```
+
+---
+
+## 引擎架构
+
+```
+命盘 MCP JSON
+    │
+    ▼
+┌─────────────────────────────────────────────────┐
+│  古籍检索层                                      │
+│  retrieve_classical.py (BM25 + jieba + 缓存)     │
+│  hybrid_search.py (FAISS + 权威权重)             │
+└─────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────┐
+│  解读引擎层 (SKILL.md 10步执行流)                │
+│  四层格局筛查 → 喜用神推导 → 九步分析             │
+│  evidence.py · trace.py · view_model.py          │
+└─────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────┐
+│  输出与可视化层                                   │
+│  generate_report.py (MD/HTML/PDF)                │
+│  ui/ 子包 (SVG命盘 · 命运河流 · 推理图谱)         │
+│  server/ (FastAPI) · tui/ (Rich 终端)            │
+└─────────────────────────────────────────────────┘
+```
+
+⚠️ 本项目处于 Beta 阶段，确定性计算核心已实现但仍在持续完善中。compare_engine 和 liunian_sandbox 标记为 EXPERIMENTAL。
+
+---
+
+## 能力状态
+
+### ✅ 稳定能力
+| 能力 | 代码入口 | 测试覆盖 |
+|------|---------|---------|
+| 十神推导 | `bazi_pro.core.constants.derive_shishen` | `tests/test_core.py` |
+| 藏干展开 | `bazi_pro.core.hidden_stems.get_canggan` | `tests/test_core.py` |
+| 五行力量 | `bazi_pro.core.elements.calc_element_forces` | `tests/test_core.py` |
+| 旺衰判定 | `bazi_pro.core.strength.judge_wangshuai` | `tests/test_core.py` |
+| 格局筛查 (Layer 0-3) | `bazi_pro.core.patterns.screen_pattern` | `tests/test_core.py` |
+| 喜用神推导 | `bazi_pro.core.yongshen.derive_yongshen` | `tests/test_core.py` |
+| 刑冲合害 | `bazi_pro.core.relations.detect_relations` | `tests/test_core.py` |
+| 古籍检索 | `bazi_pro.retrieve_classical.retrieve` | `tests/test_core.py` |
+| 83 Golden Cases | `tests/run_golden.py` | 83/83 通过 |
+| 24 Analysis Golden Cases | `tests/test_analysis_golden.py` | 24/24 通过 |
+
+> **格局筛查说明**：当前代码实现 Layer 0-3（建禄月劫、阳刃、从格、正格常规），Layer 4-5（调候用神、多候选裁决）依赖 LLM 补充，未编码为确定性规则。
+>
+> **Golden Cases 说明**：覆盖十神推导、旺衰判定、格局筛查、喜用神推导等确定性规则；不覆盖命理争议点（如调候用神取舍、特殊格局认定分歧），不代表结果绝对正确。
+
+### ⚠️ 实验能力 (EXPERIMENTAL)
+| 能力 | 代码入口 | 说明 |
+|------|---------|------|
+| 命盘对比 | `bazi_pro.compare_engine` | 置信区间 ±15%，不返回伪精确分数 |
+| 流年沙盒 | `bazi_pro.liunian_sandbox` | 依赖 AnalysisEngine 结果 |
+| 向量融合检索 | `bazi_pro.hybrid_search` | 需要 sentence-transformers + FAISS |
+| 格局 Layer 4-5 | SKILL.md | 调候用神查表、多候选格局裁决，当前未编码为确定性规则，由 LLM 补充 |
+| 分维度解读 | SKILL.md Step 8 | 性格/事业/财运/感情/健康/近运的文字解读，由 LLM 完成 |
+
+### 🧪 Beta 能力
+| 能力 | 代码入口 | 说明 |
+|------|---------|------|
+| Web API | `server/app.py` | FastAPI REST + WebSocket，统一错误响应，环境变量可配置 |
+| 报告/仪表盘 | `bazi_pro/generate_report.py` | Markdown/HTML/PDF 输出，Dashboard 可视化 |
+
+---
+
+## Web API 环境变量
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `BAZI_API_KEY` | (空) | 设置后启用 API 鉴权。REST 使用 `X-API-Key` header；WebSocket 使用 `x-api-key` header |
+| `BAZI_CORS_ORIGINS` | (空) | 逗号分隔的允许 Origin 列表。默认不启用 CORS |
+| `BAZI_MAX_PAYLOAD_BYTES` | `10240` | 请求体最大字节数（含 chunked body） |
+| `BAZI_TASK_TTL_SECONDS` | `7200` | 分析任务缓存 TTL（秒） |
+| `BAZI_MAX_CONCURRENT_TASKS` | `1000` | 最大并发分析任务数 |
+| `BAZI_RATE_LIMIT_REQUESTS` | `30` | 每个 IP+API key 在窗口期内最大请求数 |
+| `BAZI_RATE_LIMIT_WINDOW_SECONDS` | `60` | Rate limit 窗口期（秒） |
+| `BAZI_HOST` | `0.0.0.0` | 服务监听地址 |
+| `BAZI_PORT` | `8800` | 服务监听端口 |
+| `BAZI_LOG_LEVEL` | `info` | 日志级别 |
+| `BAZI_CACHE_DIR` | (平台缓存目录) | BM25 索引缓存目录，默认 `~/.cache/bazi-pro` (Linux) |
+| `REDIS_URL` | (空) | 设置后使用 Redis 作为缓存/任务存储/限流后端 |
+
+API 错误响应统一格式：
+
+```json
+{"error": {"code": "UNAUTHORIZED", "message": "API key 无效或缺失"}}
+```
+
+错误码：`UNAUTHORIZED` / `NOT_FOUND` / `PAYLOAD_TOO_LARGE` / `RATE_LIMITED` / `INTERNAL_ERROR` / `SERVER_BUSY`。422 Pydantic 校验错误保留 FastAPI 默认格式。
+
+---
+
+## CI / 测试
+
+- **Python 版本矩阵**：3.10 / 3.11 / 3.12
+- **全量 pytest**：`python -m pytest -q`
+- **Ruff lint**：`ruff check server/ bazi_pro/ tests/`
+- **Build 验证**：`python -m build`
+- **Twine 检查**：`twine check dist/*`
+- **Wheel 安装冒烟测试**：从非源码目录安装并运行 CLI
+- **Console scripts 检查**：所有 entry point 可 import 且 callable
+
+---
+
+## 核心模块
+
+| 模块 | 功能 | 亮点 |
+|------|------|------|
+| `bazi_pro/retrieve_classical.py` | BM25+古籍检索 | pickle 缓存 · `--batch` 批量 · JSON 元数据 |
+| `bazi_pro/hybrid_search.py` | 融合检索 | BM25+向量+权威权重 · 匹配词高亮 · CLI 入口 |
+| `bazi_pro/generate_report.py` | 报告生成 | Markdown/HTML/PDF · `--theme dashboard` v5.0 仪表盘 |
+| `bazi_pro/ui/` (子包) | 可视化组件 | 动态SVG命盘 · 命运河流时间轴 · 推理图谱 · 裁决印章 |
+| `bazi_pro/view_model.py` | 共享数据层 | DashboardVM 统一三种输出形态 |
+| `server/` | Web 服务 | FastAPI REST + WebSocket 进度推送 + Redis/LRU 缓存 |
+| `bazi_pro/tui/` | 交互终端 | Rich 彩色表格 + 进度条 + Tab 补全 REPL |
+| `bazi_pro/plugin_api.py` | 插件机制 | on_retrieve / on_evidence / on_render 钩子 |
+| `bazi_pro/archive.py` | 档案系统 | SQLite 存储 + 用户反馈校准 |
+| `bazi_pro/doctor.py` | 环境诊断 | 16 项检查一键运行 |
+
+---
+
+## 版本历史
+
+| 版本 | 内容 |
+|------|------|
+| **v5.0** | 确定性计算核心 (core/)：十神推导、藏干展开、五行力量、旺衰判定、格局筛查、喜用神推导、刑冲合害 · 83 Golden Cases 全通过 · Pydantic API Schema · CORS/安全加固 · counter_evidence 通道 · 插件机制 · CLI TUI · AnalysisEngine SDK · ⚠️流年沙盒/命盘对比为EXPERIMENTAL · 档案校准系统 |
+| **v4.8** | 命盘对比引擎 · 古籍双栏展示 · 流年推演沙盒 · 个人命理档案 |
+| **v4.7** | Hybrid Search 落地(INT8量化+FAISS+预热) · ViewModel 统一化 |
+| **v4.6** | FastAPI + WebSocket 服务层 · Redis 缓存 |
+| **v4.5** | 动态 SVG 命盘 · 命运河流时间轴 · 推理图谱 DAG · 印章动画升级 |
+| **v4.3** | Golden Cases (4例) + CI + Web Demo 首页 + Evidence Pipeline + 包结构重构 |
+| **v4.1** | bazi doctor · pyproject 包结构修复 · README 引擎化 · 检索性能元数据 |
+| **v4.0** | Evidence Object · BM25缓存 · 批量检索 · Hybrid Search骨架 · examples |
+| **v3.5** | 层3比劫拦截 (禁止"暗劫财格"→建禄月劫经典框架) · 强制自动生成报告 · 交互式仪表盘 |
+
+---
+
+## 依赖
+
+最小安装仅需 `jieba`。可选依赖通过 `pip install -e ".[extra]"` 安装，详见上方安装章节。
+
+---
+
+## 许可
+
+MIT License — 仅供传统文化学习与参考，不构成任何决策依据。
+
+⚠️ **免责声明**：bazi-pro 的分析结果包含三类来源：(1) 确定性规则推导（十神、旺衰、格局筛查 L0-3、喜用神等），(2) 古籍检索（BM25 检索 6 部经典条文），(3) LLM 辅助解释（调候用神、多候选裁决、分维度解读）。其中 LLM 输出为概率性生成，不代表确定性事实。请勿将任何分析结果用于人生重大决策。

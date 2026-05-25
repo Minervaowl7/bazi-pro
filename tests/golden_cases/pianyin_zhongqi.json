@@ -1,0 +1,23 @@
+{
+  "id": "pianyin_zhongqi",
+  "description": "偏印格 — 月令偏印中气透干",
+  "scenario": "甲木日主，申月壬水偏印中气透干",
+  "input": {
+    "day_master": "甲",
+    "bazi": "丙寅 壬申 甲子 壬申",
+    "month_branch": "申",
+    "expected_pattern": "偏印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": -3,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "偏印格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "月支申中气壬水偏印透干"
+}

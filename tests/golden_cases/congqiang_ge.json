@@ -1,0 +1,25 @@
+{
+  "id": "congqiang_ge",
+  "description": "建禄格 — 庚金日主申月建禄，无财官煞食透出",
+  "scenario": "庚金日主，申月建禄，印比成势但不满足从强条件",
+  "input": {
+    "day_master": "庚",
+    "bazi": "庚辰 戊申 庚戌 己丑",
+    "month_branch": "申",
+    "expected_pattern": "建禄格，无财官煞食透出",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "火",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "建禄格，无财官煞食透出"
+  ],
+  "must_not_include": [
+    "从格",
+    "暗比肩格",
+    "暗劫财格"
+  ],
+  "notes": "庚日主申月建禄，印比合计高但旺衰为偏旺(非极旺)，不成从强格"
+}

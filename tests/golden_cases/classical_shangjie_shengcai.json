@@ -1,0 +1,25 @@
+{
+  "id": "classical_shangjie_shengcai",
+  "description": "古籍案例·伤官化劫生财—甲子 辛未 辛酉 壬辰（汪学士）",
+  "source": "ZPZ_00112",
+  "scenario": "辛金日主未月，伤官化劫生财",
+  "input": {
+    "day_master": "辛",
+    "bazi": "甲子 辛未 辛酉 壬辰",
+    "month_branch": "未",
+    "expected_pattern": "暗偏印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "木"
+  },
+  "must_include": [
+    "印"
+  ],
+  "must_not_include": [
+    "从格",
+    "正官格"
+  ],
+  "classical_support": [
+    "ZPZ_00112"
+  ],
+  "notes": "《子平真诠》：财不甚旺而比强，露伤官化劫生财"
+}

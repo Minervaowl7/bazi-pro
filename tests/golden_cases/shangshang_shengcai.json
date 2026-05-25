@@ -1,0 +1,27 @@
+{
+  "id": "shangshang_shengcai",
+  "description": "食神生财 — 食神格财星流通",
+  "scenario": "壬水日主，寅月甲木食神透干，财星流通",
+  "input": {
+    "day_master": "壬",
+    "bazi": "辛亥 壬寅 壬午 甲辰",
+    "month_branch": "寅",
+    "expected_pattern": "食神格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": -1,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "食神格"
+  ],
+  "must_not_include": [
+    "从格",
+    "七杀格"
+  ],
+  "classical_support": [
+    "ZPZQ_00045"
+  ],
+  "notes": "月令寅中甲木食神透干，食神格"
+}

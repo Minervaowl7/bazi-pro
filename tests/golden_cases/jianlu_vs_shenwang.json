@@ -1,0 +1,31 @@
+{
+  "id": "jianlu_vs_shenwang",
+  "description": "建禄 vs 普通身旺 — 甲木寅月建禄，比肩极旺",
+  "scenario": "甲木日主，寅月建禄，四柱比肩重重，属建禄格而非普通身旺",
+  "input": {
+    "day_master": "甲",
+    "bazi": "甲寅 丙寅 甲寅 丙寅",
+    "month_branch": "寅",
+    "expected_pattern": "建禄格，透食神",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "建禄格，透食神"
+  ],
+  "must_not_include": [
+    "从格",
+    "暗比肩格",
+    "暗劫财格"
+  ],
+  "rationale": "甲日主生于寅月，寅为甲之禄，月令本气为比肩，属建禄格而非普通身旺",
+  "classical_support": "DTM_00080",
+  "expected_relations": [
+    {
+      "type": "无特殊关系"
+    }
+  ]
+}

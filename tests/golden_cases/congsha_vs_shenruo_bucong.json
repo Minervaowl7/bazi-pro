@@ -1,0 +1,36 @@
+{
+  "id": "congsha_vs_shenruo_bucong",
+  "description": "从杀 vs 身弱不从 — 戊土日主有午火通根不从杀",
+  "scenario": "戊土日主生于丑月，水旺土虚，但有午火印星通根，不从杀",
+  "input": {
+    "day_master": "戊",
+    "bazi": "壬子 癸丑 戊午 壬子",
+    "month_branch": "丑",
+    "expected_pattern": "正财格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "正财格"
+  ],
+  "must_not_include": [
+    "从杀格",
+    "从官杀"
+  ],
+  "rationale": "戊日主生于丑月，水旺土虚，但有午火印星通根，不从杀",
+  "classical_support": "SFTK_00068",
+  "expected_relations": [
+    {
+      "type": "天干合"
+    },
+    {
+      "type": "地支合"
+    },
+    {
+      "type": "地支冲"
+    }
+  ]
+}

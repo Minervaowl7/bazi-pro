@@ -1,0 +1,26 @@
+{
+  "id": "yinwang_shenqiang",
+  "description": "印旺身强 — 印比过重需食伤泄秀",
+  "scenario": "丙火日主，卯月印星当令，全局印比成势",
+  "input": {
+    "day_master": "丙",
+    "bazi": "甲午 丁卯 丙寅 甲午",
+    "month_branch": "卯",
+    "expected_pattern": "暗正印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": 1,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "正印"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "classical_support": [
+    "ZPZQ_00035"
+  ],
+  "notes": "月支卯本气乙正印不透干，暗正印格"
+}

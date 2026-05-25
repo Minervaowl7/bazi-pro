@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="bazi-pro report generator">
+<title>八字命理分析报告</title>
+<style>
+/* ==== Font face for emoji ==== */
+@font-face {
+    font-family: "Noto Color Emoji";
+    src: local("Noto Color Emoji");
+    font-display: swap;
+}
+
+/* ==== Reset & Base ==== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --ink: #2c1810;
+    --ink-light: #5a3a1a;
+    --accent: #8b2500;
+    --accent-soft: #a0522d;
+    --gold: #b8860b;
+    --bg-page: #f5f0e8;
+    --bg-card: #fffdf7;
+    --bg-warm: #fdfaf3;
+    --bg-cream: #fdf5e6;
+    --border-light: #e8d5c4;
+    --border-soft: #e0d0c0;
+    --shadow: 0 2px 32px rgba(44,24,16,0.07);
+}
+
+body {
+    font-family: "Noto Serif CJK SC", "DejaVu Serif", "Noto Color Emoji", "SimSun", "STSong", "Microsoft YaHei", serif;
+    font-size: 15px; line-height: 1.9; color: var(--ink); background: var(--bg-page);
+    -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ==== Page container ==== */
+.page {
+    max-width: 780px; margin: 24px auto 48px;
+    background: var(--bg-card); box-shadow: var(--shadow);
+    border-radius: 2px;
+}
+
+/* ==== Cover ==== */
+.cover {
+    text-align: center; padding: 72px 64px 56px;
+    border-bottom: 1px solid var(--border-light);
+    background: linear-gradient(180deg, #fffdf7 0%, #fef9f0 40%, #fdf5e8 100%);
+    position: relative;
+}
+.cover::before {
+    content: "";
+    display: block; width: 48px; height: 2px;
+    background: var(--accent); margin: 0 auto 36px;
+}
+.cover h1 {
+    font-size: 30px; font-weight: 700; color: var(--accent);
+    letter-spacing: 6px; margin-bottom: 12px; line-height: 1.3;
+}
+.cover .subtitle {
+    font-size: 15px; color: var(--accent-soft); margin-bottom: 28px;
+    letter-spacing: 2px;
+}
+.cover .date {
+    font-size: 13px; color: #999; margin-bottom: 28px;
+}
+.cover .meta-table {
+    margin: 20px auto 0; border-collapse: collapse;
+    display: inline-table;
+}
+.cover .meta-table td {
+    padding: 5px 18px; font-size: 14px; text-align: left;
+    border-bottom: 1px dotted var(--border-soft);
+}
+.cover .meta-table .meta-label {
+    color: var(--accent-soft); font-weight: 600;
+    text-align: right; white-space: nowrap; padding-right: 8px;
+}
+.cover .decoration {
+    margin: 36px auto 0; width: 48px; height: 1px; background: var(--gold);
+}
+
+/* ==== TOC ==== */
+.toc {
+    margin: 0 64px 48px; padding: 28px 36px;
+    background: var(--bg-warm);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 2px 2px 0;
+}
+.toc h2 {
+    font-size: 18px; color: var(--accent); margin-bottom: 14px;
+    font-weight: 600; letter-spacing: 2px;
+}
+.toc-list { list-style: none; }
+.toc-list ol { padding-left: 20px; }
+.toc-list li { margin: 6px 0; font-size: 14px; line-height: 1.5; }
+.toc-list li a { color: var(--ink-light); }
+.toc-list li a:hover { color: var(--accent); }
+.toc-num { color: var(--accent-soft); font-weight: 600; margin-right: 4px; }
+
+/* ==== Content ==== */
+.content { padding: 0 64px 56px; }
+
+.content h1 {
+    font-size: 24px; color: var(--accent); margin: 44px 0 14px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border-light);
+    font-weight: 700; letter-spacing: 2px; line-height: 1.3;
+}
+.content h2 {
+    font-size: 20px; color: var(--accent-soft); margin: 36px 0 12px;
+    font-weight: 600; letter-spacing: 1px;
+}
+.content h3 {
+    font-size: 17px; color: #4a3020; margin: 28px 0 10px;
+    font-weight: 600;
+}
+.content h4 {
+    font-size: 15px; color: #666; margin: 20px 0 8px;
+    font-weight: 600;
+}
+.content p {
+    margin: 12px 0; text-align: justify; text-indent: 2em;
+    line-height: 1.9;
+}
+.content p:first-of-type { text-indent: 0; }
+.content strong { color: var(--accent); font-weight: 700; }
+.content a { color: var(--accent); }
+
+/* ==== Tables ==== */
+.table-wrapper {
+    overflow-x: auto; margin: 18px 0;
+    border: 1px solid var(--border-soft); border-radius: 2px;
+}
+.content table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13.5px; margin: 0;
+}
+.content table thead th, .content table th {
+    background: linear-gradient(180deg, #f5e6d3 0%, #eedcc8 100%);
+    color: var(--ink-light); font-weight: 700;
+    padding: 10px 11px; border-bottom: 2px solid var(--accent-soft);
+    text-align: center; white-space: nowrap;
+    font-size: 13px; letter-spacing: 0.5px;
+}
+.content table td {
+    padding: 8px 11px; border-bottom: 1px solid var(--border-soft);
+    text-align: center; vertical-align: middle;
+}
+.content table tr:last-child td { border-bottom: none; }
+.content table tr:nth-child(even) td { background: var(--bg-warm); }
+.content table tr:nth-child(odd) td { background: var(--bg-card); }
+.content table td:first-child { text-align: left; font-weight: 500; }
+
+/* ==== Code & ASCII Art ==== */
+.content code {
+    background: #f5e6d3; padding: 2px 7px; border-radius: 2px;
+    font-family: "DejaVu Sans Mono", "Noto Sans Mono", "Courier New", monospace;
+    font-size: 13px; color: #8b4513; font-weight: 500;
+}
+.content pre {
+    background: #2d2416; color: #e8d5a0; padding: 18px 22px;
+    border-radius: 3px; overflow-x: auto;
+    font-family: "DejaVu Sans Mono", "Noto Sans Mono", "Courier New", monospace;
+    font-size: 12.5px; line-height: 1.55; margin: 18px 0;
+    border: 1px solid #3d3426;
+}
+.content pre.ascii-art {
+    background: #1a1a2e; color: #a0d468;
+    border: 1px solid #2a2a3e;
+}
+
+/* ==== Blockquote (classical citations) ==== */
+.content blockquote {
+    margin: 18px 0; padding: 14px 22px;
+    background: linear-gradient(90deg, var(--bg-cream) 0%, var(--bg-card) 100%);
+    border-left: 3px solid var(--gold);
+    color: #5a4a3a; font-style: italic; line-height: 1.8;
+    border-radius: 0 3px 3px 0;
+}
+.content blockquote p { text-indent: 0; }
+
+/* ==== HR (section divider) ==== */
+.content hr {
+    border: none; border-top: 1px solid var(--border-light);
+    margin: 36px 0; width: 40%; margin-left: auto; margin-right: auto;
+}
+
+/* ==== List styling ==== */
+.content ul, .content ol { margin: 12px 0; padding-left: 24px; }
+.content li { margin: 5px 0; line-height: 1.7; }
+
+/* ==== Disclaimer ==== */
+.disclaimer {
+    margin: 48px 64px 0; padding: 28px 0 48px;
+    border-top: 1px solid var(--border-light);
+    font-size: 11.5px; color: #aaa; line-height: 1.8;
+    text-align: justify;
+}
+.disclaimer strong { color: #888; }
+.disclaimer p { margin: 6px 0; text-indent: 0; }
+
+/* ==== Navbar ==== */
+.navbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 40px;
+    background: rgba(255,253,247,0.94); border-bottom: 1px solid var(--border-light);
+    padding: 0 24px; font-size: 13px; z-index: 100;
+    display: flex; align-items: center; gap: 20px;
+    backdrop-filter: blur(6px);
+}
+.navbar a { color: var(--accent-soft); cursor: pointer; font-weight: 500; }
+.navbar span { color: #999; flex: 1; }
+
+/* ==== Print ==== */
+@media print {
+    body { background: white; font-size: 11px; }
+    .page { max-width: none; box-shadow: none; margin: 0; border-radius: 0; }
+    .cover { padding: 20px 36px 16px; }
+    .cover::before { margin-bottom: 20px; }
+    .cover h1 { font-size: 24px; letter-spacing: 4px; }
+    .content { padding: 0 36px 24px; }
+    .content h1 { font-size: 18px; margin: 28px 0 10px; page-break-before: always; }
+    .content h1:first-of-type, .cover + * h1 { page-break-before: avoid; }
+    .content h2 { font-size: 16px; }
+    .content h3 { font-size: 14px; }
+    .content p { text-indent: 1.5em; font-size: 10.5px; }
+    .content table { font-size: 10px; }
+    .content table th, .content table td { padding: 5px 8px; }
+    .toc { margin: 0 36px 16px; page-break-after: always; padding: 16px 24px; }
+    .navbar { display: none; }
+    .disclaimer { margin: 30px 36px 0; padding: 16px 0; }
+    a { color: inherit; text-decoration: none; }
+    .content pre { background: #f8f8f8; color: #333; border: 1px solid #ddd; }
+    .content pre.ascii-art { background: #f8f8f8; color: #333; }
+    .content table th { background: #f0f0f0; }
+    .content table tr:nth-child(even) td { background: #fafafa; }
+    @page {
+        margin: 16mm 15mm;
+        @bottom-center { content: counter(page); font-size: 9px; color: #999; }
+    }
+}
+
+/* ==== Responsive ==== */
+@media (max-width: 640px) {
+    .page { margin: 0; }
+    .cover { padding: 40px 24px 28px; }
+    .cover h1 { font-size: 22px; letter-spacing: 3px; }
+    .content { padding: 0 24px 30px; }
+    .content p { text-indent: 1.5em; }
+    .toc { margin: 0 24px 20px; padding: 16px 20px; }
+    .disclaimer { margin: 32px 24px 0; }
+    .table-wrapper { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span>八字命理分析报告</span>
+  <a href="#toc-top">目录</a>
+  <a href="#" onclick="window.print(); return false;">打印 / 保存为PDF</a>
+</nav>
+
+<div class="page">
+
+<section class="cover">
+  <h1>八字命理分析报告</h1>
+  <p class="subtitle">专业命理解读报告</p>
+  <p class="date">2026年05月25日 05:09</p>
+  <table class="meta-table">
+    <tr><td class="meta-label">性别</td><td>男</td></tr>
+<tr><td class="meta-label">阳历</td><td>1991年4月16日 22:36</td></tr>
+<tr><td class="meta-label">八字</td><td>辛未 壬辰 丙辰 己亥</td></tr>
+<tr><td class="meta-label">日主</td><td>丙（阳火）</td></tr>
+<tr><td class="meta-label">生肖</td><td>羊</td></tr>
+<tr><td class="meta-label">纳音</td><td>路旁土 / 长流水 / 沙中土 / 平地木</td></tr>
+<tr><td class="meta-label">命宫</td><td>辛卯</td></tr>
+<tr><td class="meta-label">胎元</td><td>癸未</td></tr>
+  </table>
+  <div class="decoration"></div>
+</section>
+
+<div class="toc" id="toc-top">
+  <nav class="toc"><h2>目录</h2>
+<ol>
+<li><a href="#八字命理详细解读-1991年4月16日22-36-男命"><span class="toc-num">1</span> 八字命理详细解读 · 1991年4月16日22:36 · 男命</a>
+<ol>
+<li><a href="#第一步-基本信息"><span class="toc-num">1.1</span> 第一步：基本信息</a></li>
+<li><a href="#第二步-旺衰判断"><span class="toc-num">1.2</span> 第二步：旺衰判断</a></li>
+<li><a href="#第三步-格局判定"><span class="toc-num">1.3</span> 第三步：格局判定</a>
+<ol>
+<li><a href="#从格否决理由"><span class="toc-num">1.3.1</span> 从格否决理由</a></li>
+<li><a href="#格局之病"><span class="toc-num">1.3.2</span> 格局之病</a></li>
+</ol>
+</li>
+<li><a href="#第四步-喜用神"><span class="toc-num">1.4</span> 第四步：喜用神</a></li>
+<li><a href="#第五步-五行力量"><span class="toc-num">1.5</span> 第五步：五行力量</a></li>
+<li><a href="#第六步-大运分析"><span class="toc-num">1.6</span> 第六步：大运分析</a>
+<ol>
+<li><a href="#重点流年"><span class="toc-num">1.6.1</span> 重点流年</a></li>
+</ol>
+</li>
+<li><a href="#第七步-刑冲合害"><span class="toc-num">1.7</span> 第七步：刑冲合害</a></li>
+<li><a href="#第八步-分维度解读"><span class="toc-num">1.8</span> 第八步：分维度解读</a>
+<ol>
+<li><a href="#性格"><span class="toc-num">1.8.1</span> 性格</a></li>
+<li><a href="#事业"><span class="toc-num">1.8.2</span> 事业</a></li>
+<li><a href="#财运"><span class="toc-num">1.8.3</span> 财运</a></li>
+<li><a href="#感情"><span class="toc-num">1.8.4</span> 感情</a></li>
+<li><a href="#健康"><span class="toc-num">1.8.5</span> 健康</a></li>
+</ol>
+</li>
+<li><a href="#命盘独有标识"><span class="toc-num">1.9</span> 命盘独有标识</a></li>
+</ol>
+</li>
+</ol>
+</nav>
+</div>
+
+<div class="content">
+  <h1 id="八字命理详细解读-1991年4月16日22-36-男命">八字命理详细解读 · 1991年4月16日22:36 · 男命</h1>
+<h2 id="第一步-基本信息">第一步：基本信息</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>内容</th>
+</tr>
+<tr>
+<th>性别</th>
+<th>男</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>阳历</td>
+<td>1991年4月16日 22:36</td>
+</tr>
+<tr>
+<td>八字</td>
+<td>辛未 壬辰 丙辰 己亥</td>
+</tr>
+<tr>
+<td>日主</td>
+<td>丙（阳火）</td>
+</tr>
+<tr>
+<td>生肖</td>
+<td>羊</td>
+</tr>
+<tr>
+<td>纳音</td>
+<td>路旁土 / 长流水 / 沙中土 / 平地木</td>
+</tr>
+<tr>
+<td>胎元</td>
+<td>癸未</td>
+</tr>
+<tr>
+<td>命宫</td>
+<td>辛卯</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="第二步-旺衰判断">第二步：旺衰判断</h2>
+<ul>
+<li>得令：辰月冠带 +1</li>
+<li>得地：未中丁火微根 0.6</li>
+<li>得势：0</li>
+<li>结论：身弱（印比28.2%，克泄耗71.8%）</li>
+</ul>
+<h2 id="第三步-格局判定">第三步：格局判定</h2>
+<p>暗食神格（月支辰本气戊土食神不透干），格局评分47/100，中下等。身弱偏深，有假从倾向，但按正格论。</p>
+<h3 id="从格否决理由">从格否决理由</h3>
+<ol>
+<li>克泄耗71.8%未达75%硬阈值</li>
+<li>日主丙火在未中有丁火微根</li>
+<li>得令冠带有气</li>
+<li>丙辛合绊未化</li>
+</ol>
+<h3 id="格局之病">格局之病</h3>
+<ul>
+<li>枭神夺食：亥中甲木偏印克辰中戊土食神</li>
+<li>食伤混杂：食神+伤官同现</li>
+<li>财破印：辛金正财克乙木正印</li>
+</ul>
+<h2 id="第四步-喜用神">第四步：喜用神</h2>
+<ul>
+<li>用神：木（印星）</li>
+<li>喜神：火（比劫）</li>
+<li>忌神：水（官杀主忌）、金（财星偏忌力弱）</li>
+<li>半忌半闲：土（食伤泄身为忌但食神制杀为格局之功）</li>
+</ul>
+<p>用神双面性：正印乙木生身为吉，偏印甲木克食神为枭夺食之病。</p>
+<h2 id="第五步-五行力量">第五步：五行力量</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>五行</th>
+<th>力量</th>
+<th>状态</th>
+</tr>
+<tr>
+<th>木</th>
+<th>17.6%</th>
+<th>偏弱</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>火</td>
+<td>10.6%</td>
+<td>极弱</td>
+</tr>
+<tr>
+<td>土</td>
+<td>42.8%</td>
+<td>过旺</td>
+</tr>
+<tr>
+<td>金</td>
+<td>2.4%</td>
+<td>极弱</td>
+</tr>
+<tr>
+<td>水</td>
+<td>26.6%</td>
+<td>偏旺</td>
+</tr>
+</tbody>
+</table></div>
+<p>丙辛合绊修正后火金有效力量减半。</p>
+<h2 id="第六步-大运分析">第六步：大运分析</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>大运</th>
+<th>年龄段</th>
+<th>吉凶</th>
+</tr>
+<tr>
+<th>辛卯</th>
+<th>5-14</th>
+<th>偏吉</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>庚寅</td>
+<td>15-24</td>
+<td>偏吉</td>
+</tr>
+<tr>
+<td>己丑</td>
+<td>25-34</td>
+<td>凶</td>
+</tr>
+<tr>
+<td>戊子</td>
+<td>35-44</td>
+<td>凶(当前)</td>
+</tr>
+<tr>
+<td>丁亥</td>
+<td>45-54</td>
+<td>喜忌参半</td>
+</tr>
+<tr>
+<td>丙戌</td>
+<td>55-64</td>
+<td>偏吉</td>
+</tr>
+<tr>
+<td>乙酉</td>
+<td>65-74</td>
+<td>喜忌参半</td>
+</tr>
+<tr>
+<td>甲申</td>
+<td>75-84</td>
+<td>喜忌参半</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="重点流年">重点流年</h3>
+<ul>
+<li>2026丙午：喜神到位+子午冲变动</li>
+<li>2032壬子：忌神大忌年</li>
+<li>2034甲寅：用神大旺但枭夺食激活</li>
+</ul>
+<h2 id="第七步-刑冲合害">第七步：刑冲合害</h2>
+<ul>
+<li>丙辛合（日干-年干）：合绊，力量减半</li>
+<li>辰辰自刑（月日支）：内心纠结，食伤自刑</li>
+<li>子辰半合水（大运-原局）：官杀增强</li>
+<li>空亡在子丑：大运子落空亡减凶</li>
+</ul>
+<h2 id="第八步-分维度解读">第八步：分维度解读</h2>
+<h3 id="性格">性格</h3>
+<p>外表沉稳有锋芒（七杀+伤官），内心温润好思（食神+正印），极度需要独处空间（华盖3叠），决策时容易内耗（辰辰自刑），受家庭牵制（丙辛合）。</p>
+<h3 id="事业">事业</h3>
+<p>专业技术路线，食神制杀=以技术立身。25-44岁低谷期深耕技术，45岁起运势回升。</p>
+<h3 id="财运">财运</h3>
+<p>食伤生财链断裂（土旺金极弱），才华变现困难。忌神大运中不宜投资。</p>
+<h3 id="感情">感情</h3>
+<p>辛金正财虚透→配偶力量偏弱。丙辛合→有感情纽带但互相牵制。子为桃花→当前大运引动。</p>
+<h3 id="健康">健康</h3>
+<p>脾胃第一短板（土过旺+辰辰自刑），心血偏弱（火极弱），肾脏承压（土克水）。</p>
+<h2 id="命盘独有标识">命盘独有标识</h2>
+<p>辰辰自刑·华盖三叠·丙辛合绊·食神制杀逢枭</p>
+</div>
+
+<div class="disclaimer">
+  <p><strong>免责声明</strong></p>
+  <p>本报告基于 Bazi MCP 排盘数据和传统命理学理论（参酌《穷通宝鉴》《子平真诠》《三命通会》《滴天髓》《神峰通考》等经典），仅供传统文化学习与参考，不构成任何决策依据。命理学属于传统文化范畴，涉及健康和财务的判断请以专业诊断为准。人生在于自身的努力和选择，命理仅为认知自我的辅助工具。</p>
+  <br>
+  <p>报告生成时间：2026年05月25日 05:09 &nbsp;|&nbsp; bazi-pro v5.0 &nbsp;|&nbsp; 生成工具: scripts/generate_report.py</p>
+</div>
+
+</div>
+
+</body>
+</html>

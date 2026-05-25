@@ -1,0 +1,27 @@
+{
+  "id": "classical_jianlu_wucai",
+  "description": "古籍案例·建禄无可用—戊子 庚申 庚申 庚申（郭统制）",
+  "source": "ZPZ_00164",
+  "scenario": "庚金日主申月建禄，无财官透出",
+  "input": {
+    "day_master": "庚",
+    "bazi": "戊子 庚申 庚申 庚申",
+    "month_branch": "申",
+    "expected_pattern": "建禄格，无财官煞食透出",
+    "expected_wangshuai": "身旺",
+    "expected_yongshen_wx": "火"
+  },
+  "must_include": [
+    "建禄格",
+    "无财官煞食透出"
+  ],
+  "must_not_include": [
+    "从强",
+    "从革",
+    "暗比肩格"
+  ],
+  "classical_support": [
+    "ZPZ_00164"
+  ],
+  "notes": "《子平真诠》：庚生申月建禄，三庚申无财官"
+}

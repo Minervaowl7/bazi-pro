@@ -1,0 +1,26 @@
+{
+  "id": "classical_jianlu_zhengcai",
+  "description": "古籍案例·建禄透官印—庚戌 戊子 癸酉 癸亥（金丞相）",
+  "source": "ZPZ_00151",
+  "scenario": "癸水日主子月，建禄官印相随",
+  "input": {
+    "day_master": "癸",
+    "bazi": "庚戌 戊子 癸酉 癸亥",
+    "month_branch": "子",
+    "expected_pattern": "建禄格，透正官",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "土"
+  },
+  "must_include": [
+    "建禄格",
+    "正官"
+  ],
+  "must_not_include": [
+    "从格",
+    "羊刃格"
+  ],
+  "classical_support": [
+    "ZPZ_00151"
+  ],
+  "notes": "《子平真诠》：建禄用官而印护，金丞相命"
+}

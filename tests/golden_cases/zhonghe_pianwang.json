@@ -1,0 +1,25 @@
+{
+  "id": "zhonghe_pianwang",
+  "description": "中和偏旺 — 庚金日主，得令但不得地不得势",
+  "scenario": "庚金日主，申月临官，但地支无助",
+  "input": {
+    "day_master": "庚",
+    "bazi": "甲寅 庚申 庚午 丙寅",
+    "month_branch": "申",
+    "expected_pattern": "建禄格，透偏财",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "火",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "建禄格，透偏财"
+  ],
+  "must_not_include": [
+    "从格",
+    "暗比肩格",
+    "暗劫财格"
+  ],
+  "notes": "得令+不得地+不得势"
+}

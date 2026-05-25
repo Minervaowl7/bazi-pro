@@ -1,0 +1,29 @@
+{
+  "id": "canggan_quanzhong",
+  "description": "藏干权重影响 — 四柱地支皆丑，藏干权重对五行力量影响显著",
+  "scenario": "四柱地支皆丑，丑藏己(本气)癸(中气)辛(余气)，藏干权重对五行力量影响显著",
+  "input": {
+    "day_master": "乙",
+    "bazi": "己丑 丁丑 乙丑 己丑",
+    "month_branch": "丑",
+    "expected_pattern": "偏财格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "火",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "偏财格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "rationale": "四柱地支皆丑，丑藏己(本气)癸(中气)辛(余气)，藏干权重对五行力量影响显著",
+  "classical_support": "",
+  "expected_relations": [
+    {
+      "type": "无特殊关系"
+    }
+  ]
+}

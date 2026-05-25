@@ -1,0 +1,24 @@
+{
+  "id": "classical_shishen_zhengcai_ju",
+  "description": "古籍案例·食神生财巨富—辛丑 丁酉 丁巳 丁未",
+  "source": "YHZ_00065",
+  "scenario": "丁火日主酉月，巳酉丑金局财旺",
+  "input": {
+    "day_master": "丁",
+    "bazi": "辛丑 丁酉 丁巳 丁未",
+    "month_branch": "酉",
+    "expected_pattern": "偏财格",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "土"
+  },
+  "must_include": [
+    "偏财格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "classical_support": [
+    "YHZ_00065"
+  ],
+  "notes": "《渊海子平》：巳酉丑金局，身旺能任，巨富"
+}

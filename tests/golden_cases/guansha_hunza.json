@@ -1,0 +1,35 @@
+{
+  "id": "guansha_hunza",
+  "description": "官杀混杂 — 乙日主庚辛金官杀混杂透出",
+  "scenario": "乙日主，庚辛金官杀混杂透出",
+  "input": {
+    "day_master": "乙",
+    "bazi": "辛未 庚寅 乙卯 丙戌",
+    "month_branch": "寅",
+    "expected_pattern": "伤官格",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "伤官格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "rationale": "乙日主，庚辛金官杀混杂透出",
+  "classical_support": "",
+  "expected_relations": [
+    {
+      "type": "天干合"
+    },
+    {
+      "type": "天干合"
+    },
+    {
+      "type": "地支刑"
+    }
+  ]
+}

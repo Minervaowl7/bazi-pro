@@ -1,0 +1,37 @@
+{
+  "id": "case_01_standard_complete",
+  "description": "Standard complete analysis with all fields present, classical refs, dayun summary, and key features",
+  "input": {
+    "day_master": "丙火",
+    "gender": "女",
+    "bazi": "癸卯 壬戌 丙午 壬辰",
+    "deling_score": -2,
+    "dedi_score": 2.3,
+    "deshi_score": 2.9,
+    "wangshuai": "身弱",
+    "pattern_name": "暗食神格，官杀混杂",
+    "pattern_score": 65,
+    "pattern_tier": "中等",
+    "yongshen": "土",
+    "xishen": "木、火",
+    "jishen": "水",
+    "classical_refs": [
+      {"id": "SFTK_00068", "topic": "十神", "source": "神峰通考", "content": "杀星原有制神降，制旺身强贵必昌"},
+      {"id": "SFTK_00120", "topic": "十神", "source": "神峰通考", "content": "官杀混杂当寿夭，去官留杀仔细寻"},
+      {"id": "YHZ_00157", "topic": "十神", "source": "渊海子平", "content": "食神干旺，印绶天月二德，夫荣子贵"}
+    ],
+    "key_features": ["卯戌合火", "午戌半合火", "戌辰冲"],
+    "dayun_summary": [
+      {"ganzhi": "癸亥", "ji": "凶"},
+      {"ganzhi": "甲子", "ji": "平偏吉"},
+      {"ganzhi": "乙丑", "ji": "吉"},
+      {"ganzhi": "丙寅", "ji": "大吉"},
+      {"ganzhi": "丁卯", "ji": "大吉"}
+    ]
+  },
+  "expected": {
+    "min_chains": 5,
+    "completeness": "High",
+    "must_have_stages": ["E1", "E2", "E3", "E4", "E5"]
+  }
+}

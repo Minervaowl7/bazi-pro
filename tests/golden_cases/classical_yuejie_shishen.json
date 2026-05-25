@@ -1,0 +1,26 @@
+{
+  "id": "classical_yuejie_shishen",
+  "description": "古籍案例·月劫透食神—己未 己巳 丁未 辛丑",
+  "source": "YHZ_00057",
+  "scenario": "丁火日主巳月，巳丑合金局",
+  "input": {
+    "day_master": "丁",
+    "bazi": "己未 己巳 丁未 辛丑",
+    "month_branch": "巳",
+    "expected_pattern": "月劫格，透食神",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "水"
+  },
+  "must_include": [
+    "月劫格"
+  ],
+  "must_not_include": [
+    "从格",
+    "建禄",
+    "羊刃"
+  ],
+  "classical_support": [
+    "YHZ_00057"
+  ],
+  "notes": "《渊海子平》：巳丑合金为财，身旺喜财"
+}

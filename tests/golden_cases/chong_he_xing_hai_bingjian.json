@@ -1,0 +1,32 @@
+{
+  "id": "chong_he_xing_hai_bingjian",
+  "description": "冲合刑害并见 — 子午冲辰戌冲并见",
+  "scenario": "子午冲、辰戌冲并见，冲合刑害交织",
+  "input": {
+    "day_master": "丙",
+    "bazi": "甲子 庚午 丙辰 壬戌",
+    "month_branch": "午",
+    "expected_pattern": "羊刃格，透偏财",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "羊刃格"
+  ],
+  "must_not_include": [
+    "待定"
+  ],
+  "rationale": "子午冲、辰戌冲并见，冲合刑害交织",
+  "classical_support": "",
+  "expected_relations": [
+    {
+      "type": "地支冲"
+    },
+    {
+      "type": "地支冲"
+    }
+  ]
+}

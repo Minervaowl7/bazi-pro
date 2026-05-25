@@ -1,0 +1,25 @@
+{
+  "id": "classical_qisha_shenwang",
+  "description": "古籍案例·时上七杀有制—辛丑 乙未 乙卯 丙子",
+  "source": "YHZ_00091",
+  "scenario": "乙木日主未月，时上七杀丙合为制",
+  "input": {
+    "day_master": "乙",
+    "bazi": "辛丑 乙未 乙卯 丙子",
+    "month_branch": "未",
+    "expected_pattern": "暗偏财格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "火"
+  },
+  "must_include": [
+    "偏财"
+  ],
+  "must_not_include": [
+    "从格",
+    "建禄"
+  ],
+  "classical_support": [
+    "YHZ_00091"
+  ],
+  "notes": "《渊海子平》：身旺，丙合辛杀，贵而有权"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "qisha_an",
+  "description": "暗七杀格 — 月令七杀本气不透干",
+  "scenario": "甲木日主，申月庚金七杀不透干",
+  "input": {
+    "day_master": "甲",
+    "bazi": "壬辰 壬申 甲寅 丙寅",
+    "month_branch": "申",
+    "expected_pattern": "偏印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": -3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "偏印格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "月支申本气庚金七杀不透干"
+}

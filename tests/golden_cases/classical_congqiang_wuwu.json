@@ -1,0 +1,24 @@
+{
+  "id": "classical_congqiang_wuwu",
+  "description": "古籍案例·从强格—戊午 戊午 戊午 甲寅",
+  "source": "YHZ_00115",
+  "scenario": "戊土日主午月，三戊午一甲寅",
+  "input": {
+    "day_master": "戊",
+    "bazi": "戊午 戊午 戊午 甲寅",
+    "month_branch": "午",
+    "expected_pattern": "从强格",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "火"
+  },
+  "must_include": [
+    "从强格"
+  ],
+  "must_not_include": [
+    "羊刃格"
+  ],
+  "classical_support": [
+    "YHZ_00115"
+  ],
+  "notes": "《渊海子平》：戊日午月勿作刃看，岁时火多却为印绶"
+}

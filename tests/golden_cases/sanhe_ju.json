@@ -1,0 +1,23 @@
+{
+  "id": "sanhe_ju",
+  "description": "三合局 — 申子辰三合水局",
+  "scenario": "壬水日主，年支申月支子时支辰，三合水局",
+  "input": {
+    "day_master": "壬",
+    "bazi": "庚申 戊子 壬寅 甲辰",
+    "month_branch": "子",
+    "expected_pattern": "羊刃格，透七杀",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "羊刃格"
+  ],
+  "must_not_include": [
+    "待定"
+  ],
+  "notes": "申子辰三合水局"
+}

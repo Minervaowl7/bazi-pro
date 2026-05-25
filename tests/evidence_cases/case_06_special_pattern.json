@@ -1,0 +1,34 @@
+{
+  "id": "case_06_special_pattern",
+  "description": "Special pattern (从财格) case testing pattern-specific evidence chain",
+  "input": {
+    "day_master": "壬水",
+    "gender": "男",
+    "bazi": "甲午 丙寅 壬午 丙午",
+    "deling_score": -2,
+    "dedi_score": 1.0,
+    "deshi_score": 1.5,
+    "wangshuai": "极弱",
+    "pattern_name": "从财格",
+    "pattern_score": 80,
+    "pattern_tier": "上等",
+    "yongshen": "火",
+    "xishen": "土、木",
+    "jishen": "水",
+    "classical_refs": [
+      {"id": "YHZ_00201", "topic": "格局", "source": "渊海子平", "content": "从财者，日主无根，财旺成势，从之为美"},
+      {"id": "SFTK_00099", "topic": "格局", "source": "神峰通考", "content": "从格真者，富贵双全，不可逆其势"}
+    ],
+    "key_features": ["寅午半合火", "午午自刑"],
+    "dayun_summary": [
+      {"ganzhi": "丁卯", "ji": "大吉"},
+      {"ganzhi": "戊辰", "ji": "吉"},
+      {"ganzhi": "己巳", "ji": "大吉"}
+    ]
+  },
+  "expected": {
+    "min_chains": 5,
+    "completeness": "High",
+    "must_have_stages": ["E1", "E2", "E3", "E4", "E5"]
+  }
+}

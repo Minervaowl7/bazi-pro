@@ -1,0 +1,25 @@
+{
+  "id": "maoxu_he",
+  "description": "地支合 — 卯戌合化火",
+  "scenario": "乙木日主，月支卯时支戌，卯戌合化火",
+  "input": {
+    "day_master": "乙",
+    "bazi": "庚辰 己卯 乙卯 丙戌",
+    "month_branch": "卯",
+    "expected_pattern": "建禄格，透正官",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "建禄格，透正官"
+  ],
+  "must_not_include": [
+    "从格",
+    "暗比肩格",
+    "暗劫财格"
+  ],
+  "notes": "月支卯与时支戌合化火"
+}

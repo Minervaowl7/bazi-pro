@@ -1,0 +1,23 @@
+{
+  "id": "yangren_an",
+  "description": "羊刃格 — 丙火午月帝旺，劫财不透干",
+  "scenario": "丙火日主，午月羊刃，丁火劫财不透干",
+  "input": {
+    "day_master": "丙",
+    "bazi": "甲子 壬午 丙寅 庚寅",
+    "month_branch": "午",
+    "expected_pattern": "羊刃格，透七杀",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "羊刃格"
+  ],
+  "must_not_include": [
+    "待定"
+  ],
+  "notes": "月支午本气丁火劫财不透干，羊刃格框架"
+}

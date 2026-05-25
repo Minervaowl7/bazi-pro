@@ -1,0 +1,25 @@
+{
+  "id": "siyouchou_sanhe",
+  "description": "三合局 — 巳酉丑三合金局",
+  "scenario": "辛金日主，年支巳月支酉时支丑，三合金局",
+  "input": {
+    "day_master": "辛",
+    "bazi": "己巳 癸酉 辛卯 己丑",
+    "month_branch": "酉",
+    "expected_pattern": "建禄格，透食神",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "火",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "建禄格，透食神"
+  ],
+  "must_not_include": [
+    "从格",
+    "暗比肩格",
+    "暗劫财格"
+  ],
+  "notes": "巳酉丑三合金局"
+}

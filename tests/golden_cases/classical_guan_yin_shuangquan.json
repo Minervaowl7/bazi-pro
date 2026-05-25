@@ -1,0 +1,25 @@
+{
+  "id": "classical_guan_yin_shuangquan",
+  "description": "古籍案例·官印双全—戊戌 庚申 癸酉 庚申",
+  "source": "YHZ_00100",
+  "scenario": "癸水日主申月，庚申重重官印双全",
+  "input": {
+    "day_master": "癸",
+    "bazi": "戊戌 庚申 癸酉 庚申",
+    "month_branch": "申",
+    "expected_pattern": "正印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土"
+  },
+  "must_include": [
+    "正印格"
+  ],
+  "must_not_include": [
+    "从格",
+    "建禄"
+  ],
+  "classical_support": [
+    "YHZ_00100"
+  ],
+  "notes": "《渊海子平》：官印两全，极为贵命"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "classical_zhengyin_shenqiang",
+  "description": "古籍案例·正印身强透官—丙寅 戊戌 辛酉 戊子（张参政）",
+  "source": "ZPZ_00117",
+  "scenario": "辛金日主戌月，戊土正印双透",
+  "input": {
+    "day_master": "辛",
+    "bazi": "丙寅 戊戌 辛酉 戊子",
+    "month_branch": "戌",
+    "expected_pattern": "正印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "火"
+  },
+  "must_include": [
+    "正印格"
+  ],
+  "must_not_include": [
+    "从格",
+    "暗印格"
+  ],
+  "classical_support": [
+    "ZPZ_00117"
+  ],
+  "notes": "《子平真诠》：身旺印强，只要官星清纯"
+}

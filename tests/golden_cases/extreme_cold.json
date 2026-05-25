@@ -1,0 +1,23 @@
+{
+  "id": "extreme_cold",
+  "description": "极寒 — 壬水亥月，全局无火",
+  "scenario": "壬水日主，亥月，天干地支无火行",
+  "input": {
+    "day_master": "壬",
+    "bazi": "壬子 辛亥 壬子 癸亥",
+    "month_branch": "亥",
+    "expected_pattern": "润下格",
+    "expected_wangshuai": "极旺",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "润下格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "亥月水旺，全局无火"
+}

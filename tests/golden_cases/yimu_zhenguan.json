@@ -1,0 +1,23 @@
+{
+  "id": "yimu_zhenguan",
+  "description": "乙木日主正官格 — 庚金正官透干",
+  "scenario": "乙木日主，申月庚金正官透干",
+  "input": {
+    "day_master": "乙",
+    "bazi": "庚辰 甲申 乙卯 丙子",
+    "month_branch": "申",
+    "expected_pattern": "正官格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "正官格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "乙木日主申月庚金正官透干"
+}

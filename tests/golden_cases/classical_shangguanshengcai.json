@@ -1,0 +1,25 @@
+{
+  "id": "classical_shangguanshengcai",
+  "description": "古籍案例·伤官生财—丙申 己亥 辛未 己亥（郑丞相）",
+  "source": "ZPZ_00142",
+  "scenario": "辛金日主亥月，金水伤官化财",
+  "input": {
+    "day_master": "辛",
+    "bazi": "丙申 己亥 辛未 己亥",
+    "month_branch": "亥",
+    "expected_pattern": "暗伤官格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土"
+  },
+  "must_include": [
+    "伤官"
+  ],
+  "must_not_include": [
+    "从格",
+    "建禄"
+  ],
+  "classical_support": [
+    "ZPZ_00142"
+  ],
+  "notes": "《子平真诠》：冬金用官化伤为财，极秀极贵"
+}

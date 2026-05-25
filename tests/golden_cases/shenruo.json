@@ -1,0 +1,23 @@
+{
+  "id": "shenruo",
+  "description": "身弱 — 甲木日主，不得令不得地不得势",
+  "scenario": "甲木日主，酉月胎地，全无助力",
+  "input": {
+    "day_master": "甲",
+    "bazi": "庚午 乙酉 甲申 丙寅",
+    "month_branch": "酉",
+    "expected_pattern": "暗正官格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "偏得势"
+  },
+  "must_include": [
+    "暗正官格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "不得令+不得地+不得势"
+}

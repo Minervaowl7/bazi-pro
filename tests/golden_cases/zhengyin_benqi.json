@@ -1,0 +1,23 @@
+{
+  "id": "zhengyin_benqi",
+  "description": "正印格 — 月令正印本气透干",
+  "scenario": "甲木日主，子月癸水正印透干",
+  "input": {
+    "day_master": "甲",
+    "bazi": "癸酉 丙子 甲寅 壬申",
+    "month_branch": "子",
+    "expected_pattern": "正印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 1,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "正印格"
+  ],
+  "must_not_include": [
+    "从格"
+  ],
+  "notes": "月支子本气癸水正印透干"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "classical_caiwang_shenruo",
+  "description": "古籍案例·财旺身弱—庚申 乙酉 丙申 丙申",
+  "source": "YHZ_00066",
+  "scenario": "丙火日主酉月，三申一酉财旺身弱",
+  "input": {
+    "day_master": "丙",
+    "bazi": "庚申 乙酉 丙申 丙申",
+    "month_branch": "酉",
+    "expected_pattern": "暗正财格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "土"
+  },
+  "must_include": [
+    "财"
+  ],
+  "must_not_include": [
+    "从财格",
+    "身旺"
+  ],
+  "classical_support": [
+    "YHZ_00066"
+  ],
+  "notes": "《渊海子平》：日弱财旺，不能胜其财，所以贫也"
+}

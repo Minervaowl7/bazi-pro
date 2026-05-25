@@ -1,0 +1,27 @@
+{
+  "id": "jianlu_yuejie",
+  "description": "建禄格 — 月令比肩，另取财官为用",
+  "scenario": "甲木日主，寅月比肩当令，透庚金七杀取用",
+  "input": {
+    "day_master": "甲",
+    "bazi": "庚午 戊寅 甲子 丙寅",
+    "month_branch": "寅",
+    "expected_pattern": "建禄格，透七杀",
+    "expected_wangshuai": "中和偏旺",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "建禄格，透七杀"
+  ],
+  "must_not_include": [
+    "暗比肩格",
+    "暗劫财格"
+  ],
+  "classical_support": [
+    "ZPZQ_00060"
+  ],
+  "notes": "月令比肩透干，建禄格"
+}
