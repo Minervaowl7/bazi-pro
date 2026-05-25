@@ -13,12 +13,14 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
                 'trace': {'method': 'none', 'reason': '日主五行缺失'}}
 
     pattern_name = pattern_result.get('pattern', '')
+    pattern_type = pattern_result.get('type', '')
     is_weak = wangshuai.get('is_weak', False)
     is_strong = wangshuai.get('is_strong', False)
     trace = {'pattern_basis': pattern_name, 'wangshuai_basis': wangshuai.get('verdict', ''),
              'method': '', 'reason': '', 'candidates_considered': []}
 
-    yongshen_wx = _pattern_yongshen_wx(pattern_name, dm_wx, is_weak, is_strong)
+    yongshen_wx = _pattern_yongshen_wx(pattern_name, dm_wx, is_weak, is_strong,
+                                        pattern_type=pattern_type)
     if yongshen_wx:
         trace['method'] = 'pattern_based'
         trace['reason'] = f'格局"{pattern_name}"推导用神为{yongshen_wx}'
@@ -42,13 +44,8 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
     elif yongshen_wx == dm_wx:
         xishen_wx.append(SHENG_MAP.get(dm_wx, ''))
 
-    jishen_wx = []
-    ke_wo = KE_MAP.get(dm_wx, '')
-    wo_ke = WO_KE_MAP.get(dm_wx, '')
-    if is_weak:
-        jishen_wx = [w for w in [ke_wo, wo_ke] if w and w != yongshen_wx]
-    elif is_strong:
-        jishen_wx = [dm_wx, SHENG_MAP.get(dm_wx, '')] if yongshen_wx != dm_wx else []
+    jishen_wx = _derive_jishen(pattern_name, dm_wx, yongshen_wx, is_weak, is_strong,
+                               pattern_type=pattern_type)
 
     return {
         'yongshen': yongshen_wx,
@@ -64,9 +61,93 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
     }
 
 
+def _derive_jishen(pattern_name: str, dm_wx: str, yongshen_wx: str,
+                   is_weak: bool, is_strong: bool, pattern_type: str = '') -> list[str]:
+    """
+    推导忌神五行。
+
+    规则：
+    1. 从格（从强/专旺/从财/从官杀/从儿）：忌神=逆势五行
+    2. 扶抑格身弱：忌神=克我+我克（排除用神）
+    3. 扶抑格身强：忌神=同我+生我（排除用神）
+    4. 中和：从格局忌神表推导（PATTERN_YONGSHEN[格局]['忌神']）
+    """
+    ke_wo = KE_MAP.get(dm_wx, '')
+    wo_ke = WO_KE_MAP.get(dm_wx, '')
+    sheng_wo = SHENG_MAP.get(dm_wx, '')
+    wo_sheng = WO_SHENG_MAP.get(dm_wx, '')
+
+    # ── 从格：忌神=逆势五行 ──
+    is_cong_qiang = ('从强' in pattern_name or '假从强' in pattern_name
+                     or '专旺' in pattern_name or pattern_type == '专旺格'
+                     or '从强' in pattern_type or '假从强' in pattern_type)
+    if is_cong_qiang:
+        # 从强顺印比之势，忌官杀+财星+食伤
+        return [w for w in [ke_wo, wo_ke, wo_sheng] if w and w != yongshen_wx]
+    if '从财' in pattern_name:
+        # 从财顺财势，忌比劫+印星
+        return [w for w in [dm_wx, sheng_wo] if w and w != yongshen_wx]
+    if '从官杀' in pattern_name:
+        # 从官杀顺杀势，忌比劫+印星
+        return [w for w in [dm_wx, sheng_wo] if w and w != yongshen_wx]
+    if '从儿' in pattern_name:
+        # 从儿顺食伤势，忌印星+官杀
+        return [w for w in [sheng_wo, ke_wo] if w and w != yongshen_wx]
+
+    # ── 扶抑格 ──
+    if is_weak:
+        return [w for w in [ke_wo, wo_ke] if w and w != yongshen_wx]
+    if is_strong:
+        return [w for w in [dm_wx, sheng_wo] if w and w != yongshen_wx]
+
+    # ── 中和：从格局忌神表推导 ──
+    jishen = _jishen_from_pattern_table(pattern_name, dm_wx, yongshen_wx)
+    if jishen:
+        return jishen
+
+    # 兜底：用神的对立面
+    if yongshen_wx == sheng_wo:
+        return [w for w in [ke_wo, wo_ke] if w]
+    elif yongshen_wx == ke_wo:
+        return [w for w in [dm_wx, sheng_wo] if w]
+    return []
+
+
+def _jishen_from_pattern_table(pattern_name: str, dm_wx: str, yongshen_wx: str) -> list[str]:
+    """从 PATTERN_YONGSHEN 忌神表推导忌神五行。"""
+    _REL_TO_WX = {
+        '同我': dm_wx,
+        '生我': SHENG_MAP.get(dm_wx, ''),
+        '我生': WO_SHENG_MAP.get(dm_wx, ''),
+        '我克': WO_KE_MAP.get(dm_wx, ''),
+        '克我': KE_MAP.get(dm_wx, ''),
+    }
+
+    for ss_name, info in PATTERN_YONGSHEN.items():
+        if ss_name in pattern_name:
+            ji_list = info.get('忌神', [])
+            result = []
+            for candidate in ji_list:
+                rel = SHISHEN_WUXING_REL.get(candidate, '')
+                if not rel:
+                    # 带括号注释的忌神如 '财星(无制时)' → 提取前缀
+                    base = candidate.split('(')[0].strip()
+                    rel = SHISHEN_WUXING_REL.get(base, '')
+                wx = _REL_TO_WX.get(rel, '')
+                if wx and wx != yongshen_wx and wx not in result:
+                    result.append(wx)
+            return result
+    return []
+
+
 def _pattern_yongshen_wx(pattern_name: str, dm_wx: str,
-                         is_weak: bool = False, is_strong: bool = False) -> str:
-    if '从强' in pattern_name or '假从强' in pattern_name or '专旺' in pattern_name:
+                         is_weak: bool = False, is_strong: bool = False,
+                         pattern_type: str = '') -> str:
+    # 从格/专旺格：检查 pattern_name 和 pattern_type 两个维度
+    is_cong_qiang = ('从强' in pattern_name or '假从强' in pattern_name
+                     or '专旺' in pattern_name or pattern_type == '专旺格'
+                     or '从强' in pattern_type or '假从强' in pattern_type)
+    if is_cong_qiang:
         return SHENG_MAP.get(dm_wx, '')
     if '从财' in pattern_name:
         return WO_KE_MAP.get(dm_wx, '')
