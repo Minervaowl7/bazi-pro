@@ -6,7 +6,7 @@
     "day_master": "丙",
     "bazi": "甲午 丁卯 丙寅 甲午",
     "month_branch": "卯",
-    "expected_pattern": "暗正印格",
+    "expected_pattern": "正印格",
     "expected_wangshuai": "中和",
     "expected_yongshen_wx": "水",
     "expected_deling_score": 1,

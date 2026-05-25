@@ -120,10 +120,11 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
     is_jianlu_yangren_month = month_zhi in (jianlu_zhi, yangren_zhi)
     if element_forces is not None and not is_jianlu_yangren_month:
         hehua = element_forces.get('hehua', {})
+        pct_adj = element_forces.get('percent_adjusted', pct)
         for item in hehua.get('gan_he', []):
             if day_master in item['gans']:
                 hua_wx = item['hua_wx']
-                hua_pct = pct.get(hua_wx, 0)
+                hua_pct = pct_adj.get(hua_wx, 0)
                 if hua_pct >= 60:
                     hua_names = {'土': '化土格', '金': '化金格', '水': '化水格',
                                  '木': '化木格', '火': '化火格'}
@@ -131,7 +132,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                         'layer': 0, 'type': '化气格',
                         'pattern': hua_names.get(hua_wx, f'化{hua_wx}格'),
                         'confidence': 0.80,
-                        'reason': f'日主{day_master}参与合化，化神{hua_wx}占比{hua_pct}%≥60%',
+                        'reason': f'日主{day_master}参与合化，化神{hua_wx}(修正后)占比{hua_pct}%≥60%',
                         'yongshen_direction': f'化神{hua_wx}',
                     }
 
@@ -348,9 +349,9 @@ def _screen_layer3(day_master, dm_wx, month_zhi, gans):
 
     if benqi_ss and benqi_gan not in gans:
         return {
-            'layer': 3, 'type': '暗格', 'pattern': f'暗{benqi_ss}格',
+            'layer': 3, 'type': '暗格', 'pattern': f'{benqi_ss}格',
             'confidence': 0.65,
-            'reason': f'月支{month_zhi}本气{benqi_gan}({benqi_ss})不透干，以暗{benqi_ss}格论',
+            'reason': f'月支{month_zhi}本气{benqi_gan}({benqi_ss})不透干，取为暗格',
             'yongshen_direction': _get_yongshen_direction(benqi_ss),
         }
 

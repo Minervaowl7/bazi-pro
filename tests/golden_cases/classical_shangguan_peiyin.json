@@ -7,7 +7,7 @@
     "day_master": "庚",
     "bazi": "己未 丙子 庚子 丙子",
     "month_branch": "子",
-    "expected_pattern": "暗伤官格",
+    "expected_pattern": "伤官格",
     "expected_wangshuai": "中和",
     "expected_yongshen_wx": "土"
   },

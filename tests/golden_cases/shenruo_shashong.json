@@ -6,7 +6,7 @@
     "day_master": "壬",
     "bazi": "辛巳 乙未 壬子 甲辰",
     "month_branch": "未",
-    "expected_pattern": "暗正官格",
+    "expected_pattern": "正官格",
     "expected_wangshuai": "中和",
     "expected_yongshen_wx": "火",
     "expected_deling_score": 0,

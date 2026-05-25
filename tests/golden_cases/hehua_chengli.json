@@ -6,7 +6,7 @@
     "day_master": "己",
     "bazi": "甲子 丙子 己丑 甲戌",
     "month_branch": "子",
-    "expected_pattern": "暗偏财格",
+    "expected_pattern": "偏财格",
     "expected_wangshuai": "中和",
     "expected_yongshen_wx": "金",
     "expected_deling_score": -3,
@@ -14,7 +14,7 @@
     "expected_deshi_level": "偏得势"
   },
   "must_include": [
-    "暗偏财格"
+    "偏财格"
   ],
   "must_not_include": [
     "化土格"
