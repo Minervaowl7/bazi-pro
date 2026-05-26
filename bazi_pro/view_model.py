@@ -405,15 +405,18 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
         '正印格', '偏印格', '建禄格', '月劫格', '羊刃格',
     ]
     vm.verdict.pattern = ''
-    # Strategy 1: tree format "层3 暗食神格（..." — scan layer lines for known patterns
-    for m in re.finditer(r'[├─│]\s*层[2-5]\s+(.+)', text):
-        candidate = _strip_md(m.group(1))
+    # Strategy 1: tree format — collect all layer matches, prefer deepest layer
+    _layer_hits: list[tuple[int, str]] = []
+    for m in re.finditer(r'[├─│]\s*层(\d)\s+(.+)', text):
+        layer_num = int(m.group(1))
+        candidate = _strip_md(m.group(2))
         for p in _known_patterns:
             if p in candidate:
-                vm.verdict.pattern = p
+                _layer_hits.append((layer_num, p))
                 break
-        if vm.verdict.pattern:
-            break
+    if _layer_hits:
+        _layer_hits.sort(key=lambda x: x[0], reverse=True)
+        vm.verdict.pattern = _layer_hits[0][1]
     # Strategy 2: "实质是 **XXX格**" definitive statement
     if not vm.verdict.pattern:
         m = re.search(r'实质是\s*\*{0,2}(.+?)\*{0,2}(?:$|\n|。)', text)
@@ -498,7 +501,9 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
             raw_jishen=raw_jishen,
             raw_decision=vm.verdict.decision,
         )
-        vm.verdict.pattern = cv.pattern_short or vm.verdict.pattern
+        # Only apply text_cleaner's pattern if ours isn't already a known clean name
+        if cv.pattern_short and vm.verdict.pattern not in _known_patterns:
+            vm.verdict.pattern = cv.pattern_short
         vm.verdict.yongshen = [cv.yongshen_label] if cv.yongshen_label else vm.verdict.yongshen
         vm.verdict.xishen = cv.xishen_labels if cv.xishen_labels else vm.verdict.xishen
         vm.verdict.jishen = cv.jishen_labels if cv.jishen_labels else vm.verdict.jishen

@@ -870,10 +870,7 @@ def main():
     args = parser.parse_args()
 
     # --mode 优先于 --theme，两者都未指定时默认 report
-    if args.mode:
-        args.theme = args.mode
-    elif not args.theme:
-        args.theme = 'report'
+    mode = args.mode or args.theme or 'report'
 
     # --- Read input ---
     if args.input:
@@ -926,12 +923,12 @@ def main():
         output_base = os.path.join(os.getcwd(), f'bazi_report_{ts}{ext}')
 
     # --- Generate ---
-    if args.format in ('html', 'both') or args.theme in ('dashboard', 'consumer'):
-        if args.theme == 'consumer':
+    if args.format in ('html', 'both') or mode in ('dashboard', 'consumer'):
+        if mode == 'consumer':
             from bazi_pro.ui.consumer_report import render_consumer_report
             vm = build_vm_from_analysis_text(analysis_text)
             html_content = render_consumer_report(vm, raw_markdown=analysis_text)
-        elif args.theme == 'dashboard':
+        elif mode == 'dashboard':
             # v5.0: 新版仪表盘 — 动态 SVG 命盘 + 命运河流时间轴 + 推理图谱
             try:
                 vm = build_vm_from_analysis_text(analysis_text)
@@ -950,7 +947,7 @@ def main():
         # v5.0: no auto-rename — user's explicit --output is respected
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        label = '仪表盘' if args.theme == 'dashboard' else 'HTML 报告'
+        label = '仪表盘' if mode == 'dashboard' else 'HTML 报告'
         print(f'{label}已保存至: {html_path}')
 
         if args.pdf:

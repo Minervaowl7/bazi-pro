@@ -81,6 +81,27 @@ class TestPatternExtraction:
         vm = build_vm_from_analysis_text(text)
         assert vm.verdict.pattern == '暗食神格'
 
+    def test_pattern_deepest_layer_wins(self):
+        """层3 格局应优先于层2 格局"""
+        from bazi_pro.view_model import build_vm_from_analysis_text
+        text = """
+├─ 层2 月令中气：辛金正财格（正财透出）
+├─ 层3 暗七杀格（戌中辛金七杀，暗格成立）
+├─ 层5 成败：成格
+"""
+        vm = build_vm_from_analysis_text(text)
+        assert vm.verdict.pattern == '暗七杀格'
+
+    def test_pattern_layer_5_over_layer_3(self):
+        """更深层级始终优先"""
+        from bazi_pro.view_model import build_vm_from_analysis_text
+        text = """
+├─ 层3 食神格（月令本气透出）
+├─ 层5 从儿格（食伤极旺，日主无根）
+"""
+        vm = build_vm_from_analysis_text(text)
+        assert vm.verdict.pattern == '从儿格'
+
 
 class TestDecisionExtraction:
 
