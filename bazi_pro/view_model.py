@@ -137,6 +137,17 @@ class DashboardVM:
 
 
 # ═══════════════════════════════════════════════════════════════════
+# Shared constants
+# ═══════════════════════════════════════════════════════════════════
+
+KNOWN_PATTERNS = (
+    '暗食神格', '暗正官格', '暗七杀格', '暗正财格', '暗偏财格',
+    '从官杀格', '从强格', '从财格', '从儿格', '专旺格', '化气格',
+    '正官格', '七杀格', '食神格', '伤官格', '正财格', '偏财格',
+    '正印格', '偏印格', '建禄格', '月劫格', '羊刃格',
+)
+
+# ═══════════════════════════════════════════════════════════════════
 # Builders: 从 trace.json 或分析文本构建 ViewModel
 # ═══════════════════════════════════════════════════════════════════
 
@@ -374,8 +385,8 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
             else:
                 setattr(vm, target, val)
 
-    # Qiyun age
-    m = re.search(r'(?:起运(?:年龄)?|起运)[：:]\s*\*{0,2}(\d+)\*{0,2}', text)
+    # Qiyun age — handle **起运**：9岁 or 起运：9岁
+    m = re.search(r'\*{0,2}起运(?:年龄)?\*{0,2}[：:]\s*\*{0,2}(\d+)', text)
     if m:
         vm.qiyun_age = m.group(1)
 
@@ -397,38 +408,77 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
             pct = float(m.group(2))
             setattr(vm.wuxing, wx_key, pct)
 
-    # Verdict
-    m = re.search(r'格局(?:命名|判定)?[：:]\s*[\*_]*(.+?)[\*_]*(?:$|\n)', text)
-    if m:
-        vm.verdict.pattern = _strip_md(m.group(1))
-    else:
-        # 尝试从"格局："行提取
-        m = re.search(r'(?:最终|综合)?格局[：:]\s*(.+?)(?:$|\n)', text)
+    # Verdict — pattern extraction (multi-strategy)
+    vm.verdict.pattern = ''
+    # Strategy 1: tree format — collect all layer matches, prefer deepest layer
+    _layer_hits: list[tuple[int, str]] = []
+    for m in re.finditer(r'[├─│]\s*层(\d)\s+(.+)', text):
+        layer_num = int(m.group(1))
+        candidate = _strip_md(m.group(2))
+        for p in KNOWN_PATTERNS:
+            if p in candidate:
+                _layer_hits.append((layer_num, p))
+                break
+    if _layer_hits:
+        _layer_hits.sort(key=lambda x: x[0], reverse=True)
+        vm.verdict.pattern = _layer_hits[0][1]
+    # Strategy 2: "实质是 **XXX格**" definitive statement
+    if not vm.verdict.pattern:
+        m = re.search(r'实质是\s*\*{0,2}(.+?)\*{0,2}(?:$|\n|。)', text)
         if m:
+            candidate = _strip_md(m.group(1))
+            for p in KNOWN_PATTERNS:
+                if p in candidate:
+                    vm.verdict.pattern = p
+                    break
+    # Strategy 3: fallback — "格局：" line (skip section headers)
+    if not vm.verdict.pattern:
+        m = re.search(r'(?:最终|综合)?格局[：:]\s*\*{0,2}(.+?)\*{0,2}(?:$|\n)', text)
+        if m and '筛查' not in m.group(1) and '├' not in m.group(1):
             vm.verdict.pattern = _strip_md(m.group(1))
 
-    m = re.search(r'(\d+)\s*/\s*100.*?(中[下上]等|上等|下等)', text)
+    # Pattern score
+    m = re.search(r'(\d+)\s*/\s*100\s*[,，]?\s*(中等|中上等|中下等|上等|下等)', text)
     if m:
         vm.pattern_score = int(m.group(1))
         vm.pattern_score_label = m.group(2)
 
+    # Decision/strength — from comprehensive judgment table
     vm.verdict.day_master = vm.verdict.day_master or vm.day_master
-    vm.verdict.decision = _strip_md(vm.verdict.decision or '')
+    m = re.search(r'\|\s*\*{0,2}综合\*{0,2}\s*\|.+?\|\s*\*{0,2}(身[旺弱]|极[旺弱])\*{0,2}\s*\|', text)
+    if m:
+        vm.verdict.decision = m.group(1)
+    else:
+        vm.verdict.decision = _strip_md(vm.verdict.decision or '')
 
-    # Dayun extraction
-    for m in re.finditer(
-        r'\|\s*(?:第[一二三四五六七八九十\d]+步|起运前)\s*\|\s*(\d+[-~]\d+岁|\d+[-~]\d+)\s*\|\s*([甲乙丙丁戊己庚辛壬癸]{1,2}[子丑寅卯辰巳午未申酉戌亥])\s*\|\s*(.+?)\s*\|\s*(.{1,4})\s*\|',
-        text
-    ):
-        age_range = m.group(1).strip()
-        gan_zhi = _strip_md(m.group(2))
-        assessment = _strip_md(m.group(4))
-        vm.dayun.append(DayunVM(
-            gan_zhi=gan_zhi,
-            age_range=age_range,
-            shishen=_strip_md(m.group(3)),
-            assessment=assessment if assessment in ('大吉', '吉', '平', '凶', '大凶') else '平',
-        ))
+    # Dayun extraction - cell-based parsing for varied table formats
+    # Handles 5-column and 6-column tables, markdown bold, emoji markers
+    dayun_header = re.search(r'大运(?:总览|逐运|排列)', text)
+    if dayun_header:
+        for line in text[dayun_header.start():].split('\n'):
+            if not line.strip().startswith('|'):
+                continue
+            cells = [c.strip() for c in line.split('|')]
+            cells = [c for c in cells if c]
+            if len(cells) < 4:
+                continue
+            if not re.match(r'第[一二三四五六七八九十\d]+步|起运前', _strip_md(cells[0])):
+                continue
+            age_m = re.search(r'(\d+[-~]\d+)', cells[1])
+            if not age_m:
+                continue
+            gz_m = re.search(r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])', cells[2])
+            if not gz_m:
+                continue
+            raw_assess = re.sub(r'[\s⚠️✅⭐🔥\U0001f300-\U0001f9ff☀-➿]', '', _strip_md(cells[-1]))
+            shishen = _strip_md(cells[3]) if len(cells) >= 5 else ''
+            valid = ('大吉', '吉', '平', '凶', '大凶', '平偏吉', '平偏凶')
+            vm.dayun.append(DayunVM(
+                gan_zhi=gz_m.group(1),
+                age_range=age_m.group(1),
+                shishen=shishen,
+                assessment=raw_assess if raw_assess in valid else '平',
+            ))
 
     raw_yongshen = ''
     raw_xishen = ''
@@ -456,7 +506,9 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
             raw_jishen=raw_jishen,
             raw_decision=vm.verdict.decision,
         )
-        vm.verdict.pattern = cv.pattern_short or vm.verdict.pattern
+        # Only apply text_cleaner's pattern if ours isn't already a known clean name
+        if cv.pattern_short and vm.verdict.pattern not in KNOWN_PATTERNS:
+            vm.verdict.pattern = cv.pattern_short
         vm.verdict.yongshen = [cv.yongshen_label] if cv.yongshen_label else vm.verdict.yongshen
         vm.verdict.xishen = cv.xishen_labels if cv.xishen_labels else vm.verdict.xishen
         vm.verdict.jishen = cv.jishen_labels if cv.jishen_labels else vm.verdict.jishen

@@ -6,6 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `bazi-pro` v5.0 — deterministic Chinese Bazi (八字) computation engine + LLM interpretation framework. The core principle is **算析分离**: `bazi_pro/core/` does all deterministic 命理 calculations (十神, 藏干, 五行力量, 旺衰, 格局, 喜用神, 刑冲合害); the LLM only interprets results, never computes them.
 
+### Recent changes
+
+- **Consumer report mode** (`--mode consumer`): 面向普通用户的消费级报告，结论先行、术语解释、六维叙事扩展
+- **Glossary system** (`bazi_pro/ui/glossary.py`): 70 个命理术语的 tooltip 标注 + 分类词典渲染
+- **CLI `--mode` parameter**: 新增语义更清晰的 `--mode` 参数（`--theme` 保留向后兼容）
+- **Technical appendix collapse**: 技术分析步骤折叠到 `<details>` 中，不丢失信息
+- **Test coverage**: 24 项 consumer report 专项测试 + 17 项 dayun 提取测试 + 19 项 VM 提取质量测试
+- **VM extraction fixes**: 修复 Markdown→ViewModel 的关键字段提取（pattern/decision/score/dayun/qiyun_age），consumer 报告个性化程度大幅提升
+- **Core logic fixes** (prior commits): 地支三刑、天干争合检测、从儿格条件修正、忌神推导修正、关系去重
+
 ## Build and test commands
 
 ```bash
@@ -116,6 +126,45 @@ Plugins in `plugins/{name}/` with `plugin.json` + `main.py` implementing `BaziPl
 ## Corpus format
 
 `[ID] @topic @source ## content` — one entry per line, 2964 total across 6 classical texts.
+
+## Report modes
+
+Three report rendering modes, all consuming the same `DashboardVM` data:
+
+| Mode | CLI | Audience | Description |
+|------|-----|----------|-------------|
+| `report` (default) | `--mode report` | 开发者/命理师 | 传统技术报告，按分析步骤排列，含完整表格和评分 |
+| `dashboard` | `--mode dashboard` | 开发者/命理师 | 交互式仪表盘，SVG 图表 + 证据链 + 推理图谱 |
+| `consumer` | `--mode consumer` | 普通用户 | 消费级报告，结论先行 + 术语解释 + 六维叙事 + 技术附录折叠 |
+
+```bash
+# 生成消费级报告（面向普通用户）
+python bazi_pro/generate_report.py --input analysis.md --mode consumer --format html -o report.html
+
+# 生成传统技术报告（默认行为不变）
+python bazi_pro/generate_report.py --input analysis.md --format html -o report.html
+
+# --theme 是 --mode 的旧别名，向后兼容；--mode 优先级更高
+python bazi_pro/generate_report.py --input analysis.md --theme consumer --format html -o report.html
+```
+
+Consumer 模式特性：术语 tooltip（hover 显示通俗解释）、70 词术语小词典、六维度叙事扩展（性格/事业/财运/感情/健康/近运各 300+ 字）、技术附录折叠、移动端适配、暗色模式、阅读进度条。
+
+VM 提取能力（`build_vm_from_analysis_text()`）：
+- **格局 pattern**：三策略级联提取（树形层级行 → 定性语句 → 格局行 fallback），支持 21 种已知格局名
+- **旺衰 decision**：从综合判定表格提取（身旺/身弱/极旺/极弱）
+- **格局评分 pattern_score**：支持 中等/中上等/中下等/上等/下等 全部标签
+- **大运 dayun**：按行分割单元格解析，兼容 5/6 列表格、Markdown 粗体、emoji 标记
+- **起运年龄 qiyun_age**：兼容 `**起运**：9岁` 格式
+
+重新生成示例：`python bazi_pro/generate_report.py --input examples/sample_analysis.md --mode consumer --format html -o examples/sample_consumer_report.html`
+
+### 已知未做事项（下一轮）
+
+- Relations 提取（刑冲合害表格解析）→ 为感情/健康章节提供个性化素材
+- 十神组合特征判断（官杀混杂、食伤生财等）→ 增强叙事条件分支
+- Pattern score 展示 → 在核心发现卡中显示格局评分
+- 感情/财运叙事增强 → 利用 relations + 十神组合数据
 
 ## Editing SKILL.md
 
