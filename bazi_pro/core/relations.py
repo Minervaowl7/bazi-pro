@@ -120,6 +120,7 @@ def detect_relations(bazi_parts: list[str]) -> list[dict]:
                 })
 
     zhi_set = set(zhis)
+    sanhe_groups = []
     for group, he_wx in ZHI_SANHE:
         if group.issubset(zhi_set):
             relations.append({
@@ -127,16 +128,25 @@ def detect_relations(bazi_parts: list[str]) -> list[dict]:
                 'result': f'{" ".join(sorted(group))} 三合成{he_wx}局',
                 'hua_wuxing': he_wx,
             })
+            sanhe_groups.append(set(group))
 
     # 半合局：两字即可成半合，气势弱于三合局
     # 《三命通会》："若三字缺一则化不成局"——半合为待局，大运流年补全可成
+    # 当三合局成立时，排除其子集的半合局
     for group, he_wx in ZHI_BANHE:
         if group.issubset(zhi_set):
-            relations.append({
-                'type': '半合局', 'elements': sorted(group),
-                'result': f'{" ".join(sorted(group))} 半合{he_wx}局',
-                'hua_wuxing': he_wx,
-            })
+            # 检查此半合是否是任一三合局的子集
+            is_subset_of_sanhe = False
+            for sg in sanhe_groups:
+                if group.issubset(sg):
+                    is_subset_of_sanhe = True
+                    break
+            if not is_subset_of_sanhe:
+                relations.append({
+                    'type': '半合局', 'elements': sorted(group),
+                    'result': f'{" ".join(sorted(group))} 半合{he_wx}局',
+                    'hua_wuxing': he_wx,
+                })
 
     for group, hui_wx in ZHI_HUIFANG:
         if group.issubset(zhi_set):

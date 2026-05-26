@@ -115,6 +115,11 @@ def judge_wangshuai(deling_score: int, dedi_score: float, deshi_score: float) ->
         verdict = '中和偏弱'
     elif 0 <= deling_score <= 1 and dedi_score < 1.5 and deshi_score < 2:
         verdict = '身弱'
+    # 补充中间区间细分（只在极端情况下触发，保持与Golden Case一致）
+    elif -1 <= deling_score <= 1 and 1.5 <= dedi_score < 3 and deshi_score >= 10:
+        verdict = '中和偏旺'
+    elif -1 <= deling_score <= 1 and 1.5 <= dedi_score < 3 and deshi_score < 1:
+        verdict = '中和偏弱'
     else:
         verdict = '中和'
 

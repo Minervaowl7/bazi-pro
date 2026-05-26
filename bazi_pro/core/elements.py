@@ -36,10 +36,11 @@ def _gan_he_hua_wuxing(gan1: str, gan2: str, month_zhi: str,
 
 def _detect_hehua(bazi_parts: list[str], month_zhi: str) -> dict:
     """
-    检测命局中的合化情况。
+    检测命盘中的合化情况。
     返回:
         { 'gan_he': [{'gans': [a,b], 'hua_wx': '土', 'type': '天干合化'}, ...],
           'zhi_sanhe': [{'zhis': [...], 'hua_wx': '水'}, ...],
+          'zhi_banhe': [{'zhis': [...], 'hua_wx': '水'}, ...],
           'zhi_huifang': [{'zhis': [...], 'hui_wx': '木'}, ...] }
     """
     result = {'gan_he': [], 'zhi_sanhe': [], 'zhi_banhe': [], 'zhi_huifang': []}
@@ -59,6 +60,7 @@ def _detect_hehua(bazi_parts: list[str], month_zhi: str) -> dict:
 
     # 地支三合局
     zhi_set = set(zhis)
+    sanhe_groups = []
     for group, he_wx in ZHI_SANHE:
         if group.issubset(zhi_set):
             result['zhi_sanhe'].append({
@@ -66,15 +68,24 @@ def _detect_hehua(bazi_parts: list[str], month_zhi: str) -> dict:
                 'hua_wx': he_wx,
                 'type': '三合局',
             })
+            sanhe_groups.append(set(group))
 
     # 半合局（两字即可成局，气势弱于三合）
+    # 当三合局成立时，排除其子集的半合局
     for group, he_wx in ZHI_BANHE:
         if group.issubset(zhi_set):
-            result['zhi_banhe'].append({
-                'zhis': sorted(group),
-                'hua_wx': he_wx,
-                'type': '半合局',
-            })
+            # 检查此半合是否是任一三合局的子集
+            is_subset_of_sanhe = False
+            for sg in sanhe_groups:
+                if group.issubset(sg):
+                    is_subset_of_sanhe = True
+                    break
+            if not is_subset_of_sanhe:
+                result['zhi_banhe'].append({
+                    'zhis': sorted(group),
+                    'hua_wx': he_wx,
+                    'type': '半合局',
+                })
 
     # 会方
     for group, hui_wx in ZHI_HUIFANG:

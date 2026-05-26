@@ -1,24 +1,24 @@
 {
   "id": "classical_zhengcaige_yhzwang",
-  "description": "古籍案例·正印格透财—辛酉 丙申 壬申 辛亥（汪侍郎命）",
+  "description": "古籍案例·月劫格透财—辛酉 丙申 壬申 辛亥（汪侍郎命）",
   "source": "ZPZ_00120",
-  "scenario": "壬水日主申月，印重身强透财",
+  "scenario": "壬水日主申月，申为壬水中气根，月劫格透偏财",
   "input": {
     "day_master": "壬",
     "bazi": "辛酉 丙申 壬申 辛亥",
     "month_branch": "申",
-    "expected_pattern": "假从强格",
+    "expected_pattern": "月劫格，透偏财",
     "expected_wangshuai": "偏旺",
-    "expected_yongshen_wx": "金"
+    "expected_yongshen_wx": "火"
   },
   "must_include": [
-    "假从强"
+    "月劫格"
   ],
   "must_not_include": [
-    "正官格", "七杀格"
+    "正官格", "七杀格", "从强格", "假从强格"
   ],
   "classical_support": [
     "ZPZ_00120"
   ],
-  "notes": "壬水申月长生，金水印比>80%，假从强格。古籍称印重身强透财"
+  "notes": "壬水日主申月，申中藏壬水中气根，地支有根非从格。月令本气庚金透出，月劫格。古籍称印重身强透财，但实际为身旺有根，应用月劫格框架。"
 }

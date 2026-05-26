@@ -35,6 +35,18 @@ def validate_gender(gender: str) -> tuple[bool, str]:
     return True, ''
 
 
+def validate_day_master_consistency(bazi: str, day_master: str) -> tuple[bool, str]:
+    try:
+        bazi_parts = bazi.split()
+        if len(bazi_parts) >= 3 and len(bazi_parts[2]) >= 1:
+            day_stem = bazi_parts[2][0]
+            if day_stem != day_master:
+                return False, f'日主与日柱天干不一致！八字日柱天干为"{day_stem}"，但输入日主为"{day_master}"'
+        return True, ''
+    except Exception:
+        return True, ''
+
+
 def validate_bazi_input(data: dict, require_gender: bool = True) -> dict:
     errors = []
 
@@ -57,6 +69,11 @@ def validate_bazi_input(data: dict, require_gender: bool = True) -> dict:
         valid, msg = validate_day_master(day_master)
         if not valid:
             errors.append(msg)
+        # 检查日主与八字日柱天干一致性
+        if bazi and valid:
+            consistent, consistency_msg = validate_day_master_consistency(bazi, day_master)
+            if not consistent:
+                errors.append(consistency_msg)
 
     gender = data.get('性别')
     if gender is None:
