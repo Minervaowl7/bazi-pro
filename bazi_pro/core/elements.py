@@ -47,16 +47,30 @@ def _detect_hehua(bazi_parts: list[str], month_zhi: str) -> dict:
     gans = [p[0] for p in bazi_parts if len(p) >= 1]
     zhis = [p[1] for p in bazi_parts if len(p) >= 2]
 
-    # 天干合化
+    # 天干合化（含位置紧贴检查和争合检测）
+    # 位置相邻：年-月、月-日、日-时为紧贴，其余为遥合
     for i in range(len(gans)):
         for j in range(i + 1, len(gans)):
             hua_wx = _gan_he_hua_wuxing(gans[i], gans[j], month_zhi, bazi_parts)
             if hua_wx:
+                adjacent = (j - i == 1)
                 result['gan_he'].append({
                     'gans': [gans[i], gans[j]],
                     'hua_wx': hua_wx,
                     'type': '天干合化',
+                    'adjacent': adjacent,
+                    'positions': [i, j],
                 })
+
+    # 争合检测：一天干同时与两个以上天干有合化可能（此合化被削弱或无效）
+    gan_he_count = {}
+    for item in result['gan_he']:
+        for g in item['gans']:
+            gan_he_count[g] = gan_he_count.get(g, 0) + 1
+    for item in result['gan_he']:
+        contested = any(gan_he_count.get(g, 0) > 1 for g in item['gans'])
+        if contested:
+            item['contested'] = True
 
     # 地支三合局
     zhi_set = set(zhis)

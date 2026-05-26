@@ -1,4 +1,4 @@
-from bazi_pro.core.branches import ZHI_BANHE, ZHI_CHONG, ZHI_HAI, ZHI_HE, ZHI_HUIFANG, ZHI_SANHE, ZHI_XING
+from bazi_pro.core.branches import ZHI_BANHE, ZHI_CHONG, ZHI_HAI, ZHI_HE, ZHI_HUIFANG, ZHI_SANHE, ZHI_SANXING, ZHI_XING
 from bazi_pro.core.disease import _find_shishen_instances, _severity
 from bazi_pro.core.stems import GAN_HE
 
@@ -154,6 +154,14 @@ def detect_relations(bazi_parts: list[str]) -> list[dict]:
                 'type': '会方', 'elements': sorted(group),
                 'result': f'{" ".join(sorted(group))} 三会{hui_wx}方',
                 'hua_wuxing': hui_wx,
+            })
+
+    # 地支三刑（三支齐备）
+    for group, name in ZHI_SANXING:
+        if group.issubset(zhi_set):
+            relations.append({
+                'type': '三刑', 'elements': sorted(group),
+                'result': f'{" ".join(sorted(group))} {name}',
             })
 
     return relations
