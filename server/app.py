@@ -11,16 +11,27 @@ import os
 import time
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 
-from fastapi import Depends, FastAPI, Security, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, Request, Security, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import APIKeyHeader
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.analysis import run_analysis
+from server.auth.jwt_handler import verify_token
+from server.auth.routes import router as auth_router
+from server.billing.quota import check_quota, deduct_quota
+from server.billing.routes import router as billing_router
 from server.cache import get_cache
+from server.database import backend as db_backend
+from server.database import close_db, get_db, get_user_analyses, init_db, is_degraded, persist_analysis
+from server.models import User
 from server.ratelimiter import MemoryRateLimiter, RateLimiter, RedisRateLimiter, create_rate_limiter
 from server.schemas import BaziAnalysisRequest
 from server.taskstore import MemoryTaskStore, RedisTaskStore, create_task_store
@@ -77,7 +88,7 @@ app.add_middleware(
     allow_origins=_cors_origins,
     allow_credentials=_cors_credentials,
     allow_methods=["POST", "GET"],
-    allow_headers=["Content-Type", "X-API-Key"],
+    allow_headers=["Content-Type", "X-API-Key", "Authorization"],
 )
 
 if not _cors_origins:
@@ -125,21 +136,48 @@ _API_KEY = os.environ.get('BAZI_API_KEY', '')
 _api_key_scheme = APIKeyHeader(name='X-API-Key', auto_error=False)
 
 
-class _APIKeyError(Exception):
+class _AuthError(Exception):
     pass
 
 
-@app.exception_handler(_APIKeyError)
-async def _api_key_error_handler(request, exc):
-    return error_response(401, "UNAUTHORIZED", "API key 无效或缺失")
+@app.exception_handler(_AuthError)
+async def _auth_error_handler(request, exc):
+    return error_response(401, "UNAUTHORIZED", "认证信息无效或缺失")
 
 
-async def _verify_api_key(api_key: str = Security(_api_key_scheme)):
+async def _verify_auth(request: Request, api_key: str = Security(_api_key_scheme)):
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[len("Bearer "):]
+        payload = verify_token(token)
+        if payload:
+            return payload
+    if api_key and _API_KEY and hmac.compare_digest(api_key, _API_KEY):
+        return None
     if not _API_KEY:
-        return True
-    if api_key and hmac.compare_digest(api_key, _API_KEY):
-        return True
-    raise _APIKeyError()
+        return None
+    raise _AuthError()
+
+
+async def get_current_user(request: Request, db: Optional[AsyncSession] = Depends(get_db)):
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise _AuthError()
+    token = auth_header[len("Bearer "):]
+    payload = verify_token(token)
+    if payload is None:
+        raise _AuthError()
+    user_id = payload.get("sub")
+    if not user_id:
+        raise _AuthError()
+    if db is None:
+        raise _AuthError()
+    stmt = select(User).where(User.id == user_id, User.is_active.is_(True))
+    result = await db.execute(stmt)
+    user = result.scalars().first()
+    if not user:
+        raise _AuthError()
+    return user
 
 
 class _RequestSizeLimitMiddleware:
@@ -281,6 +319,24 @@ def _ratelimiter_backend_name(limiter) -> str:
     return type(limiter).__name__
 
 
+app.include_router(auth_router)
+app.include_router(billing_router)
+
+
+@app.on_event("startup")
+async def _on_startup():
+    await init_db()
+    if is_degraded():
+        logger.warning("Database: running in degraded mode — %s", db_backend())
+    else:
+        logger.info("Database: %s backend active", db_backend())
+
+
+@app.on_event("shutdown")
+async def _on_shutdown():
+    await close_db()
+
+
 @app.get("/api/health")
 async def api_health():
     """健康检查：返回版本、后端状态、降级信息"""
@@ -290,12 +346,15 @@ async def api_health():
         "cache_backend": cache.backend,
         "task_store_backend": _backend_name(_task_store),
         "rate_limiter_backend": _ratelimiter_backend_name(_rate_limiter),
+        "database_backend": db_backend(),
     }
     degraded_reasons = []
     if isinstance(_task_store, RedisTaskStore) and _task_store.is_degraded:
         degraded_reasons.append("task_store: redis degraded, using memory fallback")
     if isinstance(_rate_limiter, RedisRateLimiter) and _rate_limiter.is_degraded:
         degraded_reasons.append("rate_limiter: redis degraded, using memory fallback")
+    if is_degraded():
+        degraded_reasons.append("database: postgresql unavailable, using memory mode")
     if degraded_reasons:
         health["degraded"] = degraded_reasons
     return JSONResponse(health)
@@ -449,7 +508,12 @@ async function pollStatus(runId) {
 
 
 @app.post("/api/analyze")
-async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_key)):
+async def api_analyze(
+    payload: BaziAnalysisRequest,
+    request: Request,
+    _auth=Depends(_verify_auth),
+    db: Optional[AsyncSession] = Depends(get_db),
+):
     """接收 MCP JSON，启动后台分析
 
     请求体示例:
@@ -466,6 +530,16 @@ async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_ke
     if _task_store.count_active() >= _MAX_CONCURRENT_TASKS:
         return error_response(503, "SERVER_BUSY", "服务繁忙，请稍后重试")
 
+    auth_header = request.headers.get("Authorization", "")
+    is_jwt = auth_header.startswith("Bearer ")
+
+    if is_jwt and _auth is not None:
+        user_id = _auth.get("sub") if isinstance(_auth, dict) else None
+        if user_id:
+            quota = await check_quota(user_id, db)
+            if not quota.allowed:
+                return error_response(402, "QUOTA_EXCEEDED", f"配额不足，当前计划: {quota.plan}，剩余次数: {quota.remaining}")
+
     run_id = uuid.uuid4().hex
     payload_dict = payload.model_dump()
     detail_level = payload_dict.pop('detail_level', 'standard')
@@ -476,7 +550,11 @@ async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_ke
         '_created_ts': time.time(),
     })
 
-    asyncio.create_task(_background_analyze(run_id, payload_dict, detail_level))
+    user_id_for_quota = None
+    if is_jwt and _auth is not None and isinstance(_auth, dict):
+        user_id_for_quota = _auth.get("sub")
+
+    asyncio.create_task(_background_analyze(run_id, payload_dict, detail_level, user_id_for_quota, db))
 
     return JSONResponse({
         'run_id': run_id,
@@ -486,7 +564,7 @@ async def api_analyze(payload: BaziAnalysisRequest, _auth=Depends(_verify_api_ke
 
 
 @app.get("/api/status/{run_id}")
-async def api_status(run_id: str, _auth=Depends(_verify_api_key)):
+async def api_status(run_id: str, _auth=Depends(_verify_auth)):
     """查询分析进度"""
     task = _task_store.get(run_id)
     if not task:
@@ -496,7 +574,7 @@ async def api_status(run_id: str, _auth=Depends(_verify_api_key)):
 
 
 @app.get("/api/result/{run_id}")
-async def api_result(run_id: str, _auth=Depends(_verify_api_key)):
+async def api_result(run_id: str, _auth=Depends(_verify_auth)):
     """获取分析结果"""
     task = _task_store.get(run_id)
     if not task:
@@ -521,6 +599,14 @@ async def api_result(run_id: str, _auth=Depends(_verify_api_key)):
     })
 
 
+@app.get("/api/history")
+async def api_history(current_user: User = Depends(get_current_user), limit: int = 50, offset: int = 0):
+    user_id = str(current_user.id)
+
+    records = await get_user_analyses(user_id, limit=limit, offset=offset)
+    return JSONResponse({"history": records, "source": db_backend(), "total": len(records)})
+
+
 @app.websocket("/ws/{run_id}")
 async def ws_connect(ws: WebSocket, run_id: str):
     if _API_KEY:
@@ -542,7 +628,7 @@ async def ws_connect(ws: WebSocket, run_id: str):
         manager.disconnect(run_id, ws)
 
 
-async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
+async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str, user_id: Optional[str] = None, db: Optional[AsyncSession] = None):
     """后台执行分析"""
     _task_store.update(run_id, {'status': 'running'})
     try:
@@ -550,11 +636,38 @@ async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
         _task_store.update(run_id, {'status': result.get('status', 'completed')})
         cache = get_cache()
         cache.set(f'result:{run_id}', result, ttl=_TASK_TTL_SECONDS)
+
+        if user_id and db is not None:
+            await deduct_quota(user_id, db)
+
+        await persist_analysis(
+            run_id=run_id,
+            user_id=user_id or os.environ.get("BAZI_DEFAULT_USER_ID") or None,
+            bazi=mcp_json.get('八字', ''),
+            day_master=mcp_json.get('日主', ''),
+            gender=mcp_json.get('性别', ''),
+            solar_date=mcp_json.get('阳历', ''),
+            detail_level=detail_level,
+            status=result.get('status', 'completed'),
+            result=result,
+        )
     except Exception as e:
         _task_store.update(run_id, {'status': 'failed'})
         debug = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
         _task_store.update(run_id, {'error': str(e) if debug else "Internal server error"})
         logger.error("Analysis failed for run_id=%s: %s", run_id, e)
+
+        await persist_analysis(
+            run_id=run_id,
+            user_id=user_id or os.environ.get("BAZI_DEFAULT_USER_ID") or None,
+            bazi=mcp_json.get('八字', ''),
+            day_master=mcp_json.get('日主', ''),
+            gender=mcp_json.get('性别', ''),
+            solar_date=mcp_json.get('阳历', ''),
+            detail_level=detail_level,
+            status='failed',
+            result=None,
+        )
 
 
 def main():
@@ -565,6 +678,12 @@ def main():
     workers = _get_int_env("BAZI_WORKERS", 1)
     if os.environ.get("DEBUG", "").lower() in ("1", "true", "yes"):
         logger.warning("⚠️  DEBUG mode is enabled — do not use in production!")
+
+    _static_dir = os.path.join(os.path.dirname(__file__), 'static')
+    if os.path.isdir(_static_dir) and os.path.exists(os.path.join(_static_dir, 'index.html')):
+        app.mount("/", StaticFiles(directory=_static_dir, html=True), name="static")
+        logger.info("Serving frontend static files from %s", _static_dir)
+
     uvicorn.run(app, host=host, port=port, log_level=log_level, workers=workers)
 
 

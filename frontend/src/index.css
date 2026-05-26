@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #1a1a2e;
+  --color-ink-light: #22223a;
+  --color-ink-lighter: #2a2a4a;
+  --color-vermilion: #c41e3a;
+  --color-vermilion-dark: #a01830;
+  --color-vermilion-light: #e8354f;
+  --color-gold: #d4a574;
+  --color-gold-dark: #b8895a;
+  --color-gold-light: #e8c49a;
+  --color-rice: #f5f0e8;
+  --color-rice-dark: #e8e0d0;
+  --color-ink-text: #e0dcc8;
+  --color-ink-muted: #8888a0;
+  --color-ink-border: #3a3a5a;
+  --font-display: "Noto Serif SC", "Source Han Serif SC", "STSong", serif;
+  --font-body: "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+:root {
+  --color-ink: #1a1a2e;
+  --color-ink-light: #22223a;
+  --color-ink-lighter: #2a2a4a;
+  --color-vermilion: #c41e3a;
+  --color-vermilion-dark: #a01830;
+  --color-vermilion-light: #e8354f;
+  --color-gold: #d4a574;
+  --color-gold-dark: #b8895a;
+  --color-gold-light: #e8c49a;
+  --color-rice: #f5f0e8;
+  --color-rice-dark: #e8e0d0;
+  --color-ink-text: #e0dcc8;
+  --color-ink-muted: #8888a0;
+  --color-ink-border: #3a3a5a;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-ink);
+  color: var(--color-ink-text);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-ink-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-muted);
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
