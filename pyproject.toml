@@ -31,7 +31,7 @@ dependencies = [
 hybrid = ["sentence-transformers>=2.2", "faiss-cpu>=1.7", "numpy>=1.24"]
 report = ["markdown>=3.5"]
 pdf = ["weasyprint>=60"]
-server = ["fastapi>=0.110", "uvicorn[standard]>=0.20", "redis>=4.5", "websockets>=11.0", "jinja2>=3.1", "pydantic>=2,<3"]
+server = ["fastapi>=0.110", "uvicorn[standard]>=0.20", "redis>=4.5", "websockets>=11.0", "jinja2>=3.1", "pydantic>=2,<3", "aiosqlite>=0.19"]
 tui = ["rich>=13.0"]
 all = ["bazi-pro[hybrid,report,pdf,server,tui]"]
 

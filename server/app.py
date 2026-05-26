@@ -6,21 +6,35 @@ API 路由：分析、状态查询、结果获取、仪表盘
 
 import asyncio
 import hmac
+import json
 import logging
 import os
 import time
 import uuid
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from typing import Optional
 
-from fastapi import Depends, FastAPI, Security, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, Query, Security, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.security import APIKeyHeader
+from pydantic import BaseModel, Field
 
 from server.analysis import run_analysis
 from server.cache import get_cache
+from server.db import (
+    close_db,
+    generate_analysis_id,
+    get_analysis,
+    get_db,
+    insert_analysis,
+    list_analyses,
+    update_analysis_result,
+    update_analysis_status,
+)
 from server.ratelimiter import MemoryRateLimiter, RateLimiter, RedisRateLimiter, create_rate_limiter
 from server.schemas import BaziAnalysisRequest
 from server.taskstore import MemoryTaskStore, RedisTaskStore, create_task_store
@@ -52,16 +66,25 @@ def error_response(status_code: int, code: str, message: str) -> JSONResponse:
 
 _enable_docs = os.environ.get('BAZI_ENABLE_DOCS', '').lower() in ('1', 'true', 'yes')
 
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    await get_db()
+    yield
+    await close_db()
+
+
 app = FastAPI(
     title="bazi-pro API",
     description="专业八字命理解读引擎 Web 服务\n\n⚠️ 免责声明：本服务仅供传统文化学习与参考，分析结果不构成任何决策依据。命理解释包含规则推导、古籍检索和 LLM 辅助解释，请勿将模型输出视为确定性事实。",
     version="5.0.0",
+    lifespan=_lifespan,
     docs_url="/docs" if _enable_docs else None,
     redoc_url="/redoc" if _enable_docs else None,
     openapi_url="/openapi.json" if _enable_docs else None,
 )
 
-_cors_origins_str = os.environ.get('BAZI_CORS_ORIGINS', '')
+_cors_origins_str = os.environ.get('BAZI_CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
 if not _cors_origins_str:
     _cors_origins = []
     _cors_credentials = False
@@ -557,10 +580,188 @@ async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
         logger.error("Analysis failed for run_id=%s: %s", run_id, e)
 
 
+# ─── P0 Frontend API Routes ─────────────────────────────────────────────────
+
+_sse_subscribers: dict[str, list[asyncio.Queue]] = {}
+_sse_buffers: dict[str, list[str]] = {}
+_v2_active_ids: set[str] = set()
+
+
+_original_ws_send_progress = manager.send_progress
+
+
+async def _ws_send_with_sse(run_id, step, status, summary='', data=None):
+    await _original_ws_send_progress(run_id, step, status, summary, data)
+    if run_id in _v2_active_ids:
+        await _sse_broadcast(run_id, "progress", {
+            "step": step, "name": summary, "status": status, "message": summary,
+        })
+
+
+manager.send_progress = _ws_send_with_sse
+
+
+class BirthAnalyzeRequest(BaseModel):
+    性别: str = Field(..., description="性别: 男/女")
+    八字: str = Field(..., description="四柱八字，空格分隔")
+    日主: str = Field(..., description="日主天干")
+    阳历: Optional[str] = Field(default="", description="阳历日期时间")
+    农历: Optional[str] = Field(default="", description="农历日期")
+    生肖: Optional[str] = Field(default="", description="生肖")
+    大运: Optional[list] = Field(default=None, description="大运列表")
+    detail_level: str = Field(default="standard")
+    longitude: Optional[float] = Field(default=None, description="出生地经度")
+    latitude: Optional[float] = Field(default=None, description="出生地纬度")
+
+
+@app.post("/api/v2/analyze")
+async def api_v2_analyze(payload: BirthAnalyzeRequest):
+    """P0 前端分析入口 — 存储到 SQLite + SSE 流式"""
+    analysis_id = generate_analysis_id()
+    payload_dict = payload.model_dump(exclude_none=True)
+    detail_level = payload_dict.pop("detail_level", "standard")
+    payload_dict.pop("longitude", None)
+    payload_dict.pop("latitude", None)
+
+    await insert_analysis(analysis_id, payload_dict, detail_level)
+
+    _sse_subscribers[analysis_id] = []
+    _sse_buffers[analysis_id] = []
+
+    asyncio.create_task(_background_analyze_v2(analysis_id, payload_dict, detail_level))
+
+    return JSONResponse(
+        status_code=202,
+        content={
+            "analysis_id": analysis_id,
+            "status": "processing",
+            "stream_url": f"/api/v2/analysis/{analysis_id}/stream",
+        },
+    )
+
+
+async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level: str):
+    """P0 后台分析 — 发送 SSE 事件 + 存储结果"""
+    _v2_active_ids.add(analysis_id)
+    try:
+        await _sse_broadcast(analysis_id, "progress", {
+            "step": "0", "name": "启动分析", "status": "running", "message": "正在初始化..."
+        })
+
+        result = await run_analysis(mcp_json, analysis_id, detail_level)
+
+        await update_analysis_result(analysis_id, result)
+        await _sse_broadcast(analysis_id, "done", {"analysis_id": analysis_id})
+
+    except Exception as e:
+        logger.error("V2 analysis failed for %s: %s", analysis_id, e)
+        await update_analysis_status(analysis_id, "failed", str(e))
+        await _sse_broadcast(analysis_id, "error", {"message": str(e)})
+    finally:
+        _v2_active_ids.discard(analysis_id)
+        await asyncio.sleep(2)
+        _sse_subscribers.pop(analysis_id, None)
+        _sse_buffers.pop(analysis_id, None)
+
+
+async def _sse_broadcast(analysis_id: str, event: str, data: dict):
+    """向所有订阅该 analysis_id 的 SSE 客户端广播事件，同时缓存"""
+    msg = f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+    buf = _sse_buffers.get(analysis_id)
+    if buf is not None:
+        buf.append(msg)
+    queues = _sse_subscribers.get(analysis_id, [])
+    for q in queues:
+        await q.put(msg)
+
+
+@app.get("/api/v2/analysis/{analysis_id}/stream")
+async def api_v2_stream(analysis_id: str):
+    """SSE 流式端点 — 实时推送分析进度（含缓冲回放）"""
+    queue: asyncio.Queue = asyncio.Queue()
+
+    buffered = _sse_buffers.get(analysis_id, [])
+    for msg in buffered:
+        await queue.put(msg)
+
+    if analysis_id not in _sse_subscribers:
+        _sse_subscribers[analysis_id] = []
+    _sse_subscribers[analysis_id].append(queue)
+
+    already_done = any('"done"' in m or '"error"' in m for m in buffered)
+
+    async def event_generator():
+        try:
+            while True:
+                try:
+                    msg = await asyncio.wait_for(queue.get(), timeout=30.0)
+                    yield msg
+                    if '"done"' in msg or '"error"' in msg:
+                        break
+                except asyncio.TimeoutError:
+                    if already_done:
+                        break
+                    yield ": keepalive\n\n"
+        finally:
+            subs = _sse_subscribers.get(analysis_id, [])
+            if queue in subs:
+                subs.remove(queue)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.get("/api/v2/analysis/{analysis_id}")
+async def api_v2_get_analysis(analysis_id: str):
+    """获取分析完整结果"""
+    record = await get_analysis(analysis_id)
+    if not record:
+        return error_response(404, "NOT_FOUND", "分析记录不存在")
+
+    result = record.get("full_result")
+    if not result:
+        return JSONResponse({
+            "analysis_id": analysis_id,
+            "status": record["status"],
+            "message": "分析尚未完成" if record["status"] == "processing" else "无结果数据",
+        })
+
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    return JSONResponse({
+        "analysis_id": analysis_id,
+        "status": record["status"],
+        "created_at": record.get("created_at"),
+        "completed_at": record.get("completed_at"),
+        "day_master": record.get("day_master", ""),
+        "pattern": record.get("pattern", ""),
+        "yongshen": record.get("yongshen", ""),
+        "result": result,
+    })
+
+
+@app.get("/api/v2/history")
+async def api_v2_history(page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1, le=100)):
+    """历史分析记录列表"""
+    data = await list_analyses(page=page, page_size=page_size)
+    return JSONResponse(data)
+
+
 def main():
     import uvicorn
     host = os.environ.get("BAZI_HOST", "0.0.0.0")
-    port = _get_int_env("BAZI_PORT", 8800)
+    port = _get_int_env("BAZI_PORT", 8710)
     log_level = os.environ.get("BAZI_LOG_LEVEL", "info")
     workers = _get_int_env("BAZI_WORKERS", 1)
     if os.environ.get("DEBUG", "").lower() in ("1", "true", "yes"):
