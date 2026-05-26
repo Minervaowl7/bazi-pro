@@ -1,4 +1,8 @@
 
+import importlib.util
+
+import pytest
+
 from bazi_pro.core import full_analysis
 from bazi_pro.validation import (
     TIANGAN,
@@ -171,6 +175,10 @@ class TestAPISDKConsistency:
         result = full_analysis({})
         assert result['status'] == 'invalid_input'
 
+    @pytest.mark.skipif(
+        importlib.util.find_spec("fastapi") is None,
+        reason="fastapi not installed",
+    )
     def test_api_and_sdk_same_invalid_input(self):
         from server.analysis import _validate_input
         invalid = {'八字': 'bad', '日主': 'X', '性别': 'unknown'}

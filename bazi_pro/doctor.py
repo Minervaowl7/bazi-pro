@@ -104,7 +104,7 @@ def check_pyproject_packages():
     pyproject_path = os.path.join(project_root, "pyproject.toml")
     if not os.path.exists(pyproject_path):
         return "WARN", "pyproject.toml not found (wheel install — skip)"
-    with open(pyproject_path) as f:
+    with open(pyproject_path, encoding="utf-8") as f:
         content = f.read()
     if "[tool.setuptools.packages.find]" in content:
         return "PASS", "auto-discovery configured"

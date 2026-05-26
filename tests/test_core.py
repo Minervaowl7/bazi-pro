@@ -188,6 +188,7 @@ class TestArchiveStore:
             records = store.list_analyses(limit=5)
             assert len(records) >= 1
             assert records[0]['bazi'] == '壬午 乙巳 丁亥 癸卯'
+            store.close()
 
     def test_get_analysis(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -196,6 +197,7 @@ class TestArchiveStore:
             rid = store.save_analysis(bazi='甲子 乙丑 丙寅 丁卯')
             record = store.get_analysis(rid)
             assert record['bazi'] == '甲子 乙丑 丙寅 丁卯'
+            store.close()
 
     def test_total_count(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -204,6 +206,7 @@ class TestArchiveStore:
             assert store.total_count == 0
             store.save_analysis(bazi='test')
             assert store.total_count == 1
+            store.close()
 
 
 class TestCalibrationTracker:

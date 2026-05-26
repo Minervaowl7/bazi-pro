@@ -1,10 +1,13 @@
 """Trace format smoke tests for v5.0"""
 
 import json
+import os
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+PYTHON = sys.executable
 
 
 def test_demo_trace():
@@ -59,13 +62,14 @@ def test_evidence_trace_out():
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
         tmp = f.name
     try:
+        env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
         r = subprocess.run(
-            ["python3", "-m", "bazi_pro.evidence", "--trace-out", tmp],
-            capture_output=True, text=True, timeout=10,
-            cwd=str(REPO)
+            [PYTHON, "-m", "bazi_pro.evidence", "--trace-out", tmp],
+            capture_output=True, text=True, encoding="utf-8", timeout=10,
+            cwd=str(REPO), env=env
         )
         assert r.returncode == 0, r.stderr
-        trace = json.loads(Path(tmp).read_text())
+        trace = json.loads(Path(tmp).read_text(encoding="utf-8"))
         assert trace["schema_version"] == "trace.v1"
         assert len(trace["stages"]) >= 5
     finally:
@@ -74,13 +78,14 @@ def test_evidence_trace_out():
 
 def test_evidence_validate():
     """bazi-evidence --validate 校验正常"""
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     r = subprocess.run(
-        ["python3", "-m", "bazi_pro.evidence", "--validate", str(REPO / "examples" / "sample_trace.json")],
-        capture_output=True, text=True, timeout=10,
-        cwd=str(REPO)
+        [PYTHON, "-m", "bazi_pro.evidence", "--validate", str(REPO / "examples" / "sample_trace.json")],
+        capture_output=True, text=True, encoding="utf-8", timeout=10,
+        cwd=str(REPO), env=env
     )
     assert r.returncode == 0, r.stderr
-    assert "✅ Trace valid" in r.stdout
+    assert "Trace valid" in r.stdout
 
 
 def test_replay_viewer_exists():

@@ -3,26 +3,31 @@
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 try:
     import pytest
 except ImportError:
-    import sys
     print("pytest not installed. Skipping tests.", file=sys.stderr)
     sys.exit(0)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO_ROOT / "scripts"
+PYTHON = sys.executable
 
 
 def run(cmd: list[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=30)
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    return subprocess.run(
+        cmd, capture_output=True, text=True, encoding="utf-8",
+        cwd=str(REPO_ROOT), timeout=30, env=env,
+    )
 
 
 def test_retrieve_basic():
     """检索基本功能"""
-    r = run(["python3", str(SCRIPTS / "retrieve_classical.py"), "食神 制杀 身弱", "-k", "3", "--json"])
+    r = run([PYTHON, str(SCRIPTS / "retrieve_classical.py"), "食神 制杀 身弱", "-k", "3", "--json"])
     assert r.returncode == 0, f"exit={r.returncode} stderr={r.stderr}"
     data = json.loads(r.stdout)
     assert "queries" in data or "results" in data
@@ -31,7 +36,7 @@ def test_retrieve_basic():
 
 def test_retrieve_batch():
     """批量检索"""
-    r = run(["python3", str(SCRIPTS / "retrieve_classical.py"), "--batch", "食神", "七杀", "调候", "-k", "2", "--json"])
+    r = run([PYTHON, str(SCRIPTS / "retrieve_classical.py"), "--batch", "食神", "七杀", "调候", "-k", "2", "--json"])
     assert r.returncode == 0
     data = json.loads(r.stdout)
     assert len(data.get("queries", [])) == 3
@@ -39,20 +44,20 @@ def test_retrieve_batch():
 
 def test_retrieve_stats():
     """语料库统计"""
-    r = run(["python3", str(SCRIPTS / "retrieve_classical.py"), "--stats"])
+    r = run([PYTHON, str(SCRIPTS / "retrieve_classical.py"), "--stats"])
     assert r.returncode == 0
     assert "总条数" in r.stdout
 
 
 def test_retrieve_cache_info():
     """缓存信息"""
-    r = run(["python3", str(SCRIPTS / "retrieve_classical.py"), "--cache-info"])
+    r = run([PYTHON, str(SCRIPTS / "retrieve_classical.py"), "--cache-info"])
     assert r.returncode == 0
 
 
 def test_doctor():
     """环境诊断"""
-    r = run(["python3", str(SCRIPTS / "doctor.py")])
+    r = run([PYTHON, str(SCRIPTS / "doctor.py")])
     assert r.returncode == 0
     assert "Python" in r.stdout
     assert "jieba" in r.stdout
@@ -60,7 +65,7 @@ def test_doctor():
 
 def test_evidence():
     """证据对象"""
-    r = run(["python3", str(SCRIPTS / "evidence.py")])
+    r = run([PYTHON, str(SCRIPTS / "evidence.py")])
     assert r.returncode == 0
     data = json.loads(r.stdout)
     assert "evidence_chain" in data
@@ -69,7 +74,7 @@ def test_evidence():
 
 def test_hybrid_status():
     """Hybrid Search 状态"""
-    r = run(["python3", str(SCRIPTS / "hybrid_search.py")])
+    r = run([PYTHON, str(SCRIPTS / "hybrid_search.py")])
     assert r.returncode == 0
     assert "Hybrid Search 可用" in r.stdout
 
@@ -83,7 +88,7 @@ def test_report_markdown():
     with tempfile.NamedTemporaryFile(suffix=".md", delete=False) as f:
         tmp = f.name
     try:
-        r = run(["python3", str(SCRIPTS / "generate_report.py"), "--input", str(sample), "--output", tmp])
+        r = run([PYTHON, str(SCRIPTS / "generate_report.py"), "--input", str(sample), "--output", tmp])
         assert r.returncode == 0
         assert os.path.getsize(tmp) > 100
     finally:
@@ -99,13 +104,13 @@ def test_report_dashboard():
     with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as f:
         tmp = f.name
     try:
-        r = run(["python3", str(SCRIPTS / "generate_report.py"), "--input", str(sample),
+        r = run([PYTHON, str(SCRIPTS / "generate_report.py"), "--input", str(sample),
                  "--theme", "dashboard", "--format", "html", "--output", tmp])
         assert r.returncode == 0
         actual_path = tmp.replace(".html", "_dashboard.html") if not tmp.endswith("_dashboard.html") else tmp
         if not Path(actual_path).exists():
             actual_path = tmp
-        content = Path(actual_path).read_text()
+        content = Path(actual_path).read_text(encoding="utf-8")
         assert "ev-card" in content or "evidence-card" in content
         assert "reasoning-graph" in content or "relation-graph" in content
     finally:
@@ -115,12 +120,12 @@ def test_report_dashboard():
 
 
 def test_version_consistency():
-    r = run(["python3", str(SCRIPTS / "check_version_consistency.py")])
+    r = run([PYTHON, str(SCRIPTS / "check_version_consistency.py")])
     assert r.returncode == 0, f"Version check failed: {r.stdout}\n{r.stderr}"
 
 
 def test_retrieve_single_json_schema():
-    r = run(["python3", str(SCRIPTS / "retrieve_classical.py"), "食神", "-k", "2", "--json"])
+    r = run([PYTHON, str(SCRIPTS / "retrieve_classical.py"), "食神", "-k", "2", "--json"])
     assert r.returncode == 0, f"exit={r.returncode} stderr={r.stderr}"
     data = json.loads(r.stdout)
     assert "queries" in data, f"Single query output missing 'queries' key: {list(data.keys())}"
@@ -134,7 +139,7 @@ def test_retrieve_single_json_schema():
 
 
 def test_retrieve_batch_json_schema():
-    r = run(["python3", str(SCRIPTS / "retrieve_classical.py"), "--batch", "食神", "七杀", "-k", "2", "--json"])
+    r = run([PYTHON, str(SCRIPTS / "retrieve_classical.py"), "--batch", "食神", "七杀", "-k", "2", "--json"])
     assert r.returncode == 0, f"exit={r.returncode} stderr={r.stderr}"
     data = json.loads(r.stdout)
     assert "queries" in data, f"Batch output missing 'queries' key: {list(data.keys())}"

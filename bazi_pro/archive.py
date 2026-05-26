@@ -122,3 +122,8 @@ class ArchiveStore:
         conn = self._get_conn()
         row = conn.execute('SELECT COUNT(*) FROM analyses').fetchone()
         return row[0] if row else 0
+
+    def close(self) -> None:
+        if hasattr(self._local, 'conn') and self._local.conn is not None:
+            self._local.conn.close()
+            self._local.conn = None

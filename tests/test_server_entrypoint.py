@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+import importlib.util
+
+import pytest
+
+pytestmark = pytest.mark.skipif(
+    importlib.util.find_spec("fastapi") is None,
+    reason="fastapi not installed",
+)
 
 
 def test_server_main_callable():

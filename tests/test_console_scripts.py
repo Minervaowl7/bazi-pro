@@ -6,9 +6,10 @@ import sys
 try:
     import pytest
 except ImportError:
-    import sys
     print("pytest not installed. Skipping tests.", file=sys.stderr)
     sys.exit(0)
+
+_HAS_FASTAPI = importlib.util.find_spec("fastapi") is not None
 
 _CONSOLE_SCRIPTS = [
     ("bazi-retrieve", "bazi_pro.retrieve_classical", "main"),
@@ -16,7 +17,8 @@ _CONSOLE_SCRIPTS = [
     ("bazi-doctor", "bazi_pro.doctor", "main"),
     ("bazi-evidence", "bazi_pro.evidence", "main"),
     ("bazi-trace", "bazi_pro.trace", "main"),
-    ("bazi-server", "server.app", "main"),
+    pytest.param("bazi-server", "server.app", "main", marks=pytest.mark.skipif(
+        not _HAS_FASTAPI, reason="fastapi not installed")),
 ]
 
 
@@ -38,6 +40,7 @@ class TestConsoleScriptsImportable:
         assert result.returncode == 0, f"Import {module}:{func} failed: {result.stderr}"
 
 
+@pytest.mark.skipif(not _HAS_FASTAPI, reason="fastapi/pydantic not installed")
 class TestServerEntrypointSmoke:
 
     def test_server_import_no_error(self):

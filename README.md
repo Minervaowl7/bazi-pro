@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml)
 
-**确定性命理计算核心 + LLM 解释框架（Beta）**
+**确定性命理计算核心 + LLM 解释框架**
 
-📜 2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 四层格局筛查 · 喜用神推导 · 动态 SVG 命盘 · FastAPI 服务 · 插件机制
+2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 六层格局筛查 · 喜用神推导 · 消费级报告 · 动态 SVG 命盘 · 插件机制
 
 ---
 
@@ -35,11 +35,14 @@ pip install -e .
 # 检索古籍（核心功能，无需 extra）
 python scripts/retrieve_classical.py "食神 制杀 身弱" -k 3 --json
 
-# 生成报告（需要 [report]）
+# 生成技术报告
 python scripts/generate_report.py --input examples/sample_analysis.md --output report.md
 
-# 交互式仪表盘（需要 [report]）
-python scripts/generate_report.py --input examples/sample_analysis.md --theme dashboard --format html --output dashboard.html
+# 生成消费级报告（面向普通用户，六维叙事 + 术语解释）
+python scripts/generate_report.py --input examples/sample_analysis.md --mode consumer --format html -o consumer.html
+
+# 交互式仪表盘
+python scripts/generate_report.py --input examples/sample_analysis.md --mode dashboard --format html -o dashboard.html
 
 # 环境诊断
 python scripts/doctor.py
@@ -65,6 +68,14 @@ bazi-hybrid
     │
     ▼
 ┌─────────────────────────────────────────────────┐
+│  确定性计算核心 (bazi_pro/core/ · 13 模块)       │
+│  full_analysis() → dict                         │
+│  十神 · 藏干 · 五行力量 · 旺衰 · 格局 · 用神     │
+│  刑冲合害 · 格局之病 · 调候用神                   │
+└─────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────┐
 │  古籍检索层                                      │
 │  retrieve_classical.py (BM25 + jieba + 缓存)     │
 │  hybrid_search.py (FAISS + 权威权重)             │
@@ -72,58 +83,67 @@ bazi-hybrid
     │
     ▼
 ┌─────────────────────────────────────────────────┐
-│  解读引擎层 (SKILL.md 10步执行流)                │
-│  四层格局筛查 → 喜用神推导 → 九步分析             │
-│  evidence.py · trace.py · view_model.py          │
+│  证据链 + Trace 管线                             │
+│  evidence.py → trace.py → view_model.py          │
+│  DashboardVM 统一数据契约                         │
 └─────────────────────────────────────────────────┘
     │
     ▼
 ┌─────────────────────────────────────────────────┐
 │  输出与可视化层                                   │
-│  generate_report.py (MD/HTML/PDF)                │
+│  3 种报告模式 (技术/仪表盘/消费级)                │
 │  ui/ 子包 (SVG命盘 · 命运河流 · 推理图谱)         │
 │  server/ (FastAPI) · tui/ (Rich 终端)            │
 └─────────────────────────────────────────────────┘
 ```
 
-⚠️ 本项目处于 Beta 阶段，确定性计算核心已实现但仍在持续完善中。compare_engine 和 liunian_sandbox 标记为 EXPERIMENTAL。
+核心原则：**算析分离** — `bazi_pro/core/` 做所有确定性命理计算，LLM 只负责解读，不参与计算。
 
 ---
 
 ## 能力状态
 
-### ✅ 稳定能力
-| 能力 | 代码入口 | 测试覆盖 |
-|------|---------|---------|
-| 十神推导 | `bazi_pro.core.constants.derive_shishen` | `tests/test_core.py` |
-| 藏干展开 | `bazi_pro.core.hidden_stems.get_canggan` | `tests/test_core.py` |
-| 五行力量 | `bazi_pro.core.elements.calc_element_forces` | `tests/test_core.py` |
-| 旺衰判定 | `bazi_pro.core.strength.judge_wangshuai` | `tests/test_core.py` |
-| 格局筛查 (Layer 0-3) | `bazi_pro.core.patterns.screen_pattern` | `tests/test_core.py` |
-| 喜用神推导 | `bazi_pro.core.yongshen.derive_yongshen` | `tests/test_core.py` |
-| 刑冲合害 | `bazi_pro.core.relations.detect_relations` | `tests/test_core.py` |
-| 古籍检索 | `bazi_pro.retrieve_classical.retrieve` | `tests/test_core.py` |
-| 83 Golden Cases | `tests/run_golden.py` | 83/83 通过 |
-| 24 Analysis Golden Cases | `tests/test_analysis_golden.py` | 24/24 通过 |
+### 稳定能力
 
-> **格局筛查说明**：当前代码实现 Layer 0-3（建禄月劫、阳刃、从格、正格常规），Layer 4-5（调候用神、多候选裁决）依赖 LLM 补充，未编码为确定性规则。
+| 能力 | 代码入口 | 说明 |
+|------|---------|------|
+| 十神推导 | `bazi_pro.core.constants.derive_shishen` | 10 种十神完整推导 |
+| 藏干展开 | `bazi_pro.core.hidden_stems.get_canggan` | 含气级别 (本/中/余) |
+| 五行力量 | `bazi_pro.core.elements.calc_element_forces` | 原始 + 合化修正双版本 |
+| 旺衰判定 | `bazi_pro.core.strength.judge_wangshuai` | 得令/得地/得势三维判定 |
+| 格局筛查 | `bazi_pro.core.patterns.screen_pattern` | 六层算法 (化气→专旺→从格→L1→L2→L3) |
+| 喜用神推导 | `bazi_pro.core.yongshen.derive_yongshen` | 格局感知，含喜/忌/闲神 |
+| 刑冲合害 | `bazi_pro.core.relations.detect_relations` | 三合/六合/三刑/冲/害/暗合/半合 |
+| 格局之病 | `bazi_pro.core.disease.detect_disease` | 5 类病症检测 + 药方建议 |
+| 调候用神 | `bazi_pro.core.tiaohou.lookup_tiaohou` | 穷通宝鉴 120 条查表 |
+| 古籍检索 | `bazi_pro.retrieve_classical.retrieve` | BM25 + 反证通道 |
+| 消费级报告 | `bazi_pro.ui.consumer_report` | 六维叙事 + 术语解释 + 暗色模式 |
+| 98 Golden Cases | `tests/run_golden.py` | 98/98 通过 |
+
+> **格局筛查说明**：六层算法覆盖化气格、专旺格、从格（从强/从财/从官杀/从儿）、建禄月劫格、正格月令透干、暗格。调候用神已编码为确定性查表（穷通宝鉴 120 条）。
 >
-> **Golden Cases 说明**：覆盖十神推导、旺衰判定、格局筛查、喜用神推导等确定性规则；不覆盖命理争议点（如调候用神取舍、特殊格局认定分歧），不代表结果绝对正确。
+> **Golden Cases 说明**：覆盖十神推导、旺衰判定、格局筛查、喜用神推导、刑冲合害等确定性规则的边界情况。不覆盖命理争议点。
 
-### ⚠️ 实验能力 (EXPERIMENTAL)
+### 实验能力
+
 | 能力 | 代码入口 | 说明 |
 |------|---------|------|
 | 命盘对比 | `bazi_pro.compare_engine` | 置信区间 ±15%，不返回伪精确分数 |
 | 流年沙盒 | `bazi_pro.liunian_sandbox` | 依赖 AnalysisEngine 结果 |
 | 向量融合检索 | `bazi_pro.hybrid_search` | 需要 sentence-transformers + FAISS |
-| 格局 Layer 4-5 | SKILL.md | 调候用神查表、多候选格局裁决，当前未编码为确定性规则，由 LLM 补充 |
-| 分维度解读 | SKILL.md Step 8 | 性格/事业/财运/感情/健康/近运的文字解读，由 LLM 完成 |
+| 大运流年 | `bazi_pro.view_model` (dayun 提取) | 从分析文本提取，部分边界情况待完善 |
 
-### 🧪 Beta 能力
-| 能力 | 代码入口 | 说明 |
-|------|---------|------|
-| Web API | `server/app.py` | FastAPI REST + WebSocket，统一错误响应，环境变量可配置 |
-| 报告/仪表盘 | `bazi_pro/generate_report.py` | Markdown/HTML/PDF 输出，Dashboard 可视化 |
+---
+
+## 报告模式
+
+| 模式 | CLI | 受众 | 说明 |
+|------|-----|------|------|
+| `report` | `--mode report` | 命理师/开发者 | 技术报告，按分析步骤排列，含完整表格和评分 |
+| `dashboard` | `--mode dashboard` | 命理师/开发者 | 交互式仪表盘，SVG 图表 + 证据链 + 推理图谱 |
+| `consumer` | `--mode consumer` | 普通用户 | 消费级报告，结论先行 + 术语解释 + 六维叙事 |
+
+Consumer 模式特性：术语 tooltip（hover 显示通俗解释）、70 词术语小词典、六维度叙事扩展（性格/事业/财运/感情/健康/近运）、技术附录折叠、移动端适配、暗色模式。
 
 ---
 
@@ -187,7 +207,7 @@ API 错误响应统一格式：
 
 | 版本 | 内容 |
 |------|------|
-| **v5.0** | 确定性计算核心 (core/)：十神推导、藏干展开、五行力量、旺衰判定、格局筛查、喜用神推导、刑冲合害 · 83 Golden Cases 全通过 · Pydantic API Schema · CORS/安全加固 · counter_evidence 通道 · 插件机制 · CLI TUI · AnalysisEngine SDK · ⚠️流年沙盒/命盘对比为EXPERIMENTAL · 档案校准系统 |
+| **v5.0** | 确定性计算核心 (core/ 13模块)：十神推导、藏干展开、五行力量、旺衰判定、六层格局筛查、喜用神推导、刑冲合害、格局之病、调候用神 · 98 Golden Cases · 消费级报告（六维叙事+术语解释） · Pydantic API Schema · counter_evidence 通道 · 插件机制 · CLI TUI · AnalysisEngine SDK · 档案校准系统 |
 | **v4.8** | 命盘对比引擎 · 古籍双栏展示 · 流年推演沙盒 · 个人命理档案 |
 | **v4.7** | Hybrid Search 落地(INT8量化+FAISS+预热) · ViewModel 统一化 |
 | **v4.6** | FastAPI + WebSocket 服务层 · Redis 缓存 |
@@ -209,4 +229,4 @@ API 错误响应统一格式：
 
 MIT License — 仅供传统文化学习与参考，不构成任何决策依据。
 
-⚠️ **免责声明**：bazi-pro 的分析结果包含三类来源：(1) 确定性规则推导（十神、旺衰、格局筛查 L0-3、喜用神等），(2) 古籍检索（BM25 检索 6 部经典条文），(3) LLM 辅助解释（调候用神、多候选裁决、分维度解读）。其中 LLM 输出为概率性生成，不代表确定性事实。请勿将任何分析结果用于人生重大决策。
+⚠️ **免责声明**：bazi-pro 的分析结果包含三类来源：(1) 确定性规则推导（十神、旺衰、六层格局筛查、喜用神、刑冲合害、格局之病、调候用神等），(2) 古籍检索（BM25 检索 6 部经典条文），(3) LLM 辅助解释（分维度叙事解读）。其中 LLM 输出为概率性生成，不代表确定性事实。请勿将任何分析结果用于人生重大决策。
