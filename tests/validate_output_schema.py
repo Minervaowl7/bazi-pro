@@ -10,6 +10,9 @@
 
 import sys
 
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
 # ── 顶层键名和类型 ──
 TOP_LEVEL = {
     "status": str,

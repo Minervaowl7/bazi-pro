@@ -276,8 +276,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
         bijie_free = shishen_counts.get('比劫', 0) == 0 and not has_bijie_benqi_root
         yin_free = shishen_counts.get('印星', 0) == 0
         if (shishen_counts.get('食伤', 0) >= 3 and bijie_free and yin_free
-                and shishen_counts.get('财星', 0) >= 1
-                and not wangshuai.get('is_strong', False)):
+                and shishen_counts.get('财星', 0) >= 1):
             return {
                 'layer': 0, 'type': '从儿格', 'pattern': '从儿格',
                 'confidence': 0.80,

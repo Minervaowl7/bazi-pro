@@ -11,6 +11,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
 PROJECT = Path(__file__).resolve().parent.parent
 
 SCRIPTS = {

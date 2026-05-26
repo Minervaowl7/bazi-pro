@@ -13,6 +13,7 @@ from bazi_pro.core.branches import (
     ZHI_HE,
     ZHI_HUIFANG,
     ZHI_SANHE,
+    ZHI_SANXING,
     ZHI_XING,
 )
 from bazi_pro.core.constants import GAN_WUXING, WUXING_TO_GAN, ZHI_WUXING, derive_shishen
@@ -73,7 +74,15 @@ def full_analysis(mcp_json: dict) -> dict:
     element_forces = calc_element_forces(bazi_parts, month_zhi)
     relations = detect_relations(bazi_parts)
     shishen_relations = detect_shishen_relations(day_master, bazi_parts)
-    relations = relations + shishen_relations
+    # 合并并去重（两类检测来源不同，type 不重叠，但防御性保留去重逻辑）
+    seen = set()
+    merged = []
+    for r in relations + shishen_relations:
+        key = (r['type'], frozenset(r.get('elements', [])))
+        if key not in seen:
+            seen.add(key)
+            merged.append(r)
+    relations = merged
     pattern = screen_pattern(day_master, bazi_parts, wangshuai, element_forces)
     yongshen = derive_yongshen(day_master, bazi_parts, pattern, wangshuai, element_forces)
     disease = detect_disease(day_master, bazi_parts, element_forces)
@@ -130,7 +139,7 @@ __all__ = [
     'full_analysis',
     'GAN_HE', 'WUXING_SHENG', 'WUXING_KE', 'SHENG_MAP', 'KE_MAP', 'WO_KE_MAP', 'WO_SHENG_MAP',
     'ZHI_CANGGAN', 'CANGGAN_WEIGHT', 'SHIER_CHANGSHENG', 'DELING_SCORE',
-    'ZHI_HE', 'ZHI_CHONG', 'ZHI_HAI', 'ZHI_XING', 'ZHI_SANHE', 'ZHI_BANHE', 'ZHI_HUIFANG',
+    'ZHI_HE', 'ZHI_CHONG', 'ZHI_HAI', 'ZHI_XING', 'ZHI_SANHE', 'ZHI_SANXING', 'ZHI_BANHE', 'ZHI_HUIFANG',
     'JIANLU_MAP', 'YANGREN_MAP', 'WUXING_TO_GAN',
     'get_canggan',
     'SHISHEN_WUXING_REL', '_count_shishen_categories', '_get_yongshen_direction',
