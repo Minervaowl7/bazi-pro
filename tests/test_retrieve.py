@@ -148,9 +148,9 @@ def test_retrieve_batch_json_schema():
 
 if __name__ == "__main__":
     try:
-    import pytest
-except ImportError:
-    import sys
-    print("pytest not installed. Skipping tests.", file=sys.stderr)
-    sys.exit(0)
+        import pytest
+    except ImportError:
+        import sys
+        print("pytest not installed. Skipping tests.", file=sys.stderr)
+        sys.exit(0)
     pytest.main([__file__, "-v"])
