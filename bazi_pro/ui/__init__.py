@@ -7,6 +7,7 @@ bazi-pro UI Renderer v5.0
 
 from html import escape
 
+from bazi_pro.ui.consumer_report import render_consumer_report  # noqa: F401
 from bazi_pro.ui.pillar_chart import render_pillar_chart
 from bazi_pro.ui.reasoning_graph import render_reasoning_graph
 from bazi_pro.ui.replay import render_replay as _render_replay

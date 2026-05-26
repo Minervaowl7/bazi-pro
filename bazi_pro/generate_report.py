@@ -859,13 +859,21 @@ def main():
                         help='输出格式（默认: md）')
     parser.add_argument('--style', choices=['traditional', 'modern'], default='traditional',
                         help='样式主题（默认: traditional）')
-    parser.add_argument('--theme', choices=['report', 'dashboard'], default='report',
-                        help='呈现主题: report(传统报告) / dashboard(交互仪表盘)')
+    parser.add_argument('--theme', choices=['report', 'dashboard', 'consumer'], default=None,
+                        help='(旧参数，建议用 --mode) 报告模式')
+    parser.add_argument('--mode', choices=['report', 'dashboard', 'consumer'], default=None,
+                        help='报告模式: report(传统报告) / dashboard(交互仪表盘) / consumer(消费级报告，默认: report)')
     parser.add_argument('--gender', help='性别（覆盖自动提取）')
     parser.add_argument('--birth', help='出生日期（覆盖自动提取）')
     parser.add_argument('--name', help='姓名/称呼')
 
     args = parser.parse_args()
+
+    # --mode 优先于 --theme，两者都未指定时默认 report
+    if args.mode:
+        args.theme = args.mode
+    elif not args.theme:
+        args.theme = 'report'
 
     # --- Read input ---
     if args.input:
@@ -918,8 +926,12 @@ def main():
         output_base = os.path.join(os.getcwd(), f'bazi_report_{ts}{ext}')
 
     # --- Generate ---
-    if args.format in ('html', 'both') or args.theme == 'dashboard':
-        if args.theme == 'dashboard':
+    if args.format in ('html', 'both') or args.theme in ('dashboard', 'consumer'):
+        if args.theme == 'consumer':
+            from bazi_pro.ui.consumer_report import render_consumer_report
+            vm = build_vm_from_analysis_text(analysis_text)
+            html_content = render_consumer_report(vm, raw_markdown=analysis_text)
+        elif args.theme == 'dashboard':
             # v5.0: 新版仪表盘 — 动态 SVG 命盘 + 命运河流时间轴 + 推理图谱
             try:
                 vm = build_vm_from_analysis_text(analysis_text)
