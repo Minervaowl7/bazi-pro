@@ -6,7 +6,7 @@ bazi-pro 消费级报告渲染器 v1.0
 from html import escape  # noqa: I001
 
 from bazi_pro.ui.glossary import GLOSSARY_CSS, annotate_terms, render_glossary_section
-from bazi_pro.view_model import DashboardVM
+from bazi_pro.view_model import KNOWN_PATTERNS, DashboardVM
 
 
 # ── 五行属性映射 ──
@@ -47,15 +47,19 @@ def _get_dm_element(vm: DashboardVM) -> str:
     return '火'
 
 
+def _get_dm_gan(vm: DashboardVM) -> str:
+    """提取日主天干字符"""
+    for c in (vm.verdict.day_master or ''):
+        if c in '甲乙丙丁戊己庚辛壬癸':
+            return c
+    return ''
+
+
 def _clean_pattern(raw: str) -> str:
     """清理 VM 提取的格局名称（可能包含多余文本）"""
     if not raw:
         return ''
-    known = ['正官格', '七杀格', '食神格', '伤官格', '正财格', '偏财格',
-             '正印格', '偏印格', '建禄格', '月劫格', '从强格', '从财格',
-             '从官杀格', '从儿格', '专旺格', '化气格', '羊刃格',
-             '暗食神格', '暗正官格', '暗七杀格', '暗正财格', '暗偏财格']
-    for p in sorted(known, key=len, reverse=True):
+    for p in sorted(KNOWN_PATTERNS, key=len, reverse=True):
         if p in raw:
             return p
     if len(raw) <= 6 and '格' in raw:
@@ -69,7 +73,14 @@ def _get_strength(vm: DashboardVM) -> str:
     for key in ('极旺', '极弱', '身旺', '身弱'):
         if key in d:
             return key
-    return '身旺' if vm.wuxing and _get_dm_element(vm) == '火' and vm.wuxing.fire > 30 else '身弱'
+    # Fallback: 基于日主五行对应力量百分比判断
+    if vm.wuxing:
+        dm_wx = _get_dm_element(vm)
+        wx_map = {'木': vm.wuxing.wood, '火': vm.wuxing.fire, '土': vm.wuxing.earth,
+                  '金': vm.wuxing.metal, '水': vm.wuxing.water}
+        pct = wx_map.get(dm_wx, 0)
+        return '身旺' if pct > 25 else '身弱'
+    return '身弱'
 
 
 def _truncate_sentence(text: str, max_len: int) -> str:
@@ -88,11 +99,7 @@ def _render_cover(vm: DashboardVM) -> str:
     v = vm.verdict
     dm_wx = _get_dm_element(vm)
     pattern = _clean_pattern(v.pattern)
-    dm_char = ''
-    for c in (v.day_master or ''):
-        if c in '甲乙丙丁戊己庚辛壬癸':
-            dm_char = c
-            break
+    dm_char = _get_dm_gan(vm)
     subtitle = f'{dm_char}{dm_wx}命 · {pattern or "命理解读"}' if dm_char else '命理解读'
     return f'''<header class="cr-cover">
   <div class="cr-cover-badge">{escape(dm_wx)}</div>
@@ -560,7 +567,12 @@ def render_consumer_report(vm: DashboardVM, raw_markdown: str = '') -> str:
     appendix = ''
     if raw_markdown:
         from bazi_pro.ui.report_composer import _simple_md_to_html
-        appendix_html = _simple_md_to_html(raw_markdown[:8000])
+        # 截断到段落边界，避免在句子中间断开
+        md_text = raw_markdown
+        if len(md_text) > 8000:
+            cut_pos = md_text.rfind('\n', 0, 8000)
+            md_text = md_text[:cut_pos] if cut_pos > 4000 else md_text[:8000]
+        appendix_html = _simple_md_to_html(md_text)
         appendix = (f'<details class="cr-appendix">'
                     f'<summary>查看完整技术分析（专业人士参考）</summary>'
                     f'<div class="appendix-body">{appendix_html}</div></details>')

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `bazi-pro` v5.0 — deterministic Chinese Bazi (八字) computation engine + LLM interpretation framework. The core principle is **算析分离**: `bazi_pro/core/` does all deterministic 命理 calculations (十神, 藏干, 五行力量, 旺衰, 格局, 喜用神, 刑冲合害); the LLM only interprets results, never computes them.
 
-### Recent changes (fix/assessment-issues branch)
+### Recent changes
 
 - **Consumer report mode** (`--mode consumer`): 面向普通用户的消费级报告，结论先行、术语解释、六维叙事扩展
 - **Glossary system** (`bazi_pro/ui/glossary.py`): 70 个命理术语的 tooltip 标注 + 分类词典渲染

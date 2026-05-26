@@ -137,6 +137,17 @@ class DashboardVM:
 
 
 # ═══════════════════════════════════════════════════════════════════
+# Shared constants
+# ═══════════════════════════════════════════════════════════════════
+
+KNOWN_PATTERNS = (
+    '暗食神格', '暗正官格', '暗七杀格', '暗正财格', '暗偏财格',
+    '从官杀格', '从强格', '从财格', '从儿格', '专旺格', '化气格',
+    '正官格', '七杀格', '食神格', '伤官格', '正财格', '偏财格',
+    '正印格', '偏印格', '建禄格', '月劫格', '羊刃格',
+)
+
+# ═══════════════════════════════════════════════════════════════════
 # Builders: 从 trace.json 或分析文本构建 ViewModel
 # ═══════════════════════════════════════════════════════════════════
 
@@ -398,19 +409,13 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
             setattr(vm.wuxing, wx_key, pct)
 
     # Verdict — pattern extraction (multi-strategy)
-    _known_patterns = [
-        '暗食神格', '暗正官格', '暗七杀格', '暗正财格', '暗偏财格',
-        '从官杀格', '从强格', '从财格', '从儿格', '专旺格', '化气格',
-        '正官格', '七杀格', '食神格', '伤官格', '正财格', '偏财格',
-        '正印格', '偏印格', '建禄格', '月劫格', '羊刃格',
-    ]
     vm.verdict.pattern = ''
     # Strategy 1: tree format — collect all layer matches, prefer deepest layer
     _layer_hits: list[tuple[int, str]] = []
     for m in re.finditer(r'[├─│]\s*层(\d)\s+(.+)', text):
         layer_num = int(m.group(1))
         candidate = _strip_md(m.group(2))
-        for p in _known_patterns:
+        for p in KNOWN_PATTERNS:
             if p in candidate:
                 _layer_hits.append((layer_num, p))
                 break
@@ -422,7 +427,7 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
         m = re.search(r'实质是\s*\*{0,2}(.+?)\*{0,2}(?:$|\n|。)', text)
         if m:
             candidate = _strip_md(m.group(1))
-            for p in _known_patterns:
+            for p in KNOWN_PATTERNS:
                 if p in candidate:
                     vm.verdict.pattern = p
                     break
@@ -465,7 +470,7 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
             gz_m = re.search(r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])', cells[2])
             if not gz_m:
                 continue
-            raw_assess = re.sub(r'[^一-鿿]', '', _strip_md(cells[-1]))
+            raw_assess = re.sub(r'[\s⚠️✅⭐🔥\U0001f300-\U0001f9ff☀-➿]', '', _strip_md(cells[-1]))
             shishen = _strip_md(cells[3]) if len(cells) >= 5 else ''
             valid = ('大吉', '吉', '平', '凶', '大凶', '平偏吉', '平偏凶')
             vm.dayun.append(DayunVM(
@@ -502,7 +507,7 @@ def build_vm_from_analysis_text(text: str) -> DashboardVM:
             raw_decision=vm.verdict.decision,
         )
         # Only apply text_cleaner's pattern if ours isn't already a known clean name
-        if cv.pattern_short and vm.verdict.pattern not in _known_patterns:
+        if cv.pattern_short and vm.verdict.pattern not in KNOWN_PATTERNS:
             vm.verdict.pattern = cv.pattern_short
         vm.verdict.yongshen = [cv.yongshen_label] if cv.yongshen_label else vm.verdict.yongshen
         vm.verdict.xishen = cv.xishen_labels if cv.xishen_labels else vm.verdict.xishen
