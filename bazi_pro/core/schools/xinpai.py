@@ -12,29 +12,28 @@ from bazi_pro.core.constants import WUXING_TO_GAN
 from bazi_pro.core.schools import register_school
 from bazi_pro.core.schools.base import SchoolAnalyzer
 
-KONGWANG_MAP = {
-    '甲子': ['戌', '亥'], '甲寅': ['子', '丑'], '甲辰': ['寅', '卯'],
-    '甲午': ['辰', '巳'], '甲申': ['午', '未'], '甲戌': ['申', '酉'],
-    '乙丑': ['亥', '子'], '乙卯': ['丑', '寅'], '乙巳': ['卯', '辰'],
-    '乙未': ['巳', '午'], '乙酉': ['未', '申'], '乙亥': ['酉', '戌'],
-    '丙寅': ['子', '丑'], '丙辰': ['寅', '卯'], '丙午': ['辰', '巳'],
-    '丙申': ['午', '未'], '丙戌': ['申', '酉'], '丙子': ['戌', '亥'],
-    '丁卯': ['寅', '卯'], '丁巳': ['卯', '辰'], '丁未': ['辰', '巳'],
-    '丁酉': ['午', '未'], '丁亥': ['申', '酉'], '丁丑': ['戌', '亥'],
-    '戊辰': ['寅', '卯'], '戊午': ['辰', '巳'], '戊申': ['午', '未'],
-    '戊戌': ['申', '酉'], '戊子': ['戌', '亥'], '戊寅': ['子', '丑'],
-    '己巳': ['卯', '辰'], '己未': ['辰', '巳'], '己酉': ['午', '未'],
-    '己亥': ['申', '酉'], '己丑': ['戌', '亥'], '己卯': ['子', '丑'],
-    '庚午': ['辰', '巳'], '庚申': ['午', '未'], '庚戌': ['申', '酉'],
-    '庚子': ['戌', '亥'], '庚寅': ['子', '丑'], '庚辰': ['寅', '卯'],
-    '辛未': ['辰', '巳'], '辛酉': ['午', '未'], '辛亥': ['申', '酉'],
-    '辛丑': ['戌', '亥'], '辛卯': ['子', '丑'], '辛巳': ['寅', '卯'],
-    '壬申': ['午', '未'], '壬戌': ['申', '酉'], '壬子': ['戌', '亥'],
-    '壬寅': ['子', '丑'], '壬辰': ['寅', '卯'], '壬午': ['辰', '巳'],
-    '癸酉': ['午', '未'], '癸亥': ['申', '酉'], '癸丑': ['戌', '亥'],
-    '癸卯': ['子', '丑'], '癸巳': ['寅', '卯'], '癸未': ['辰', '巳'],
+LIUJIA_XUN = {
+    '甲子': ['戌', '亥'], '乙丑': ['亥', '子'], '丙寅': ['子', '丑'], '丁卯': ['丑', '寅'],
+    '戊辰': ['寅', '卯'], '己巳': ['卯', '辰'], '庚午': ['辰', '巳'], '辛未': ['巳', '午'],
+    '壬申': ['午', '未'], '癸酉': ['未', '申'],
+    '甲戌': ['申', '酉'], '乙亥': ['酉', '戌'], '丙子': ['戌', '亥'], '丁丑': ['亥', '子'],
+    '戊寅': ['子', '丑'], '己卯': ['丑', '寅'], '庚辰': ['寅', '卯'], '辛巳': ['卯', '辰'],
+    '壬午': ['辰', '巳'], '癸未': ['巳', '午'],
+    '甲申': ['午', '未'], '乙酉': ['未', '申'], '丙戌': ['申', '酉'], '丁亥': ['酉', '戌'],
+    '戊子': ['戌', '亥'], '己丑': ['亥', '子'], '庚寅': ['子', '丑'], '辛卯': ['丑', '寅'],
+    '壬辰': ['寅', '卯'], '癸巳': ['卯', '辰'],
+    '甲午': ['辰', '巳'], '乙未': ['巳', '午'], '丙申': ['午', '未'], '丁酉': ['未', '申'],
+    '戊戌': ['申', '酉'], '己亥': ['酉', '戌'], '庚子': ['戌', '亥'], '辛丑': ['亥', '子'],
+    '壬寅': ['子', '丑'], '癸卯': ['丑', '寅'],
+    '甲辰': ['寅', '卯'], '乙巳': ['卯', '辰'], '丙午': ['辰', '巳'], '丁未': ['巳', '午'],
+    '戊申': ['午', '未'], '己酉': ['未', '申'], '庚戌': ['申', '酉'], '辛亥': ['酉', '戌'],
+    '壬子': ['戌', '亥'], '癸丑': ['亥', '子'],
+    '甲寅': ['子', '丑'], '乙卯': ['丑', '寅'], '丙辰': ['寅', '卯'], '丁巳': ['卯', '辰'],
+    '戊午': ['辰', '巳'], '己未': ['巳', '午'], '庚申': ['午', '未'], '辛酉': ['未', '申'],
+    '壬戌': ['申', '酉'], '癸亥': ['酉', '戌'],
 }
 
+KE_PAIRS_SET = {('木', '金'), ('火', '水'), ('土', '木'), ('金', '火'), ('水', '土')}
 
 BAISHEN_RULES = {
     '正官': {'position': '月干', 'condition': 'not_on_gan'},
@@ -96,51 +95,67 @@ class XinpaiAnalyzer(SchoolAnalyzer):
 
         sheng_fu = self._judge_sheng_fu(dm_wx, month_zhi_wx)
 
-        yongshen = []
-        jishen = []
+        yongshen_names = []
+        jishen_names = []
 
         if sheng_fu == '身旺':
-            yongshen = ['官星', '财星', '食伤']
-            jishen = ['印星', '比劫']
+            yongshen_names = ['官星', '财星', '食伤']
+            jishen_names = ['印星', '比劫']
         else:
-            yongshen = ['印星', '比劫']
-            jishen = ['官星', '财星', '食伤']
+            yongshen_names = ['印星', '比劫']
+            jishen_names = ['官星', '财星', '食伤']
 
         if month_zhi_wx == dm_wx and dm_wx:
             sheng_fu = '身旺极'
-            yongshen = ['食伤']
-            jishen = ['印星', '比劫', '官星', '财星']
-        elif self._is_counter(dm_wx, month_zhi_wx):
+            yongshen_names = ['食伤']
+            jishen_names = ['印星', '比劫', '官星', '财星']
+        elif (month_zhi_wx, dm_wx) in KE_PAIRS_SET:
             sheng_fu = '身弱极'
-            yongshen = ['印星', '比劫']
-            jishen = ['官星', '财星', '食伤']
+            yongshen_names = ['印星', '比劫']
+            jishen_names = ['官星', '财星', '食伤']
 
-        yong_wx_list = []
-        for y in yongshen:
-            if y == '印星':
-                yong_wx_list.append(SHENG_MAP.get(dm_wx, ''))
-            elif y == '比劫':
-                yong_wx_list.append(dm_wx)
-            elif y == '官星':
-                yong_wx_list.append(KE_MAP.get(dm_wx, ''))
-            elif y == '财星':
-                yong_wx_list.append(WO_KE_MAP.get(dm_wx, ''))
-            elif y == '食伤':
-                yong_wx_list.append(WO_SHENG_MAP.get(dm_wx, ''))
+        yong_wx_list = self._names_to_wuxing(dm_wx, yongshen_names)
+        ji_wx_list = self._names_to_wuxing(dm_wx, jishen_names)
 
         yongshen_gan = []
         for wx in yong_wx_list:
             if wx:
                 yongshen_gan.extend(list(WUXING_TO_GAN.get(wx, '')))
 
+        jishen_gan = []
+        for wx in ji_wx_list:
+            if wx:
+                jishen_gan.extend(list(WUXING_TO_GAN.get(wx, '')))
+
         return {
             'sheng_fu': sheng_fu,
             'yongshen': yong_wx_list,
-            'yongshen_name': yongshen,
-            'jishen': [],
-            'jishen_name': jishen,
-            'reason': f'月令{month_zhi}({month_zhi_wx})与日主{dm_wx}关系判定',
+            'yongshen_name': yongshen_names,
+            'yongshen_gan': yongshen_gan,
+            'jishen': ji_wx_list,
+            'jishen_name': jishen_names,
+            'jishen_gan': jishen_gan,
+            'reason': '月令{}({})与日主{}关系判定'.format(month_zhi, month_zhi_wx, dm_wx),
         }
+
+    def _names_to_wuxing(self, dm_wx: str, names: list) -> list:
+        result = []
+        for name in names:
+            if name == '印星':
+                wx = SHENG_MAP.get(dm_wx, '')
+            elif name == '比劫':
+                wx = dm_wx
+            elif name == '官星':
+                wx = KE_MAP.get(dm_wx, '')
+            elif name == '财星':
+                wx = WO_KE_MAP.get(dm_wx, '')
+            elif name == '食伤':
+                wx = WO_SHENG_MAP.get(dm_wx, '')
+            else:
+                wx = ''
+            if wx and wx not in result:
+                result.append(wx)
+        return result
 
     def _judge_sheng_fu(self, dm_wx: str, month_wx: str) -> str:
         if not dm_wx or not month_wx:
@@ -148,22 +163,16 @@ class XinpaiAnalyzer(SchoolAnalyzer):
 
         if month_wx == dm_wx:
             return '身旺'
-        if (dm_wx, month_wx) in [('木', '水'), ('火', '木'), ('土', '火'), ('金', '土'), ('水', '金')]:
-            return '身旺'
-        if (month_wx, dm_wx) in [('木', '土'), ('土', '水'), ('水', '火'), ('火', '金'), ('金', '木')]:
-            return '身弱'
-        if month_wx == WO_SHENG_MAP.get(dm_wx, ''):
-            return '身旺'
         if month_wx == SHENG_MAP.get(dm_wx, ''):
             return '身旺'
+        if (month_wx, dm_wx) in KE_PAIRS_SET:
+            return '身弱'
+        if month_wx == WO_SHENG_MAP.get(dm_wx, ''):
+            return '身弱'
+        if month_wx == WO_KE_MAP.get(dm_wx, ''):
+            return '身弱'
 
         return '身旺'
-
-    def _is_counter(self, dm_wx: str, month_wx: str) -> bool:
-        if not dm_wx or not month_wx:
-            return False
-        ke_pairs = [('木', '金'), ('金', '木'), ('火', '水'), ('水', '火'), ('土', '木'), ('木', '土')]
-        return (dm_wx, month_wx) in ke_pairs
 
     def _apply_baishen(self, result: dict) -> dict:
         pillars = result.get('pillars', [])
@@ -213,11 +222,15 @@ class XinpaiAnalyzer(SchoolAnalyzer):
         if not pillars:
             return {'kongwang_zhi': [], 'affected': [], 'power_reduction': 0.5}
 
-        year_gan = pillars[0].get('gan', '') if pillars else ''
-        if not year_gan:
-            return {'kongwang_zhi': [], 'affected': [], 'power_reduction': 0.5}
+        day_gan = pillars[2].get('gan', '') if len(pillars) > 2 else ''
+        day_zhi = pillars[2].get('zhi', '') if len(pillars) > 2 else ''
+        day_ganzhi = day_gan + day_zhi
 
-        kongwang_zhi = KONGWANG_MAP.get(year_gan, [])
+        kongwang_zhi = LIUJIA_XUN.get(day_ganzhi, [])
+
+        if not kongwang_zhi:
+            year_ganzhi = (pillars[0].get('gan', '') + pillars[0].get('zhi', '')) if pillars else ''
+            kongwang_zhi = LIUJIA_XUN.get(year_ganzhi, [])
 
         affected = []
         for pillar in pillars:
@@ -265,7 +278,7 @@ class XinpaiAnalyzer(SchoolAnalyzer):
             if kw in [p.get('zhi', '') for p in pillars]:
                 conditions.append({
                     'type': 'kongwang_fan',
-                    'description': f'地支{kw}空亡',
+                    'description': '地支{}空亡'.format(kw),
                     'action': '用忌互换',
                 })
                 break
@@ -274,7 +287,7 @@ class XinpaiAnalyzer(SchoolAnalyzer):
         if '极' in sheng_fu:
             conditions.append({
                 'type': 'wang_ji',
-                'description': f'{sheng_fu}',
+                'description': '{}'.format(sheng_fu),
                 'action': '克泄耗反断',
             })
 
@@ -311,13 +324,13 @@ class XinpaiAnalyzer(SchoolAnalyzer):
 
             if is_kongwang:
                 verdict = '平'
-                detail = f'大运地支{zhi}空亡，力量减半'
+                detail = '大运地支{}空亡，力量减半'.format(zhi)
             elif is_yong:
                 verdict = '吉'
-                detail = f'大运天干{gan}({gan_wx})为用神'
+                detail = '大运天干{}({})为用神'.format(gan, gan_wx)
             else:
                 verdict = '凶'
-                detail = f'大运天干{gan}({gan_wx})为忌神'
+                detail = '大运天干{}({})为忌神'.format(gan, gan_wx)
 
             verdicts.append({
                 'step': step,
@@ -356,11 +369,11 @@ class XinpaiAnalyzer(SchoolAnalyzer):
         ji_str = '、'.join(ji_names) if ji_names else '待定'
         kong_str = '、'.join(kongwang_list) if kongwang_list else '无'
 
-        advice = f'新派以用忌神为核心。用神为{yong_str}，忌神为{ji_str}。'
+        advice = '新派以用忌神为核心。用神为{}，忌神为{}。'.format(yong_str, ji_str)
         if kongwang_list:
-            advice += f'空亡{kong_str}，力量减半。'
+            advice += '空亡{}，力量减半。'.format(kong_str)
         if fanduan_count > 0:
-            advice += f'存在{fanduan_count}项反断条件，需综合判断。'
+            advice += '存在{}项反断条件，需综合判断。'.format(fanduan_count)
 
         return {
             'yongshen': yong_str,

@@ -1,8 +1,11 @@
 from bazi_pro.core import (
     CANGGAN_WEIGHT,
     GAN_WUXING,
+    KE_MAP,
     SHENG_MAP,
     SHIER_CHANGSHENG,
+    WO_KE_MAP,
+    WO_SHENG_MAP,
     derive_shishen,
     full_analysis,
 )
@@ -12,15 +15,25 @@ from bazi_pro.core.schools.base import SchoolAnalyzer
 TI_STEMS = {'比肩', '劫财', '正印', '偏印'}
 YONG_STEMS = {'正财', '偏财', '正官', '七杀', '食神', '伤官'}
 
-SHISHEN_TO_WUXING = {
-    '比肩': '木', '劫财': '木',
-    '食神': '火', '伤官': '火',
-    '正财': '土', '偏财': '土',
-    '正官': '金', '七杀': '金',
-    '正印': '水', '偏印': '水',
-}
+KE_PAIRS = {('木', '土'), ('土', '水'), ('水', '火'), ('火', '金'), ('金', '木')}
+SHENG_PAIRS = {('木', '火'), ('火', '土'), ('土', '金'), ('金', '水'), ('水', '木')}
 
-WUXING_SHENG_MAP = {'木': '火', '火': '土', '土': '金', '金': '水', '水': '木'}
+
+def _shishen_to_wuxing(day_master: str, shishen: str) -> str:
+    dm_wx = GAN_WUXING.get(day_master, '')
+    if not dm_wx:
+        return ''
+    if shishen in ('比肩', '劫财'):
+        return dm_wx
+    if shishen in ('食神', '伤官'):
+        return WO_SHENG_MAP.get(dm_wx, '')
+    if shishen in ('正财', '偏财'):
+        return WO_KE_MAP.get(dm_wx, '')
+    if shishen in ('正官', '七杀'):
+        return KE_MAP.get(dm_wx, '')
+    if shishen in ('正印', '偏印'):
+        return SHENG_MAP.get(dm_wx, '')
+    return ''
 
 
 class MangpaiAnalyzer(SchoolAnalyzer):
@@ -34,10 +47,14 @@ class MangpaiAnalyzer(SchoolAnalyzer):
 
     def analyze(self, mcp_json: dict) -> dict:
         result = full_analysis(mcp_json)
+        if result.get('status') != 'completed':
+            return {'status': 'error', 'school': 'mangpai', 'message': '核心分析失败'}
 
-        binzhu = self._analyze_binzhu(result)
-        tiyong = self._analyze_tiyong(result)
-        zuogong = self._analyze_zuogong(result)
+        day_master = result.get('day_master', '')
+
+        binzhu = self._analyze_binzhu(day_master, result)
+        tiyong = self._analyze_tiyong(day_master, result)
+        zuogong = self._analyze_zuogong(day_master, result)
         gongli = self._evaluate_gongli(zuogong, tiyong)
         yingqi = self._predict_yingqi(zuogong, result)
         summary = self._generate_summary(binzhu, tiyong, zuogong, gongli)
@@ -54,7 +71,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
             'summary': summary,
         }
 
-    def _analyze_binzhu(self, result: dict) -> dict:
+    def _analyze_binzhu(self, day_master: str, result: dict) -> dict:
         pillars = result.get('pillars', [])
 
         bin_positions = []
@@ -70,39 +87,43 @@ class MangpaiAnalyzer(SchoolAnalyzer):
         bin_shishen = []
         for p in bin_positions:
             shishen = p.get('shishen', '')
+            gan = p.get('gan', '')
             if shishen:
                 bin_shishen.append({
                     'position': p.get('position', ''),
-                    'gan': p.get('gan', ''),
+                    'gan': gan,
                     'shishen': shishen,
-                    'wuxing': GAN_WUXING.get(p.get('gan', ''), ''),
+                    'wuxing': _shishen_to_wuxing(day_master, shishen),
                 })
             for cg in p.get('canggan', []):
-                if cg.get('shishen'):
+                cg_shishen = cg.get('shishen', '')
+                if cg_shishen:
                     bin_shishen.append({
                         'position': p.get('position', '') + '藏',
                         'gan': cg.get('gan', ''),
-                        'shishen': cg.get('shishen', ''),
-                        'wuxing': cg.get('wuxing', ''),
+                        'shishen': cg_shishen,
+                        'wuxing': _shishen_to_wuxing(day_master, cg_shishen),
                     })
 
         zhu_shishen = []
         for p in zhu_positions:
             shishen = p.get('shishen', '')
+            gan = p.get('gan', '')
             if shishen:
                 zhu_shishen.append({
                     'position': p.get('position', ''),
-                    'gan': p.get('gan', ''),
+                    'gan': gan,
                     'shishen': shishen,
-                    'wuxing': GAN_WUXING.get(p.get('gan', ''), ''),
+                    'wuxing': _shishen_to_wuxing(day_master, shishen),
                 })
             for cg in p.get('canggan', []):
-                if cg.get('shishen'):
+                cg_shishen = cg.get('shishen', '')
+                if cg_shishen:
                     zhu_shishen.append({
                         'position': p.get('position', '') + '藏',
                         'gan': cg.get('gan', ''),
-                        'shishen': cg.get('shishen', ''),
-                        'wuxing': cg.get('wuxing', ''),
+                        'shishen': cg_shishen,
+                        'wuxing': _shishen_to_wuxing(day_master, cg_shishen),
                     })
 
         interpretations = []
@@ -110,14 +131,23 @@ class MangpaiAnalyzer(SchoolAnalyzer):
             bs_wx = bs.get('wuxing', '')
             for zs in zhu_shishen:
                 zs_wx = zs.get('wuxing', '')
-                rel = self._classify_relation(bs_wx, zs_wx)
-                if rel in ('克我', '我克'):
+                if not bs_wx or not zs_wx:
+                    continue
+                if (bs_wx, zs_wx) in KE_PAIRS:
                     interpretations.append({
                         'type': '宾主交战',
                         'bin': bs,
                         'zhu': zs,
-                        'relation': rel,
-                        'meaning': '宾主相克，' + ('贵' if rel == '克我' else '富'),
+                        'relation': '宾克主',
+                        'meaning': '贵',
+                    })
+                elif (zs_wx, bs_wx) in KE_PAIRS:
+                    interpretations.append({
+                        'type': '宾主交战',
+                        'bin': bs,
+                        'zhu': zs,
+                        'relation': '主克宾',
+                        'meaning': '富',
                     })
 
         return {
@@ -126,7 +156,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
             'interpretations': interpretations,
         }
 
-    def _analyze_tiyong(self, result: dict) -> dict:
+    def _analyze_tiyong(self, day_master: str, result: dict) -> dict:
         pillars = result.get('pillars', [])
 
         ti_items = []
@@ -140,7 +170,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                     'position': p.get('position', ''),
                     'gan': gan,
                     'shishen': gan_shishen,
-                    'wuxing': GAN_WUXING.get(gan, ''),
+                    'wuxing': _shishen_to_wuxing(day_master, gan_shishen),
                     'source': '天干',
                 })
             elif gan_shishen in YONG_STEMS:
@@ -148,7 +178,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                     'position': p.get('position', ''),
                     'gan': gan,
                     'shishen': gan_shishen,
-                    'wuxing': GAN_WUXING.get(gan, ''),
+                    'wuxing': _shishen_to_wuxing(day_master, gan_shishen),
                     'source': '天干',
                 })
 
@@ -160,7 +190,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                         'position': p.get('position', '') + '藏',
                         'gan': cg_gan,
                         'shishen': cg_shishen,
-                        'wuxing': cg.get('wuxing', ''),
+                        'wuxing': _shishen_to_wuxing(day_master, cg_shishen),
                         'source': '藏干',
                     })
                 elif cg_shishen in YONG_STEMS:
@@ -168,33 +198,38 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                         'position': p.get('position', '') + '藏',
                         'gan': cg_gan,
                         'shishen': cg_shishen,
-                        'wuxing': cg.get('wuxing', ''),
+                        'wuxing': _shishen_to_wuxing(day_master, cg_shishen),
                         'source': '藏干',
                     })
 
-        seen_ti = {(x['position'], x['gan']) for x in ti_items}
-        ti_items = [x for i, x in enumerate(ti_items)
-                    if (x['position'], x['gan']) not in seen_ti or i == 0
-                    or (x['position'], x['gan']) not in {(y['position'], y['gan']) for y in ti_items[:i]}]
+        seen_ti = set()
+        deduped_ti = []
+        for x in ti_items:
+            key = (x['position'], x['gan'])
+            if key not in seen_ti:
+                seen_ti.add(key)
+                deduped_ti.append(x)
 
-        seen_yong = {(x['position'], x['gan']) for x in yong_items}
-        yong_items = [x for i, x in enumerate(yong_items)
-                     if (x['position'], x['gan']) not in seen_yong or i == 0
-                     or (x['position'], x['gan']) not in {(y['position'], y['gan']) for y in yong_items[:i]}]
+        seen_yong = set()
+        deduped_yong = []
+        for x in yong_items:
+            key = (x['position'], x['gan'])
+            if key not in seen_yong:
+                seen_yong.add(key)
+                deduped_yong.append(x)
 
-        ti_strength = self._calc_strength(ti_items, result)
-        yong_strength = self._calc_strength(yong_items, result)
+        ti_strength = self._calc_strength(deduped_ti, result)
+        yong_strength = self._calc_strength(deduped_yong, result)
 
         return {
-            'ti': ti_items,
-            'yong': yong_items,
+            'ti': deduped_ti,
+            'yong': deduped_yong,
             'ti_strength': ti_strength,
             'yong_strength': yong_strength,
         }
 
-    def _analyze_zuogong(self, result: dict) -> dict:
+    def _analyze_zuogong(self, day_master: str, result: dict) -> dict:
         pillars = result.get('pillars', [])
-        day_master = result.get('day_master', '')
         relations = result.get('relations', [])
 
         gong_types = {
@@ -217,8 +252,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                 cg_shishen = derive_shishen(day_master, cg)
 
                 if gan_shishen in TI_STEMS and cg_shishen in YONG_STEMS:
-                    if (gan_wx, cg_wx) in {('木', '金'), ('火', '水'), ('土', '木'),
-                                            ('金', '火'), ('水', '土')}:
+                    if (gan_wx, cg_wx) in KE_PAIRS:
                         gong_types['zhiyong'].append({
                             'type': '制用',
                             'tool': {'position': p.get('position', ''), 'gan': gan,
@@ -228,8 +262,8 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                             'description': '{}{}({})制{}({})'.format(gan_shishen, gan, gan, cg_shishen, cg),
                         })
 
-                if gan_shishen in YONG_STEMS and cg_shishen in TI_STEMS:
-                    if gan_wx == SHENG_MAP.get(cg_wx, ''):
+                if gan_shishen in TI_STEMS and cg_shishen in YONG_STEMS:
+                    if (gan_wx, cg_wx) in SHENG_PAIRS:
                         gong_types['shengyong'].append({
                             'type': '生用',
                             'tool': {'position': p.get('position', ''), 'gan': gan,
@@ -239,22 +273,16 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                             'description': '{}{}({})生{}({})'.format(gan_shishen, gan, gan, cg_shishen, cg),
                         })
 
-            if gan_shishen in TI_STEMS:
-                for cg_item in canggan_list:
-                    cg = cg_item.get('gan', '')
-                    cg_wx = GAN_WUXING.get(cg, '')
-                    cg_shishen = derive_shishen(day_master, cg)
-                    if cg_shishen in YONG_STEMS:
-                        if (gan_wx, cg_wx) in {('木', '金'), ('火', '水'), ('土', '木'),
-                                                ('金', '火'), ('水', '土')}:
-                            gong_types['zhiyong'].append({
-                                'type': '制用',
-                                'tool': {'position': p.get('position', ''), 'gan': gan,
-                                         'shishen': gan_shishen, 'wuxing': gan_wx},
-                                'target': {'position': p.get('position', '') + '藏',
-                                           'gan': cg, 'shishen': cg_shishen, 'wuxing': cg_wx},
-                                'description': '{}{}({})制{}({})'.format(gan_shishen, gan, gan, cg_shishen, cg),
-                            })
+                if gan_shishen in YONG_STEMS and cg_shishen in TI_STEMS:
+                    if (cg_wx, gan_wx) in SHENG_PAIRS:
+                        gong_types['huayong'].append({
+                            'type': '化用',
+                            'tool': {'position': p.get('position', '') + '藏',
+                                     'gan': cg, 'shishen': cg_shishen, 'wuxing': cg_wx},
+                            'target': {'position': p.get('position', ''), 'gan': gan,
+                                       'shishen': gan_shishen, 'wuxing': gan_wx},
+                            'description': '{}({})化泄{}{}({})'.format(cg_shishen, cg, gan_shishen, gan, gan),
+                        })
 
             if gan_shishen in {'食神', '伤官'}:
                 for cg_item in canggan_list:
@@ -262,7 +290,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                     cg_wx = GAN_WUXING.get(cg, '')
                     cg_shishen = derive_shishen(day_master, cg)
                     if cg_shishen in {'七杀', '正官'}:
-                        if (gan_wx, cg_wx) in {('火', '金'), ('火', '金')}:
+                        if (gan_wx, cg_wx) in KE_PAIRS:
                             gong_types['zhiyong'].append({
                                 'type': '制用',
                                 'tool': {'position': p.get('position', ''), 'gan': gan,
@@ -284,7 +312,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                             gong_types['heyong'].append({
                                 'type': '合用',
                                 'tool': {'gan': cg, 'shishen': cg_shishen, 'wuxing': cg_wx},
-                                'description': f'合{cg_shishen}({cg})为我用',
+                                'description': '合{}({})为我用'.format(cg_shishen, cg),
                             })
 
         return gong_types
@@ -319,7 +347,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
             level = '无功'
             score = 0
 
-        analysis_parts = [f'做功项目数：{tool_count}']
+        analysis_parts = ['做功项目数：{}'.format(tool_count)]
         if ti_strength > yong_strength:
             analysis_parts.append('体强于用，做功效率高')
         elif ti_strength < yong_strength:
@@ -363,7 +391,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                         triggers.append({
                             'type': rel_type,
                             'zhi': zhi,
-                            'description': f'大运/流年{rel.get("result", "")}时引动做功',
+                            'description': '大运/流年{}时引动做功'.format(rel.get('result', '')),
                         })
 
         return {
@@ -411,7 +439,8 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                 if p.get('position', '') in pos or pos in p.get('position', ''):
                     zhi = p.get('zhi', '')
                     changsheng = SHIER_CHANGSHENG.get(gan, {}).get(zhi, '')
-                    strength += CANGGAN_WEIGHT.get(changsheng, 0) if changsheng in CANGGAN_WEIGHT else 0
+                    if changsheng in CANGGAN_WEIGHT:
+                        strength += CANGGAN_WEIGHT.get(changsheng, 0)
 
                     canggan = p.get('canggan', [])
                     for cg_item in canggan:
@@ -420,19 +449,6 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                             strength += CANGGAN_WEIGHT.get(qi, 0) * 0.5
 
         return round(strength, 2)
-
-    def _classify_relation(self, wx1: str, wx2: str) -> str:
-        if wx1 == wx2:
-            return '同我'
-        if (wx1, wx2) in {('木', '火'), ('火', '土'), ('土', '金'), ('金', '水'), ('水', '木')}:
-            return '我生'
-        if (wx1, wx2) in {('火', '木'), ('土', '火'), ('金', '土'), ('水', '金'), ('木', '水')}:
-            return '生我'
-        if (wx1, wx2) in {('木', '土'), ('土', '水'), ('水', '火'), ('火', '金'), ('金', '木')}:
-            return '我克'
-        if (wx1, wx2) in {('土', '木'), ('水', '土'), ('火', '水'), ('金', '火'), ('木', '金')}:
-            return '克我'
-        return ''
 
 
 register_school('mangpai', MangpaiAnalyzer)

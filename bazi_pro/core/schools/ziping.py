@@ -9,7 +9,7 @@ from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP
 _BREAK_ADJUST = {
     '伤官见官': '印星',
     '比劫争财': '官杀',
-    '财星破印': '比劫',
+    '财星破印': '官杀',
     '枭神夺食': '财星',
 }
 
@@ -18,14 +18,6 @@ _BREAK_YONGSHEN_WX = {
     '官杀': '克我',
     '比劫': '同我',
     '财星': '我克',
-}
-
-_WUXING_REL_TO_VERDICT = {
-    '我生': '凶',
-    '我克': '凶',
-    '生我': '吉',
-    '克我': '吉',
-    '同我': '平',
 }
 
 
