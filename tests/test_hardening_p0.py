@@ -118,6 +118,7 @@ class TestCacheKeyCorrectness:
             "农历": "",
             "大运": [],
             "detail_level": "standard",
+            "school": "ziping",
             "analysis_version": _ANALYSIS_VERSION,
         }
         expected_raw = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
