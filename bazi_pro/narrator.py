@@ -10,7 +10,7 @@ bazi-pro 确定性报告叙述器 (narrator)
     # sections = {"strength": "...", "pattern": "...", "yongshen": "...", ...}
 """
 
-from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING, derive_shishen
+from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING
 from bazi_pro.core.tiaohou import lookup_tiaohou
 
 # ─── 五行属性描述 ─────────────────────────────────────────────────────────────
@@ -71,7 +71,6 @@ def narrate_analysis(result: dict) -> dict:
     yongshen_info = result.get("yongshen", {})
     elements = result.get("elements", {})
     relations = result.get("relations", [])
-    shishen = result.get("shishen", {})
     retrieval = result.get("retrieval", {})
 
     day_master = validation.get("day_master", "")
@@ -163,7 +162,7 @@ def _narrate_strength(day_master, dm_wx, month_zhi, strength):
         else:
             lines.append(f"【得势】得势分 {deshi_score:.1f}。")
     else:
-        lines.append(f"【得势】天干无同党帮扶，不得势。")
+        lines.append("【得势】天干无同党帮扶，不得势。")
 
     # 综合
     lines.append(f"综合三要素：得令{deling_score}，得地{dedi_score:.1f}，得势{deshi_score:.1f}。判定：{verdict}。")
@@ -174,7 +173,6 @@ def _narrate_strength(day_master, dm_wx, month_zhi, strength):
 def _narrate_pattern(day_master, dm_wx, bazi_parts, pattern_info):
     pattern = pattern_info.get("pattern", "")
     layer = pattern_info.get("layer", -1)
-    ptype = pattern_info.get("type", "")
     confidence = pattern_info.get("confidence", 0)
     reason = pattern_info.get("reason", "")
 
@@ -206,7 +204,6 @@ def _narrate_yongshen(day_master, dm_wx, month_zhi, pattern_info, yongshen_info)
     xishen = yongshen_info.get("xishen", [])
     jishen = yongshen_info.get("jishen", [])
     pattern_basis = yongshen_info.get("pattern_basis", "")
-    confidence = yongshen_info.get("confidence", 0)
     trace = yongshen_info.get("trace", {})
     method = trace.get("method", "")
     trace_reason = trace.get("reason", "")
