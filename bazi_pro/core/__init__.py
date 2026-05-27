@@ -52,6 +52,7 @@ from bazi_pro.core.ten_gods import (
 )
 from bazi_pro.core.tiaohou import lookup_tiaohou
 from bazi_pro.core.yongshen import _pattern_yongshen_wx, derive_yongshen
+from bazi_pro.core.schools import SchoolAnalyzer, school_analyze, SCHOOL_REGISTRY
 
 
 def full_analysis(mcp_json: dict) -> dict:
@@ -69,9 +70,8 @@ def full_analysis(mcp_json: dict) -> dict:
     deling_status, deling_score = calc_deling(day_master, month_zhi)
     dedi = calc_dedi(day_master, bazi_parts)
     deshi = calc_deshi(day_master, bazi_parts)
-    wangshuai = judge_wangshuai(deling_score, dedi['score'], deshi['score'])
-
     element_forces = calc_element_forces(bazi_parts, month_zhi)
+    wangshuai = judge_wangshuai(deling_score, dedi['score'], deshi['score'], day_master, element_forces)
     relations = detect_relations(bazi_parts)
     shishen_relations = detect_shishen_relations(day_master, bazi_parts)
     # 合并并去重（两类检测来源不同，type 不重叠，但防御性保留去重逻辑）
@@ -131,6 +131,7 @@ def full_analysis(mcp_json: dict) -> dict:
         'disease': disease,
         'tiaohou': tiaohou,
         'pillars': pillars,
+        'school_analyses': {},
     }
 
 
@@ -150,4 +151,5 @@ __all__ = [
     '_screen_layer0', '_screen_layer1', '_screen_layer2', '_screen_layer3',
     '_finalize_pattern',
     'derive_yongshen', '_pattern_yongshen_wx',
+    'SchoolAnalyzer', 'school_analyze', 'SCHOOL_REGISTRY',
 ]

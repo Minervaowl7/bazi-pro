@@ -1,31 +1,54 @@
 "use client";
 
 import BirthForm from "@/components/BirthForm";
+import HistorySidebar from "@/components/HistorySidebar";
+import { ThemeToggle } from "@/components/ThemeProvider";
 
 export default function Home() {
   return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-[var(--accent)] tracking-wider mb-2">
-            bazi-pro
-          </h1>
-          <p className="text-[var(--text-muted)] text-sm">
-            专业八字命理分析引擎 · 确定性计算 · 古籍引证
-          </p>
+    <div className="flex min-h-screen">
+      <HistorySidebar />
+      <main className="flex-1 flex items-center justify-center p-8 relative">
+        <div className="absolute top-6 right-6">
+          <ThemeToggle />
         </div>
+        <div className="w-full max-w-lg animate-fade-in">
+          <div className="text-center mb-12">
+            <h1
+              className="text-5xl font-bold tracking-wide mb-4"
+              style={{ color: "var(--accent)", fontFamily: '"Noto Serif SC", serif' }}
+            >
+              八字排盘
+            </h1>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: "var(--text-muted)" }}
+            >
+              输入出生时辰，即刻排盘 · 深度解读
+            </p>
+          </div>
 
-        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
-          <h2 className="text-base font-medium mb-4 text-[var(--text-secondary)]">
-            输入命盘信息
-          </h2>
-          <BirthForm />
+          <div
+            className="rounded-2xl p-8"
+            style={{
+              background: "var(--bg-card)",
+              border: "1px solid var(--border)",
+              boxShadow: "var(--shadow)",
+            }}
+          >
+            <BirthForm />
+          </div>
+
+          <div className="text-center mt-10 space-y-1.5">
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              基于确定性计算引擎 · 古籍引证 · 零幻觉
+            </p>
+            <p className="text-xs" style={{ color: "var(--text-muted)", opacity: 0.5 }}>
+              仅供传统文化学习与参考
+            </p>
+          </div>
         </div>
-
-        <p className="text-center text-xs text-[var(--text-muted)] mt-6 max-w-sm mx-auto">
-          本服务仅供传统文化学习与参考，分析结果不构成任何决策依据。
-        </p>
-      </div>
+      </main>
     </div>
   );
 }

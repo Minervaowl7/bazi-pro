@@ -1,7 +1,7 @@
-from bazi_pro.core.branches import JIANLU_MAP, YANGREN_MAP
-from bazi_pro.core.constants import GAN_WUXING, derive_shishen
+from bazi_pro.core.branches import JIANLU_MAP, YANGREN_MAP, ZHI_HUIFANG, ZHI_SANHE, ZHI_BANHE, SHIER_CHANGSHENG
+from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
-from bazi_pro.core.stems import SHENG_MAP
+from bazi_pro.core.stems import GAN_HE, KE_MAP, SHENG_MAP, WO_KE_MAP
 from bazi_pro.core.ten_gods import _count_shishen_categories, _get_yongshen_direction
 
 
@@ -42,6 +42,279 @@ def _check_dm_root_in_branches(day_master: str, dm_wx: str, bazi_parts: list) ->
                     result['root_locations'].append(f'{zhi}（余气）')
 
     return result
+
+
+HUA_SEASON_MAP = {
+    '土': {'辰', '戌', '丑', '未'},
+    '金': {'申', '酉'},
+    '水': {'亥', '子'},
+    '木': {'寅', '卯'},
+    '火': {'巳', '午'},
+}
+
+GAN_HE_DUO = {
+    frozenset({'甲', '己'}): {'争合': '己', '妒合': '乙'},
+    frozenset({'乙', '庚'}): {'争合': '庚', '妒合': '甲'},
+    frozenset({'丙', '辛'}): {'争合': '辛', '妒合': '丁'},
+    frozenset({'丁', '壬'}): {'争合': '壬', '妒合': '丙'},
+    frozenset({'戊', '癸'}): {'争合': '癸', '妒合': '己'},
+}
+
+WUXING_KE = {'木': '金', '火': '水', '土': '木', '金': '火', '水': '土'}
+
+
+def _check_formation(bazi_parts, target_wx):
+    branches = []
+    for part in bazi_parts:
+        if len(part) >= 2:
+            branches.append(part[1])
+    branch_set = set(branches)
+    for fang_set, fang_wx in ZHI_HUIFANG:
+        if fang_set.issubset(branch_set) and fang_wx == target_wx:
+            return {
+                'has_formation': True,
+                'type': '会方',
+                'branches': sorted(list(fang_set)),
+                'element': target_wx,
+            }
+    for he_set, he_wx in ZHI_SANHE:
+        if he_set.issubset(branch_set) and he_wx == target_wx:
+            return {
+                'has_formation': True,
+                'type': '三合',
+                'branches': sorted(list(he_set)),
+                'element': target_wx,
+            }
+    for fang_set, fang_wx in ZHI_HUIFANG:
+        if fang_wx == target_wx:
+            overlap = fang_set & branch_set
+            if len(overlap) >= 2:
+                return {
+                    'has_formation': True,
+                    'type': '会方',
+                    'branches': sorted(list(overlap)),
+                    'element': target_wx,
+                }
+    for banhe_set, banhe_wx in ZHI_BANHE:
+        if banhe_set.issubset(branch_set) and banhe_wx == target_wx:
+            return {
+                'has_formation': True,
+                'type': '三合',
+                'branches': sorted(list(banhe_set)),
+                'element': target_wx,
+            }
+    if target_wx == '土':
+        siku = {'辰', '戌', '丑', '未'}
+        siku_present = siku & branch_set
+        if len(siku_present) >= 3:
+            return {
+                'has_formation': True,
+                'type': '会方',
+                'branches': sorted(list(siku_present)),
+                'element': target_wx,
+            }
+    wx_count = sum(1 for b in branches if ZHI_WUXING.get(b, '') == target_wx)
+    if wx_count >= 3:
+        wx_branches = sorted([b for b in branches if ZHI_WUXING.get(b, '') == target_wx])
+        return {
+            'has_formation': True,
+            'type': '会方',
+            'branches': wx_branches,
+            'element': target_wx,
+        }
+    return {
+        'has_formation': False,
+        'type': None,
+        'branches': [],
+        'element': target_wx,
+    }
+
+
+def _check_month_season(month_zhi, target_wx):
+    SEASON_MAP = {
+        '木': ['寅', '卯', '辰'],
+        '火': ['巳', '午', '未'],
+        '金': ['申', '酉', '戌'],
+        '水': ['亥', '子', '丑'],
+        '土': ['辰', '戌', '丑', '未'],
+    }
+    season_months = SEASON_MAP.get(target_wx, [])
+    return {
+        'is_season': month_zhi in season_months,
+        'season_months': season_months,
+    }
+
+
+def _check_zhuanwang_break(day_master, dm_wx, bazi_parts, gans):
+    breaks = []
+    KE_WUXING = {'木': '金', '火': '水', '土': '木', '金': '火', '水': '土'}
+    ke_wx = KE_WUXING.get(dm_wx, '')
+    if ke_wx:
+        for g in gans:
+            if GAN_WUXING.get(g, '') == ke_wx:
+                ss = derive_shishen(day_master, g)
+                breaks.append({
+                    'type': '官杀逆势',
+                    'severity': 'high',
+                    'detail': f'天干{g}({ss})克日主{dm_wx}行，逆专旺之势',
+                })
+    hour_zhi = bazi_parts[-1][1] if len(bazi_parts) >= 1 and len(bazi_parts[-1]) >= 2 else ''
+    if hour_zhi:
+        cs_map = SHIER_CHANGSHENG.get(day_master, {})
+        cs_status = cs_map.get(hour_zhi, '')
+        if cs_status in ('死', '绝', '墓'):
+            breaks.append({
+                'type': '引至死绝',
+                'severity': 'medium',
+                'detail': f'时支{hour_zhi}为日主{day_master}{cs_status}地，专旺气泄',
+            })
+    return breaks
+
+
+def _check_hua_break(day_master, hua_wx, gans, bazi_parts):
+    breaks = []
+    he_key = None
+    for k in GAN_HE:
+        if day_master in k:
+            he_key = k
+            break
+    if he_key is None:
+        return breaks
+    duo_info = GAN_HE_DUO.get(he_key, {})
+    zhenghe_gan = duo_info.get('争合', '')
+    duhe_gan = duo_info.get('妒合', '')
+    zhenghe_count = sum(1 for g in gans if g == zhenghe_gan)
+    if zhenghe_count >= 2:
+        breaks.append({'type': '争合', 'severity': 'high',
+                       'detail': f'天干出现{zhenghe_count}个{zhenghe_gan}争合{day_master}'})
+    if duhe_gan and duhe_gan in gans:
+        breaks.append({'type': '妒合', 'severity': 'high',
+                       'detail': f'天干{duhe_gan}妒合，与合神同类但阴阳不同'})
+    ke_wx = WUXING_KE.get(hua_wx, '')
+    if ke_wx:
+        ke_gans = [g for g in gans if GAN_WUXING.get(g, '') == ke_wx]
+        if ke_gans:
+            breaks.append({'type': '克化神', 'severity': 'medium',
+                           'detail': f'天干{",".join(ke_gans)}属{ke_wx}克化神{hua_wx}'})
+    return breaks
+
+
+def _build_break_conditions(dm_root_info):
+    conditions = []
+    if dm_root_info['has_benqi_root'] or dm_root_info['has_zhongqi_root']:
+        conditions.append({
+            'type': '命逢根气',
+            'severity': 'high',
+            'detail': '日主有根气，从格不真',
+        })
+    return conditions
+
+
+def _check_jianlu_yangren_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
+    breaks = []
+    if '透正官' in pattern_name:
+        has_cai = False
+        has_yin = False
+        for g in gans:
+            if g == day_master:
+                continue
+            ss = derive_shishen(day_master, g)
+            if ss in ('正财', '偏财'):
+                has_cai = True
+            if ss in ('正印', '偏印'):
+                has_yin = True
+        if not has_cai and not has_yin:
+            breaks.append({
+                'type': '孤官无辅',
+                'severity': 'medium',
+                'detail': f'建禄格透正官，天干无财星印星辅佐，官星孤立',
+            })
+    if '羊刃格' in pattern_name and '透七杀' in pattern_name:
+        sha_gans = []
+        for g in gans:
+            if g == day_master:
+                continue
+            ss = derive_shishen(day_master, g)
+            if ss == '七杀':
+                sha_gans.append(g)
+        for sha_g in sha_gans:
+            for he_pair in GAN_HE:
+                if sha_g in he_pair:
+                    other_in_pair = he_pair - {sha_g}
+                    if other_in_pair:
+                        other_g = list(other_in_pair)[0]
+                        if other_g in gans:
+                            breaks.append({
+                                'type': '透刃合煞',
+                                'severity': 'high',
+                                'detail': f'羊刃格透七杀{sha_g}，天干{other_g}与七杀相合，杀被合去',
+                            })
+    if '建禄格' in pattern_name:
+        sha_wx = KE_MAP.get(dm_wx, '')
+        if sha_wx:
+            formation = _check_formation(bazi_parts, sha_wx)
+            if formation['has_formation']:
+                breaks.append({
+                    'type': '会杀为凶',
+                    'severity': 'high',
+                    'detail': f'建禄格地支{formation["type"]}{"".join(formation["branches"])}会{sha_wx}杀，凶',
+                })
+    return breaks
+
+
+def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
+    breaks = []
+    shishen_map = {}
+    for g in gans:
+        if g == day_master:
+            continue
+        ss = derive_shishen(day_master, g)
+        if ss not in shishen_map:
+            shishen_map[ss] = []
+        shishen_map[ss].append(g)
+    if '正官格' in pattern_name:
+        if '伤官' in shishen_map:
+            breaks.append({
+                'type': '伤官见官',
+                'severity': 'high',
+                'detail': f'正官格天干透伤官{"".join(shishen_map["伤官"])}，伤官见官为祸百端',
+            })
+    if '财格' in pattern_name:
+        if '比肩' in shishen_map or '劫财' in shishen_map:
+            has_guansha = '正官' in shishen_map or '七杀' in shishen_map
+            if not has_guansha:
+                bijie_gans = shishen_map.get('比肩', []) + shishen_map.get('劫财', [])
+                breaks.append({
+                    'type': '比劫争财',
+                    'severity': 'high',
+                    'detail': f'财格天干透比劫{"".join(bijie_gans)}，无官杀制比劫，财被争夺',
+                })
+    if '印格' in pattern_name:
+        if '正财' in shishen_map or '偏财' in shishen_map:
+            has_guansha = '正官' in shishen_map or '七杀' in shishen_map
+            if not has_guansha:
+                cai_gans = shishen_map.get('正财', []) + shishen_map.get('偏财', [])
+                breaks.append({
+                    'type': '财星破印',
+                    'severity': 'high',
+                    'detail': f'印格天干透财星{"".join(cai_gans)}，无官杀通关，财星破印',
+                })
+    if '食神格' in pattern_name:
+        if '偏印' in shishen_map:
+            breaks.append({
+                'type': '枭神夺食',
+                'severity': 'high',
+                'detail': f'食神格天干透偏印{"".join(shishen_map["偏印"])}，枭神夺食',
+            })
+    if '伤官格' in pattern_name:
+        is_jin_dm = day_master in ('庚', '辛')
+        if '正官' in shishen_map and not is_jin_dm:
+            breaks.append({
+                'type': '伤官见官',
+                'severity': 'high',
+                'detail': f'伤官格天干透正官{"".join(shishen_map["正官"])}，伤官见官为祸百端',
+            })
+    return breaks
 
 
 PATTERN_YONGSHEN = {
@@ -108,7 +381,7 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
     trace['layers_missed'].append('L0')
     trace['layer_details']['L0'] = {'hit': False, 'reason': '无专旺/从格/两行成象匹配'}
 
-    layer1_result = _screen_layer1(day_master, month_zhi, gans)
+    layer1_result = _screen_layer1(day_master, month_zhi, gans, bazi_parts)
     trace['layers_checked'].append('L1')
     if layer1_result:
         candidates.append(layer1_result)
@@ -119,7 +392,7 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
     trace['layers_missed'].append('L1')
     trace['layer_details']['L1'] = {'hit': False, 'reason': '月令本气未透干'}
 
-    layer2_result = _screen_layer2(day_master, month_zhi, gans)
+    layer2_result = _screen_layer2(day_master, month_zhi, gans, bazi_parts)
     trace['layers_checked'].append('L2')
     if layer2_result:
         candidates.append(layer2_result)
@@ -130,7 +403,7 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
     trace['layers_missed'].append('L2')
     trace['layer_details']['L2'] = {'hit': False, 'reason': '月令中气未透干或本气已透'}
 
-    layer3_result = _screen_layer3(day_master, dm_wx, month_zhi, gans)
+    layer3_result = _screen_layer3(day_master, dm_wx, month_zhi, gans, bazi_parts)
     trace['layers_checked'].append('L3')
     if layer3_result:
         candidates.append(layer3_result)
@@ -175,11 +448,60 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                         'yongshen_direction': f'化神{hua_wx}',
                     }
 
+    zhuanwang_names = {'木': '曲直格', '火': '炎上格', '土': '稼穑格', '金': '从革格', '水': '润下格'}
+    zhuanwang_trigger = False
+    zhuanwang_reason_base = ''
     if dm_pct >= 80:
-        zhuanwang_names = {'木': '曲直格', '火': '炎上格', '土': '稼穑格', '金': '从革格', '水': '润下格'}
+        zhuanwang_trigger = True
+        zhuanwang_reason_base = f'日主{dm_wx}行占{dm_pct}%≥80%'
+    elif dm_pct >= 50 and yin_bi_pct >= 75:
+        zhuanwang_trigger = True
+        zhuanwang_reason_base = f'日主{dm_wx}行占{dm_pct}%≥50%，印比合计{yin_bi_pct}%≥75%'
+
+    if zhuanwang_trigger:
+        formation = _check_formation(bazi_parts, dm_wx)
+        if formation['has_formation']:
+            season = _check_month_season(month_zhi, dm_wx)
+            confidence = 0.90
+            if not season['is_season']:
+                confidence -= 0.15
+            break_conditions = _check_zhuanwang_break(day_master, dm_wx, bazi_parts, gans)
+            for bc in break_conditions:
+                if bc['severity'] == 'high':
+                    confidence -= 0.2
+                elif bc['severity'] == 'medium':
+                    confidence -= 0.1
+            reason = zhuanwang_reason_base + f'，{formation["type"]}{"".join(formation["branches"])}成局'
+            if not season['is_season']:
+                reason += '，月令不当令'
+            return {
+                'layer': 0, 'type': '专旺格', 'pattern': zhuanwang_names.get(dm_wx, '专旺格'),
+                'confidence': confidence, 'reason': reason,
+                'yongshen_direction': '印比',
+                'formation': formation,
+                'break_conditions': break_conditions,
+            }
+        else:
+            if yin_bi_pct >= 80 and not dm_root_in_branch['has_benqi_root']:
+                return {
+                    'layer': 0, 'type': '从强格', 'pattern': '从强格',
+                    'confidence': 0.85,
+                    'reason': zhuanwang_reason_base + '但无方局/三合局，降级为从强格',
+                    'yongshen_direction': '印比',
+                }
+            else:
+                return {
+                    'layer': 0, 'type': '身旺', 'pattern': '身旺',
+                    'confidence': 0.75,
+                    'reason': zhuanwang_reason_base + '但无方局/三合局，降级为身旺',
+                    'yongshen_direction': '克泄耗',
+                }
+
+    if yin_bi_pct >= 80 and not dm_root_in_branch['has_benqi_root']:
         return {
-            'layer': 0, 'type': '专旺格', 'pattern': zhuanwang_names.get(dm_wx, '专旺格'),
-            'confidence': 0.90, 'reason': f'日主{dm_wx}行占{dm_pct}%≥80%',
+            'layer': 0, 'type': '从强格', 'pattern': '从强格',
+            'confidence': 0.85,
+            'reason': f'印比合计{yin_bi_pct}%≥80%，地支无本气根（真从强）',
             'yongshen_direction': '印比',
         }
 
@@ -256,17 +578,51 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
         shishen_counts = _count_shishen_categories(day_master, gans, bazi_parts, include_canggan=False)
         bijie_free = shishen_counts.get('比劫', 0) == 0 and not has_bijie_benqi_root
         if shishen_counts.get('财星', 0) >= 3 and bijie_free:
-            return {
-                'layer': 0, 'type': '从财格', 'pattern': '从财格',
-                'confidence': 0.80, 'reason': '日主极弱，财星成势，无比劫印星',
-                'yongshen_direction': '食伤生财',
-            }
+            cai_wx = WO_KE_MAP.get(dm_wx, '')
+            formation = _check_formation(bazi_parts, cai_wx)
+            if formation['has_formation']:
+                result = {
+                    'layer': 0, 'type': '从财格', 'pattern': '从财格',
+                    'confidence': 0.85,
+                    'reason': f'日主极弱，财星成势，{formation["type"]}{"".join(formation["branches"])}（真从）',
+                    'yongshen_direction': '食伤生财',
+                    'formation': formation, 'is_true': True,
+                }
+            else:
+                result = {
+                    'layer': 0, 'type': '从财格', 'pattern': '从财格',
+                    'confidence': 0.65,
+                    'reason': '日主极弱，财星成势，地支无财星方局/三合局（假从）',
+                    'yongshen_direction': '食伤生财',
+                    'formation': formation, 'is_true': False,
+                }
+            break_conds = _build_break_conditions(dm_root_in_branch)
+            if break_conds:
+                result['break_conditions'] = break_conds
+            return result
         if shishen_counts.get('官杀', 0) >= 3 and bijie_free:
-            return {
-                'layer': 0, 'type': '从官杀格', 'pattern': '从官杀格',
-                'confidence': 0.80, 'reason': '日主极弱，官杀成势，无比劫印星',
-                'yongshen_direction': '财生官',
-            }
+            guan_wx = KE_MAP.get(dm_wx, '')
+            formation = _check_formation(bazi_parts, guan_wx)
+            if formation['has_formation']:
+                result = {
+                    'layer': 0, 'type': '从官杀格', 'pattern': '从官杀格',
+                    'confidence': 0.85,
+                    'reason': f'日主极弱，官杀成势，{formation["type"]}{"".join(formation["branches"])}（真从）',
+                    'yongshen_direction': '财生官',
+                    'formation': formation, 'is_true': True,
+                }
+            else:
+                result = {
+                    'layer': 0, 'type': '从官杀格', 'pattern': '从官杀格',
+                    'confidence': 0.65,
+                    'reason': '日主极弱，官杀成势，地支无官杀方局/三合局（假从）',
+                    'yongshen_direction': '财生官',
+                    'formation': formation, 'is_true': False,
+                }
+            break_conds = _build_break_conditions(dm_root_in_branch)
+            if break_conds:
+                result['break_conditions'] = break_conds
+            return result
 
     # 从儿格：食伤成势 + 财星承接
     # 《滴天髓》："从儿不管身强弱，只要吾儿又得儿"
@@ -275,14 +631,25 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
         shishen_counts = _count_shishen_categories(day_master, gans, bazi_parts, include_canggan=False)
         bijie_free = shishen_counts.get('比劫', 0) == 0 and not has_bijie_benqi_root
         yin_free = shishen_counts.get('印星', 0) == 0
-        if (shishen_counts.get('食伤', 0) >= 3 and bijie_free and yin_free
-                and shishen_counts.get('财星', 0) >= 1):
-            return {
-                'layer': 0, 'type': '从儿格', 'pattern': '从儿格',
-                'confidence': 0.80,
-                'reason': '食伤成势，财星承接（吾儿又得儿），日主无强根',
-                'yongshen_direction': '食伤生财',
-            }
+        if shishen_counts.get('食伤', 0) >= 3 and bijie_free and yin_free:
+            if shishen_counts.get('财星', 0) >= 1:
+                result = {
+                    'layer': 0, 'type': '从儿格', 'pattern': '从儿格',
+                    'confidence': 0.80,
+                    'reason': '食伤成势，财星承接（吾儿又得儿），日主无强根',
+                    'yongshen_direction': '食伤生财',
+                }
+                break_conds = _build_break_conditions(dm_root_in_branch)
+                if break_conds:
+                    result['break_conditions'] = break_conds
+                return result
+            else:
+                return {
+                    'layer': 0, 'type': '食伤泄气', 'pattern': '食伤泄气',
+                    'confidence': 0.60,
+                    'reason': '食伤成势但无财星承接（吾儿未得儿），降为食伤泄气',
+                    'yongshen_direction': '待定',
+                }
 
     # 从势格：日主极弱，克泄耗多类混杂，无单一主导
     # 《滴天髓》："五阴从势无情义"
@@ -294,30 +661,34 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                            if shishen_counts.get(cat, 0) >= 1]
             no_dominance = all(shishen_counts.get(cat, 0) < 3 for cat in ke_xie_types)
             if len(ke_xie_types) >= 2 and no_dominance:
-                return {
+                result = {
                     'layer': 0, 'type': '从势格', 'pattern': '从势格',
                     'confidence': 0.65,
                     'reason': f'日主极弱，克泄耗{",".join(ke_xie_types)}混杂无单一主导，从势格',
                     'yongshen_direction': '顺势而为',
                 }
+                break_conds = _build_break_conditions(dm_root_in_branch)
+                if break_conds:
+                    result['break_conditions'] = break_conds
+                return result
 
     if month_zhi == JIANLU_MAP.get(day_master, ''):
         return None
 
     if month_zhi == YANGREN_MAP.get(day_master, ''):
-        if yin_bi_pct >= 80:
+        if yin_bi_pct >= 75:
             return {
                 'layer': 0, 'type': '从强格', 'pattern': '从强格',
-                'confidence': 0.85, 'reason': f'月支羊刃但印比{yin_bi_pct}%≥80%，从强格优先',
+                'confidence': 0.85, 'reason': f'月支羊刃但印比{yin_bi_pct}%≥75%，从强格优先',
                 'yongshen_direction': '印比',
             }
-        # 羊刃月但不从强 → 交给后续层处理(建禄月劫框架)
         return None
 
     return None
 
 
-def _screen_layer1(day_master, month_zhi, gans):
+def _screen_layer1(day_master, month_zhi, gans, bazi_parts):
+    dm_wx = GAN_WUXING.get(day_master, '')
     canggan = get_canggan(month_zhi)
     if not canggan:
         return None
@@ -325,19 +696,25 @@ def _screen_layer1(day_master, month_zhi, gans):
     if benqi_gan in gans:
         ss = derive_shishen(day_master, benqi_gan)
         if ss in ('比肩', '劫财'):
-            return _build_jianlu_yuejie(day_master, dm_wx='', month_zhi=month_zhi,
-                                        gans=gans, benqi_ss=ss, benqi_gan=benqi_gan,
+            return _build_jianlu_yuejie(day_master, dm_wx=dm_wx, month_zhi=month_zhi,
+                                        gans=gans, bazi_parts=bazi_parts,
+                                        benqi_ss=ss, benqi_gan=benqi_gan,
                                         layer=1, layer_type='月令本气比劫透干')
         pattern_name = f'{ss}格' if ss else '未知格'
-        return {
+        result = {
             'layer': 1, 'type': '月令本气透干', 'pattern': pattern_name,
             'confidence': 0.85, 'reason': f'月支{month_zhi}本气{benqi_gan}透干，十神为{ss}',
             'yongshen_direction': _get_yongshen_direction(ss),
         }
+        break_conditions = _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name)
+        if break_conditions:
+            result['break_conditions'] = break_conditions
+        return result
     return None
 
 
-def _screen_layer2(day_master, month_zhi, gans):
+def _screen_layer2(day_master, month_zhi, gans, bazi_parts):
+    dm_wx = GAN_WUXING.get(day_master, '')
     canggan = get_canggan(month_zhi)
     if len(canggan) < 2:
         return None
@@ -348,15 +725,20 @@ def _screen_layer2(day_master, month_zhi, gans):
     if zhongqi_gan in gans:
         ss = derive_shishen(day_master, zhongqi_gan)
         if ss in ('比肩', '劫财'):
-            return _build_jianlu_yuejie(day_master, dm_wx='', month_zhi=month_zhi,
-                                        gans=gans, benqi_ss=ss, benqi_gan=zhongqi_gan,
+            return _build_jianlu_yuejie(day_master, dm_wx=dm_wx, month_zhi=month_zhi,
+                                        gans=gans, bazi_parts=bazi_parts,
+                                        benqi_ss=ss, benqi_gan=zhongqi_gan,
                                         layer=2, layer_type='月令中气比劫透干')
         pattern_name = f'{ss}格' if ss else '未知格'
-        return {
+        result = {
             'layer': 2, 'type': '月令中气透干', 'pattern': pattern_name,
             'confidence': 0.75, 'reason': f'月支{month_zhi}中气{zhongqi_gan}透干，十神为{ss}',
             'yongshen_direction': _get_yongshen_direction(ss),
         }
+        break_conditions = _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name)
+        if break_conditions:
+            result['break_conditions'] = break_conditions
+        return result
     return None
 
 
@@ -368,8 +750,10 @@ def _classify_bijie_pattern(day_master: str, month_zhi: str, benqi_ss: str) -> s
     return '月劫格'
 
 
-def _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans,
+def _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans, bazi_parts,
                           benqi_ss, benqi_gan, layer, layer_type):
+    if not dm_wx:
+        dm_wx = GAN_WUXING.get(day_master, '')
     pattern_base = _classify_bijie_pattern(day_master, month_zhi, benqi_ss)
     tou_gan_ss = []
     for g in gans:
@@ -377,38 +761,42 @@ def _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans,
             ss = derive_shishen(day_master, g)
             if ss in ('正官', '七杀', '正财', '偏财', '食神', '伤官'):
                 tou_gan_ss.append(ss)
+    pattern_name = f'{pattern_base}，透{tou_gan_ss[0]}' if tou_gan_ss else f'{pattern_base}，无财官煞食透出'
+    break_conditions = _check_jianlu_yangren_break(day_master, dm_wx, bazi_parts, gans, pattern_name)
     if tou_gan_ss:
         main_ss = tou_gan_ss[0]
-        return {
-            'layer': layer, 'type': layer_type, 'pattern': f'{pattern_base}，透{main_ss}',
+        result = {
+            'layer': layer, 'type': layer_type, 'pattern': pattern_name,
             'confidence': 0.70,
             'reason': f'月令{benqi_gan}为{benqi_ss}，{pattern_base}不入正格，透{main_ss}取用',
             'yongshen_direction': _get_yongshen_direction(main_ss),
         }
     else:
-        return {
-            'layer': layer, 'type': layer_type, 'pattern': f'{pattern_base}，无财官煞食透出',
+        result = {
+            'layer': layer, 'type': layer_type, 'pattern': pattern_name,
             'confidence': 0.50,
             'reason': f'月令{benqi_gan}为{benqi_ss}，{pattern_base}不入正格，四天干无财官煞食透出',
             'yongshen_direction': '待定',
         }
+    if break_conditions:
+        result['break_conditions'] = break_conditions
+    return result
 
 
-def _screen_layer3(day_master, dm_wx, month_zhi, gans):
+def _screen_layer3(day_master, dm_wx, month_zhi, gans, bazi_parts):
     canggan = get_canggan(month_zhi)
     if not canggan:
         return None
     benqi_gan = canggan[0][0]
     benqi_ss = derive_shishen(day_master, benqi_gan)
 
-    # 羊刃月: 即使本气非比劫，仍以羊刃格论（如戊午月本气丁=正印）
     if month_zhi == YANGREN_MAP.get(day_master, ''):
-        return _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans,
+        return _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans, bazi_parts,
                                     benqi_ss='劫财', benqi_gan=benqi_gan,
                                     layer=3, layer_type='羊刃月令')
 
     if benqi_ss in ('比肩', '劫财'):
-        return _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans,
+        return _build_jianlu_yuejie(day_master, dm_wx, month_zhi, gans, bazi_parts,
                                     benqi_ss=benqi_ss, benqi_gan=benqi_gan,
                                     layer=3, layer_type='比劫月令')
 
@@ -425,7 +813,7 @@ def _screen_layer3(day_master, dm_wx, month_zhi, gans):
 
 def _finalize_pattern(candidates, wangshuai):
     best = candidates[0]
-    return {
+    result = {
         'pattern': best['pattern'],
         'candidates': candidates,
         'layer': best['layer'],
@@ -435,3 +823,8 @@ def _finalize_pattern(candidates, wangshuai):
         'yongshen_direction': best.get('yongshen_direction', '待定'),
         'wangshuai': wangshuai,
     }
+    if 'formation' in best:
+        result['formation'] = best['formation']
+    if 'break_conditions' in best:
+        result['break_conditions'] = best['break_conditions']
+    return result

@@ -1,0 +1,20 @@
+{
+  "id": "classical_cong_cai_juhui",
+  "description": "从财格-地支财局",
+  "scenario": "丙火日主，从财格，地支申酉会金局",
+  "input": {
+    "day_master": "丙",
+    "bazi": "庚申 乙酉 丙申 乙未",
+    "month_branch": "酉",
+    "expected_pattern": "从财格",
+    "expected_wangshuai": "从弱"
+  },
+  "must_include": [
+    "从财格"
+  ],
+  "must_not_include": [
+    "正财格",
+    "偏财格"
+  ],
+  "notes": "丙火日主极弱，地支申酉全金（财局），从财格"
+}

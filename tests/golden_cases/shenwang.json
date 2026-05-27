@@ -6,20 +6,19 @@
     "day_master": "庚",
     "bazi": "庚辰 庚申 庚戌 戊申",
     "month_branch": "申",
-    "expected_pattern": "建禄格，无财官煞食透出",
-    "expected_wangshuai": "偏旺",
-    "expected_yongshen_wx": "火",
+    "expected_pattern": "从革格",
+    "expected_wangshuai": "极旺",
+    "expected_yongshen_wx": "土",
     "expected_deling_score": 3,
     "expected_dedi_level": "偏得地",
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "建禄格，无财官煞食透出"
+    "从革格"
   ],
   "must_not_include": [
-    "从格",
     "暗比肩格",
     "暗劫财格"
   ],
-  "notes": "得令+得地+得势"
+  "notes": "得令+得地+得势，金行51.9%≥50%且印比81.4%≥75%，极旺+从革格"
 }

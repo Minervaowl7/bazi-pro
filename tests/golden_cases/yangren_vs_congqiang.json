@@ -6,7 +6,7 @@
     "day_master": "壬",
     "bazi": "庚子 壬子 壬申 庚子",
     "month_branch": "子",
-    "expected_pattern": "从强格",
+    "expected_pattern": "润下格",
     "expected_wangshuai": "极旺",
     "expected_yongshen_wx": "金",
     "expected_deling_score": 3,
@@ -14,7 +14,7 @@
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "从强"
+    "润下格"
   ],
   "must_not_include": [
     "羊刃格",
@@ -25,5 +25,5 @@
     "DTM_00080",
     "DTM_00082"
   ],
-  "notes": "v3.5修复：层0-A从强格检查必须在羊刃格之前"
+  "notes": "壬水日主子月羊刃，水行专旺为润下格"
 }

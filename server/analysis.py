@@ -21,15 +21,22 @@ from bazi_pro.core import (
     judge_wangshuai,
     screen_pattern,
 )
+from bazi_pro.paipan import paipan_from_datetime
 from server.cache import get_cache
 from server.ws import manager
 
+try:
+    from bazi_pro.core.schools import school_analyze
+except ImportError:
+    school_analyze = None
+
 
 async def run_analysis(mcp_json: dict, run_id: str,
-                       detail_level: str = 'standard') -> dict:
+                       detail_level: str = 'standard',
+                       school: str = 'ziping') -> dict:
     cache = get_cache()
 
-    cache_key = _make_cache_key(mcp_json, detail_level)
+    cache_key = _make_cache_key(mcp_json, detail_level, school)
     cached = cache.get(cache_key)
     if cached:
         await manager.send_progress(run_id, 'cache', 'done',
@@ -40,6 +47,7 @@ async def run_analysis(mcp_json: dict, run_id: str,
         'run_id': run_id,
         'status': 'completed',
         'detail_level': detail_level,
+        'school': school,
         'started_at': datetime.now(timezone.utc).isoformat(),
         'disclaimer': '本分析仅供传统文化学习与参考，不构成任何决策依据。',
         'source_attribution': {
@@ -67,6 +75,15 @@ async def run_analysis(mcp_json: dict, run_id: str,
         day_master = mcp_json.get('日主', '')
         bazi_parts = bazi.split()
         month_zhi = bazi_parts[1][1] if len(bazi_parts) >= 2 and len(bazi_parts[1]) >= 2 else ''
+
+        paipan_result = None
+        solar = mcp_json.get('阳历', '')
+        gender = mcp_json.get('性别', '')
+        if solar and gender:
+            try:
+                paipan_result = paipan_from_datetime(solar, gender)
+            except Exception:
+                paipan_result = None
 
         await manager.send_progress(run_id, '0', 'running', '古籍条文检索中...')
         retrieval = await _do_retrieve(mcp_json)
@@ -116,6 +133,16 @@ async def run_analysis(mcp_json: dict, run_id: str,
         await manager.send_progress(run_id, '5', 'done', '五行力量分析完成', element_forces)
         result['elements'] = element_forces
 
+        await manager.send_progress(run_id, '5b', 'running', '调候查表中...')
+        await asyncio.sleep(0.05)
+        try:
+            from bazi_pro.core.tiaohou import lookup_tiaohou
+            tiaohou = lookup_tiaohou(day_master, month_zhi)
+        except Exception:
+            tiaohou = {'has_tiaohou': False, 'tiaohou_gan': [], 'tiaohou_wx': []}
+        await manager.send_progress(run_id, '5b', 'done', '调候查表完成', tiaohou)
+        result['tiaohou'] = tiaohou
+
         await manager.send_progress(run_id, '7', 'running', '刑冲合害检测中...')
         await asyncio.sleep(0.05)
         relations = _detect_relations(bazi_parts)
@@ -125,6 +152,24 @@ async def run_analysis(mcp_json: dict, run_id: str,
         result['relations'] = relations
 
         await manager.send_progress(run_id, '9', 'done', '全部分析步骤完成')
+
+        if paipan_result and 'dayun' in paipan_result:
+            result['dayun'] = paipan_result['dayun']
+            result['qiyun_age'] = paipan_result.get('qiyun_age', 5)
+
+        if school_analyze and school != 'ziping':
+            await manager.send_progress(run_id, 'school', 'running', '流派分析中...')
+            try:
+                if school == 'all':
+                    school_results = school_analyze(mcp_json, 'all')
+                    result['school_analyses'] = school_results
+                else:
+                    school_result = school_analyze(mcp_json, school)
+                    result['school_analysis'] = school_result
+                await manager.send_progress(run_id, 'school', 'done', '流派分析完成')
+            except Exception as e:
+                result['school_warning'] = f'流派分析失败: {str(e)}'
+                await manager.send_progress(run_id, 'school', 'done', '流派分析跳过')
 
         result['completed_at'] = datetime.now(timezone.utc).isoformat()
         cache.set(cache_key, result, ttl=3600)
@@ -208,13 +253,19 @@ def _derive_shishen(mcp_json: dict, bazi_parts: list[str]) -> dict:
             continue
         gan, zhi = token[0], token[1]
         canggan = get_canggan(zhi)
+        shishen_gan = derive_shishen(day_master, gan)
+        canggan_list = get_canggan(zhi)
+        main_cg_gan = canggan_list[0][0] if canggan_list else ''
+        shishen_zhi = derive_shishen(day_master, main_cg_gan) if main_cg_gan else ''
         pillars.append({
             'position': positions[i] if i < 4 else '',
             'gan': gan,
             'zhi': zhi,
             'wuxing_gan': GAN_WUXING.get(gan, ''),
             'wuxing_zhi': ZHI_WUXING.get(zhi, ''),
-            'shishen': derive_shishen(day_master, gan),
+            'shishen': shishen_gan,
+            'shishen_gan': shishen_gan,
+            'shishen_zhi': shishen_zhi,
             'canggan': [{'gan': cg, 'qi': ql,
                           'wuxing': GAN_WUXING.get(cg, ''),
                           'shishen': derive_shishen(day_master, cg)}
@@ -256,7 +307,7 @@ def _detect_relations(bazi_parts: list[str]) -> list[dict]:
 _ANALYSIS_VERSION = "v5"
 
 
-def _make_cache_key(mcp_json: dict, detail_level: str) -> str:
+def _make_cache_key(mcp_json: dict, detail_level: str, school: str = 'ziping') -> str:
     key_data = {
         "八字": mcp_json.get("八字", ""),
         "日主": mcp_json.get("日主", ""),
@@ -265,6 +316,7 @@ def _make_cache_key(mcp_json: dict, detail_level: str) -> str:
         "农历": mcp_json.get("农历", ""),
         "大运": mcp_json.get("大运", []),
         "detail_level": detail_level,
+        "school": school,
         "analysis_version": _ANALYSIS_VERSION,
     }
     raw = json.dumps(key_data, sort_keys=True, ensure_ascii=False, separators=(",", ":"))

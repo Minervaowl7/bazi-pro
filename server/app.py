@@ -25,16 +25,22 @@ from pydantic import BaseModel, Field
 
 from server.analysis import run_analysis
 from server.cache import get_cache
+from server.dayun_score import score_dayun, score_liunian
 from server.db import (
     close_db,
     generate_analysis_id,
     get_analysis,
+    get_chat_messages,
     get_db,
+    get_report,
     insert_analysis,
+    insert_chat_message,
     list_analyses,
+    save_report,
     update_analysis_result,
     update_analysis_status,
 )
+from server.llm import build_chat_system_prompt, build_report_system_prompt, chat_completion, is_llm_configured
 from server.ratelimiter import MemoryRateLimiter, RateLimiter, RedisRateLimiter, create_rate_limiter
 from server.schemas import BaziAnalysisRequest
 from server.taskstore import MemoryTaskStore, RedisTaskStore, create_task_store
@@ -612,6 +618,33 @@ class BirthAnalyzeRequest(BaseModel):
     detail_level: str = Field(default="standard")
     longitude: Optional[float] = Field(default=None, description="出生地经度")
     latitude: Optional[float] = Field(default=None, description="出生地纬度")
+    school: Optional[str] = Field(default="ziping", description="解读流派: ziping/ziwei/qiongtong")
+
+
+class PaipanRequest(BaseModel):
+    性别: str = Field(..., description="性别: 男/女")
+    阳历: str = Field(..., description="阳历日期时间，如 2002-05-19 06:14")
+    农历: Optional[str] = Field(default="", description="农历日期")
+
+
+class ChatRequest(BaseModel):
+    analysis_id: str = Field(..., description="分析记录 ID")
+    message: str = Field(..., description="用户消息")
+
+
+class ReportRequest(BaseModel):
+    analysis_id: str = Field(..., description="分析记录 ID")
+
+
+@app.post("/api/v2/paipan")
+async def api_v2_paipan(payload: PaipanRequest):
+    """排盘 API — 根据出生时间生成八字四柱"""
+    try:
+        from bazi_pro.paipan import paipan_from_datetime
+        result = paipan_from_datetime(payload.阳历, payload.性别, payload.农历 or "")
+        return JSONResponse(result)
+    except Exception as e:
+        return error_response(400, "PAIPAN_ERROR", str(e))
 
 
 @app.post("/api/v2/analyze")
@@ -620,6 +653,7 @@ async def api_v2_analyze(payload: BirthAnalyzeRequest):
     analysis_id = generate_analysis_id()
     payload_dict = payload.model_dump(exclude_none=True)
     detail_level = payload_dict.pop("detail_level", "standard")
+    school = payload_dict.pop("school", "ziping")
     payload_dict.pop("longitude", None)
     payload_dict.pop("latitude", None)
 
@@ -628,7 +662,7 @@ async def api_v2_analyze(payload: BirthAnalyzeRequest):
     _sse_subscribers[analysis_id] = []
     _sse_buffers[analysis_id] = []
 
-    asyncio.create_task(_background_analyze_v2(analysis_id, payload_dict, detail_level))
+    asyncio.create_task(_background_analyze_v2(analysis_id, payload_dict, detail_level, school))
 
     return JSONResponse(
         status_code=202,
@@ -640,7 +674,47 @@ async def api_v2_analyze(payload: BirthAnalyzeRequest):
     )
 
 
-async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level: str):
+class CompareRequest(BaseModel):
+    八字: str = Field(..., description="四柱八字，空格分隔")
+    日主: str = Field(..., description="日主天干")
+    性别: str = Field(default="男", description="性别: 男/女")
+    出生年: Optional[int] = Field(default=None, description="出生年份")
+    出生月: Optional[int] = Field(default=None, description="出生月份")
+    出生日: Optional[int] = Field(default=None, description="出生日期")
+
+
+@app.post("/api/v2/analyze/compare")
+async def api_v2_analyze_compare(payload: CompareRequest):
+    """三流派对比分析 — 同时返回子平/盲派/新派分析结果"""
+    try:
+        from bazi_pro.core.schools import school_analyze
+    except ImportError:
+        return error_response(503, "SCHOOL_NOT_AVAILABLE", "流派分析模块不可用")
+
+    mcp_json = {
+        "八字": payload.八字,
+        "日主": payload.日主,
+        "性别": payload.性别,
+    }
+    if payload.出生年:
+        mcp_json["出生年"] = payload.出生年
+    if payload.出生月:
+        mcp_json["出生月"] = payload.出生月
+    if payload.出生日:
+        mcp_json["出生日"] = payload.出生日
+
+    try:
+        results = school_analyze(mcp_json, "all")
+        return JSONResponse({
+            "status": "completed",
+            "schools": results,
+        })
+    except Exception as e:
+        logger.error("Compare analysis failed: %s", e)
+        return error_response(500, "ANALYSIS_ERROR", f"分析失败: {str(e)}")
+
+
+async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level: str, school: str = 'ziping'):
     """P0 后台分析 — 发送 SSE 事件 + 存储结果"""
     _v2_active_ids.add(analysis_id)
     try:
@@ -648,7 +722,7 @@ async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level:
             "step": "0", "name": "启动分析", "status": "running", "message": "正在初始化..."
         })
 
-        result = await run_analysis(mcp_json, analysis_id, detail_level)
+        result = await run_analysis(mcp_json, analysis_id, detail_level, school)
 
         await update_analysis_result(analysis_id, result)
         await _sse_broadcast(analysis_id, "done", {"analysis_id": analysis_id})
@@ -739,7 +813,19 @@ async def api_v2_get_analysis(analysis_id: str):
         except (json.JSONDecodeError, TypeError):
             pass
 
-    # Generate deterministic narrator text
+    if isinstance(result, dict) and result.get("status") == "completed" and "tiaohou" not in result:
+        try:
+            from bazi_pro.core.tiaohou import lookup_tiaohou
+            validation = result.get("validation", {})
+            day_master = validation.get("day_master", "")
+            bazi = validation.get("bazi", "")
+            bazi_parts = bazi.split() if bazi else []
+            month_zhi = bazi_parts[1][1] if len(bazi_parts) >= 2 and len(bazi_parts[1]) >= 2 else ""
+            if day_master and month_zhi:
+                result["tiaohou"] = lookup_tiaohou(day_master, month_zhi)
+        except Exception:
+            pass
+
     narration = {}
     if isinstance(result, dict) and result.get("status") == "completed":
         try:
@@ -761,11 +847,240 @@ async def api_v2_get_analysis(analysis_id: str):
     })
 
 
+@app.get("/api/v2/dayun-liunian/{analysis_id}")
+async def api_v2_dayun_liunian(analysis_id: str):
+    record = await get_analysis(analysis_id)
+    if not record:
+        return error_response(404, "NOT_FOUND", "分析记录不存在")
+
+    result = record.get("full_result")
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except (json.JSONDecodeError, TypeError):
+            result = {}
+
+    if not isinstance(result, dict) or result.get("status") != "completed":
+        return error_response(400, "ANALYSIS_NOT_COMPLETED", "分析尚未完成，无法获取大运流年评分")
+
+    dayun_list = result.get("dayun", [])
+    qiyun_age = result.get("qiyun_age", 5)
+
+    yongshen_info = result.get("yongshen", {})
+    if isinstance(yongshen_info, dict):
+        yongshen_wx = yongshen_info.get("yongshen", "")
+        jishen_wx = yongshen_info.get("jishen", [])
+        xishen_wx = yongshen_info.get("xishen", [])
+    else:
+        yongshen_wx = str(yongshen_info) if yongshen_info else ""
+        jishen_wx = []
+        xishen_wx = []
+
+    day_master = result.get("validation", {}).get("day_master", "")
+    if not day_master:
+        day_master = record.get("day_master", "")
+
+    birth_json = record.get("birth_json", {})
+    if isinstance(birth_json, str):
+        try:
+            birth_json = json.loads(birth_json)
+        except (json.JSONDecodeError, TypeError):
+            birth_json = {}
+
+    birth_year = None
+    solar = birth_json.get("阳历", "")
+    if solar:
+        try:
+            birth_year = int(solar.split("-")[0])
+        except (ValueError, IndexError):
+            birth_year = None
+
+    if not dayun_list or not yongshen_wx or not birth_year:
+        return JSONResponse({
+            "analysis_id": analysis_id,
+            "dayun_scores": [],
+            "liunian_scores": [],
+            "warning": "缺少大运、用神或出生年份数据，无法评分",
+        })
+
+    dayun_scores = score_dayun(dayun_list, yongshen_wx, jishen_wx, day_master)
+    liunian_scores = score_liunian(
+        dayun_list, yongshen_wx, jishen_wx, xishen_wx, day_master,
+        birth_year, qiyun_age,
+    )
+
+    return JSONResponse({
+        "analysis_id": analysis_id,
+        "dayun_scores": dayun_scores,
+        "liunian_scores": liunian_scores,
+    })
+
+
 @app.get("/api/v2/history")
 async def api_v2_history(page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1, le=100)):
     """历史分析记录列表"""
     data = await list_analyses(page=page, page_size=page_size)
     return JSONResponse(data)
+
+
+@app.post("/api/v2/chat")
+async def api_v2_chat(payload: ChatRequest):
+    """对话接口 — 基于命盘数据与 LLM 对话"""
+    if not is_llm_configured():
+        return error_response(503, "LLM_NOT_CONFIGURED", "LLM 服务未配置。请设置 LLM_API_KEY 环境变量。")
+
+    record = await get_analysis(payload.analysis_id)
+    if not record:
+        return error_response(404, "NOT_FOUND", "分析记录不存在")
+
+    result = record.get("full_result")
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except (json.JSONDecodeError, TypeError):
+            result = {}
+
+    narration = {}
+    if isinstance(result, dict) and result.get("status") == "completed":
+        try:
+            from bazi_pro.narrator import narrate_analysis
+            narration = narrate_analysis(result)
+        except Exception:
+            pass
+
+    system_prompt = build_chat_system_prompt(result or {}, narration)
+
+    history = await get_chat_messages(payload.analysis_id, limit=20)
+
+    messages = [{"role": "system", "content": system_prompt}]
+    for msg in history:
+        messages.append({"role": msg["role"], "content": msg["content"]})
+    messages.append({"role": "user", "content": payload.message})
+
+    await insert_chat_message(payload.analysis_id, "user", payload.message)
+
+    try:
+        reply = await chat_completion(messages)
+        await insert_chat_message(payload.analysis_id, "assistant", reply)
+        return JSONResponse({"reply": reply})
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        logger.error("Chat failed for analysis %s: %s\n%s", payload.analysis_id, e, tb)
+        err_msg = str(e) or type(e).__name__
+        return error_response(500, "LLM_ERROR", f"LLM 调用失败: {err_msg}")
+
+
+@app.get("/api/v2/chat/{analysis_id}")
+async def api_v2_get_chat(analysis_id: str):
+    """获取对话历史"""
+    messages = await get_chat_messages(analysis_id, limit=100)
+    return JSONResponse({"messages": messages})
+
+
+@app.post("/api/v2/report")
+async def api_v2_create_report(payload: ReportRequest):
+    """生成七维度综合分析报告"""
+    if not is_llm_configured():
+        return error_response(503, "LLM_NOT_CONFIGURED", "LLM 服务未配置。请设置 LLM_API_KEY 环境变量。")
+
+    record = await get_analysis(payload.analysis_id)
+    if not record:
+        return error_response(404, "NOT_FOUND", "分析记录不存在")
+
+    if record.get("status") != "completed":
+        return error_response(400, "ANALYSIS_NOT_COMPLETED", "分析尚未完成，无法生成报告")
+
+    result = record.get("full_result")
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except (json.JSONDecodeError, TypeError):
+            result = {}
+
+    if not isinstance(result, dict) or result.get("status") != "completed":
+        return error_response(400, "INVALID_RESULT", "分析结果数据异常，无法生成报告")
+
+    narration = {}
+    try:
+        from bazi_pro.narrator import narrate_analysis
+        narration = narrate_analysis(result)
+    except Exception:
+        pass
+
+    birth_json = record.get("birth_json", {})
+    if isinstance(birth_json, str):
+        try:
+            birth_json = json.loads(birth_json)
+        except (json.JSONDecodeError, TypeError):
+            birth_json = {}
+
+    dayun_data = birth_json.get("大运", None)
+
+    system_prompt = build_report_system_prompt(result, narration, dayun_data)
+    messages = [{"role": "system", "content": system_prompt}]
+
+    try:
+        raw_reply = await chat_completion(messages, temperature=0.7, max_tokens=8192)
+    except Exception as e:
+        logger.error("Report LLM call failed for analysis %s: %s", payload.analysis_id, e)
+        err_msg = str(e) or type(e).__name__
+        return error_response(500, "LLM_ERROR", f"LLM 调用失败: {err_msg}")
+
+    report_data = _parse_report_json(raw_reply)
+
+    report_id = await save_report(payload.analysis_id, report_data)
+
+    return JSONResponse({
+        "report_id": report_id,
+        "analysis_id": payload.analysis_id,
+        "report": report_data,
+    })
+
+
+@app.get("/api/v2/report/{analysis_id}")
+async def api_v2_get_report(analysis_id: str):
+    """获取已生成的七维度综合分析报告"""
+    record = await get_report(analysis_id)
+    if not record:
+        return error_response(404, "NOT_FOUND", "报告不存在，请先通过 POST /api/v2/report 生成")
+
+    return JSONResponse({
+        "report_id": record["id"],
+        "analysis_id": record["analysis_id"],
+        "report": record["report_data"],
+        "created_at": record["created_at"],
+    })
+
+
+def _parse_report_json(raw_reply: str) -> dict:
+    try:
+        cleaned = raw_reply.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[len("```json"):]
+        if cleaned.startswith("```"):
+            cleaned = cleaned[len("```"):]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-len("```")]
+        cleaned = cleaned.strip()
+        parsed = json.loads(cleaned)
+        if isinstance(parsed, dict):
+            required_keys = {"overview", "personality", "career", "marriage", "health", "dayun_analysis", "lucky"}
+            if required_keys.issubset(parsed.keys()):
+                return parsed
+            return {k: parsed.get(k, "") for k in required_keys}
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    return {
+        "overview": "",
+        "personality": "",
+        "career": "",
+        "marriage": "",
+        "health": "",
+        "dayun_analysis": raw_reply,
+        "lucky": "",
+    }
 
 
 def main():

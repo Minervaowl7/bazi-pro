@@ -67,6 +67,17 @@ async def _init_tables(db: aiosqlite.Connection):
 
         CREATE INDEX IF NOT EXISTS idx_chat_analysis
             ON chat_messages(analysis_id, created_at);
+
+        CREATE TABLE IF NOT EXISTS reports (
+            id TEXT PRIMARY KEY,
+            analysis_id TEXT NOT NULL,
+            report_data TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (analysis_id) REFERENCES analyses(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_reports_analysis
+            ON reports(analysis_id);
     """)
 
 
@@ -193,3 +204,61 @@ def _row_to_dict(row) -> dict:
         else:
             d[key] = val
     return d
+
+
+async def insert_chat_message(analysis_id: str, role: str, content: str, citations: str = ""):
+    db = await get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    await db.execute(
+        "INSERT INTO chat_messages (analysis_id, role, content, citations, created_at) VALUES (?, ?, ?, ?, ?)",
+        (analysis_id, role, content, citations, now),
+    )
+    await db.commit()
+
+
+async def get_chat_messages(analysis_id: str, limit: int = 50) -> list[dict]:
+    db = await get_db()
+    cursor = await db.execute(
+        "SELECT role, content, citations, created_at FROM chat_messages WHERE analysis_id = ? ORDER BY id ASC LIMIT ?",
+        (analysis_id, limit),
+    )
+    rows = await cursor.fetchall()
+    return [
+        {"role": row[0], "content": row[1], "citations": row[2] or "", "created_at": row[3]}
+        for row in rows
+    ]
+
+
+async def save_report(analysis_id: str, report_data: dict) -> str:
+    db = await get_db()
+    report_id = f"rpt_{uuid.uuid4().hex[:12]}"
+    now = datetime.now(timezone.utc).isoformat()
+    await db.execute(
+        "INSERT INTO reports (id, analysis_id, report_data, created_at) VALUES (?, ?, ?, ?)",
+        (report_id, analysis_id, json.dumps(report_data, ensure_ascii=False), now),
+    )
+    await db.commit()
+    return report_id
+
+
+async def get_report(analysis_id: str) -> dict | None:
+    db = await get_db()
+    cursor = await db.execute(
+        "SELECT id, analysis_id, report_data, created_at FROM reports WHERE analysis_id = ? ORDER BY created_at DESC LIMIT 1",
+        (analysis_id,),
+    )
+    row = await cursor.fetchone()
+    if not row:
+        return None
+    report_data = row[2]
+    if isinstance(report_data, str):
+        try:
+            report_data = json.loads(report_data)
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return {
+        "id": row[0],
+        "analysis_id": row[1],
+        "report_data": report_data,
+        "created_at": row[3],
+    }

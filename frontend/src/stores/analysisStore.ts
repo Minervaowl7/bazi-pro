@@ -2,9 +2,12 @@ import { create } from "zustand";
 import {
   type AnalysisResult,
   type BirthInput,
+  type PaipanInput,
+  type PaipanResult,
   type SSEEvent,
   getAnalysis,
   submitAnalysis,
+  submitPaipan,
   subscribeSSE,
 } from "@/lib/api";
 
@@ -22,10 +25,13 @@ interface AnalysisState {
   progress: ProgressStep[];
   result: AnalysisResult | null;
   error: string | null;
+  paipanResult: PaipanResult | null;
+  paipanLoading: boolean;
 
   setBirthInput: (input: BirthInput) => void;
   startAnalysis: (input: BirthInput) => Promise<string>;
   fetchResult: (analysisId: string) => Promise<void>;
+  submitPaipan: (input: PaipanInput) => Promise<void>;
   reset: () => void;
 }
 
@@ -36,6 +42,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   progress: [],
   result: null,
   error: null,
+  paipanResult: null,
+  paipanLoading: false,
 
   setBirthInput: (input) => set({ birthInput: input }),
 
@@ -80,6 +88,17 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
     }
   },
 
+  submitPaipan: async (input) => {
+    set({ paipanLoading: true, paipanResult: null });
+    try {
+      const result = await submitPaipan(input);
+      set({ paipanResult: result, paipanLoading: false });
+    } catch (e) {
+      set({ paipanLoading: false });
+      throw e;
+    }
+  },
+
   reset: () =>
     set({
       birthInput: null,
@@ -88,5 +107,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
       progress: [],
       result: null,
       error: null,
+      paipanResult: null,
+      paipanLoading: false,
     }),
 }));

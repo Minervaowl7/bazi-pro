@@ -1,54 +1,77 @@
 "use client";
 
-interface DayunStep {
-  age_range?: string;
-  gan?: string;
-  zhi?: string;
-  startAge?: number;
-  endAge?: number;
-}
+const WUXING_COLORS: Record<string, string> = {
+  木: "var(--wood)",
+  火: "var(--fire)",
+  土: "var(--earth)",
+  金: "var(--metal)",
+  水: "var(--water)",
+};
 
-interface DayunTimelineProps {
+interface Props {
   result: Record<string, unknown>;
 }
 
-export default function DayunTimeline({ result }: DayunTimelineProps) {
-  const validation = result.validation as { bazi?: string } | undefined;
-  const birthJson = result.birth_json || result.validation;
+export default function DayunTimeline({ result }: Props) {
+  const dayun = (result.dayun as Array<Record<string, unknown>> | undefined)
+    || (result.paipan_dayun as Array<Record<string, unknown>> | undefined);
 
-  let dayunList: DayunStep[] = [];
-  if (result.dayun && Array.isArray(result.dayun)) {
-    dayunList = result.dayun as DayunStep[];
-  } else if (birthJson && typeof birthJson === "object") {
-    const bj = birthJson as Record<string, unknown>;
-    if (bj["大运"] && Array.isArray(bj["大运"])) {
-      dayunList = bj["大运"] as DayunStep[];
-    }
-  }
-
-  if (dayunList.length === 0) return null;
+  if (!dayun || dayun.length === 0) return null;
 
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5 mb-6">
-      <h2 className="text-lg font-medium mb-4">大运时间轴</h2>
+    <div
+      className="rounded-2xl p-6 animate-fade-in"
+      style={{
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      <h3
+        className="text-base font-semibold mb-5"
+        style={{ color: "var(--accent)" }}
+      >
+        大运时间线
+      </h3>
+      <div
+        className="flex overflow-x-auto gap-3 pb-2"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {dayun.map((d, i) => {
+          const ganWuxing = d.gan_wuxing as string | undefined;
+          const zhiWuxing = d.zhi_wuxing as string | undefined;
+          const ganColor = ganWuxing ? WUXING_COLORS[ganWuxing] : "var(--text-primary)";
+          const zhiColor = zhiWuxing ? WUXING_COLORS[zhiWuxing] : "var(--text-primary)";
 
-      <div className="overflow-x-auto">
-        <div className="flex gap-2 min-w-max pb-2">
-          {dayunList.map((step, i) => {
-            const ganZhi = `${step.gan || ""}${step.zhi || ""}`;
-            const ageRange = step.age_range || (step.startAge != null ? `${step.startAge}-${step.endAge}` : `${i * 10 + 3}-${i * 10 + 12}`);
-
-            return (
+          return (
+            <div
+              key={i}
+              className="flex-shrink-0 px-4 py-3 rounded-xl text-center min-w-[80px] transition-all duration-200 hover:-translate-y-0.5"
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border)",
+              }}
+            >
               <div
-                key={i}
-                className="flex flex-col items-center px-3 py-2 bg-[var(--bg-secondary)] rounded-lg min-w-[64px] hover:bg-[var(--bg-hover)] transition-colors cursor-default"
+                className="text-base font-bold tracking-wide"
+                style={{ color: ganColor }}
               >
-                <span className="text-xs text-[var(--text-muted)] mb-1">{ageRange}岁</span>
-                <span className="text-base font-medium text-[var(--text-primary)]">{ganZhi || "—"}</span>
+                {String(d.gan || "")}
               </div>
-            );
-          })}
-        </div>
+              <div
+                className="text-base font-bold tracking-wide"
+                style={{ color: zhiColor }}
+              >
+                {String(d.zhi || "")}
+              </div>
+              <div
+                className="text-xs mt-1.5"
+                style={{ color: "var(--text-muted)" }}
+              >
+                {String(d.age_range || `${i + 1}运`)}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

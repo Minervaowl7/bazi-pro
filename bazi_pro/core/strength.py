@@ -1,6 +1,7 @@
 from bazi_pro.core.branches import CANGGAN_WEIGHT, DELING_SCORE, SHIER_CHANGSHENG
 from bazi_pro.core.constants import GAN_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
+from bazi_pro.core.stems import SHENG_MAP
 
 
 def calc_deling(day_master: str, month_zhi: str) -> tuple[str, int]:
@@ -96,7 +97,7 @@ def calc_deshi(day_master: str, bazi_parts: list[str]) -> dict:
     return {'score': total, 'details': details, 'level': level}
 
 
-def judge_wangshuai(deling_score: int, dedi_score: float, deshi_score: float) -> dict:
+def judge_wangshuai(deling_score: int, dedi_score: float, deshi_score: float, day_master: str = '', element_forces: dict = None) -> dict:
     if deling_score >= 3 and dedi_score >= 3 and deshi_score >= 6:
         verdict = '极旺'
     elif deling_score <= -2 and dedi_score < 1.5 and deshi_score <= 1:
@@ -115,13 +116,23 @@ def judge_wangshuai(deling_score: int, dedi_score: float, deshi_score: float) ->
         verdict = '中和偏弱'
     elif 0 <= deling_score <= 1 and dedi_score < 1.5 and deshi_score < 2:
         verdict = '身弱'
-    # 补充中间区间细分（只在极端情况下触发，保持与Golden Case一致）
     elif -1 <= deling_score <= 1 and 1.5 <= dedi_score < 3 and deshi_score >= 10:
         verdict = '中和偏旺'
     elif -1 <= deling_score <= 1 and 1.5 <= dedi_score < 3 and deshi_score < 1:
         verdict = '中和偏弱'
     else:
         verdict = '中和'
+
+    if element_forces and day_master:
+        dm_wx = GAN_WUXING.get(day_master, '')
+        if dm_wx:
+            yin_wx = SHENG_MAP.get(dm_wx, '')
+            percent = element_forces.get('percent', {})
+            bi_pct = percent.get(dm_wx, 0)
+            yin_pct = percent.get(yin_wx, 0) if yin_wx else 0
+            yin_bi_ratio = bi_pct + yin_pct
+            if yin_bi_ratio >= 75:
+                verdict = '极旺'
 
     return {
         'verdict': verdict,

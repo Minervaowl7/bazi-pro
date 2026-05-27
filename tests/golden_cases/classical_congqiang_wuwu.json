@@ -8,7 +8,7 @@
     "bazi": "戊午 戊午 戊午 甲寅",
     "month_branch": "午",
     "expected_pattern": "从强格",
-    "expected_wangshuai": "偏旺",
+    "expected_wangshuai": "极旺",
     "expected_yongshen_wx": "火"
   },
   "must_include": [
@@ -20,5 +20,5 @@
   "classical_support": [
     "YHZ_00115"
   ],
-  "notes": "《渊海子平》：戊日午月勿作刃看，岁时火多却为印绶"
+  "notes": "《渊海子平》：戊日午月勿作刃看，岁时火多却为印绶，印比81.7%≥75%故极旺"
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAnalysisStore, type ProgressStep } from "@/stores/analysisStore";
+import { useEffect, useState } from "react";
 
 const STEP_LABELS: Record<string, string> = {
   "0": "古籍检索",
@@ -10,60 +11,126 @@ const STEP_LABELS: Record<string, string> = {
   "4": "十神推导",
   "4b": "喜用神推导",
   "5": "五行力量",
+  "5b": "调候查表",
   "7": "刑冲合害",
   "9": "分析完成",
 };
 
+const STEP_ORDER = ["0", "1", "2", "3", "4", "4b", "5", "5b", "7"];
+
 export default function AnalysisProgress() {
   const { progress, status } = useAnalysisStore();
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (status !== "streaming" && status !== "submitting") return;
+    const timer = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(timer);
+  }, [status]);
 
   if (status !== "streaming" && status !== "submitting") return null;
 
-  const latestStep = progress[progress.length - 1];
   const completedSteps = progress.filter((s) => s.status === "done");
-  const totalSteps = 8;
-  const pct = Math.min((completedSteps.length / totalSteps) * 100, 100);
+  const latestStep = progress[progress.length - 1];
+  const currentStepIdx = latestStep
+    ? STEP_ORDER.indexOf(latestStep.step)
+    : -1;
+  const pct = Math.min(
+    ((Math.max(currentStepIdx, 0) + (latestStep?.status === "done" ? 1 : 0.5)) / STEP_ORDER.length) * 100,
+    95
+  );
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}分${sec}秒` : `${sec}秒`;
+  };
 
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5 mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-[var(--text-secondary)]">分析进度</h3>
-        <span className="text-xs text-[var(--text-muted)]">
-          {completedSteps.length}/{totalSteps}
+    <div
+      className="rounded-xl p-5 mb-6"
+      style={{
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span
+            className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
+            style={{ background: "var(--accent)" }}
+          />
+          <h3 className="text-sm font-medium" style={{ color: "var(--accent)" }}>
+            正在分析
+          </h3>
+        </div>
+        <span className="text-xs font-mono tabular-nums" style={{ color: "var(--text-muted)" }}>
+          {formatTime(elapsed)}
         </span>
       </div>
 
-      <div className="w-full h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden mb-3">
+      <div
+        className="w-full rounded-full overflow-hidden mb-4"
+        style={{ height: 4, background: "var(--bg-secondary)" }}
+      >
         <div
-          className="h-full bg-[var(--accent)] rounded-full transition-all duration-500"
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all duration-700 ease-out"
+          style={{
+            width: `${pct}%`,
+            background: "linear-gradient(90deg, var(--accent), var(--accent-hover))",
+          }}
         />
       </div>
 
       {latestStep && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-sm" style={{ color: "var(--text-primary)" }}>
+            {STEP_LABELS[latestStep.step] || latestStep.name || `步骤 ${latestStep.step}`}
+          </span>
           {latestStep.status === "running" && (
-            <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
+            <span
+              className="text-xs animate-pulse"
+              style={{ color: "var(--text-muted)" }}
+            >
+              处理中...
+            </span>
           )}
           {latestStep.status === "done" && (
-            <div className="w-2 h-2 rounded-full bg-[var(--success)]" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           )}
-          <span className="text-sm text-[var(--text-secondary)]">
-            {STEP_LABELS[latestStep.step] || latestStep.name || `步骤 ${latestStep.step}`}
-            {latestStep.status === "running" ? "..." : ""}
-          </span>
         </div>
       )}
 
-      <div className="mt-3 space-y-1">
-        {progress.map((step: ProgressStep, i: number) => (
-          <div key={i} className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-            <span className={step.status === "done" ? "text-[var(--success)]" : "text-[var(--accent)]"}>
-              {step.status === "done" ? "✓" : "●"}
+      <div className="flex flex-wrap gap-1.5">
+        {STEP_ORDER.map((step) => {
+          const stepProgress = progress.find((p) => p.step === step);
+          const isDone = stepProgress?.status === "done";
+          const isRunning = stepProgress?.status === "running";
+          return (
+            <span
+              key={step}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                isDone
+                  ? ""
+                  : isRunning
+                    ? "animate-pulse"
+                    : ""
+              }`}
+              style={
+                isDone
+                  ? { background: "rgba(74,222,128,0.12)", color: "var(--success)" }
+                  : isRunning
+                    ? { background: "var(--accent-dim)", color: "var(--accent)" }
+                    : { background: "var(--bg-secondary)", color: "var(--text-muted)" }
+              }
+            >
+              {isDone && (
+                <svg className="inline-block mr-1 -mt-px" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              )}
+              {STEP_LABELS[step]}
             </span>
-            <span>{STEP_LABELS[step.step] || step.name || `步骤 ${step.step}`}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

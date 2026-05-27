@@ -1,0 +1,21 @@
+{
+  "id": "classical_hua_wood_true",
+  "description": "化木格-丁壬合-真化",
+  "scenario": "丁火日主，丁壬合化木，月令寅月当令，化木真格",
+  "input": {
+    "day_master": "丁",
+    "bazi": "丁卯 壬寅 辛亥 戊申",
+    "month_branch": "寅",
+    "expected_pattern": "化木格",
+    "expected_wangshuai": "从弱"
+  },
+  "must_include": [
+    "化木格",
+    "丁壬"
+  ],
+  "must_not_include": [
+    "正印格",
+    "偏印格"
+  ],
+  "notes": "丁壬化木，月令寅月当令，地支亥卯未"
+}
