@@ -1,11 +1,10 @@
 import copy
 
-from bazi_pro.core.schools.base import SchoolAnalyzer
 from bazi_pro.core import full_analysis
-from bazi_pro.core.constants import GAN_WUXING, derive_shishen, WUXING_TO_GAN
-from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP, WO_SHENG_MAP
-from bazi_pro.core.ten_gods import SHISHEN_WUXING_REL
-
+from bazi_pro.core.constants import GAN_WUXING, WUXING_TO_GAN, derive_shishen
+from bazi_pro.core.schools import register_school  # noqa: E402
+from bazi_pro.core.schools.base import SchoolAnalyzer
+from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP
 
 _BREAK_ADJUST = {
     '伤官见官': '印星',
@@ -153,7 +152,6 @@ class ZipingAnalyzer(SchoolAnalyzer):
                 continue
 
             shishen = derive_shishen(day_master, gan)
-            rel = SHISHEN_WUXING_REL.get(shishen, '')
 
             if gan_wx == yong_wx:
                 verdict = '吉'
@@ -204,5 +202,4 @@ def _ke_pairs():
     return _KE_PAIRS
 
 
-from bazi_pro.core.schools import register_school
 register_school('ziping', ZipingAnalyzer)

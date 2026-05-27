@@ -1,4 +1,4 @@
-from bazi_pro.core.branches import JIANLU_MAP, YANGREN_MAP, ZHI_HUIFANG, ZHI_SANHE, ZHI_BANHE, SHIER_CHANGSHENG
+from bazi_pro.core.branches import JIANLU_MAP, SHIER_CHANGSHENG, YANGREN_MAP, ZHI_BANHE, ZHI_HUIFANG, ZHI_SANHE
 from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.stems import GAN_HE, KE_MAP, SHENG_MAP, WO_KE_MAP
@@ -227,7 +227,7 @@ def _check_jianlu_yangren_break(day_master, dm_wx, bazi_parts, gans, pattern_nam
             breaks.append({
                 'type': '孤官无辅',
                 'severity': 'medium',
-                'detail': f'建禄格透正官，天干无财星印星辅佐，官星孤立',
+                'detail': '建禄格透正官，天干无财星印星辅佐，官星孤立',
             })
     if '羊刃格' in pattern_name and '透七杀' in pattern_name:
         sha_gans = []

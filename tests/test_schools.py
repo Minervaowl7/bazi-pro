@@ -1,6 +1,4 @@
-import pytest
-from bazi_pro.core.schools import school_analyze, SCHOOL_REGISTRY, _ensure_schools_loaded
-from bazi_pro.core import full_analysis
+from bazi_pro.core.schools import SCHOOL_REGISTRY, _ensure_schools_loaded, school_analyze
 
 
 class TestSchools:

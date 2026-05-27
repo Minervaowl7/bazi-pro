@@ -30,6 +30,7 @@ from bazi_pro.core.patterns import (
     screen_pattern,
 )
 from bazi_pro.core.relations import detect_relations, detect_shishen_relations
+from bazi_pro.core.schools import SCHOOL_REGISTRY, SchoolAnalyzer, school_analyze
 from bazi_pro.core.stems import (
     GAN_HE,
     KE_MAP,
@@ -52,7 +53,6 @@ from bazi_pro.core.ten_gods import (
 )
 from bazi_pro.core.tiaohou import lookup_tiaohou
 from bazi_pro.core.yongshen import _pattern_yongshen_wx, derive_yongshen
-from bazi_pro.core.schools import SchoolAnalyzer, school_analyze, SCHOOL_REGISTRY
 
 
 def full_analysis(mcp_json: dict) -> dict:

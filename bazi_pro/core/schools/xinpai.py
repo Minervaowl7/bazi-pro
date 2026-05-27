@@ -1,12 +1,16 @@
-from bazi_pro.core.schools.base import SchoolAnalyzer
 from bazi_pro.core import (
-    full_analysis, get_canggan, derive_shishen, GAN_WUXING, ZHI_WUXING,
-    KE_MAP, WO_KE_MAP, SHENG_MAP, WO_SHENG_MAP,
-    JIANLU_MAP, SHIER_CHANGSHENG, CANGGAN_WEIGHT
+    GAN_WUXING,
+    KE_MAP,
+    SHENG_MAP,
+    WO_KE_MAP,
+    WO_SHENG_MAP,
+    ZHI_WUXING,
+    derive_shishen,
+    full_analysis,
 )
-from bazi_pro.core.schools import register_school
 from bazi_pro.core.constants import WUXING_TO_GAN
-
+from bazi_pro.core.schools import register_school
+from bazi_pro.core.schools.base import SchoolAnalyzer
 
 KONGWANG_MAP = {
     '甲子': ['戌', '亥'], '甲寅': ['子', '丑'], '甲辰': ['寅', '卯'],

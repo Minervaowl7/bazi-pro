@@ -8,9 +8,9 @@ _LOADED = False
 def _ensure_schools_loaded():
     global _LOADED
     if not _LOADED:
-        from bazi_pro.core.schools import ziping
-        from bazi_pro.core.schools import mangpai
-        from bazi_pro.core.schools import xinpai
+        import bazi_pro.core.schools.mangpai  # noqa: F401
+        import bazi_pro.core.schools.xinpai  # noqa: F401
+        import bazi_pro.core.schools.ziping  # noqa: F401
         _LOADED = True
 
 
