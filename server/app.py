@@ -739,6 +739,15 @@ async def api_v2_get_analysis(analysis_id: str):
         except (json.JSONDecodeError, TypeError):
             pass
 
+    # Generate deterministic narrator text
+    narration = {}
+    if isinstance(result, dict) and result.get("status") == "completed":
+        try:
+            from bazi_pro.narrator import narrate_analysis
+            narration = narrate_analysis(result)
+        except Exception:
+            pass
+
     return JSONResponse({
         "analysis_id": analysis_id,
         "status": record["status"],
@@ -748,6 +757,7 @@ async def api_v2_get_analysis(analysis_id: str):
         "pattern": record.get("pattern", ""),
         "yongshen": record.get("yongshen", ""),
         "result": result,
+        "narration": narration,
     })
 
 

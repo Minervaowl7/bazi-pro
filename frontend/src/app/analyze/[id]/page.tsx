@@ -30,6 +30,7 @@ export default function AnalyzePage() {
   }, [analysisId, status, storeAnalysisId, fetchResult, reset]);
 
   const analysisResult = result?.result as Record<string, unknown> | undefined;
+  const narration = (result as Record<string, unknown> | null)?.narration as Record<string, unknown> | undefined;
 
   return (
     <div className="flex flex-1 min-h-screen">
@@ -58,7 +59,7 @@ export default function AnalyzePage() {
         {status === "completed" && analysisResult && (
           <>
             <BaziChartCard result={analysisResult} />
-            <SchoolPanel result={analysisResult} />
+            <SchoolPanel result={analysisResult} narration={narration as never} />
             <DayunTimeline result={analysisResult} />
           </>
         )}

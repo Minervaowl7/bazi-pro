@@ -33,6 +33,7 @@ export interface AnalysisResult {
   pattern?: string;
   yongshen?: string;
   result?: Record<string, unknown>;
+  narration?: Record<string, unknown>;
 }
 
 export interface HistoryItem {
