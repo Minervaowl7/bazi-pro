@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Minervaowl7/bazi-pro/actions/workflows/ci.yml)
 
-**确定性命理计算核心 + LLM 解释框架**
+**确定性命理计算核心 + 零幻觉叙述器 + 交互式 Web 应用**
 
-2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 六层格局筛查 · 喜用神推导 · 消费级报告 · 动态 SVG 命盘 · 插件机制
+2964 条古籍条文 · 6 部经典 · BM25+Hybrid 检索 · 六层格局筛查 · 喜用神推导 · 确定性叙述器 · Next.js 暗色主题前端 · FastAPI SSE 后端 · 插件机制
 
 ---
 
@@ -30,8 +30,19 @@ pip install -e ".[tui]"       # Rich 终端界面
 ```bash
 git clone git@github.com:Minervaowl7/bazi-pro.git
 cd bazi-pro
-pip install -e .
+pip install -e ".[server]"
 
+# 启动后端 (端口 8710)
+python -m uvicorn server.app:app --host 127.0.0.1 --port 8710
+
+# 启动前端 (另一个终端)
+cd frontend && pnpm install && pnpm dev
+
+# 打开浏览器访问 http://localhost:3000
+```
+
+```bash
+# 或者使用 CLI 工具
 # 检索古籍（核心功能，无需 extra）
 python scripts/retrieve_classical.py "食神 制杀 身弱" -k 3 --json
 
@@ -64,7 +75,7 @@ bazi-hybrid
 ## 引擎架构
 
 ```
-命盘 MCP JSON
+用户输入 (Web 表单 / MCP JSON / CLI)
     │
     ▼
 ┌─────────────────────────────────────────────────┐
@@ -83,14 +94,15 @@ bazi-hybrid
     │
     ▼
 ┌─────────────────────────────────────────────────┐
-│  证据链 + Trace 管线                             │
-│  evidence.py → trace.py → view_model.py          │
-│  DashboardVM 统一数据契约                         │
+│  确定性叙述器 (bazi_pro/narrator.py)             │
+│  narrate_analysis() → 9 维度专业中文文本          │
+│  零 LLM · 零幻觉 · 每句可追溯到计算数据          │
 └─────────────────────────────────────────────────┘
     │
     ▼
 ┌─────────────────────────────────────────────────┐
-│  输出与可视化层                                   │
+│  输出层                                          │
+│  Web 应用 (Next.js + FastAPI SSE + SQLite)       │
 │  3 种报告模式 (技术/仪表盘/消费级)                │
 │  ui/ 子包 (SVG命盘 · 命运河流 · 推理图谱)         │
 │  server/ (FastAPI) · tui/ (Rich 终端)            │
@@ -98,6 +110,31 @@ bazi-hybrid
 ```
 
 核心原则：**算析分离** — `bazi_pro/core/` 做所有确定性命理计算，LLM 只负责解读，不参与计算。
+
+---
+
+## Web 应用
+
+bazi-pro 提供完整的交互式 Web 应用（暗色主题，DeepOracle 风格）：
+
+**前端** (`frontend/`): Next.js 14 + TypeScript + Tailwind CSS + Zustand + ECharts
+- 命盘输入表单（八字 + 日主自动推导 + 性别）
+- SSE 实时分析进度条
+- 四柱网格 + 五行雷达图
+- 确定性叙述面板（旺衰/格局/用神/调候/五行/刑冲/性格/事业）
+- 大运时间轴
+- 历史记录侧边栏
+
+**后端** (`server/`): FastAPI + SSE + SQLite
+- `POST /api/v2/analyze` — 提交分析，返回 analysis_id + SSE stream URL
+- `GET /api/v2/analysis/{id}/stream` — SSE 实时进度推送（含事件缓冲回放）
+- `GET /api/v2/analysis/{id}` — 完整结果 + 确定性叙述文本
+- `GET /api/v2/history` — 分页历史记录
+
+**叙述器** (`bazi_pro/narrator.py`): 从计算结果直接生成命理师风格中文文本
+- 9 个维度：总览/旺衰/格局/用神/调候/五行/刑冲/性格/事业
+- 零 LLM 依赖，每句话可追溯到确定性计算数据
+- 风格：先下结论再给论据，用干支语言，敢说"不确定"
 
 ---
 
@@ -152,16 +189,18 @@ Consumer 模式特性：术语 tooltip（hover 显示通俗解释）、70 词术
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `BAZI_API_KEY` | (空) | 设置后启用 API 鉴权。REST 使用 `X-API-Key` header；WebSocket 使用 `x-api-key` header |
-| `BAZI_CORS_ORIGINS` | (空) | 逗号分隔的允许 Origin 列表。默认不启用 CORS |
+| `BAZI_CORS_ORIGINS` | `localhost:3000` | 逗号分隔的允许 Origin 列表。默认允许前端开发地址 |
 | `BAZI_MAX_PAYLOAD_BYTES` | `10240` | 请求体最大字节数（含 chunked body） |
 | `BAZI_TASK_TTL_SECONDS` | `7200` | 分析任务缓存 TTL（秒） |
 | `BAZI_MAX_CONCURRENT_TASKS` | `1000` | 最大并发分析任务数 |
 | `BAZI_RATE_LIMIT_REQUESTS` | `30` | 每个 IP+API key 在窗口期内最大请求数 |
 | `BAZI_RATE_LIMIT_WINDOW_SECONDS` | `60` | Rate limit 窗口期（秒） |
 | `BAZI_HOST` | `0.0.0.0` | 服务监听地址 |
-| `BAZI_PORT` | `8800` | 服务监听端口 |
+| `BAZI_PORT` | `8710` | 服务监听端口 |
 | `BAZI_LOG_LEVEL` | `info` | 日志级别 |
 | `BAZI_CACHE_DIR` | (平台缓存目录) | BM25 索引缓存目录，默认 `~/.cache/bazi-pro` (Linux) |
+| `BAZI_DB_PATH` | `bazi_pro.db` | SQLite 数据库文件路径 |
+| `NEXT_PUBLIC_API_URL` | `http://127.0.0.1:8710` | 前端连接后端的地址（前端 .env.local） |
 | `REDIS_URL` | (空) | 设置后使用 Redis 作为缓存/任务存储/限流后端 |
 
 API 错误响应统一格式：
@@ -191,11 +230,12 @@ API 错误响应统一格式：
 | 模块 | 功能 | 亮点 |
 |------|------|------|
 | `bazi_pro/retrieve_classical.py` | BM25+古籍检索 | pickle 缓存 · `--batch` 批量 · JSON 元数据 |
+| `bazi_pro/narrator.py` | 确定性叙述器 | 9 维度中文文本 · 零 LLM · 命理师风格 |
 | `bazi_pro/hybrid_search.py` | 融合检索 | BM25+向量+权威权重 · 匹配词高亮 · CLI 入口 |
 | `bazi_pro/generate_report.py` | 报告生成 | Markdown/HTML/PDF · `--theme dashboard` v5.0 仪表盘 |
 | `bazi_pro/ui/` (子包) | 可视化组件 | 动态SVG命盘 · 命运河流时间轴 · 推理图谱 · 裁决印章 |
 | `bazi_pro/view_model.py` | 共享数据层 | DashboardVM 统一三种输出形态 |
-| `server/` | Web 服务 | FastAPI REST + WebSocket 进度推送 + Redis/LRU 缓存 |
+| `server/` | Web 服务 | FastAPI REST + SSE + WebSocket + SQLite 持久化 |
 | `bazi_pro/tui/` | 交互终端 | Rich 彩色表格 + 进度条 + Tab 补全 REPL |
 | `bazi_pro/plugin_api.py` | 插件机制 | on_retrieve / on_evidence / on_render 钩子 |
 | `bazi_pro/archive.py` | 档案系统 | SQLite 存储 + 用户反馈校准 |
