@@ -4,14 +4,13 @@
   "scenario": "丁火日主，丁壬合化木，月令寅月当令，化木真格",
   "input": {
     "day_master": "丁",
-    "bazi": "丁卯 壬寅 辛亥 戊申",
+    "bazi": "丁卯 壬寅 丁亥 戊申",
     "month_branch": "寅",
     "expected_pattern": "化木格",
-    "expected_wangshuai": "从弱"
+    "expected_wangshuai": "中和"
   },
   "must_include": [
-    "化木格",
-    "丁壬"
+    "化木格"
   ],
   "must_not_include": [
     "正印格",

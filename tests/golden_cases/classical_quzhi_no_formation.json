@@ -1,20 +1,20 @@
 {
   "id": "classical_quzhi_no_formation",
-  "description": "从强格-无方局三合降级",
-  "scenario": "甲木日主，地支无完整方局/三合，降级为从强格",
+  "description": "羊刃格-无方局三合",
+  "scenario": "甲木日主，月令卯为羊刃，地支无完整寅卯辰方局，取羊刃格",
   "input": {
     "day_master": "甲",
     "bazi": "甲寅 丁卯 甲子 丙寅",
     "month_branch": "卯",
-    "expected_pattern": "从强格",
-    "expected_wangshuai": "极旺",
-    "expected_yongshen_wx": "水"
+    "expected_pattern": "羊刃格，透伤官",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "火"
   },
   "must_include": [
-    "从强格"
+    "羊刃格"
   ],
   "must_not_include": [
     "曲直格"
   ],
-  "notes": "地支无寅卯辰或亥卯未，从强格而非曲直格"
+  "notes": "甲木日主月令卯为羊刃，子平真诠月令羊刃先取羊刃格，非曲直格"
 }
