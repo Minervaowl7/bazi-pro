@@ -305,15 +305,25 @@ class MangpaiAnalyzer(SchoolAnalyzer):
             if rel_type == '天干合':
                 gans = rel.get('elements', [])
                 if len(gans) == 2:
-                    for cg in gans:
-                        cg_wx = GAN_WUXING.get(cg, '')
-                        cg_shishen = derive_shishen(day_master, cg)
-                        if cg_shishen in YONG_STEMS:
-                            gong_types['heyong'].append({
-                                'type': '合用',
-                                'tool': {'gan': cg, 'shishen': cg_shishen, 'wuxing': cg_wx},
-                                'description': '合{}({})为我用'.format(cg_shishen, cg),
-                            })
+                    g1, g2 = gans[0], gans[1]
+                    ss1 = derive_shishen(day_master, g1)
+                    ss2 = derive_shishen(day_master, g2)
+                    wx1 = GAN_WUXING.get(g1, '')
+                    wx2 = GAN_WUXING.get(g2, '')
+                    if ss1 in TI_STEMS and ss2 in YONG_STEMS:
+                        gong_types['heyong'].append({
+                            'type': '合用',
+                            'tool': {'gan': g1, 'shishen': ss1, 'wuxing': wx1},
+                            'target': {'gan': g2, 'shishen': ss2, 'wuxing': wx2},
+                            'description': '{}{}({})合{}({})为我用'.format(ss1, g1, g1, ss2, g2),
+                        })
+                    elif ss2 in TI_STEMS and ss1 in YONG_STEMS:
+                        gong_types['heyong'].append({
+                            'type': '合用',
+                            'tool': {'gan': g2, 'shishen': ss2, 'wuxing': wx2},
+                            'target': {'gan': g1, 'shishen': ss1, 'wuxing': wx1},
+                            'description': '{}{}({})合{}({})为我用'.format(ss2, g2, g2, ss1, g1),
+                        })
 
         return gong_types
 

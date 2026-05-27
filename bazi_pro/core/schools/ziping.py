@@ -153,13 +153,13 @@ class ZipingAnalyzer(SchoolAnalyzer):
                 detail = f'大运天干{gan}({gan_wx})生扶用神{yong_wx}'
             elif (yong_wx, gan_wx) in _ke_pairs():
                 verdict = '凶'
-                detail = f'大运天干{gan}({gan_wx})克泄用神{yong_wx}'
+                detail = f'用神{yong_wx}克大运天干{gan}({gan_wx})，耗用神之力'
             elif (gan_wx, yong_wx) in _ke_pairs():
                 verdict = '凶'
-                detail = f'大运天干{gan}({gan_wx})克泄用神{yong_wx}'
+                detail = f'大运天干{gan}({gan_wx})克用神{yong_wx}'
             elif (yong_wx, gan_wx) in _sheng_pairs():
                 verdict = '凶'
-                detail = f'大运天干{gan}({gan_wx})泄用神{yong_wx}'
+                detail = f'用神{yong_wx}生大运天干{gan}({gan_wx})，泄用神之力'
             else:
                 verdict = '平'
                 detail = f'大运天干{gan}({gan_wx})与用神{yong_wx}关系待定'
