@@ -156,8 +156,9 @@ async def run_analysis(mcp_json: dict, run_id: str,
         if paipan_result and 'dayun' in paipan_result:
             result['dayun'] = paipan_result['dayun']
             result['qiyun_age'] = paipan_result.get('qiyun_age', 5)
+            mcp_json['dayun'] = paipan_result['dayun']
 
-        if school_analyze and school != 'ziping':
+        if school_analyze:
             await manager.send_progress(run_id, 'school', 'running', '流派分析中...')
             try:
                 if school == 'all':

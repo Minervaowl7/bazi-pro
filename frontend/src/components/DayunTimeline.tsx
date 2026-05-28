@@ -1,12 +1,6 @@
 "use client";
 
-const WUXING_COLORS: Record<string, string> = {
-  木: "var(--wood)",
-  火: "var(--fire)",
-  土: "var(--earth)",
-  金: "var(--metal)",
-  水: "var(--water)",
-};
+import { WUXING_COLORS } from "@/lib/constants";
 
 interface Props {
   result: Record<string, unknown>;

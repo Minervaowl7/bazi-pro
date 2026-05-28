@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getHistory } from "@/lib/api";
 
@@ -16,17 +16,37 @@ export default function HistorySidebar() {
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
+  const backendDownRef = useRef(false);
 
-  function loadHistory() {
-    getHistory(1, 10)
-      .then((data) => setItems(data.analyses || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+  async function loadHistory() {
+    try {
+      const data = await getHistory(1, 20);
+      backendDownRef.current = false;
+      const all = data.analyses || [];
+      const seen = new Set<string>();
+      const unique: HistoryItem[] = [];
+      for (const item of all) {
+        const key = `${item.day_master}|${item.pattern}|${item.status}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(item);
+        }
+      }
+      setItems(unique.slice(0, 10));
+    } catch {
+      backendDownRef.current = true;
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
     loadHistory();
-    const interval = setInterval(loadHistory, 5000);
+    const interval = setInterval(() => {
+      if (!backendDownRef.current) {
+        loadHistory();
+      }
+    }, 15000);
     return () => clearInterval(interval);
   }, []);
 

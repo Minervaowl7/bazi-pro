@@ -63,6 +63,7 @@ def full_analysis(mcp_json: dict) -> dict:
 
     bazi = mcp_json.get('八字', '')
     day_master = mcp_json.get('日主', '')
+    dayun = mcp_json.get('dayun', [])
 
     bazi_parts = bazi.split()
     month_zhi = bazi_parts[1][1] if len(bazi_parts[1]) >= 2 else ''
@@ -131,6 +132,7 @@ def full_analysis(mcp_json: dict) -> dict:
         'disease': disease,
         'tiaohou': tiaohou,
         'pillars': pillars,
+        'dayun': dayun,
         'school_analyses': {},
     }
 

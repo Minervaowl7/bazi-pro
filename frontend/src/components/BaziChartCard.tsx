@@ -2,43 +2,12 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 
-const WUXING_COLORS: Record<string, string> = {
-  木: "var(--wood)",
-  火: "var(--fire)",
-  土: "var(--earth)",
-  金: "var(--metal)",
-  水: "var(--water)",
-};
-
-const WUXING_BG: Record<string, string> = {
-  木: "rgba(34,197,94,0.12)",
-  火: "rgba(239,68,68,0.12)",
-  土: "rgba(234,179,8,0.12)",
-  金: "rgba(245,158,11,0.12)",
-  水: "rgba(59,130,246,0.12)",
-};
-
-const GAN_WUXING: Record<string, string> = {
-  甲: "木",
-  乙: "木",
-  丙: "火",
-  丁: "火",
-  戊: "土",
-  己: "土",
-  庚: "金",
-  辛: "金",
-  壬: "水",
-  癸: "水",
-};
-
-const RELATION_COLORS: Record<string, string> = {
-  合: "#22c55e",
-  冲: "#ef4444",
-  刑: "#f97316",
-  害: "#a855f7",
-  合化: "#22c55e",
-  化: "#22c55e",
-};
+import {
+  WUXING_COLORS,
+  WUXING_BG,
+  RELATION_COLORS,
+  GAN_WUXING,
+} from "@/lib/constants";
 
 interface CangganItem {
   gan: string;
@@ -448,16 +417,18 @@ export default function BaziChartCard({ result }: Props) {
                         ...dayPillarBg(i),
                       }}
                     >
-                      <span
-                        className="text-3xl font-bold"
-                        style={{
-                          color: p.wuxing_zhi
-                            ? WUXING_COLORS[p.wuxing_zhi]
-                            : "inherit",
-                        }}
-                      >
-                        {p.zhi || "—"}
-                      </span>
+                      <div className="flex flex-col items-center gap-1">
+                        <span
+                          className="text-3xl font-bold inline-block px-3 py-1 rounded-lg"
+                          style={{
+                            color: p.wuxing_zhi
+                              ? WUXING_COLORS[p.wuxing_zhi]
+                              : "inherit",
+                          }}
+                        >
+                          {p.zhi || "—"}
+                        </span>
+                      </div>
                     </td>
                   ))}
                 </tr>

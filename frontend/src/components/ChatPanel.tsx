@@ -60,7 +60,7 @@ export default function ChatPanel({ analysisId }: Props) {
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : "发送失败";
-      if (errMsg.includes("LLM_NOT_CONFIGURED") || errMsg.includes("503")) {
+      if (errMsg.includes("LLM") && (errMsg.includes("未配置") || errMsg.includes("503") || errMsg.includes("not configured"))) {
         setError("LLM 服务未配置。请在服务端设置 LLM_API_KEY 环境变量后重启。");
       } else {
         setError(errMsg);

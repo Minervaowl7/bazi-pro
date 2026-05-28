@@ -150,6 +150,8 @@ def calc_element_forces(bazi_parts: list[str], month_zhi: str) -> dict:
     forces_adjusted = dict(forces)
 
     for item in hehua['gan_he']:
+        if not item.get('adjacent', False):
+            continue
         hua_wx = item['hua_wx']
         for g in item['gans']:
             g_wx = GAN_WUXING.get(g, '')

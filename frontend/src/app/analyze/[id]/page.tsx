@@ -13,13 +13,10 @@ import ExportPanel from "@/components/ExportPanel";
 import HistorySidebar from "@/components/HistorySidebar";
 import { ThemeToggle } from "@/components/ThemeProvider";
 import Link from "next/link";
+import { SCHOOL_OPTIONS_WITH_ALL } from "@/lib/constants";
+import { generateReport } from "@/lib/api";
 
-const SCHOOL_OPTIONS = [
-  { value: "ziping", label: "传统子平", desc: "格局用神 · 正统子平" },
-  { value: "mangpai", label: "盲派", desc: "做功宾主 · 象法推断" },
-  { value: "xinpai", label: "新派", desc: "百神空亡 · 用忌反断" },
-  { value: "all", label: "全流派对比", desc: "三派并排 · 综合参断" },
-];
+const SCHOOL_OPTIONS = SCHOOL_OPTIONS_WITH_ALL;
 
 function SkeletonCard() {
   return (
@@ -117,6 +114,8 @@ export default function AnalyzePage() {
   const prevIdRef = useRef<string | null>(null);
   const [selectedSchool, setSelectedSchool] = useState("ziping");
   const [schoolDropdownOpen, setSchoolDropdownOpen] = useState(false);
+  const [reportStatus, setReportStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [reportMsg, setReportMsg] = useState("");
 
   useEffect(() => {
     if (!analysisId) return;
@@ -148,6 +147,46 @@ export default function AnalyzePage() {
       router.push(`/analyze/${newId}`);
     } catch {}
   }, [birthInput, selectedSchool, startAnalysis, router]);
+
+  const handleGenerateReport = useCallback(async () => {
+    if (reportStatus === "loading") return;
+    setReportStatus("loading");
+    setReportMsg("");
+    try {
+      const report = await generateReport(analysisId);
+      if (report.report) {
+        const text = Object.entries(report.report).map(([t, c]) => `## ${t}\n\n${c}`).join("\n\n");
+        await navigator.clipboard.writeText(text).catch(() => {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.cssText = "position:fixed;left:-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        });
+        setReportStatus("done");
+        setReportMsg("报告已复制到剪贴板");
+      } else {
+        setReportStatus("error");
+        setReportMsg("报告生成失败，请稍后重试");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("LLM") || msg.includes("503")) {
+        setReportMsg("LLM 服务未配置，无法生成详批报告");
+      } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+        setReportMsg("无法连接服务器，请检查后端是否运行");
+      } else {
+        setReportMsg(msg || "生成失败，请稍后重试");
+      }
+      setReportStatus("error");
+    }
+    setTimeout(() => {
+      setReportStatus("idle");
+      setReportMsg("");
+    }, 4000);
+  }, [analysisId, reportStatus]);
 
   const analysisResult = result?.result as
     | Record<string, unknown>
@@ -290,7 +329,9 @@ export default function AnalyzePage() {
               {analysisResult && (
                 <>
                   <button
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-sm"
+                    onClick={handleGenerateReport}
+                    disabled={reportStatus === "loading"}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-sm disabled:opacity-60"
                     style={{
                       background: "var(--accent)",
                       color: "var(--bg-primary)",
@@ -311,8 +352,19 @@ export default function AnalyzePage() {
                       <line x1="16" y1="13" x2="8" y2="13" />
                       <line x1="16" y1="17" x2="8" y2="17" />
                     </svg>
-                    生成详批报告
+                    {reportStatus === "loading" ? "生成中..." : "生成详批报告"}
                   </button>
+                  {reportMsg && (
+                    <span
+                      className="text-xs px-2 py-1 rounded-lg"
+                      style={{
+                        color: reportStatus === "error" ? "var(--danger)" : "var(--success)",
+                        background: reportStatus === "error" ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.1)",
+                      }}
+                    >
+                      {reportMsg}
+                    </span>
+                  )}
                   <ExportPanel
                     analysisId={analysisId}
                     result={analysisResult}
@@ -345,8 +397,25 @@ export default function AnalyzePage() {
             </div>
           )}
 
-          {isLoading && !analysisResult && (
+          {(isLoading || (!analysisResult && status !== "failed")) && (
             <>
+              {!isLoading && (
+                <div
+                  className="rounded-xl p-5 mb-6 flex items-center gap-3"
+                  style={{
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full animate-pulse shrink-0"
+                    style={{ background: "var(--accent)" }}
+                  />
+                  <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+                    正在加载分析结果...
+                  </span>
+                </div>
+              )}
               <SkeletonCard />
               <SkeletonNarration />
             </>

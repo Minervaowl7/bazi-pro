@@ -77,7 +77,7 @@ def _check_weasyprint():
     try:
         import weasyprint  # noqa: F401
         return True, "installed"
-    except ImportError:
+    except (ImportError, OSError):
         return False, "PDF disabled"
 
 

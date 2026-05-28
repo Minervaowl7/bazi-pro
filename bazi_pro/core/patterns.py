@@ -434,7 +434,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
         hehua = element_forces.get('hehua', {})
         pct_adj = element_forces.get('percent_adjusted', pct)
         for item in hehua.get('gan_he', []):
-            if day_master in item['gans']:
+            if day_master in item['gans'] and item.get('adjacent', False):
                 hua_wx = item['hua_wx']
                 hua_pct = pct_adj.get(hua_wx, 0)
                 if hua_pct >= 60:

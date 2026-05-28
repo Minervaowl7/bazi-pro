@@ -3,28 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAnalysisStore } from "@/stores/analysisStore";
-
-const WUXING_COLORS: Record<string, string> = {
-  木: "var(--wood)",
-  火: "var(--fire)",
-  土: "var(--earth)",
-  金: "var(--metal)",
-  水: "var(--water)",
-};
-
-const WUXING_BG: Record<string, string> = {
-  木: "rgba(34,197,94,0.12)",
-  火: "rgba(239,68,68,0.12)",
-  土: "rgba(234,179,8,0.12)",
-  金: "rgba(245,158,11,0.12)",
-  水: "rgba(59,130,246,0.12)",
-};
-
-const SCHOOL_OPTIONS = [
-  { value: "ziping", label: "子平真诠", desc: "格局用神 · 正统子平" },
-  { value: "qiongtong", label: "穷通宝鉴", desc: "调候为先 · 月令调候" },
-  { value: "zitong", label: "滴天髓", desc: "旺衰扶抑 · 阴阳流通" },
-];
+import {
+  WUXING_COLORS,
+  WUXING_BG,
+  SCHOOL_OPTIONS,
+} from "@/lib/constants";
 
 export default function BirthForm() {
   const router = useRouter();
@@ -94,21 +77,21 @@ export default function BirthForm() {
 
   return (
     <div>
-      <form onSubmit={handlePaipan} className="space-y-6">
+      <form onSubmit={handlePaipan} className="space-y-5">
         <div>
           <label
-            className="block text-sm font-medium mb-2"
-            style={{ color: "var(--text-secondary)" }}
+            className="block text-xs font-medium mb-2 uppercase tracking-wider"
+            style={{ color: "var(--text-muted)" }}
           >
             性别
           </label>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             {["男", "女"].map((g) => (
               <button
                 key={g}
                 type="button"
                 onClick={() => handleChange("gender", g)}
-                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   form.gender === g
                     ? ""
                     : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
@@ -125,11 +108,11 @@ export default function BirthForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label
-              className="block text-sm font-medium mb-2"
-              style={{ color: "var(--text-secondary)" }}
+              className="block text-xs font-medium mb-2 uppercase tracking-wider"
+              style={{ color: "var(--text-muted)" }}
             >
               出生日期{" "}
               <span style={{ color: "var(--danger)" }}>*</span>
@@ -137,11 +120,12 @@ export default function BirthForm() {
             <input
               type="date"
               value={form.solarDate}
+              placeholder="YYYY-MM-DD"
               onChange={(e) => {
                 handleChange("solarDate", e.target.value);
                 setShowPaipan(false);
               }}
-              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-all duration-200"
+              className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-all duration-200"
               style={{
                 background: "var(--bg-secondary)",
                 border: "1px solid var(--border)",
@@ -151,19 +135,20 @@ export default function BirthForm() {
           </div>
           <div>
             <label
-              className="block text-sm font-medium mb-2"
-              style={{ color: "var(--text-secondary)" }}
+              className="block text-xs font-medium mb-2 uppercase tracking-wider"
+              style={{ color: "var(--text-muted)" }}
             >
               出生时间
             </label>
             <input
               type="time"
               value={form.solarTime}
+              placeholder="HH:MM"
               onChange={(e) => {
                 handleChange("solarTime", e.target.value);
                 setShowPaipan(false);
               }}
-              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-all duration-200"
+              className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-all duration-200"
               style={{
                 background: "var(--bg-secondary)",
                 border: "1px solid var(--border)",
@@ -182,7 +167,7 @@ export default function BirthForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3.5 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
+          className="w-full py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99]"
           style={{
             background: "var(--accent)",
             color: "var(--bg-primary)",
@@ -194,31 +179,31 @@ export default function BirthForm() {
 
       {showPaipan && paipanResult && paipanResult.status === "completed" && (
         <div
-          className="mt-8 pt-8 border-t animate-fade-in"
+          className="mt-7 pt-7 border-t animate-fade-in"
           style={{ borderColor: "var(--border)" }}
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5">
             <h3
-              className="text-base font-semibold"
+              className="text-sm font-semibold tracking-wide"
               style={{ color: "var(--accent)" }}
             >
               八字命盘
             </h3>
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+            <span className="text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
               {paipanResult.生肖} · {paipanResult.日主}日主
             </span>
           </div>
 
-          <div className="overflow-x-auto mb-6">
+          <div className="overflow-x-auto mb-5">
             <table className="w-full text-center">
               <thead>
                 <tr
-                  className="text-xs uppercase tracking-wider"
+                  className="text-[11px] uppercase tracking-wider"
                   style={{ color: "var(--text-muted)", background: "var(--bg-secondary)" }}
                 >
-                  <th className="py-2.5 px-3 w-14"></th>
+                  <th className="py-2 px-2 w-12"></th>
                   {paipanResult.pillars.map((p) => (
-                    <th key={p.position} className="py-2.5 px-3 font-medium">
+                    <th key={p.position} className="py-2 px-2 font-medium text-xs">
                       {p.position}
                     </th>
                   ))}
@@ -226,17 +211,14 @@ export default function BirthForm() {
               </thead>
               <tbody>
                 <tr style={{ borderTop: "1px solid var(--border)" }}>
-                  <td
-                    className="py-3 text-xs"
-                    style={{ color: "var(--text-muted)" }}
-                  >
+                  <td className="py-2.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
                     天干
                   </td>
                   {paipanResult.pillars.map((p) => (
-                    <td key={p.position} className="py-3 px-2">
+                    <td key={p.position} className="py-2.5 px-1">
                       {p.gan ? (
                         <span
-                          className="text-2xl font-bold"
+                          className="text-xl font-bold"
                           style={{
                             color: p.wuxing_gan
                               ? WUXING_COLORS[p.wuxing_gan]
@@ -252,17 +234,14 @@ export default function BirthForm() {
                   ))}
                 </tr>
                 <tr style={{ borderTop: "1px solid var(--border)" }}>
-                  <td
-                    className="py-3 text-xs"
-                    style={{ color: "var(--text-muted)" }}
-                  >
+                  <td className="py-2.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
                     地支
                   </td>
                   {paipanResult.pillars.map((p) => (
-                    <td key={p.position} className="py-3 px-2">
+                    <td key={p.position} className="py-2.5 px-1">
                       {p.zhi ? (
                         <span
-                          className="text-2xl font-bold"
+                          className="text-xl font-bold"
                           style={{
                             color: p.wuxing_zhi
                               ? WUXING_COLORS[p.wuxing_zhi]
@@ -278,22 +257,18 @@ export default function BirthForm() {
                   ))}
                 </tr>
                 <tr style={{ borderTop: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
-                  <td
-                    className="py-2.5 text-xs"
-                    style={{ color: "var(--text-muted)" }}
-                  >
+                  <td className="py-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
                     五行
                   </td>
                   {paipanResult.pillars.map((p) => (
-                    <td key={p.position} className="py-2.5 px-2">
+                    <td key={p.position} className="py-2 px-1">
                       <div className="flex flex-col items-center gap-1">
                         {p.gan && (
                           <span
-                            className="text-xs px-2 py-0.5 rounded-md"
+                            className="text-[11px] px-1.5 py-0.5 rounded-md"
                             style={{
                               color: WUXING_COLORS[p.wuxing_gan] || "inherit",
-                              background:
-                                WUXING_BG[p.wuxing_gan] || "transparent",
+                              background: WUXING_BG[p.wuxing_gan] || "transparent",
                             }}
                           >
                             {p.wuxing_gan}
@@ -301,11 +276,10 @@ export default function BirthForm() {
                         )}
                         {p.zhi && (
                           <span
-                            className="text-xs px-2 py-0.5 rounded-md"
+                            className="text-[11px] px-1.5 py-0.5 rounded-md"
                             style={{
                               color: WUXING_COLORS[p.wuxing_zhi] || "inherit",
-                              background:
-                                WUXING_BG[p.wuxing_zhi] || "transparent",
+                              background: WUXING_BG[p.wuxing_zhi] || "transparent",
                             }}
                           >
                             {p.wuxing_zhi}
@@ -319,20 +293,20 @@ export default function BirthForm() {
             </table>
           </div>
 
-          <div className="mb-6">
+          <div className="mb-5">
             <label
-              className="block text-sm font-medium mb-3"
-              style={{ color: "var(--text-secondary)" }}
+              className="block text-xs font-medium mb-2.5 uppercase tracking-wider"
+              style={{ color: "var(--text-muted)" }}
             >
               选择解读流派
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {SCHOOL_OPTIONS.map((s) => (
                 <button
                   key={s.value}
                   type="button"
                   onClick={() => handleChange("school", s.value)}
-                  className={`p-4 rounded-xl text-left transition-all duration-200 ${
+                  className={`p-3 rounded-xl text-left transition-all duration-200 ${
                     form.school === s.value
                       ? ""
                       : "border border-[var(--border)] hover:border-[var(--text-muted)]"
@@ -348,7 +322,7 @@ export default function BirthForm() {
                   }
                 >
                   <div
-                    className="text-sm font-medium"
+                    className="text-xs font-semibold"
                     style={{
                       color:
                         form.school === s.value
@@ -359,7 +333,7 @@ export default function BirthForm() {
                     {s.label}
                   </div>
                   <div
-                    className="text-xs mt-1"
+                    className="text-[11px] mt-0.5"
                     style={{ color: "var(--text-muted)" }}
                   >
                     {s.desc}
@@ -373,19 +347,19 @@ export default function BirthForm() {
             type="button"
             onClick={handleDeepAnalysis}
             disabled={status === "submitting" || status === "streaming"}
-            className="w-full py-3.5 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99] flex items-center justify-center gap-2"
             style={{
               background: "linear-gradient(135deg, var(--accent), var(--accent-hover))",
               color: "var(--bg-primary)",
             }}
           >
             {status === "submitting" ? "提交中..." : "深度解读"}{" "}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </button>
 
           <p
-            className="text-center text-xs mt-4"
-            style={{ color: "var(--text-muted)" }}
+            className="text-center text-[11px] mt-3"
+            style={{ color: "var(--text-muted)", opacity: 0.6 }}
           >
             旺衰判定 · 格局筛查 · 喜用神推导 · 古籍引证
           </p>
