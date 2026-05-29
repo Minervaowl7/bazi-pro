@@ -442,16 +442,17 @@ export default function AnalyzePage() {
                     style={{
                       background: "var(--bg-card)",
                       border: "1px solid var(--border)",
+                      boxShadow: "var(--shadow-sm)",
                     }}
                   >
                     <div
-                      className="text-[11px] mb-1.5 font-medium"
+                      className="text-[11px] mb-2 font-medium uppercase tracking-wider"
                       style={{ color: "var(--text-muted)" }}
                     >
                       旺衰
                     </div>
                     <div
-                      className="text-sm font-semibold"
+                      className="text-base font-bold"
                       style={{ color: "var(--accent)" }}
                     >
                       {wangshuai?.verdict || "—"}
@@ -462,16 +463,17 @@ export default function AnalyzePage() {
                     style={{
                       background: "var(--bg-card)",
                       border: "1px solid var(--border)",
+                      boxShadow: "var(--shadow-sm)",
                     }}
                   >
                     <div
-                      className="text-[11px] mb-1.5 font-medium"
+                      className="text-[11px] mb-2 font-medium uppercase tracking-wider"
                       style={{ color: "var(--text-muted)" }}
                     >
                       格局
                     </div>
                     <div
-                      className="text-sm font-semibold"
+                      className="text-base font-bold"
                       style={{ color: "var(--accent)" }}
                     >
                       {pattern?.pattern || "—"}
@@ -482,16 +484,17 @@ export default function AnalyzePage() {
                     style={{
                       background: "var(--bg-card)",
                       border: "1px solid var(--border)",
+                      boxShadow: "var(--shadow-sm)",
                     }}
                   >
                     <div
-                      className="text-[11px] mb-1.5 font-medium"
+                      className="text-[11px] mb-2 font-medium uppercase tracking-wider"
                       style={{ color: "var(--text-muted)" }}
                     >
                       用神
                     </div>
                     <div
-                      className="text-sm font-semibold"
+                      className="text-base font-bold"
                       style={{ color: "var(--accent)" }}
                     >
                       {yongshen?.yongshen || "—"}

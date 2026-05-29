@@ -348,10 +348,19 @@ export default function SchoolComparePanel({ schoolAnalyses }: Props) {
                 }}
               >
                 <div
-                  className="px-4 py-3 flex items-center gap-2"
+                  className="px-4 py-3.5 flex items-center gap-2.5 relative"
                   style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}
                 >
-                  <span className="text-sm">{meta.icon}</span>
+                  <span
+                    className="absolute top-0 left-0 right-0 h-[2px]"
+                    style={{ background: meta.color }}
+                  />
+                  <span
+                    className="w-6 h-6 rounded-md flex items-center justify-center text-xs"
+                    style={{ background: `${meta.color}20`, color: meta.color }}
+                  >
+                    {meta.icon}
+                  </span>
                   <span className="text-sm font-semibold" style={{ color: meta.color }}>
                     {meta.label}
                   </span>
