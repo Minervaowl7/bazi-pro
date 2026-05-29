@@ -251,10 +251,10 @@ export default function BaziChartCard({ result }: Props) {
   }
 
   const pillarBorder = (i: number): React.CSSProperties =>
-    i < 3 ? { borderRight: "1px solid var(--border)" } : {};
+    i < 3 ? { borderRight: "1px dashed var(--border-subtle)" } : {};
 
   const dayPillarBg = (i: number): React.CSSProperties =>
-    i === 2 ? { background: "var(--accent-dim)" } : {};
+    i === 2 ? { background: "var(--accent-glow)" } : {};
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -267,23 +267,23 @@ export default function BaziChartCard({ result }: Props) {
         }}
       >
         <div
-          className="px-6 py-5 flex items-center justify-between"
-          style={{ borderBottom: "1px solid var(--border)" }}
+          className="px-6 py-4 flex items-center justify-between"
+          style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}
         >
           <h2
-            className="text-lg font-semibold"
+            className="text-base font-semibold tracking-wide"
             style={{ color: "var(--accent)" }}
           >
             四柱命盘
           </h2>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <span
               className="text-xs px-2.5 py-1 rounded-full font-medium"
-              style={{ background: "var(--accent-dim)", color: "var(--accent)" }}
+              style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid rgba(201,169,110,0.2)" }}
             >
               {wangshuai?.verdict || "—"}
             </span>
-            <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+            <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
               {dayMaster}日主
             </span>
           </div>
@@ -360,23 +360,26 @@ export default function BaziChartCard({ result }: Props) {
                       <td
                         key={i}
                         data-cell={`gan-${i}`}
-                        className="py-4 px-2"
+                        className="py-5 px-2"
                         style={{
                           ...pillarBorder(i),
                           ...dayPillarBg(i),
                         }}
                       >
-                        <div className="flex flex-col items-center gap-1">
+                        <div className="flex flex-col items-center gap-1.5">
                           <span
-                            className="text-3xl font-bold inline-block px-3 py-1 rounded-lg"
+                            className="text-[2rem] font-bold inline-block px-3 py-1.5 rounded-xl"
                             style={{
                               color: p.wuxing_gan
                                 ? WUXING_COLORS[p.wuxing_gan]
                                 : "inherit",
+                              background: p.wuxing_gan
+                                ? `${WUXING_BG[p.wuxing_gan]}`
+                                : "transparent",
                               border: xutou
                                 ? "2px dashed var(--text-muted)"
-                                : "none",
-                              opacity: xutou ? 0.7 : 1,
+                                : "1px solid transparent",
+                              opacity: xutou ? 0.65 : 1,
                             }}
                           >
                             {gan || "—"}
@@ -385,11 +388,11 @@ export default function BaziChartCard({ result }: Props) {
                             <span
                               className="text-[10px] px-1.5 py-0.5 rounded font-medium"
                               style={{
-                                background: "rgba(128,128,128,0.2)",
+                                background: "rgba(128,128,128,0.15)",
                                 color: "var(--text-muted)",
                               }}
                             >
-                              虚
+                              虚透
                             </span>
                           )}
                         </div>
@@ -411,7 +414,7 @@ export default function BaziChartCard({ result }: Props) {
                     <td
                       key={i}
                       data-cell={`zhi-${i}`}
-                      className="py-4 px-2"
+                      className="py-5 px-2"
                       style={{
                         ...pillarBorder(i),
                         ...dayPillarBg(i),
@@ -419,11 +422,14 @@ export default function BaziChartCard({ result }: Props) {
                     >
                       <div className="flex flex-col items-center gap-1">
                         <span
-                          className="text-3xl font-bold inline-block px-3 py-1 rounded-lg"
+                          className="text-[2rem] font-bold inline-block px-3 py-1.5 rounded-xl"
                           style={{
                             color: p.wuxing_zhi
                               ? WUXING_COLORS[p.wuxing_zhi]
                               : "inherit",
+                            background: p.wuxing_zhi
+                              ? `${WUXING_BG[p.wuxing_zhi]}`
+                              : "transparent",
                           }}
                         >
                           {p.zhi || "—"}
