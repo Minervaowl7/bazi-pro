@@ -1,15 +1,15 @@
 import copy
 
 from bazi_pro.core import full_analysis
-from bazi_pro.core.constants import GAN_WUXING, WUXING_TO_GAN, derive_shishen
+from bazi_pro.core.constants import GAN_WUXING, WUXING_TO_GAN, ZHI_WUXING, derive_shishen
 from bazi_pro.core.schools import register_school  # noqa: E402
 from bazi_pro.core.schools.base import SchoolAnalyzer
-from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP
+from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP, WO_SHENG_MAP
 
 _BREAK_ADJUST = {
     '伤官见官': '印星',
-    '比劫争财': '官杀',
-    '财星破印': '官杀',
+    '比劫争财': ['食伤', '官杀'],
+    '财星破印': '比劫',
     '枭神夺食': '财星',
 }
 
@@ -18,6 +18,7 @@ _BREAK_YONGSHEN_WX = {
     '官杀': '克我',
     '比劫': '同我',
     '财星': '我克',
+    '食伤': '我生',
 }
 
 
@@ -80,6 +81,9 @@ class ZipingAnalyzer(SchoolAnalyzer):
             if new_category is None:
                 continue
 
+            if isinstance(new_category, list):
+                new_category = new_category[0]
+
             rel = _BREAK_YONGSHEN_WX.get(new_category, '')
             if not rel or not dm_wx:
                 continue
@@ -92,6 +96,8 @@ class ZipingAnalyzer(SchoolAnalyzer):
                 new_wx = dm_wx
             elif rel == '我克':
                 new_wx = WO_KE_MAP.get(dm_wx, '')
+            elif rel == '我生':
+                new_wx = WO_SHENG_MAP.get(dm_wx, '')
             else:
                 continue
 
@@ -128,8 +134,16 @@ class ZipingAnalyzer(SchoolAnalyzer):
             return []
 
         yong_wx = yongshen.get('yongshen', '')
+        ji_list = yongshen.get('jishen', [])
+        xi_list = yongshen.get('xishen', [])
         if not yong_wx or not dm_wx:
             return []
+
+        favorable_wx = {yong_wx}
+        if xi_list:
+            favorable_wx.update(xi_list)
+
+        unfavorable_wx = set(ji_list) if ji_list else set()
 
         verdicts = []
         for step_info in dayun_list:
@@ -140,29 +154,68 @@ class ZipingAnalyzer(SchoolAnalyzer):
                 continue
 
             gan_wx = GAN_WUXING.get(gan, '')
+            zhi_wx = ZHI_WUXING.get(zhi, '') if zhi else ''
             if not gan_wx:
                 continue
 
             shishen = derive_shishen(day_master, gan)
 
-            if gan_wx == yong_wx:
-                verdict = '吉'
-                detail = f'大运天干{gan}({gan_wx})与用神{yong_wx}同类'
+            gan_score = 0
+            zhi_score = 0
+            details = []
+
+            if gan_wx in favorable_wx:
+                gan_score += 1
+                details.append('天干{}({})为喜用'.format(gan, gan_wx))
+            elif gan_wx in unfavorable_wx:
+                gan_score -= 1
+                details.append('天干{}({})为忌神'.format(gan, gan_wx))
             elif (gan_wx, yong_wx) in _sheng_pairs():
+                gan_score += 1
+                details.append('天干{}({})生用神{}'.format(gan, gan_wx, yong_wx))
+            else:
+                for ji_wx in unfavorable_wx:
+                    if (gan_wx, ji_wx) in _ke_pairs():
+                        gan_score += 1
+                        details.append('天干{}({})克忌神{}'.format(gan, gan_wx, ji_wx))
+                        break
+                else:
+                    for ji_wx in unfavorable_wx:
+                        if (gan_wx, ji_wx) in _sheng_pairs():
+                            gan_score -= 1
+                            details.append('天干{}({})生忌神{}'.format(gan, gan_wx, ji_wx))
+                            break
+
+            if zhi_wx:
+                if zhi_wx in favorable_wx:
+                    zhi_score += 1
+                    details.append('地支{}({})为喜用'.format(zhi, zhi_wx))
+                elif zhi_wx in unfavorable_wx:
+                    zhi_score -= 1
+                    details.append('地支{}({})为忌神'.format(zhi, zhi_wx))
+                elif (zhi_wx, yong_wx) in _sheng_pairs():
+                    zhi_score += 1
+                    details.append('地支{}({})生用神{}'.format(zhi, zhi_wx, yong_wx))
+                else:
+                    for ji_wx in unfavorable_wx:
+                        if (zhi_wx, ji_wx) in _ke_pairs():
+                            zhi_score += 1
+                            details.append('地支{}({})克忌神{}'.format(zhi, zhi_wx, ji_wx))
+                            break
+                    else:
+                        for ji_wx in unfavorable_wx:
+                            if (zhi_wx, ji_wx) in _sheng_pairs():
+                                zhi_score -= 1
+                                details.append('地支{}({})生忌神{}'.format(zhi, zhi_wx, ji_wx))
+                                break
+
+            total = gan_score + zhi_score
+            if total > 0:
                 verdict = '吉'
-                detail = f'大运天干{gan}({gan_wx})生扶用神{yong_wx}'
-            elif (yong_wx, gan_wx) in _ke_pairs():
+            elif total < 0:
                 verdict = '凶'
-                detail = f'用神{yong_wx}克大运天干{gan}({gan_wx})，耗用神之力'
-            elif (gan_wx, yong_wx) in _ke_pairs():
-                verdict = '凶'
-                detail = f'大运天干{gan}({gan_wx})克用神{yong_wx}'
-            elif (yong_wx, gan_wx) in _sheng_pairs():
-                verdict = '凶'
-                detail = f'用神{yong_wx}生大运天干{gan}({gan_wx})，泄用神之力'
             else:
                 verdict = '平'
-                detail = f'大运天干{gan}({gan_wx})与用神{yong_wx}关系待定'
 
             verdicts.append({
                 'step': step,
@@ -170,7 +223,7 @@ class ZipingAnalyzer(SchoolAnalyzer):
                 'zhi': zhi,
                 'shishen': shishen,
                 'verdict': verdict,
-                'detail': detail,
+                'detail': '；'.join(details) if details else '大运{}{}与格局关系待定'.format(gan, zhi),
             })
 
         return verdicts

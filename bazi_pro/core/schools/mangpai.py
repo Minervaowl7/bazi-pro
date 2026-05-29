@@ -6,32 +6,37 @@ from bazi_pro.core import (
     SHIER_CHANGSHENG,
     WO_KE_MAP,
     WO_SHENG_MAP,
+    ZHI_CHONG,
+    ZHI_HAI,
+    ZHI_HE,
     ZHI_WUXING,
+    ZHI_XING,
     derive_shishen,
     full_analysis,
 )
 from bazi_pro.core.schools import register_school
 from bazi_pro.core.schools.base import SchoolAnalyzer
 
-TI_STEMS = {'比肩', '劫财', '正印', '偏印', '食神'}
-YONG_STEMS = {'正财', '偏财', '正官', '七杀', '伤官'}
+TI_STEMS = {'比肩', '劫财', '正印', '偏印'}
+YONG_STEMS = {'正财', '偏财', '正官', '七杀', '食神', '伤官'}
 
 KE_PAIRS = {('木', '土'), ('土', '水'), ('水', '火'), ('火', '金'), ('金', '木')}
 SHENG_PAIRS = {('木', '火'), ('火', '土'), ('土', '金'), ('金', '水'), ('水', '木')}
 
 MU_KU = {
-    '辰': {'wx': '水', 'collects': {'亥', '子'}},
-    '戌': {'wx': '火', 'collects': {'巳', '午'}},
-    '丑': {'wx': '金', 'collects': {'申', '酉'}},
-    '未': {'wx': '木', 'collects': {'寅', '卯'}},
+    '辰': {'wx': '水', 'collects': {'亥'}},
+    '戌': {'wx': '火', 'collects': {'巳'}},
+    '丑': {'wx': '金', 'collects': {'申'}},
+    '未': {'wx': '木', 'collects': {'寅'}},
 }
 
 SHI_PARTIES = [
     {'name': '木火势', 'wx': ['木', '火']},
     {'name': '金水势', 'wx': ['金', '水']},
     {'name': '水木势', 'wx': ['水', '木']},
-    {'name': '火燥土势', 'wx': ['火', '土'], 'sub_cond': {'土': ['戌']}},
-    {'name': '金湿土势', 'wx': ['金', '土'], 'sub_cond': {'土': ['丑']}},
+    {'name': '火燥土势', 'wx': ['火', '土'], 'sub_cond': {'土': ['戌', '未']}},
+    {'name': '金湿土势', 'wx': ['金', '土'], 'sub_cond': {'土': ['丑', '辰']}},
+    {'name': '水湿土势', 'wx': ['水', '土'], 'sub_cond': {'土': ['丑', '辰']}},
 ]
 
 
@@ -310,7 +315,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                         })
 
                 if gan_shishen in YONG_STEMS and cg_shishen in TI_STEMS:
-                    if (cg_wx, gan_wx) in SHENG_PAIRS:
+                    if (gan_wx, cg_wx) in SHENG_PAIRS:
                         gong_types['huayong'].append({
                             'type': '化用',
                             'tool': {'position': p.get('position', '') + '藏',
@@ -361,10 +366,69 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                             'description': '{}{}({})合{}({})为我用'.format(ss2, g2, g2, ss1, g1),
                         })
 
+        self._detect_dizhi_zuogong(pillars, day_master, gong_types)
         self._detect_muyong(pillars, gong_types)
         self._detect_fuhe(gong_types)
 
         return gong_types
+
+    def _detect_dizhi_zuogong(self, pillars: list, day_master: str, gong_types: dict) -> None:
+        """地支间做功：冲、穿(害)、合、刑——盲派做功以地支为主"""
+        zhu_zhis = []
+        bin_zhis = []
+        for p in pillars:
+            pos = p.get('position', '')
+            zhi = p.get('zhi', '')
+            if not zhi:
+                continue
+            if pos in ('日', '时'):
+                zhu_zhis.append((pos, zhi))
+            elif pos in ('年', '月'):
+                bin_zhis.append((pos, zhi))
+
+        for zhu_pos, zhu_zhi in zhu_zhis:
+            zhu_wx = ZHI_WUXING.get(zhu_zhi, '')
+            for bin_pos, bin_zhi in bin_zhis:
+                bin_wx = ZHI_WUXING.get(bin_zhi, '')
+                pair = frozenset({zhu_zhi, bin_zhi})
+
+                if pair in ZHI_CHONG:
+                    gong_types['zhiyong'].append({
+                        'type': '制用',
+                        'tool': {'position': zhu_pos, 'zhi': zhu_zhi, 'wuxing': zhu_wx},
+                        'target': {'position': bin_pos, 'zhi': bin_zhi, 'wuxing': bin_wx},
+                        'description': '主位{}冲宾位{}（地支冲做功）'.format(zhu_zhi, bin_zhi),
+                        'mechanism': '地支冲',
+                    })
+
+                if pair in ZHI_HAI:
+                    gong_types['zhiyong'].append({
+                        'type': '制用',
+                        'tool': {'position': zhu_pos, 'zhi': zhu_zhi, 'wuxing': zhu_wx},
+                        'target': {'position': bin_pos, 'zhi': bin_zhi, 'wuxing': bin_wx},
+                        'description': '主位{}穿宾位{}（地支穿做功）'.format(zhu_zhi, bin_zhi),
+                        'mechanism': '地支穿',
+                    })
+
+                if pair in ZHI_HE:
+                    he_wx = ZHI_HE[pair]
+                    gong_types['heyong'].append({
+                        'type': '合用',
+                        'tool': {'position': zhu_pos, 'zhi': zhu_zhi, 'wuxing': zhu_wx},
+                        'target': {'position': bin_pos, 'zhi': bin_zhi, 'wuxing': bin_wx},
+                        'description': '主位{}合宾位{}化{}（地支合做功）'.format(
+                            zhu_zhi, bin_zhi, he_wx),
+                        'mechanism': '地支合',
+                    })
+
+                if pair in ZHI_XING:
+                    gong_types['zhiyong'].append({
+                        'type': '制用',
+                        'tool': {'position': zhu_pos, 'zhi': zhu_zhi, 'wuxing': zhu_wx},
+                        'target': {'position': bin_pos, 'zhi': bin_zhi, 'wuxing': bin_wx},
+                        'description': '主位{}刑宾位{}（地支刑做功）'.format(zhu_zhi, bin_zhi),
+                        'mechanism': '地支刑',
+                    })
 
     def _detect_muyong(self, pillars: list, gong_types: dict) -> None:
         zhu_zhis = []
@@ -557,23 +621,50 @@ class MangpaiAnalyzer(SchoolAnalyzer):
         }
 
     def _analyze_zeishen(self, tiyong: dict, day_master: str, result: dict) -> dict:
-        ti_strength = tiyong.get('ti_strength', 0)
-        yong_strength = tiyong.get('yong_strength', 0)
+        yong_items = tiyong.get('yong', [])
+        ti_items = tiyong.get('ti', [])
+        relations = result.get('relations', [])
+        pillars = result.get('pillars', [])
 
-        is_zeishen_pattern = ti_strength > yong_strength * 1.5 if yong_strength > 0 else ti_strength > 0
+        if not yong_items or not ti_items:
+            return {'is_zeishen_pattern': False, 'bushen': [], 'zeishen': [], 'yingqi_note': ''}
+
+        yong_gans = {item.get('gan', '') for item in yong_items}
+        yong_wx_set = {item.get('wuxing', '') for item in yong_items}
+
+        controlled_count = 0
+        for item in yong_items:
+            yong_wx = item.get('wuxing', '')
+            yong_gan = item.get('gan', '')
+            is_controlled = False
+            for ti_item in ti_items:
+                ti_wx = ti_item.get('wuxing', '')
+                if (ti_wx, yong_wx) in KE_PAIRS:
+                    is_controlled = True
+                    break
+            for rel in relations:
+                if rel.get('type', '') == '天干合':
+                    elements = rel.get('elements', [])
+                    if yong_gan in elements:
+                        is_controlled = True
+                        break
+            if is_controlled:
+                controlled_count += 1
+
+        is_zeishen_pattern = controlled_count >= len(yong_items) and len(yong_items) > 0
 
         bushen = []
         zeishen = []
 
         if is_zeishen_pattern:
-            for item in tiyong.get('ti', []):
+            for item in ti_items:
                 bushen.append({
                     'gan': item.get('gan', ''),
                     'shishen': item.get('shishen', ''),
                     'wuxing': item.get('wuxing', ''),
                     'position': item.get('position', ''),
                 })
-            for item in tiyong.get('yong', []):
+            for item in yong_items:
                 zeishen.append({
                     'gan': item.get('gan', ''),
                     'shishen': item.get('shishen', ''),
