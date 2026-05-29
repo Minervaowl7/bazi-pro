@@ -382,7 +382,6 @@ class XinpaiAnalyzer(SchoolAnalyzer):
             dayun_list = self._generate_dayun_from_pillars(result)
 
         yong_wx_list = yong_ji.get('yongshen', [])
-        ji_wx_list = yong_ji.get('jishen', [])
         kongwang_zhi = kongwang.get('kongwang_zhi', [])
         chukong_zhi = [c.get('zhi', '') for c in kongwang.get('chukong', [])]
         day_master = result.get('day_master', '')
