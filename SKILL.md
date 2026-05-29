@@ -1,7 +1,7 @@
 ---
 name: bazi-pro
 description: >
-  专业八字命理解读 Skill v5.0 — 可审计、可交互、可视化的命理分析引擎（Replayable Evidence Engine），配合 Bazi MCP 排盘数据使用。
+  专业八字命理解读 Skill v5.2 — 可审计、可交互、可视化的命理分析引擎（Replayable Evidence Engine），配合 Bazi MCP 排盘数据使用。
   古籍检索：6部经典（子平真诠/滴天髓/渊海子平/神峰通考/三命通会/穷通宝鉴）
   共2964条原文，BM25+jieba实时匹配。总计29.8万中文字。
   排盘计算由 Bazi MCP（TypeScript 硬编码）完成，本 Skill 专注解读环节。
@@ -9,8 +9,11 @@ description: >
   格局分析（月令透干定格+暗格+建禄月劫+化气格+从格 全覆盖，含从强格/假从强格）、
   大运流年喜忌引动（含大运上限原则）、空亡/神煞/胎元命宫整合解读、
   六维度分述（性格/事业/财运/感情/健康/近运）+ 历史事件闭环校准。
+  多流派分析（v5.2 典籍对齐版）：
+  - 盲派（段建业体系）：宾主/体用/6种做功（含墓用复合）/贼神捕神/五党成势/功神废神
+  - 新派（李涵辰体系）：百神论(动态查找)/空亡论(含出空)/反断论(同宗对)/格局分类(扶抑从强从弱)
+  v5.2: 盲派新派典籍对齐——盲派7项修正(体用定义/墓用复合/贼神捕神/五党成势) + 新派6项修正(反断同宗对/百神动态/身旺身弱综合/格局分类/出空机制) + Golden Cases 507个。
   v5.1: 古籍校准——调候为急例外(格局不可绝对压制调候)、运可成格变格(大运非硬件上限)、会方检测(寅卯辰/巳午未/申酉戌/亥子丑)、假从强格(印比≥80%未达极旺)、财破印通关检查(官杀通关化解)。
-  v5.0: 插件机制(英文/塔罗/风水示例)+ CLI TUI(rich 交互界面)+ AnalysisEngine SDK + 流年沙盒+ 命盘对比+ 档案校准系统。
   v4.5-4.8: 动态SVG命盘+ 命运河流时间轴+ 推理图谱DAG+ FastAPI服务+ Hybrid Search INT8量化+ ViewModel统一化。
   v4.2: Replayable Evidence Engine——Golden Cases 边界回归测试(83例)+ GitHub Actions CI + Evidence Pipeline(分析→证据JSON→仪表盘)+ Web Demo 首页(dist/index.html)+ bazi_pro 引擎包重构。
   v4.1: 版本号统一(4.1.0)+ __version__ 单一源 + smoke tests(7项)+ bazi doctor 环境诊断 + README 引擎化 + dashboard v3.0(Evidence Inspector+刑冲合害图谱)+ Hybrid Search breakdown(matched_terms+why)。

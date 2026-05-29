@@ -4,9 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project identity
 
-`bazi-pro` v5.1 — 确定性八字命理计算引擎 + 古籍对齐引擎 + 多流派分析路径 + LLM 解读框架 + Web 应用。
+`bazi-pro` v5.2 — 确定性八字命理计算引擎 + 古籍对齐引擎 + 多流派分析路径（典籍对齐版） + LLM 解读框架 + Web 应用。
 
 核心原则：**算析分离** — `bazi_pro/core/` 做所有确定性命理计算（十神、藏干、五行力量、旺衰、格局、喜用神、刑冲合害、破格检测），LLM 只负责解读，不参与计算。
+
+**v5.2 重大更新**：盲派和新派分析方法论全面对照典籍修正——盲派 7 项修正（体用定义/墓用复合做功/贼神捕神/功神废神/五党成势）、新派 6 项修正（反断论/百神论/身旺身弱判定/格局分类/出空机制/大运吉凶）。详见 README.md 版本历史。
 
 ## Build and test commands
 
@@ -14,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 pip install -e .                              # 最小安装（核心 + 检索）
 pip install -e ".[all]"                       # 完整安装（含 hybrid、report、pdf、tui、server）
 
-# 主测试 — 103 golden-case 边界回归测试
+# 主测试 — 507 golden-case 边界回归测试
 python tests/run_golden.py
 
 # 全量 pytest（排除 server 依赖测试）
@@ -38,8 +40,8 @@ python scripts/audit_golden_cases.py
 # 编译检查（捕获语法错误）
 python -m compileall bazi_pro scripts tests -q
 
-# 启动后端 (端口 8710)
-python -m uvicorn server.app:app --host 127.0.0.1 --port 8710
+# 启动后端 (端口 8711)
+python -m uvicorn server.app:app --host 127.0.0.1 --port 8711
 
 # 启动前端 (端口 3000，需先 cd frontend && pnpm install)
 cd frontend && pnpm dev
@@ -61,6 +63,8 @@ cd frontend && pnpm dev
        │     │  Multi-School Analysis (schools/)    │
        │     │  ZipingAnalyzer · MangpaiAnalyzer    │
        │     │  XinpaiAnalyzer · school_analyze()   │
+       │     │  盲派: 宾主/体用/6种做功/贼神捕神/势  │
+       │     │  新派: 百神/空亡/反断/格局分类/出空   │
        │     └──────────────────────────────────────┘
        │
        ▼
@@ -96,7 +100,7 @@ cd frontend && pnpm dev
 ## Web application (P0)
 
 **后端** (`server/`):
-- FastAPI 应用，默认端口 8710
+- FastAPI 应用，默认端口 8711
 - 原有路由 (`/api/analyze`, `/api/status/{id}`, `/api/result/{id}`) 使用 WebSocket 推送
 - 新路由 (`/api/v2/*`) 使用 SSE 流式 + SQLite 持久化
 - `POST /api/v2/analyze` 支持 `school` 参数（ziping/mangpai/xinpai/all）
@@ -130,8 +134,8 @@ cd frontend && pnpm dev
 | `bazi_pro/core/schools/base.py` | SchoolAnalyzer 抽象基类 |
 | `bazi_pro/core/schools/__init__.py` | SCHOOL_REGISTRY + school_analyze() + register_school() |
 | `bazi_pro/core/schools/ziping.py` | 传统子平法（格局用神 + 破格感知用神调整 + 大运吉凶） |
-| `bazi_pro/core/schools/mangpai.py` | 盲派（宾主/做功/体用/功力/应期） |
-| `bazi_pro/core/schools/xinpai.py` | 新派（百神论/空亡论/反断论） |
+| `bazi_pro/core/schools/mangpai.py` | 盲派（宾主/6种做功/体用/功力/应期/贼神捕神/五党成势/墓用复合） |
+| `bazi_pro/core/schools/xinpai.py` | 新派（百神论/空亡论(含出空)/反断论(同宗对)/格局分类(扶抑从强从弱)） |
 | `bazi_pro/narrator.py` | 确定性叙述器（9 维度中文文本生成） |
 | `bazi_pro/view_model.py` | DashboardVM 数据契约 |
 | `bazi_pro/ui/consumer_report.py` | 消费级报告（六维叙事 + 术语解释） |
@@ -145,13 +149,14 @@ cd frontend && pnpm dev
 1. **No LLM logic in `bazi_pro/core/`** — 纯确定性计算。
 2. **No fabricated citations** — 每条古籍引用必须可追溯到 `retrieve_classical.py` 输出。
 3. **UI data contract** — 所有 UI 组件只接受 `DashboardVM` dataclass，不做正则提取。
-4. **Golden case count can never decrease** — 当前 103。
+4. **Golden case count can never decrease** — 当前 507。
 5. **推导 vs 推算** — 确定性映射（干→五行、干→十神）是推导（允许）；脆弱数学链是推算（禁止）。
 6. **Linear execution** — SKILL.md 10 步流程顺序执行，不回填。
 7. **DO NOT modify existing `server/analysis.py`** — 只扩展，不重写。
 8. **Narrator 零幻觉** — `narrator.py` 每句话必须可追溯到计算数据，不允许模糊表述。
 9. **SchoolAnalyzer 注册** — 新流派必须继承 `SchoolAnalyzer` 基类，调用 `register_school()` 注册，并在 `schools/__init__.py` 的 `_ensure_schools_loaded()` 中添加 lazy import。
 10. **破格检测必须有古籍依据** — 每个破格类型必须引用子平真诠/渊海子平/滴天髓/神峰通考原文。
+11. **盲派/新派方法论必须有典籍依据** — 盲派核心概念（宾主/体用/做功/贼神捕神/势）须对照段建业《盲派初级命理学》《命理珍宝瑰宝50期》；新派核心概念（百神/空亡/反断/格局分类）须对照李涵辰《八字预测真踪》。
 
 ## 古籍对齐规则 (v5.1)
 

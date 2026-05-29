@@ -4,6 +4,8 @@ from bazi_pro.core import (
     SHENG_MAP,
     WO_KE_MAP,
     WO_SHENG_MAP,
+    ZHI_CHONG,
+    ZHI_HE,
     ZHI_WUXING,
     derive_shishen,
     full_analysis,
@@ -35,15 +37,11 @@ LIUJIA_XUN = {
 
 KE_PAIRS_SET = {('木', '土'), ('土', '水'), ('水', '火'), ('火', '金'), ('金', '木')}
 
-BAISHEN_RULES = {
-    '正官': {'position': '月干', 'condition': 'not_on_gan'},
-    '七杀': {'position': '时干', 'condition': 'not_on_gan'},
-    '正财': {'position': '月干', 'condition': 'not_on_gan'},
-    '偏财': {'position': '时干', 'condition': 'not_on_gan'},
-    '正印': {'position': '月干', 'condition': 'not_on_gan'},
-    '偏印': {'position': '时干', 'condition': 'not_on_gan'},
-    '食神': {'position': '时干', 'condition': 'not_on_gan'},
-    '伤官': {'position': '月干', 'condition': 'not_on_gan'},
+TONGZONG_PAIRS = {
+    '丙': '戊', '戊': '丙',
+    '丁': '己', '己': '丁',
+    '庚': '壬', '壬': '庚',
+    '辛': '癸', '癸': '辛',
 }
 
 
@@ -65,7 +63,7 @@ class XinpaiAnalyzer(SchoolAnalyzer):
         baishen = self._apply_baishen(result)
         kongwang = self._apply_kongwang(result)
         fanduan = self._apply_fanduan(result, yong_ji)
-        dayun_verdict = self._judge_dayun_xinpai(result, yong_ji, kongwang)
+        dayun_verdict = self._judge_dayun_xinpai(result, yong_ji, kongwang, fanduan)
         summary = self._generate_summary(yong_ji, kongwang, fanduan)
 
         return {
@@ -88,29 +86,31 @@ class XinpaiAnalyzer(SchoolAnalyzer):
         pillars = result.get('pillars', [])
 
         if not pillars:
-            return {'sheng_fu': '身旺', 'yongshen': [], 'jishen': [], 'reason': '无法确定'}
+            return {'sheng_fu': '身旺', 'geju_type': '扶抑格', 'yongshen': [], 'jishen': [], 'reason': '无法确定'}
 
         month_zhi = pillars[1].get('zhi', '') if len(pillars) > 1 else ''
         month_zhi_wx = ZHI_WUXING.get(month_zhi, '')
 
-        sheng_fu = self._judge_sheng_fu(dm_wx, month_zhi_wx)
+        sheng_fu = self._judge_sheng_fu(dm_wx, month_zhi_wx, pillars, day_master)
 
         yongshen_names = []
         jishen_names = []
+        geju_type = '扶抑格'
 
-        if sheng_fu == '身旺':
+        if sheng_fu in ('从强', '身旺极'):
+            geju_type = '从强格'
+            yongshen_names = ['印星', '比劫']
+            jishen_names = ['官星', '财星', '食伤']
+        elif sheng_fu in ('从弱', '身弱极'):
+            geju_type = '从弱格'
+            yongshen_names = ['官星', '财星', '食伤']
+            jishen_names = ['印星', '比劫']
+        elif sheng_fu == '身旺':
+            geju_type = '扶抑格'
             yongshen_names = ['官星', '财星', '食伤']
             jishen_names = ['印星', '比劫']
         else:
-            yongshen_names = ['印星', '比劫']
-            jishen_names = ['官星', '财星', '食伤']
-
-        if month_zhi_wx == dm_wx and dm_wx:
-            sheng_fu = '身旺极'
-            yongshen_names = ['食伤']
-            jishen_names = ['印星', '比劫', '官星', '财星']
-        elif (month_zhi_wx, dm_wx) in KE_PAIRS_SET:
-            sheng_fu = '身弱极'
+            geju_type = '扶抑格'
             yongshen_names = ['印星', '比劫']
             jishen_names = ['官星', '财星', '食伤']
 
@@ -129,13 +129,14 @@ class XinpaiAnalyzer(SchoolAnalyzer):
 
         return {
             'sheng_fu': sheng_fu,
+            'geju_type': geju_type,
             'yongshen': yong_wx_list,
             'yongshen_name': yongshen_names,
             'yongshen_gan': yongshen_gan,
             'jishen': ji_wx_list,
             'jishen_name': jishen_names,
             'jishen_gan': jishen_gan,
-            'reason': '月令{}({})与日主{}关系判定'.format(month_zhi, month_zhi_wx, dm_wx),
+            'reason': '月令{}({})与日主{}关系判定，帮扶克泄综合评分'.format(month_zhi, month_zhi_wx, dm_wx),
         }
 
     def _names_to_wuxing(self, dm_wx: str, names: list) -> list:
@@ -157,70 +158,105 @@ class XinpaiAnalyzer(SchoolAnalyzer):
                 result.append(wx)
         return result
 
-    def _judge_sheng_fu(self, dm_wx: str, month_wx: str) -> str:
+    def _judge_sheng_fu(self, dm_wx: str, month_wx: str, pillars: list, day_master: str) -> str:
         if not dm_wx or not month_wx:
             return '身旺'
 
         if month_wx == dm_wx:
-            return '身旺'
-        if month_wx == SHENG_MAP.get(dm_wx, ''):
-            return '身旺'
-        if (month_wx, dm_wx) in KE_PAIRS_SET:
-            return '身弱'
-        if month_wx == WO_SHENG_MAP.get(dm_wx, ''):
-            return '身弱'
-        if month_wx == WO_KE_MAP.get(dm_wx, ''):
-            return '身弱'
+            base = '旺'
+        elif month_wx == SHENG_MAP.get(dm_wx, ''):
+            base = '旺'
+        elif (month_wx, dm_wx) in KE_PAIRS_SET:
+            base = '弱'
+        elif month_wx == WO_SHENG_MAP.get(dm_wx, ''):
+            base = '弱'
+        elif month_wx == WO_KE_MAP.get(dm_wx, ''):
+            base = '弱'
+        else:
+            base = '旺'
 
-        return '身旺'
+        help_score = 0.0
+        drain_score = 0.0
+
+        for p in pillars:
+            gan = p.get('gan', '')
+            zhi = p.get('zhi', '')
+            gan_wx = GAN_WUXING.get(gan, '')
+            zhi_wx = ZHI_WUXING.get(zhi, '')
+
+            if gan_wx == dm_wx or gan_wx == SHENG_MAP.get(dm_wx, ''):
+                help_score += 1.0
+            elif gan_wx:
+                drain_score += 1.0
+
+            if zhi_wx == dm_wx or zhi_wx == SHENG_MAP.get(dm_wx, ''):
+                help_score += 1.5
+            elif zhi_wx:
+                drain_score += 1.5
+
+        if base == '旺' and help_score >= drain_score:
+            if help_score > drain_score * 2:
+                return '从强'
+            return '身旺'
+        elif base == '弱' and drain_score >= help_score:
+            if drain_score > help_score * 2:
+                return '从弱'
+            return '身弱'
+        elif base == '旺' and help_score < drain_score:
+            return '身弱'
+        elif base == '弱' and drain_score < help_score:
+            return '身旺'
+
+        return '身旺' if base == '旺' else '身弱'
 
     def _apply_baishen(self, result: dict) -> dict:
         pillars = result.get('pillars', [])
         day_master = result.get('day_master', '')
         if not pillars:
-            return {'replacements': {}, 'original': {}}
+            return {'replacements': {}, 'missing_shishen': []}
+
+        gans = [p.get('gan', '') for p in pillars]
+        shishen_on_gan = [derive_shishen(day_master, g) for g in gans]
+
+        present_shishen = set(shishen_on_gan)
+
+        liuqin_shishen = ['正官', '七杀', '正财', '偏财', '正印', '偏印', '食神', '伤官']
+
+        missing = [ss for ss in liuqin_shishen if ss not in present_shishen]
 
         replacements = {}
-        original = {}
+        month_gan = gans[1] if len(gans) > 1 else ''
+        hour_gan = gans[3] if len(gans) > 3 else ''
+        month_ss = shishen_on_gan[1] if len(shishen_on_gan) > 1 else ''
+        hour_ss = shishen_on_gan[3] if len(shishen_on_gan) > 3 else ''
 
-        tiangan_list = [p.get('gan', '') for p in pillars]
-        shishen_list = [derive_shishen(day_master, g) for g in tiangan_list]
-
-        for i, shishen in enumerate(shishen_list):
-            if shishen in BAISHEN_RULES:
-                rule = BAISHEN_RULES[shishen]
-                original[shishen] = {'position': rule['position'], 'replaced_by': None}
-
-        for shishen, rule in BAISHEN_RULES.items():
-            if shishen not in shishen_list:
-                month_gan = tiangan_list[1] if len(tiangan_list) > 1 else ''
-                hour_gan = tiangan_list[3] if len(tiangan_list) > 3 else ''
-
-                if rule['position'] == '月干' and month_gan:
-                    original[shishen] = {'position': '月干', 'replaced_by': month_gan}
-                    replacements[shishen] = {
-                        'position': '月干',
-                        'gan': month_gan,
-                        'wuxing': GAN_WUXING.get(month_gan, ''),
-                    }
-                elif rule['position'] == '时干' and hour_gan:
-                    original[shishen] = {'position': '时干', 'replaced_by': hour_gan}
-                    replacements[shishen] = {
-                        'position': '时干',
-                        'gan': hour_gan,
-                        'wuxing': GAN_WUXING.get(hour_gan, ''),
-                    }
+        for missing_ss in missing:
+            if month_ss:
+                replacements[missing_ss] = {
+                    'replaced_by': month_gan,
+                    'position': '月干',
+                    'replacer_shishen': month_ss,
+                    'rule': '月干替代缺失的{}'.format(missing_ss),
+                }
+            elif hour_ss:
+                replacements[missing_ss] = {
+                    'replaced_by': hour_gan,
+                    'position': '时干',
+                    'replacer_shishen': hour_ss,
+                    'rule': '时干替代缺失的{}'.format(missing_ss),
+                }
 
         return {
             'replacements': replacements,
-            'original': original,
-            'shishen_on_gan': dict(zip(tiangan_list, shishen_list)),
+            'missing_shishen': missing,
+            'present_shishen': list(present_shishen),
+            'shishen_on_gan': dict(zip(gans, shishen_on_gan)),
         }
 
     def _apply_kongwang(self, result: dict) -> dict:
         pillars = result.get('pillars', [])
         if not pillars:
-            return {'kongwang_zhi': [], 'affected': [], 'power_reduction': 0.5}
+            return {'kongwang_zhi': [], 'affected': [], 'power_reduction': 0.5, 'chukong': []}
 
         day_gan = pillars[2].get('gan', '') if len(pillars) > 2 else ''
         day_zhi = pillars[2].get('zhi', '') if len(pillars) > 2 else ''
@@ -231,6 +267,8 @@ class XinpaiAnalyzer(SchoolAnalyzer):
         if not kongwang_zhi:
             year_ganzhi = (pillars[0].get('gan', '') + pillars[0].get('zhi', '')) if pillars else ''
             kongwang_zhi = LIUJIA_XUN.get(year_ganzhi, [])
+
+        all_zhi = [p.get('zhi', '') for p in pillars]
 
         affected = []
         for pillar in pillars:
@@ -243,68 +281,115 @@ class XinpaiAnalyzer(SchoolAnalyzer):
                     'reduced_power': '0.5',
                 })
 
+        chukong = []
+        for kw_zhi in kongwang_zhi:
+            for other_zhi in all_zhi:
+                if other_zhi == kw_zhi:
+                    continue
+                pair = frozenset({kw_zhi, other_zhi})
+                if pair in ZHI_CHONG:
+                    chukong.append({
+                        'zhi': kw_zhi,
+                        'reason': '{}冲{}出空'.format(other_zhi, kw_zhi),
+                        'type': '冲出空',
+                    })
+                    break
+                if pair in ZHI_HE:
+                    he_wx = ZHI_HE[pair]
+                    chukong.append({
+                        'zhi': kw_zhi,
+                        'reason': '{}合{}出空，化{}'.format(other_zhi, kw_zhi, he_wx),
+                        'type': '合出空',
+                    })
+                    break
+
         return {
             'kongwang_zhi': kongwang_zhi,
             'affected': affected,
             'power_reduction': 0.5,
             'canggan_excluded': len(affected) > 0,
+            'chukong': chukong,
         }
 
     def _apply_fanduan(self, result: dict, yong_ji: dict) -> dict:
-        day_master = result.get('day_master', '')
-        dm_wx = GAN_WUXING.get(day_master, '')
         pillars = result.get('pillars', [])
+        day_master = result.get('day_master', '')
 
-        kongwang = self._apply_kongwang(result)
-        kongwang_zhi = kongwang.get('kongwang_zhi', [])
+        if not pillars:
+            return {'conditions': [], 'fanduan_details': [], 'total_conditions': 0}
 
-        month_zhi = pillars[1].get('zhi', '') if len(pillars) > 1 else ''
-        month_zhi_wx = ZHI_WUXING.get(month_zhi, '')
+        gans = [p.get('gan', '') for p in pillars]
+        shishen_list = [derive_shishen(day_master, g) for g in gans]
 
         conditions = []
-        fanduan_yong = []
-        fanduan_ji = []
+        fanduan_targets = []
 
-        if month_zhi_wx == dm_wx and dm_wx:
-            conditions.append({
-                'type': 'yue_fan',
-                'description': '月令与日主同五行',
-                'action': '用忌互换',
-            })
-            fanduan_yong.extend(yong_ji.get('jishen', []))
-            fanduan_ji.extend(yong_ji.get('yongshen', []))
+        gan_wuxing_list = [GAN_WUXING.get(g, '') for g in gans]
+        wx_count = {}
+        for i, wx in enumerate(gan_wuxing_list):
+            if wx:
+                wx_count.setdefault(wx, []).append(i)
 
-        for kw in kongwang_zhi:
-            if kw in [p.get('zhi', '') for p in pillars]:
+        for wx, indices in wx_count.items():
+            if len(indices) >= 2:
+                fanduan_targets.append(3)
                 conditions.append({
-                    'type': 'kongwang_fan',
-                    'description': '地支{}空亡'.format(kw),
-                    'action': '用忌互换',
+                    'type': 'tongxing_fanduan',
+                    'description': '局中有两{}五行天干，时干反断'.format(wx),
+                    'action': '时干用忌互换',
+                    'target_index': 3,
                 })
                 break
 
-        sheng_fu = yong_ji.get('sheng_fu', '')
-        if '极' in sheng_fu:
-            conditions.append({
-                'type': 'wang_ji',
-                'description': '{}'.format(sheng_fu),
-                'action': '克泄耗反断',
-            })
+        month_gan = gans[1] if len(gans) > 1 else ''
+        hour_gan = gans[3] if len(gans) > 3 else ''
+        if month_gan and hour_gan:
+            if TONGZONG_PAIRS.get(month_gan) == hour_gan or TONGZONG_PAIRS.get(hour_gan) == month_gan:
+                if 3 not in fanduan_targets:
+                    fanduan_targets.append(3)
+                conditions.append({
+                    'type': 'tongzong_fanduan',
+                    'description': '月干{}与时干{}同宗，时干反断'.format(month_gan, hour_gan),
+                    'action': '时干用忌互换',
+                    'target_index': 3,
+                })
+
+        fanduan_details = []
+        for idx in fanduan_targets:
+            if idx < len(gans):
+                gan = gans[idx]
+                ss = shishen_list[idx]
+                wx = GAN_WUXING.get(gan, '')
+                is_yong = wx in yong_ji.get('yongshen', [])
+                new_role = '忌神' if is_yong else '用神'
+                fanduan_details.append({
+                    'gan': gan,
+                    'position': ['年干', '月干', '日干', '时干'][idx] if idx < 4 else '',
+                    'shishen': ss,
+                    'original': '用神' if is_yong else '忌神',
+                    'reversed': new_role,
+                })
 
         return {
             'conditions': conditions,
-            'fanduan_yong': fanduan_yong,
-            'fanduan_ji': fanduan_ji,
+            'fanduan_details': fanduan_details,
             'total_conditions': len(conditions),
         }
 
-    def _judge_dayun_xinpai(self, result: dict, yong_ji: dict, kongwang: dict) -> list:
+    def _judge_dayun_xinpai(self, result: dict, yong_ji: dict, kongwang: dict, fanduan: dict) -> list:
         dayun_list = result.get('dayun', []) if 'dayun' in result else []
         if not dayun_list:
             dayun_list = self._generate_dayun_from_pillars(result)
 
         yong_wx_list = yong_ji.get('yongshen', [])
+        ji_wx_list = yong_ji.get('jishen', [])
         kongwang_zhi = kongwang.get('kongwang_zhi', [])
+        chukong_zhi = [c.get('zhi', '') for c in kongwang.get('chukong', [])]
+        day_master = result.get('day_master', '')
+
+        fanduan_gans = set()
+        for detail in fanduan.get('fanduan_details', []):
+            fanduan_gans.add(detail.get('gan', ''))
 
         verdicts = []
         for step_info in dayun_list:
@@ -316,21 +401,38 @@ class XinpaiAnalyzer(SchoolAnalyzer):
                 continue
 
             gan_wx = GAN_WUXING.get(gan, '')
-            shishen = derive_shishen(result.get('day_master', ''), gan)
+            shishen = derive_shishen(day_master, gan)
 
             is_kongwang = zhi in kongwang_zhi if zhi else False
-
+            is_chukong = zhi in chukong_zhi if zhi else False
             is_yong = gan_wx in yong_wx_list if gan_wx else False
+            is_fanduan = gan in fanduan_gans
 
-            if is_kongwang:
+            if is_fanduan:
+                is_yong = not is_yong
+
+            if is_kongwang and not is_chukong:
                 verdict = '平'
                 detail = '大运地支{}空亡，力量减半'.format(zhi)
+            elif is_kongwang and is_chukong:
+                if is_yong:
+                    verdict = '吉'
+                    detail = '大运地支{}原空亡已出空，天干{}({})为用神'.format(zhi, gan, gan_wx)
+                else:
+                    verdict = '凶'
+                    detail = '大运地支{}原空亡已出空，天干{}({})为忌神'.format(zhi, gan, gan_wx)
             elif is_yong:
                 verdict = '吉'
-                detail = '大运天干{}({})为用神'.format(gan, gan_wx)
+                if is_fanduan:
+                    detail = '大运天干{}({})为用神（经反断调整）'.format(gan, gan_wx)
+                else:
+                    detail = '大运天干{}({})为用神'.format(gan, gan_wx)
             else:
                 verdict = '凶'
-                detail = '大运天干{}({})为忌神'.format(gan, gan_wx)
+                if is_fanduan:
+                    detail = '大运天干{}({})为忌神（经反断调整）'.format(gan, gan_wx)
+                else:
+                    detail = '大运天干{}({})为忌神'.format(gan, gan_wx)
 
             verdicts.append({
                 'step': step,
@@ -340,6 +442,8 @@ class XinpaiAnalyzer(SchoolAnalyzer):
                 'verdict': verdict,
                 'detail': detail,
                 'is_kongwang': is_kongwang,
+                'is_chukong': is_chukong,
+                'is_fanduan': is_fanduan,
             })
 
         return verdicts
@@ -364,14 +468,20 @@ class XinpaiAnalyzer(SchoolAnalyzer):
         ji_names = yong_ji.get('jishen_name', [])
         kongwang_list = kongwang.get('kongwang_zhi', [])
         fanduan_count = fanduan.get('total_conditions', 0)
+        geju_type = yong_ji.get('geju_type', '扶抑格')
 
         yong_str = '、'.join(yong_names) if yong_names else '待定'
         ji_str = '、'.join(ji_names) if ji_names else '待定'
         kong_str = '、'.join(kongwang_list) if kongwang_list else '无'
 
-        advice = '新派以用忌神为核心。用神为{}，忌神为{}。'.format(yong_str, ji_str)
+        advice = '新派以用忌神为核心，格局类型为{}。用神为{}，忌神为{}。'.format(geju_type, yong_str, ji_str)
         if kongwang_list:
-            advice += '空亡{}，力量减半。'.format(kong_str)
+            chukong = kongwang.get('chukong', [])
+            if chukong:
+                chukong_str = '、'.join([c.get('reason', '') for c in chukong])
+                advice += '空亡{}，力量减半。出空条件：{}。'.format(kong_str, chukong_str)
+            else:
+                advice += '空亡{}，力量减半。'.format(kong_str)
         if fanduan_count > 0:
             advice += '存在{}项反断条件，需综合判断。'.format(fanduan_count)
 
@@ -380,6 +490,7 @@ class XinpaiAnalyzer(SchoolAnalyzer):
             'jishen': ji_str,
             'kongwang': kong_str,
             'fanduan_count': fanduan_count,
+            'geju_type': geju_type,
             'advice': advice,
         }
 
