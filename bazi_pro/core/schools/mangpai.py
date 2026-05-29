@@ -624,13 +624,9 @@ class MangpaiAnalyzer(SchoolAnalyzer):
         yong_items = tiyong.get('yong', [])
         ti_items = tiyong.get('ti', [])
         relations = result.get('relations', [])
-        pillars = result.get('pillars', [])
 
         if not yong_items or not ti_items:
             return {'is_zeishen_pattern': False, 'bushen': [], 'zeishen': [], 'yingqi_note': ''}
-
-        yong_gans = {item.get('gan', '') for item in yong_items}
-        yong_wx_set = {item.get('wuxing', '') for item in yong_items}
 
         controlled_count = 0
         for item in yong_items:

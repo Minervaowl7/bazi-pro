@@ -203,7 +203,6 @@ class XinpaiAnalyzer(SchoolAnalyzer):
                 break
 
         zuoxia_is_yin = day_zhi_wx == yin_wx
-        zuoxia_is_gen = day_zhi_wx == dm_wx
         zuoxia_is_ku = day_zhi in ('辰', '戌', '丑', '未') and day_zhi_wx == dm_wx
 
         help_count = 0
