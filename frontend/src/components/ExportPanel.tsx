@@ -26,20 +26,6 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
   const [copied, setCopied] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  function getNestedValue(obj: unknown, path: string): unknown {
-    if (!obj || typeof obj !== "object") return undefined;
-    const keys = path.split(".");
-    let current: unknown = obj;
-    for (const key of keys) {
-      if (current && typeof current === "object" && key in (current as Record<string, unknown>)) {
-        current = (current as Record<string, unknown>)[key];
-      } else {
-        return undefined;
-      }
-    }
-    return current;
-  }
-
   const buildReportContent = useCallback(() => {
     if (!result) return "";
 

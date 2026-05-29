@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem("theme") as Theme | null;
     const initial = stored === "light" || stored === "dark" ? stored : "dark";
-    setTheme(initial);
+    setTheme(initial); // eslint-disable-line react-hooks/set-state-in-effect
     document.documentElement.setAttribute("data-theme", initial);
     setMounted(true);
   }, []);

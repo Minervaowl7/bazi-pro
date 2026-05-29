@@ -163,7 +163,7 @@ export default function ReportPage() {
   }, [analysisId]);
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
   }, [fetchData]);
 
   useEffect(() => {

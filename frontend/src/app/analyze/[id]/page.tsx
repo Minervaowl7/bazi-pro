@@ -226,7 +226,6 @@ export default function AnalyzePage() {
   } | undefined;
 
   const schoolAnalyses = analysisResult?.school_analyses as Record<string, unknown> | undefined;
-  const schoolAnalysis = analysisResult?.school_analysis as Record<string, unknown> | undefined;
   const currentSchool = (analysisResult?.school as string) || "ziping";
   const isCompareMode = currentSchool === "all";
 

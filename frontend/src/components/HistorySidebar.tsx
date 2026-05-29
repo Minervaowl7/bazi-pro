@@ -41,7 +41,7 @@ export default function HistorySidebar() {
   }
 
   useEffect(() => {
-    loadHistory();
+    loadHistory(); // eslint-disable-line react-hooks/set-state-in-effect
     const interval = setInterval(() => {
       if (!backendDownRef.current) {
         loadHistory();

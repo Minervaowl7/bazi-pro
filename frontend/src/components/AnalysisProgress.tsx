@@ -1,6 +1,6 @@
 "use client";
 
-import { useAnalysisStore, type ProgressStep } from "@/stores/analysisStore";
+import { useAnalysisStore } from "@/stores/analysisStore";
 import { useEffect, useState } from "react";
 
 const STEP_LABELS: Record<string, string> = {
@@ -30,7 +30,6 @@ export default function AnalysisProgress() {
 
   if (status !== "streaming" && status !== "submitting") return null;
 
-  const completedSteps = progress.filter((s) => s.status === "done");
   const latestStep = progress[progress.length - 1];
   const currentStepIdx = latestStep
     ? STEP_ORDER.indexOf(latestStep.step)
