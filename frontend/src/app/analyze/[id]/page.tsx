@@ -154,8 +154,8 @@ export default function AnalyzePage() {
     setReportMsg("");
     try {
       const report = await generateReport(analysisId);
-      if (report.report) {
-        const text = Object.entries(report.report).map(([t, c]) => `## ${t}\n\n${c}`).join("\n\n");
+      if (report.sections) {
+        const text = Object.entries(report.sections).map(([t, c]) => `## ${t}\n\n${c}`).join("\n\n");
         await navigator.clipboard.writeText(text).catch(() => {
           const ta = document.createElement("textarea");
           ta.value = text;

@@ -167,10 +167,11 @@ export default function BirthForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99]"
+          className="w-full py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
           style={{
             background: "var(--accent)",
             color: "var(--bg-primary)",
+            boxShadow: "0 4px 16px rgba(201,169,110,0.25)",
           }}
         >
           {paipanLoading ? "排盘中..." : "排盘"}
@@ -195,102 +196,62 @@ export default function BirthForm() {
           </div>
 
           <div className="overflow-x-auto mb-5">
-            <table className="w-full text-center">
-              <thead>
-                <tr
-                  className="text-[11px] uppercase tracking-wider"
-                  style={{ color: "var(--text-muted)", background: "var(--bg-secondary)" }}
+            <div className="grid grid-cols-4 gap-3">
+              {paipanResult.pillars.map((p) => (
+                <div
+                  key={p.position}
+                  className="flex flex-col items-center gap-1 py-4 rounded-xl relative"
+                  style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
                 >
-                  <th className="py-2 px-2 w-12"></th>
-                  {paipanResult.pillars.map((p) => (
-                    <th key={p.position} className="py-2 px-2 font-medium text-xs">
-                      {p.position}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ borderTop: "1px solid var(--border)" }}>
-                  <td className="py-2.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
-                    天干
-                  </td>
-                  {paipanResult.pillars.map((p) => (
-                    <td key={p.position} className="py-2.5 px-1">
-                      {p.gan ? (
-                        <span
-                          className="text-xl font-bold"
-                          style={{
-                            color: p.wuxing_gan
-                              ? WUXING_COLORS[p.wuxing_gan]
-                              : "inherit",
-                          }}
-                        >
-                          {p.gan}
-                        </span>
-                      ) : (
-                        <span style={{ color: "var(--text-muted)" }}>—</span>
-                      )}
-                    </td>
-                  ))}
-                </tr>
-                <tr style={{ borderTop: "1px solid var(--border)" }}>
-                  <td className="py-2.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
-                    地支
-                  </td>
-                  {paipanResult.pillars.map((p) => (
-                    <td key={p.position} className="py-2.5 px-1">
-                      {p.zhi ? (
-                        <span
-                          className="text-xl font-bold"
-                          style={{
-                            color: p.wuxing_zhi
-                              ? WUXING_COLORS[p.wuxing_zhi]
-                              : "inherit",
-                          }}
-                        >
-                          {p.zhi}
-                        </span>
-                      ) : (
-                        <span style={{ color: "var(--text-muted)" }}>—</span>
-                      )}
-                    </td>
-                  ))}
-                </tr>
-                <tr style={{ borderTop: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
-                  <td className="py-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
-                    五行
-                  </td>
-                  {paipanResult.pillars.map((p) => (
-                    <td key={p.position} className="py-2 px-1">
-                      <div className="flex flex-col items-center gap-1">
-                        {p.gan && (
-                          <span
-                            className="text-[11px] px-1.5 py-0.5 rounded-md"
-                            style={{
-                              color: WUXING_COLORS[p.wuxing_gan] || "inherit",
-                              background: WUXING_BG[p.wuxing_gan] || "transparent",
-                            }}
-                          >
-                            {p.wuxing_gan}
-                          </span>
-                        )}
-                        {p.zhi && (
-                          <span
-                            className="text-[11px] px-1.5 py-0.5 rounded-md"
-                            style={{
-                              color: WUXING_COLORS[p.wuxing_zhi] || "inherit",
-                              background: WUXING_BG[p.wuxing_zhi] || "transparent",
-                            }}
-                          >
-                            {p.wuxing_zhi}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
+                  <span
+                    className="text-[11px] font-medium mb-2 px-2 py-0.5 rounded-full"
+                    style={{ color: "var(--text-muted)", background: "var(--bg-hover)" }}
+                  >
+                    {p.position}
+                  </span>
+                  <span
+                    className="text-2xl font-bold leading-none"
+                    style={{ color: p.wuxing_gan ? WUXING_COLORS[p.wuxing_gan] : "inherit" }}
+                  >
+                    {p.gan || "—"}
+                  </span>
+                  <span
+                    className="w-6 my-1.5"
+                    style={{ height: "1px", background: "var(--border)" }}
+                  />
+                  <span
+                    className="text-2xl font-bold leading-none"
+                    style={{ color: p.wuxing_zhi ? WUXING_COLORS[p.wuxing_zhi] : "inherit" }}
+                  >
+                    {p.zhi || "—"}
+                  </span>
+                  <div className="flex gap-1 mt-2">
+                    {p.gan && (
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded"
+                        style={{
+                          color: WUXING_COLORS[p.wuxing_gan] || "inherit",
+                          background: WUXING_BG[p.wuxing_gan] || "transparent",
+                        }}
+                      >
+                        {p.wuxing_gan}
+                      </span>
+                    )}
+                    {p.zhi && (
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded"
+                        style={{
+                          color: WUXING_COLORS[p.wuxing_zhi] || "inherit",
+                          background: WUXING_BG[p.wuxing_zhi] || "transparent",
+                        }}
+                      >
+                        {p.wuxing_zhi}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="mb-5">
@@ -347,10 +308,11 @@ export default function BirthForm() {
             type="button"
             onClick={handleDeepAnalysis}
             disabled={status === "submitting" || status === "streaming"}
-            className="w-full py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99] flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] flex items-center justify-center gap-2"
             style={{
               background: "linear-gradient(135deg, var(--accent), var(--accent-hover))",
               color: "var(--bg-primary)",
+              boxShadow: "0 6px 20px rgba(201,169,110,0.3)",
             }}
           >
             {status === "submitting" ? "提交中..." : "深度解读"}{" "}

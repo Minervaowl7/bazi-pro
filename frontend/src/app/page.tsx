@@ -14,23 +14,42 @@ export default function Home() {
         </div>
 
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.03]"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundImage:
-              "radial-gradient(circle at 20% 30%, var(--accent) 0%, transparent 50%), radial-gradient(circle at 80% 70%, var(--accent) 0%, transparent 45%)",
+            background:
+              "radial-gradient(ellipse 60% 50% at 30% 20%, rgba(201,169,110,0.04) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 75% 75%, rgba(201,169,110,0.03) 0%, transparent 60%)",
           }}
         />
+
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none"
+          style={{
+            fontSize: "clamp(180px, 25vw, 320px)",
+            color: "var(--accent)",
+            opacity: 0.02,
+            fontWeight: 700,
+            lineHeight: 1,
+            letterSpacing: "-0.05em",
+          }}
+        >
+          命
+        </div>
 
         <div className="w-full max-w-lg relative z-[1]">
           <div className="mb-10">
             <div
-              className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-5"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium mb-6"
               style={{
                 background: "var(--accent-dim)",
                 color: "var(--accent)",
                 letterSpacing: "0.08em",
+                border: "1px solid rgba(201,169,110,0.15)",
               }}
             >
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: "var(--accent)" }}
+              />
               确定性计算引擎
             </div>
             <h1
@@ -40,15 +59,15 @@ export default function Home() {
               八字排盘
             </h1>
             <p
-              className="text-sm leading-relaxed max-w-xs"
+              className="text-sm leading-relaxed max-w-sm"
               style={{ color: "var(--text-muted)" }}
             >
-              输入出生时辰，即刻排盘·深度解读
+              输入出生时辰，即刻排盘 · 深度解读
             </p>
           </div>
 
           <div
-            className="rounded-2xl p-6 md:p-8"
+            className="rounded-2xl p-6 md:p-8 backdrop-blur-sm"
             style={{
               background: "var(--bg-card)",
               border: "1px solid var(--border)",
@@ -58,18 +77,26 @@ export default function Home() {
             <BirthForm />
           </div>
 
-          <div className="flex items-center justify-center gap-6 mt-8 pt-6" style={{ borderTop: "1px solid var(--border)", opacity: 0.45 }}>
-            <span className="text-[11px] whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
-              古籍引证
-            </span>
-            <span className="w-1 h-1 rounded-full" style={{ background: "var(--text-muted)" }} />
-            <span className="text-[11px] whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
-              零幻觉
-            </span>
-            <span className="w-1 h-1 rounded-full" style={{ background: "var(--text-muted)" }} />
-            <span className="text-[11px] whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
-              三大流派
-            </span>
+          <div
+            className="flex items-center justify-center gap-6 mt-8 pt-6"
+            style={{ borderTop: "1px solid var(--border-subtle)" }}
+          >
+            {["古籍引证", "零幻觉", "三大流派"].map((text, i) => (
+              <span key={text} className="flex items-center gap-6">
+                {i > 0 && (
+                  <span
+                    className="w-px h-3"
+                    style={{ background: "var(--border)" }}
+                  />
+                )}
+                <span
+                  className="text-[11px] whitespace-nowrap"
+                  style={{ color: "var(--text-muted)", opacity: 0.7 }}
+                >
+                  {text}
+                </span>
+              </span>
+            ))}
           </div>
         </div>
       </main>
