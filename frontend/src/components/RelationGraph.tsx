@@ -29,10 +29,10 @@ interface Props {
 
 export default function RelationGraph({ result }: Props) {
   const shishen = result.shishen as { pillars?: PillarDetail[] } | undefined;
-  const pillars = shishen?.pillars || [];
   const relations = result.relations as Relation[] | undefined;
 
   const option = useMemo(() => {
+    const pillars = shishen?.pillars || [];
     if (pillars.length < 4 || !relations || relations.length === 0) return null;
 
     const positions = ["年", "月", "日", "时"];
@@ -123,7 +123,7 @@ export default function RelationGraph({ result }: Props) {
         },
       }],
     };
-  }, [pillars, relations]);
+  }, [shishen, relations]);
 
   if (!option) return null;
 

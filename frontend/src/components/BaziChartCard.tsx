@@ -6,7 +6,6 @@ import {
   WUXING_COLORS,
   WUXING_BG,
   RELATION_COLORS,
-  GAN_WUXING,
 } from "@/lib/constants";
 
 interface CangganItem {
@@ -79,7 +78,6 @@ export default function BaziChartCard({ result }: Props) {
   const wuxingOrder = ["木", "火", "土", "金", "水"];
 
   const allTiangan = pillars.map((p) => p.gan || "");
-  const allCanggan = pillars.map((p) => p.canggan || []);
 
   const isGanTouchu = useCallback(
     (gan: string) => allTiangan.includes(gan),
