@@ -21,8 +21,12 @@ from bazi_pro.core import (
     judge_wangshuai,
     screen_pattern,
 )
+from bazi_pro.core.branches import SHIER_CHANGSHENG
 from bazi_pro.paipan import paipan_from_datetime
 from server.cache import get_cache
+from server.gongwei import calc_gongwei
+from server.nayin import lookup_nayin
+from server.shensha import calc_shensha
 from server.ws import manager
 
 try:
@@ -117,6 +121,14 @@ async def run_analysis(mcp_json: dict, run_id: str,
         shishen = _derive_shishen(mcp_json, bazi_parts)
         await manager.send_progress(run_id, '4', 'done', '十神推导完成', shishen)
         result['shishen'] = shishen
+
+        gongwei = calc_gongwei(bazi_parts)
+        if gongwei:
+            result['gongwei'] = gongwei
+
+        shensha = calc_shensha(bazi_parts)
+        if shensha:
+            result['shensha'] = shensha
 
         await manager.send_progress(run_id, '4b', 'running', '喜用神候选推导中...')
         await asyncio.sleep(0.05)
@@ -248,6 +260,7 @@ def _derive_shishen(mcp_json: dict, bazi_parts: list[str]) -> dict:
         return {'pillars': [], 'note': '日主或八字数据缺失'}
 
     positions = ['年', '月', '日', '时']
+    changsheng_table = SHIER_CHANGSHENG.get(day_master, {})
     pillars = []
     for i, token in enumerate(bazi_parts):
         if len(token) < 2:
@@ -267,6 +280,8 @@ def _derive_shishen(mcp_json: dict, bazi_parts: list[str]) -> dict:
             'shishen': shishen_gan,
             'shishen_gan': shishen_gan,
             'shishen_zhi': shishen_zhi,
+            'nayin': lookup_nayin(token),
+            'changsheng': changsheng_table.get(zhi, ''),
             'canggan': [{'gan': cg, 'qi': ql,
                           'wuxing': GAN_WUXING.get(cg, ''),
                           'shishen': derive_shishen(day_master, cg)}

@@ -5,9 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import { useAnalysisStore } from "@/stores/analysisStore";
 import AnalysisProgress from "@/components/AnalysisProgress";
 import BaziChartCard from "@/components/BaziChartCard";
+import StrengthSlider from "@/components/StrengthSlider";
+import ShishenEnergyChart from "@/components/ShishenEnergyChart";
+import RelationGraph from "@/components/RelationGraph";
 import SchoolPanel from "@/components/SchoolPanel";
 import SchoolComparePanel from "@/components/SchoolComparePanel";
 import DayunTimeline from "@/components/DayunTimeline";
+import GongweiPanel from "@/components/GongweiPanel";
+import ShenShaPanel from "@/components/ShenShaPanel";
 import ChatPanel from "@/components/ChatPanel";
 import ExportPanel from "@/components/ExportPanel";
 import HistorySidebar from "@/components/HistorySidebar";
@@ -422,8 +427,17 @@ export default function AnalyzePage() {
 
           {analysisResult && (
             <div className="lg:grid lg:grid-cols-12 lg:gap-8 space-y-8 lg:space-y-0">
-              <div className="lg:col-span-7 space-y-8">
+              <div className="lg:col-span-7 space-y-8 stagger-in">
                 <BaziChartCard result={analysisResult} />
+                <StrengthSlider
+                  verdict={wangshuai?.verdict}
+                  dayMaster={(analysisResult?.validation as { day_master?: string } | undefined)?.day_master}
+                  deling={(analysisResult?.strength as Record<string, unknown> | undefined)?.deling as { status?: string; score?: number } | undefined}
+                  dedi={(analysisResult?.strength as Record<string, unknown> | undefined)?.dedi as { score?: number; level?: string } | undefined}
+                  deshi={(analysisResult?.strength as Record<string, unknown> | undefined)?.deshi as { score?: number; level?: string } | undefined}
+                />
+                <ShishenEnergyChart result={analysisResult} />
+                <RelationGraph result={analysisResult} />
                 {isCompareMode && schoolAnalyses ? (
                   <SchoolComparePanel schoolAnalyses={schoolAnalyses} />
                 ) : (
@@ -434,7 +448,7 @@ export default function AnalyzePage() {
                 )}
               </div>
 
-              <div className="lg:col-span-5 space-y-6">
+              <div className="lg:col-span-5 space-y-6 stagger-in">
                 <div className="grid grid-cols-3 gap-3">
                   <div
                     className="rounded-xl p-4 text-center"
@@ -514,67 +528,48 @@ export default function AnalyzePage() {
                   >
                     喜忌用神
                   </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className="text-xs px-2.5 py-1 rounded-full font-medium"
-                        style={{
-                          background: "rgba(74,222,128,0.15)",
-                          color: "var(--success)",
-                        }}
-                      >
-                        用神
-                      </span>
-                      <span className="text-sm font-medium">
+                  <div className="grid grid-cols-3 gap-2.5 mb-3">
+                    <div
+                      className="rounded-xl p-3 text-center"
+                      style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)" }}
+                    >
+                      <div className="text-[10px] mb-1" style={{ color: "var(--success)" }}>用神</div>
+                      <div className="text-sm font-bold" style={{ color: "var(--success)" }}>
                         {yongshen?.yongshen || "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className="text-xs px-2.5 py-1 rounded-full font-medium"
-                        style={{
-                          background: "rgba(74,222,128,0.10)",
-                          color: "var(--success)",
-                          opacity: 0.8,
-                        }}
-                      >
-                        喜神
-                      </span>
-                      <span className="text-sm">
-                        {(yongshen?.xishen || []).join(" ") || "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className="text-xs px-2.5 py-1 rounded-full font-medium"
-                        style={{
-                          background: "rgba(248,113,113,0.15)",
-                          color: "var(--danger)",
-                        }}
-                      >
-                        忌神
-                      </span>
-                      <span className="text-sm">
-                        {(yongshen?.jishen || []).join(" ") || "—"}
-                      </span>
-                    </div>
-                    {tiaohou?.has_tiaohou && (
-                      <div className="flex items-center gap-2.5">
-                        <span
-                          className="text-xs px-2.5 py-1 rounded-full font-medium"
-                          style={{
-                            background: "rgba(251,191,36,0.15)",
-                            color: "var(--warning)",
-                          }}
-                        >
-                          调候
-                        </span>
-                        <span className="text-sm">
-                          {(tiaohou.tiaohou_gan || []).join(" ")}
-                        </span>
                       </div>
-                    )}
+                    </div>
+                    <div
+                      className="rounded-xl p-3 text-center"
+                      style={{ background: "var(--accent-dim)", border: "1px solid var(--border-accent)" }}
+                    >
+                      <div className="text-[10px] mb-1" style={{ color: "var(--accent)" }}>喜神</div>
+                      <div className="text-sm font-bold" style={{ color: "var(--accent)" }}>
+                        {(yongshen?.xishen || []).join(" ") || "—"}
+                      </div>
+                    </div>
+                    <div
+                      className="rounded-xl p-3 text-center"
+                      style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)" }}
+                    >
+                      <div className="text-[10px] mb-1" style={{ color: "var(--danger)" }}>忌神</div>
+                      <div className="text-sm font-bold" style={{ color: "var(--danger)" }}>
+                        {(yongshen?.jishen || []).join(" ") || "—"}
+                      </div>
+                    </div>
                   </div>
+                  {tiaohou?.has_tiaohou && (
+                    <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                        style={{ background: "rgba(251,191,36,0.15)", color: "var(--warning)" }}
+                      >
+                        调候
+                      </span>
+                      <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                        {(tiaohou.tiaohou_gan || []).join(" ")}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {pattern?.reason && (
@@ -637,6 +632,10 @@ export default function AnalyzePage() {
                 )}
 
                 <DayunTimeline result={analysisResult} />
+
+                <GongweiPanel result={analysisResult} />
+
+                <ShenShaPanel result={analysisResult} />
 
                 <ChatPanel analysisId={analysisId} />
               </div>

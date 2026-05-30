@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 import {
   WUXING_COLORS,
@@ -25,90 +25,13 @@ interface PillarDetail {
   shishen_gan?: string;
   shishen_zhi?: string;
   shishen?: string;
+  nayin?: string;
+  changsheng?: string;
   canggan?: CangganItem[];
 }
 
 interface Props {
   result: Record<string, unknown>;
-}
-
-interface RelationLine {
-  type: string;
-  fromPillar: number;
-  toPillar: number;
-  fromRow: "gan" | "zhi";
-  toRow: "gan" | "zhi";
-  description: string;
-}
-
-interface CellRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-function parseRelation(
-  rel: { type?: string; description?: string; elements?: string[] },
-  pillars: PillarDetail[]
-): RelationLine | null {
-  const desc = rel.description || "";
-  const type = rel.type || "";
-
-  const positionMap: Record<string, number> = { 年: 0, 月: 1, 日: 2, 时: 3 };
-
-  const positionPattern = /([年月日时])([干支])/g;
-  let match: RegExpExecArray | null;
-  const positions: { pillar: number; row: "gan" | "zhi" }[] = [];
-
-  while ((match = positionPattern.exec(desc)) !== null) {
-    const pillar = positionMap[match[1]];
-    const row = match[2] === "干" ? "gan" : "zhi";
-    if (pillar !== undefined) {
-      positions.push({ pillar, row });
-    }
-  }
-
-  if (positions.length >= 2) {
-    return {
-      type,
-      fromPillar: positions[0].pillar,
-      toPillar: positions[1].pillar,
-      fromRow: positions[0].row,
-      toRow: positions[1].row,
-      description: desc,
-    };
-  }
-
-  const allGan = pillars.map((p) => p.gan || "");
-  const allZhi = pillars.map((p) => p.zhi || "");
-
-  const found: { pillar: number; row: "gan" | "zhi" }[] = [];
-
-  for (let i = 0; i < allGan.length; i++) {
-    if (allGan[i] && desc.includes(allGan[i])) {
-      found.push({ pillar: i, row: "gan" });
-    }
-  }
-
-  for (let i = 0; i < allZhi.length; i++) {
-    if (allZhi[i] && desc.includes(allZhi[i])) {
-      found.push({ pillar: i, row: "zhi" });
-    }
-  }
-
-  if (found.length >= 2) {
-    return {
-      type,
-      fromPillar: found[0].pillar,
-      toPillar: found[1].pillar,
-      fromRow: found[0].row,
-      toRow: found[1].row,
-      description: desc,
-    };
-  }
-
-  return null;
 }
 
 export default function BaziChartCard({ result }: Props) {
@@ -117,9 +40,6 @@ export default function BaziChartCard({ result }: Props) {
 
   const strength = result.strength as {
     wangshuai?: { verdict?: string; is_weak?: boolean; is_strong?: boolean };
-    deling?: { status?: string; score?: number };
-    dedi?: { score?: number };
-    deshi?: { score?: number };
   } | undefined;
   const wangshuai = strength?.wangshuai;
 
@@ -139,22 +59,21 @@ export default function BaziChartCard({ result }: Props) {
   const pattern = result.pattern as {
     pattern?: string;
     confidence?: number;
-    layer?: number;
-    reason?: string;
+    formation?: {
+      has_formation?: boolean;
+      type?: string;
+      branches?: string[];
+      element?: string;
+    };
+    break_conditions?: Array<{
+      type?: string;
+      severity?: string;
+      detail?: string;
+    }>;
   } | undefined;
 
-  const formation = (pattern as Record<string, unknown> | undefined)?.formation as {
-    has_formation?: boolean;
-    type?: string;
-    branches?: string[];
-    element?: string;
-  } | undefined;
-
-  const breakConditions = (pattern as Record<string, unknown> | undefined)?.break_conditions as Array<{
-    type?: string;
-    severity?: string;
-    detail?: string;
-  }> | undefined;
+  const formation = pattern?.formation;
+  const breakConditions = pattern?.break_conditions;
 
   const percent = elements?.percent || {};
   const wuxingOrder = ["木", "火", "土", "金", "水"];
@@ -167,97 +86,13 @@ export default function BaziChartCard({ result }: Props) {
     [allTiangan]
   );
 
-  const isGanXutou = useCallback(
-    (gan: string) => {
-      const wx = GAN_WUXING[gan];
-      if (!wx) return false;
-      return !allCanggan.some((pillarCanggan) =>
-        pillarCanggan.some((cg) => cg.wuxing === wx)
-      );
-    },
-    [allCanggan]
-  );
+  const [expandedRelations, setExpandedRelations] = useState(false);
 
-  const relationLines = (relations || [])
-    .map((r) => parseRelation(r, pillars))
-    .filter(Boolean) as RelationLine[];
-
-  const chartRef = useRef<HTMLDivElement>(null);
-  const [cellRects, setCellRects] = useState<Record<string, CellRect>>({});
-  const [hoveredLine, setHoveredLine] = useState<number | null>(null);
-  const [svgReady, setSvgReady] = useState(false);
-
-  const measureCells = useCallback(() => {
-    if (!chartRef.current) return;
-
-    const container = chartRef.current;
-    const containerRect = container.getBoundingClientRect();
-    const rects: Record<string, CellRect> = {};
-
-    container.querySelectorAll("[data-cell]").forEach((el) => {
-      const key = el.getAttribute("data-cell")!;
-      const rect = el.getBoundingClientRect();
-      rects[key] = {
-        x: rect.left - containerRect.left,
-        y: rect.top - containerRect.top,
-        width: rect.width,
-        height: rect.height,
-      };
-    });
-
-    setCellRects(rects);
-    setSvgReady(Object.keys(rects).length > 0);
-  }, []);
-
-  useEffect(() => {
-    measureCells();
-
-    const observer = new ResizeObserver(measureCells);
-    if (chartRef.current) {
-      observer.observe(chartRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [measureCells]);
-
-  useEffect(() => {
-    const timer = setTimeout(measureCells, 100);
-    return () => clearTimeout(timer);
-  }, [measureCells, pillars]);
-
-  function getCellCenter(key: string): { x: number; y: number } | null {
-    const rect = cellRects[key];
-    if (!rect) return null;
-    return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
-  }
-
-  function getTooltipStyle(
-    line: RelationLine
-  ): React.CSSProperties | null {
-    const from = getCellCenter(`${line.fromRow}-${line.fromPillar}`);
-    const to = getCellCenter(`${line.toRow}-${line.toPillar}`);
-    if (!from || !to) return null;
-
-    const midX = (from.x + to.x) / 2;
-    const arcHeight = Math.max(20, Math.abs(from.x - to.x) * 0.12);
-    const cpY = Math.min(from.y, to.y) - arcHeight;
-    const curveMidY = (from.y + 2 * cpY + to.y) / 4;
-
-    return {
-      left: midX,
-      top: curveMidY - 8,
-      transform: "translate(-50%, -100%)",
-    };
-  }
-
-  const pillarBorder = (i: number): React.CSSProperties =>
-    i < 3 ? { borderRight: "1px dashed var(--border-subtle)" } : {};
-
-  const dayPillarBg = (i: number): React.CSSProperties =>
-    i === 2 ? { background: "var(--accent-glow)" } : {};
+  const positionLabels = ["年柱", "月柱", "日柱", "时柱"];
 
   return (
     <div className="animate-fade-in space-y-6">
+      {/* 四柱卡片区 */}
       <div
         className="rounded-2xl overflow-hidden"
         style={{
@@ -279,7 +114,7 @@ export default function BaziChartCard({ result }: Props) {
           <div className="flex items-center gap-3">
             <span
               className="text-xs px-2.5 py-1 rounded-full font-medium"
-              style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid rgba(201,169,110,0.2)" }}
+              style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--border-accent)" }}
             >
               {wangshuai?.verdict || "—"}
             </span>
@@ -289,418 +124,120 @@ export default function BaziChartCard({ result }: Props) {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <div ref={chartRef} className="relative" style={{ minWidth: 520 }}>
-            <table className="w-full text-center">
-              <thead>
-                <tr
-                  className="text-xs uppercase tracking-wider"
+        {/* 四柱纵向卡片 grid */}
+        <div className="grid grid-cols-4 gap-0" style={{ borderBottom: "1px solid var(--border)" }}>
+          {pillars.map((p, i) => {
+            const isDayPillar = i === 2;
+            const gan = p.gan || "";
+            const zhi = p.zhi || "";
+            return (
+              <div
+                key={i}
+                className="flex flex-col items-center py-5 px-2 relative"
+                style={{
+                  borderRight: i < 3 ? "1px solid var(--border-subtle)" : "none",
+                  background: isDayPillar ? "var(--accent-glow)" : "transparent",
+                }}
+              >
+                {/* 日主 badge */}
+                {isDayPillar && (
+                  <span
+                    className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded font-bold"
+                    style={{ background: "var(--day-master-bg)", color: "var(--day-master-text)" }}
+                  >
+                    日主
+                  </span>
+                )}
+
+                {/* 十神 */}
+                <span className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+                  {isDayPillar ? "日主" : p.shishen_gan || p.shishen || "—"}
+                </span>
+
+                {/* 天干 */}
+                <span
+                  className="text-2xl font-bold px-3 py-1.5 rounded-xl mb-1"
                   style={{
-                    color: "var(--text-muted)",
-                    background: "var(--bg-secondary)",
+                    color: p.wuxing_gan ? WUXING_COLORS[p.wuxing_gan] : "inherit",
+                    background: p.wuxing_gan ? WUXING_BG[p.wuxing_gan] : "transparent",
                   }}
                 >
-                  <th
-                    className="py-3 px-3 w-16"
-                    style={{ borderRight: "1px solid var(--border)" }}
-                  ></th>
-                  {pillars.map((p, i) => (
-                    <th
-                      key={i}
-                      className="py-3 px-4 font-medium"
-                      style={{
-                        ...pillarBorder(i),
-                        ...dayPillarBg(i),
-                      }}
-                    >
-                      {p.position || ["年柱", "月柱", "日柱", "时柱"][i]}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ borderTop: "1px solid var(--border)" }}>
-                  <td
-                    className="py-2.5 text-xs"
-                    style={{
-                      color: "var(--text-muted)",
-                      borderRight: "1px solid var(--border)",
-                    }}
-                  >
-                    十神
-                  </td>
-                  {pillars.map((p, i) => (
-                    <td
-                      key={i}
-                      className="py-2.5 px-2 text-xs"
-                      style={{
-                        color: "var(--text-secondary)",
-                        ...pillarBorder(i),
-                        ...dayPillarBg(i),
-                      }}
-                    >
-                      {i === 2 ? "日主" : p.shishen_gan || p.shishen || "—"}
-                    </td>
-                  ))}
-                </tr>
-                <tr style={{ borderTop: "1px solid var(--border)" }}>
-                  <td
-                    className="py-2.5 text-xs"
-                    style={{
-                      color: "var(--text-muted)",
-                      borderRight: "1px solid var(--border)",
-                    }}
-                  >
-                    天干
-                  </td>
-                  {pillars.map((p, i) => {
-                    const gan = p.gan || "";
-                    const xutou = gan && isGanXutou(gan);
+                  {gan || "—"}
+                </span>
+
+                {/* 分割线 */}
+                <div
+                  className="w-8 my-2"
+                  style={{ borderTop: "1px dashed var(--border)" }}
+                />
+
+                {/* 地支 */}
+                <span
+                  className="text-2xl font-bold px-3 py-1.5 rounded-xl mb-2"
+                  style={{
+                    color: p.wuxing_zhi ? WUXING_COLORS[p.wuxing_zhi] : "inherit",
+                    background: p.wuxing_zhi ? WUXING_BG[p.wuxing_zhi] : "transparent",
+                  }}
+                >
+                  {zhi || "—"}
+                </span>
+
+                {/* 藏干 */}
+                <div className="flex flex-col items-center gap-0.5 mb-2 min-h-[40px]">
+                  {(p.canggan || []).map((cg, j) => {
+                    const touchu = isGanTouchu(cg.gan);
                     return (
-                      <td
-                        key={i}
-                        data-cell={`gan-${i}`}
-                        className="py-5 px-2"
-                        style={{
-                          ...pillarBorder(i),
-                          ...dayPillarBg(i),
-                        }}
+                      <span
+                        key={j}
+                        className="text-xs inline-flex items-center gap-0.5"
+                        style={{ color: cg.wuxing ? WUXING_COLORS[cg.wuxing] : "inherit" }}
                       >
-                        <div className="flex flex-col items-center gap-1.5">
-                          <span
-                            className="text-[2rem] font-bold inline-block px-3 py-1.5 rounded-xl"
-                            style={{
-                              color: p.wuxing_gan
-                                ? WUXING_COLORS[p.wuxing_gan]
-                                : "inherit",
-                              background: p.wuxing_gan
-                                ? `${WUXING_BG[p.wuxing_gan]}`
-                                : "transparent",
-                              border: xutou
-                                ? "2px dashed var(--text-muted)"
-                                : "1px solid transparent",
-                              opacity: xutou ? 0.65 : 1,
-                            }}
-                          >
-                            {gan || "—"}
-                          </span>
-                          {xutou && (
-                            <span
-                              className="text-[10px] px-1.5 py-0.5 rounded font-medium"
-                              style={{
-                                background: "rgba(128,128,128,0.15)",
-                                color: "var(--text-muted)",
-                              }}
-                            >
-                              虚透
-                            </span>
-                          )}
-                        </div>
-                      </td>
+                        {cg.gan}
+                        <span
+                          className="text-[9px] px-1 rounded"
+                          style={{
+                            background: touchu ? "rgba(34,197,94,0.2)" : "rgba(128,128,128,0.12)",
+                            color: touchu ? "#22c55e" : "var(--text-muted)",
+                          }}
+                        >
+                          {touchu ? "透" : cg.qi === "本气" ? "本" : cg.qi === "中气" ? "中" : "余"}
+                        </span>
+                      </span>
                     );
                   })}
-                </tr>
-                <tr style={{ borderTop: "1px solid var(--border)" }}>
-                  <td
-                    className="py-2.5 text-xs"
-                    style={{
-                      color: "var(--text-muted)",
-                      borderRight: "1px solid var(--border)",
-                    }}
-                  >
-                    地支
-                  </td>
-                  {pillars.map((p, i) => (
-                    <td
-                      key={i}
-                      data-cell={`zhi-${i}`}
-                      className="py-5 px-2"
-                      style={{
-                        ...pillarBorder(i),
-                        ...dayPillarBg(i),
-                      }}
-                    >
-                      <div className="flex flex-col items-center gap-1">
-                        <span
-                          className="text-[2rem] font-bold inline-block px-3 py-1.5 rounded-xl"
-                          style={{
-                            color: p.wuxing_zhi
-                              ? WUXING_COLORS[p.wuxing_zhi]
-                              : "inherit",
-                            background: p.wuxing_zhi
-                              ? `${WUXING_BG[p.wuxing_zhi]}`
-                              : "transparent",
-                          }}
-                        >
-                          {p.zhi || "—"}
-                        </span>
-                      </div>
-                    </td>
-                  ))}
-                </tr>
-                <tr style={{ borderTop: "1px solid var(--border)" }}>
-                  <td
-                    className="py-2.5 text-xs"
-                    style={{
-                      color: "var(--text-muted)",
-                      borderRight: "1px solid var(--border)",
-                    }}
-                  >
-                    十神
-                  </td>
-                  {pillars.map((p, i) => (
-                    <td
-                      key={i}
-                      className="py-2.5 px-2 text-xs"
-                      style={{
-                        color: "var(--text-secondary)",
-                        ...pillarBorder(i),
-                        ...dayPillarBg(i),
-                      }}
-                    >
-                      {p.shishen_zhi || "—"}
-                    </td>
-                  ))}
-                </tr>
-                {pillars.some((p) => p.canggan && p.canggan.length > 0) && (
-                  <>
-                    <tr
-                      style={{
-                        borderTop: "1px solid var(--border)",
-                        background: "var(--bg-secondary)",
-                      }}
-                    >
-                      <td
-                        className="py-2 text-xs"
-                        style={{
-                          color: "var(--text-muted)",
-                          borderRight: "1px solid var(--border)",
-                        }}
-                      >
-                        藏干
-                      </td>
-                      {pillars.map((p, i) => (
-                        <td
-                          key={i}
-                          className="py-2 px-2"
-                          style={{
-                            ...pillarBorder(i),
-                            ...(i === 2
-                              ? { background: "rgba(201,169,110,0.06)" }
-                              : {}),
-                          }}
-                        >
-                          <div className="flex flex-col items-center gap-1">
-                            {(p.canggan || []).map((cg, j) => {
-                              const touchu = isGanTouchu(cg.gan);
-                              return (
-                                <span
-                                  key={j}
-                                  className="text-sm font-medium inline-flex items-center gap-1"
-                                  style={{
-                                    color: cg.wuxing
-                                      ? WUXING_COLORS[cg.wuxing]
-                                      : "inherit",
-                                  }}
-                                >
-                                  {cg.gan}
-                                  <span
-                                    className="text-[9px] px-1 py-px rounded font-medium leading-none"
-                                    style={{
-                                      background: touchu
-                                        ? "rgba(34,197,94,0.2)"
-                                        : "rgba(128,128,128,0.15)",
-                                      color: touchu
-                                        ? "#22c55e"
-                                        : "var(--text-muted)",
-                                    }}
-                                  >
-                                    {touchu ? "透" : "暗"}
-                                  </span>
-                                </span>
-                              );
-                            })}
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
-                    <tr style={{ background: "var(--bg-secondary)" }}>
-                      <td
-                        className="py-2 text-xs"
-                        style={{
-                          color: "var(--text-muted)",
-                          borderRight: "1px solid var(--border)",
-                        }}
-                      >
-                        十神
-                      </td>
-                      {pillars.map((p, i) => (
-                        <td
-                          key={i}
-                          className="py-2 px-2"
-                          style={{
-                            ...pillarBorder(i),
-                            ...(i === 2
-                              ? { background: "rgba(201,169,110,0.06)" }
-                              : {}),
-                          }}
-                        >
-                          <div className="flex flex-col items-center gap-1">
-                            {(p.canggan || []).map((cg, j) => (
-                              <span
-                                key={j}
-                                className="text-xs"
-                                style={{ color: "var(--text-muted)" }}
-                              >
-                                {cg.shishen || "—"}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
-                  </>
-                )}
-              </tbody>
-            </table>
-
-            {svgReady && relationLines.length > 0 && (
-              <svg
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  overflow: "visible",
-                  zIndex: 10,
-                }}
-              >
-                {relationLines.map((line, i) => {
-                  const from = getCellCenter(
-                    `${line.fromRow}-${line.fromPillar}`
-                  );
-                  const to = getCellCenter(`${line.toRow}-${line.toPillar}`);
-                  if (!from || !to) return null;
-
-                  const midX = (from.x + to.x) / 2;
-                  const arcHeight = Math.max(
-                    20,
-                    Math.abs(from.x - to.x) * 0.12
-                  );
-                  const cpY = Math.min(from.y, to.y) - arcHeight;
-                  const color =
-                    RELATION_COLORS[line.type] || "var(--text-muted)";
-                  const isClash = line.type === "冲";
-
-                  return (
-                    <g key={i}>
-                      <path
-                        d={`M ${from.x} ${from.y} Q ${midX} ${cpY} ${to.x} ${to.y}`}
-                        fill="none"
-                        stroke="transparent"
-                        strokeWidth={14}
-                        style={{ pointerEvents: "stroke" }}
-                        onMouseEnter={() => setHoveredLine(i)}
-                        onMouseLeave={() => setHoveredLine(null)}
-                      />
-                      <path
-                        d={`M ${from.x} ${from.y} Q ${midX} ${cpY} ${to.x} ${to.y}`}
-                        fill="none"
-                        stroke={color}
-                        strokeWidth={2}
-                        strokeDasharray={isClash ? "6 3" : undefined}
-                        style={{
-                          pointerEvents: "none",
-                          animation: isClash
-                            ? "dash-flow 0.8s linear infinite"
-                            : undefined,
-                          opacity: hoveredLine === i ? 1 : 0.6,
-                          transition: "opacity 0.2s ease",
-                        }}
-                      />
-                      {hoveredLine === i && (
-                        <circle
-                          cx={from.x}
-                          cy={from.y}
-                          r={4}
-                          fill={color}
-                          style={{ pointerEvents: "none" }}
-                        />
-                      )}
-                      {hoveredLine === i && (
-                        <circle
-                          cx={to.x}
-                          cy={to.y}
-                          r={4}
-                          fill={color}
-                          style={{ pointerEvents: "none" }}
-                        />
-                      )}
-                    </g>
-                  );
-                })}
-              </svg>
-            )}
-
-            {hoveredLine !== null && relationLines[hoveredLine] && (
-              <div
-                className="absolute z-20 px-3 py-2 rounded-lg text-xs pointer-events-none whitespace-nowrap"
-                style={{
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border)",
-                  color: "var(--text-secondary)",
-                  boxShadow: "var(--shadow)",
-                  ...(getTooltipStyle(relationLines[hoveredLine]) || {}),
-                }}
-              >
-                <span
-                  className="font-medium"
-                  style={{
-                    color:
-                      RELATION_COLORS[relationLines[hoveredLine].type] ||
-                      "var(--accent)",
-                  }}
-                >
-                  {relationLines[hoveredLine].type}
-                </span>{" "}
-                {relationLines[hoveredLine].description}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {relationLines.length > 0 && (
-          <div
-            className="px-6 py-3 flex items-center gap-4 flex-wrap"
-            style={{ borderTop: "1px solid var(--border)" }}
-          >
-            {Object.entries(RELATION_COLORS).map(([type, color]) => {
-              const count = relationLines.filter(
-                (l) => l.type === type
-              ).length;
-              if (count === 0) return null;
-              return (
-                <div key={type} className="flex items-center gap-1.5">
-                  <span
-                    className="inline-block w-5 h-0.5 rounded"
-                    style={{
-                      background: color,
-                      borderTop:
-                        type === "冲" ? `2px dashed ${color}` : "none",
-                    }}
-                  />
-                  <span
-                    className="text-[11px]"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    {type}({count})
-                  </span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                {/* 纳音 */}
+                {p.nayin && (
+                  <span className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>
+                    {p.nayin}
+                  </span>
+                )}
+
+                {/* 长生 */}
+                {p.changsheng && (
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded"
+                    style={{ background: "var(--accent-dim)", color: "var(--accent)" }}
+                  >
+                    {p.changsheng}
+                  </span>
+                )}
+
+                {/* 柱位标签 */}
+                <span
+                  className="text-[11px] mt-2 font-medium"
+                  style={{ color: isDayPillar ? "var(--accent)" : "var(--text-muted)" }}
+                >
+                  {p.position ? `${p.position}柱` : positionLabels[i]}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
+      {/* 五行力量分布 */}
       <div
         className="rounded-2xl p-6"
         style={{
@@ -750,6 +287,7 @@ export default function BaziChartCard({ result }: Props) {
         </div>
       </div>
 
+      {/* 刑冲合害 */}
       {relations && relations.length > 0 && (
         <div
           className="rounded-2xl p-6"
@@ -758,25 +296,33 @@ export default function BaziChartCard({ result }: Props) {
             border: "1px solid var(--border)",
           }}
         >
-          <h3
-            className="text-sm font-semibold mb-4"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            刑冲合害
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3
+              className="text-sm font-semibold"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              刑冲合害
+            </h3>
+            {relations.length > 3 && (
+              <button
+                className="text-xs px-2 py-0.5 rounded"
+                style={{ color: "var(--accent)", background: "var(--accent-dim)" }}
+                onClick={() => setExpandedRelations(!expandedRelations)}
+              >
+                {expandedRelations ? "收起" : `展开全部(${relations.length})`}
+              </button>
+            )}
+          </div>
           <div className="space-y-2.5">
-            {relations.map((r, i) => {
-              const rColor =
-                RELATION_COLORS[r.type || ""] || "var(--accent)";
+            {(expandedRelations ? relations : relations.slice(0, 3)).map((r, i) => {
+              const rColor = RELATION_COLORS[r.type || ""] || "var(--accent)";
               return (
                 <div key={i} className="flex items-start gap-2.5">
                   <span
                     className="text-xs px-2 py-0.5 rounded-md shrink-0"
                     style={{
-                      background: rColor
-                        ? `${rColor}20`
-                        : "var(--accent-dim)",
-                      color: rColor || "var(--accent)",
+                      background: `${rColor}20`,
+                      color: rColor,
                     }}
                   >
                     {r.type || "关系"}
@@ -794,6 +340,7 @@ export default function BaziChartCard({ result }: Props) {
         </div>
       )}
 
+      {/* 方局/三合局 */}
       {formation && formation.has_formation && (
         <div
           className="rounded-2xl p-6"
@@ -811,29 +358,29 @@ export default function BaziChartCard({ result }: Props) {
           <div className="flex items-center gap-3">
             <span
               className="text-xs px-2.5 py-1 rounded-full font-medium"
-              style={{
-                background: "rgba(251,191,36,0.15)",
-                color: "var(--warning)",
-              }}
+              style={{ background: "rgba(251,191,36,0.15)", color: "var(--warning)" }}
             >
               {formation.type || "会局"}
             </span>
             <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
               {(formation.branches || []).join(" ")}
             </span>
-            <span
-              className="text-xs px-2 py-0.5 rounded-md"
-              style={{
-                color: WUXING_COLORS[formation.element || ""],
-                background: WUXING_BG[formation.element || ""],
-              }}
-            >
-              {formation.element}
-            </span>
+            {formation.element && (
+              <span
+                className="text-xs px-2 py-0.5 rounded-md"
+                style={{
+                  color: WUXING_COLORS[formation.element],
+                  background: WUXING_BG[formation.element],
+                }}
+              >
+                {formation.element}
+              </span>
+            )}
           </div>
         </div>
       )}
 
+      {/* 破格条件 */}
       {breakConditions && breakConditions.length > 0 && (
         <div
           className="rounded-2xl p-6"
@@ -860,10 +407,7 @@ export default function BaziChartCard({ result }: Props) {
                 <div key={i} className="flex items-start gap-2.5">
                   <span
                     className="text-xs px-2 py-0.5 rounded-md shrink-0 font-medium"
-                    style={{
-                      background: `${severityColor}20`,
-                      color: severityColor,
-                    }}
+                    style={{ background: `${severityColor}20`, color: severityColor }}
                   >
                     {bc.severity === "high" ? "重" : bc.severity === "medium" ? "中" : "轻"}
                   </span>
@@ -872,7 +416,7 @@ export default function BaziChartCard({ result }: Props) {
                       {bc.type}
                     </span>
                     {bc.detail && (
-                      <span className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                         {bc.detail}
                       </span>
                     )}
