@@ -168,20 +168,20 @@ async def run_analysis(mcp_json: dict, run_id: str,
         # 提取出生年份
         if solar:
             try:
-                birth_year = int(solar.split('-')[0])
-                result['birth_year'] = birth_year
-            except (ValueError, IndexError):
+                import re
+                m = re.match(r'(\d{4})', solar)
+                if m:
+                    result['birth_year'] = int(m.group(1))
+            except (ValueError, TypeError):
                 pass
 
         if paipan_result and 'dayun' in paipan_result:
-            dayun_list = paipan_result['dayun']
-            for step in dayun_list:
-                g = step.get('gan', '')
-                z = step.get('zhi', '')
-                if g:
-                    step['gan_wuxing'] = GAN_WUXING.get(g, '')
-                if z:
-                    step['zhi_wuxing'] = ZHI_WUXING.get(z, '')
+            dayun_list = [
+                {**step,
+                 'gan_wuxing': GAN_WUXING.get(step.get('gan', ''), ''),
+                 'zhi_wuxing': ZHI_WUXING.get(step.get('zhi', ''), '')}
+                for step in paipan_result['dayun']
+            ]
             result['dayun'] = dayun_list
             result['qiyun_age'] = paipan_result.get('qiyun_age', 5)
             mcp_json['dayun'] = dayun_list

@@ -14,6 +14,14 @@ export const WUXING_BG: Record<string, string> = {
   水: "rgba(96,165,250,0.12)",
 };
 
+export const WUXING_GLOW: Record<string, string> = {
+  木: "rgba(74,222,128,0.4)",
+  火: "rgba(248,113,113,0.4)",
+  土: "rgba(251,191,36,0.4)",
+  金: "rgba(192,192,208,0.4)",
+  水: "rgba(96,165,250,0.4)",
+};
+
 export const RELATION_COLORS: Record<string, string> = {
   合: "#22c55e",
   冲: "#ef4444",
@@ -34,6 +42,11 @@ export const GAN_WUXING: Record<string, string> = {
   辛: "金",
   壬: "水",
   癸: "水",
+};
+
+export const ZHI_WUXING: Record<string, string> = {
+  子: "水", 丑: "土", 寅: "木", 卯: "木", 辰: "土", 巳: "火",
+  午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水",
 };
 
 export const SCHOOL_OPTIONS = [

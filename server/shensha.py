@@ -1,7 +1,5 @@
 """神煞查表 — 覆盖 20+ 种常见神煞"""
 
-from bazi_pro.core.constants import GAN_WUXING  # noqa: F401
-
 TIANGAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
 DIZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
 
@@ -99,7 +97,7 @@ def calc_shensha(bazi_parts: list[str]) -> list[dict]:
     year_zhi = bazi_parts[0][1] if len(bazi_parts[0]) >= 2 else ""
     month_zhi = bazi_parts[1][1] if len(bazi_parts[1]) >= 2 else ""
     all_zhis = [p[1] for p in bazi_parts if len(p) >= 2]
-    all_gans = [p[0] for p in bazi_parts if len(p) >= 1]
+    all_gans = [p[0] for p in bazi_parts if len(p) >= 2]
     positions = ["年", "月", "日", "时"]
 
     results: list[dict] = []

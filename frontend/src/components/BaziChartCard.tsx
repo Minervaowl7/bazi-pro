@@ -5,14 +5,11 @@ import { useState, useCallback } from "react";
 import {
   WUXING_COLORS,
   WUXING_BG,
+  WUXING_GLOW,
   RELATION_COLORS,
   GAN_WUXING,
+  ZHI_WUXING,
 } from "@/lib/constants";
-
-const ZHI_WUXING: Record<string, string> = {
-  子: "水", 丑: "土", 寅: "木", 卯: "木", 辰: "土", 巳: "火",
-  午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水",
-};
 
 interface CangganItem {
   gan: string;
@@ -163,7 +160,7 @@ export default function BaziChartCard({ result }: Props) {
                   style={{
                     color: ganWx ? WUXING_COLORS[ganWx] : "var(--text-primary)",
                     background: ganWx ? WUXING_BG[ganWx] : "transparent",
-                    textShadow: ganWx ? `0 0 8px ${WUXING_COLORS[ganWx]}40` : "none",
+                    textShadow: ganWx ? `0 0 8px ${WUXING_GLOW[ganWx]}` : "none",
                   }}
                 >
                   {gan || "—"}
@@ -179,7 +176,7 @@ export default function BaziChartCard({ result }: Props) {
                   style={{
                     color: zhiWx ? WUXING_COLORS[zhiWx] : "var(--text-primary)",
                     background: zhiWx ? WUXING_BG[zhiWx] : "transparent",
-                    textShadow: zhiWx ? `0 0 8px ${WUXING_COLORS[zhiWx]}40` : "none",
+                    textShadow: zhiWx ? `0 0 8px ${WUXING_GLOW[zhiWx]}` : "none",
                   }}
                 >
                   {zhi || "—"}

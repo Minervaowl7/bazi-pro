@@ -2,12 +2,7 @@
 
 import { useMemo } from "react";
 import ReactECharts from "echarts-for-react";
-import { WUXING_COLORS, GAN_WUXING, RELATION_COLORS } from "@/lib/constants";
-
-const ZHI_WUXING: Record<string, string> = {
-  子: "水", 丑: "土", 寅: "木", 卯: "木", 辰: "土", 巳: "火",
-  午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水",
-};
+import { WUXING_COLORS, GAN_WUXING, ZHI_WUXING, RELATION_COLORS } from "@/lib/constants";
 
 interface Relation {
   type?: string;
@@ -123,7 +118,8 @@ export default function RelationGraph({ result }: Props) {
         },
       }],
     };
-  }, [shishen, relations]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
 
   if (!option) return null;
 
