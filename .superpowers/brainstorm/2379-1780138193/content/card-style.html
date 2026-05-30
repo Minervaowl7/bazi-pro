@@ -1,0 +1,88 @@
+<h2>卡片风格</h2>
+<p class="subtitle">Bento Grid 里的每个卡片用什么视觉风格？这决定了整体的精致感</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f7f3ed;">
+      <div style="font-size: 10px; color: #7a6a58; margin-bottom: 12px;">A · 无边框 + 阴影层级</div>
+      <div style="display: flex; gap: 12px; margin-bottom: 14px;">
+        <div style="flex: 1; background: #fffaf2; border-radius: 16px; padding: 14px; box-shadow: 0 2px 8px rgba(54,35,20,0.06);">
+          <div style="font-size: 8px; color: #b99a5b; margin-bottom: 6px;">旺衰</div>
+          <div style="font-size: 16px; color: #8a3b2a; font-weight: 700;">偏旺</div>
+        </div>
+        <div style="flex: 1; background: #fffaf2; border-radius: 16px; padding: 14px; box-shadow: 0 4px 16px rgba(54,35,20,0.08);">
+          <div style="font-size: 8px; color: #b99a5b; margin-bottom: 6px;">格局</div>
+          <div style="font-size: 16px; color: #8a3b2a; font-weight: 700;">七杀佩印</div>
+        </div>
+      </div>
+      <div style="background: #fffaf2; border-radius: 16px; padding: 14px; box-shadow: 0 2px 8px rgba(54,35,20,0.06);">
+        <div style="font-size: 8px; color: #b99a5b; margin-bottom: 6px;">用神裁决</div>
+        <div style="display: flex; gap: 8px;">
+          <span style="font-size: 12px; color: #4A9E6E; font-weight: 600;">木</span>
+          <span style="font-size: 10px; color: #7a6a58;">喜: 水</span>
+          <span style="font-size: 10px; color: #7a6a58;">忌: 金</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A · 无边框 + 阴影层级</h3>
+      <p>卡片无边框，用柔和阴影和背景色差区分层级。最干净，像 Linear/Notion</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f7f3ed;">
+      <div style="font-size: 10px; color: #7a6a58; margin-bottom: 12px;">B · 微边框 + 淡底色</div>
+      <div style="display: flex; gap: 12px; margin-bottom: 14px;">
+        <div style="flex: 1; background: #fffaf2; border: 1px solid #ede5d8; border-radius: 16px; padding: 14px;">
+          <div style="font-size: 8px; color: #b99a5b; margin-bottom: 6px;">旺衰</div>
+          <div style="font-size: 16px; color: #8a3b2a; font-weight: 700;">偏旺</div>
+        </div>
+        <div style="flex: 1; background: #fffaf2; border: 1px solid #ede5d8; border-radius: 16px; padding: 14px;">
+          <div style="font-size: 8px; color: #b99a5b; margin-bottom: 6px;">格局</div>
+          <div style="font-size: 16px; color: #8a3b2a; font-weight: 700;">七杀佩印</div>
+        </div>
+      </div>
+      <div style="background: #fffaf2; border: 1px solid #ede5d8; border-radius: 16px; padding: 14px;">
+        <div style="font-size: 8px; color: #b99a5b; margin-bottom: 6px;">用神裁决</div>
+        <div style="display: flex; gap: 8px;">
+          <span style="font-size: 12px; color: #4A9E6E; font-weight: 600;">木</span>
+          <span style="font-size: 10px; color: #7a6a58;">喜: 水</span>
+          <span style="font-size: 10px; color: #7a6a58;">忌: 金</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B · 微边框 + 淡底色</h3>
+      <p>淡色边框 + 白色底，结构清晰。当前方案的优化版，有边界感</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f7f3ed;">
+      <div style="font-size: 10px; color: #7a6a58; margin-bottom: 12px;">C · 混合：重要卡片描边 + 普通卡片阴影</div>
+      <div style="display: flex; gap: 12px; margin-bottom: 14px;">
+        <div style="flex: 1; background: #fffaf2; border-radius: 16px; padding: 14px; box-shadow: 0 2px 8px rgba(54,35,20,0.06);">
+          <div style="font-size: 8px; color: #b99a5b; margin-bottom: 6px;">旺衰</div>
+          <div style="font-size: 16px; color: #8a3b2a; font-weight: 700;">偏旺</div>
+        </div>
+        <div style="flex: 1; background: #fffaf2; border: 1px solid #b99a5b; border-radius: 16px; padding: 14px; box-shadow: 0 2px 12px rgba(185,154,91,0.12);">
+          <div style="font-size: 8px; color: #b99a5b; margin-bottom: 6px;">格局 ★</div>
+          <div style="font-size: 16px; color: #8a3b2a; font-weight: 700;">七杀佩印</div>
+        </div>
+      </div>
+      <div style="background: #fffaf2; border: 1px solid #8a3b2a; border-radius: 16px; padding: 14px; box-shadow: 0 2px 12px rgba(138,59,42,0.10);">
+        <div style="font-size: 8px; color: #8a3b2a; margin-bottom: 6px;">用神裁决 ★</div>
+        <div style="display: flex; gap: 8px;">
+          <span style="font-size: 12px; color: #4A9E6E; font-weight: 600;">木</span>
+          <span style="font-size: 10px; color: #7a6a58;">喜: 水</span>
+          <span style="font-size: 10px; color: #7a6a58;">忌: 金</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C · 混合层级</h3>
+      <p>普通卡片无框阴影，重要卡片（用神/格局）用朱砂/金色描边突出。视觉层级最丰富</p>
+    </div>
+  </div>
+</div>
