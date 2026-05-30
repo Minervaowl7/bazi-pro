@@ -138,18 +138,20 @@ export default function DayunTimeline({ result }: Props) {
                 </svg>
               </button>
 
-              {isExpanded && startYear > 0 && (
+              {isExpanded && (
                 <div
                   className="px-6 pb-4 grid grid-cols-2 gap-1.5"
                   style={{ background: "var(--bg-secondary)" }}
                 >
                   {Array.from({ length: 10 }, (_, j) => {
-                    const year = startYear + j;
+                    const year = startYear > 0 ? startYear + j : 0;
                     const age = startAge + j;
-                    const { gan: lnGan, zhi: lnZhi, shengxiao } = getYearGanzhi(year);
+                    const { gan: lnGan, zhi: lnZhi, shengxiao } = year > 0
+                      ? getYearGanzhi(year)
+                      : { gan: "—", zhi: "", shengxiao: "" };
                     const lnGanWx = GAN_WUXING[lnGan] || "";
                     const lnGanColor = lnGanWx ? WUXING_COLORS[lnGanWx] : "var(--text-primary)";
-                    const isThisYear = year === currentYear;
+                    const isThisYear = year > 0 && year === currentYear;
                     return (
                       <div
                         key={j}
@@ -159,10 +161,10 @@ export default function DayunTimeline({ result }: Props) {
                           border: isThisYear ? "1px solid var(--border-accent)" : "1px solid transparent",
                         }}
                       >
-                        <span className="tabular-nums w-10" style={{ color: "var(--text-muted)" }}>{year}</span>
+                        <span className="tabular-nums w-10" style={{ color: "var(--text-muted)" }}>{year > 0 ? year : `${age}岁`}</span>
                         <span className="font-medium" style={{ color: lnGanColor }}>{lnGan}{lnZhi}</span>
                         <span style={{ color: "var(--text-muted)" }}>{shengxiao}</span>
-                        <span className="ml-auto tabular-nums" style={{ color: "var(--text-muted)" }}>{age}岁</span>
+                        <span className="ml-auto tabular-nums" style={{ color: "var(--text-muted)" }}>{year > 0 ? `${age}岁` : ""}</span>
                       </div>
                     );
                   })}

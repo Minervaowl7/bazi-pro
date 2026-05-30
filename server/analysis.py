@@ -165,10 +165,26 @@ async def run_analysis(mcp_json: dict, run_id: str,
 
         await manager.send_progress(run_id, '9', 'done', '全部分析步骤完成')
 
+        # 提取出生年份
+        if solar:
+            try:
+                birth_year = int(solar.split('-')[0])
+                result['birth_year'] = birth_year
+            except (ValueError, IndexError):
+                pass
+
         if paipan_result and 'dayun' in paipan_result:
-            result['dayun'] = paipan_result['dayun']
+            dayun_list = paipan_result['dayun']
+            for step in dayun_list:
+                g = step.get('gan', '')
+                z = step.get('zhi', '')
+                if g:
+                    step['gan_wuxing'] = GAN_WUXING.get(g, '')
+                if z:
+                    step['zhi_wuxing'] = ZHI_WUXING.get(z, '')
+            result['dayun'] = dayun_list
             result['qiyun_age'] = paipan_result.get('qiyun_age', 5)
-            mcp_json['dayun'] = paipan_result['dayun']
+            mcp_json['dayun'] = dayun_list
 
         if school_analyze:
             await manager.send_progress(run_id, 'school', 'running', '流派分析中...')

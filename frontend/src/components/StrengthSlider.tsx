@@ -1,6 +1,18 @@
 "use client";
 
-const LEVELS = ["极弱", "偏弱", "中和", "偏强", "极强"] as const;
+const LEVELS = ["极弱", "身弱", "中和", "偏旺", "极旺"] as const;
+
+function verdictToPosition(verdict?: string): number {
+  if (!verdict) return 2;
+  if (verdict === "极弱") return 0;
+  if (verdict === "身弱" || verdict === "中和偏弱") return 1;
+  if (verdict === "中和") return 2;
+  if (verdict === "偏旺" || verdict === "中和偏旺" || verdict === "身旺") return 3;
+  if (verdict === "极旺") return 4;
+  if (verdict.includes("弱")) return 1;
+  if (verdict.includes("旺") || verdict.includes("强")) return 3;
+  return 2;
+}
 
 interface Props {
   verdict?: string;
@@ -11,8 +23,7 @@ interface Props {
 }
 
 export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi }: Props) {
-  const idx = LEVELS.indexOf(verdict as typeof LEVELS[number]);
-  const position = idx >= 0 ? idx : 2;
+  const position = verdictToPosition(verdict);
   const pct = (position / (LEVELS.length - 1)) * 100;
 
   return (
@@ -73,7 +84,7 @@ export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi
       </div>
 
       {/* 刻度标签 */}
-      <div className="flex justify-between mb-5">
+      <div className="flex justify-between mb-2">
         {LEVELS.map((level, i) => (
           <span
             key={level}
@@ -86,6 +97,14 @@ export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi
           </span>
         ))}
       </div>
+      {verdict && (
+        <div className="text-center mb-5">
+          <span className="text-xs px-2.5 py-1 rounded-full font-medium"
+            style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>
+            {verdict}
+          </span>
+        </div>
+      )}
 
       {/* 三维得分 */}
       <div className="grid grid-cols-3 gap-3">

@@ -6,7 +6,13 @@ import {
   WUXING_COLORS,
   WUXING_BG,
   RELATION_COLORS,
+  GAN_WUXING,
 } from "@/lib/constants";
+
+const ZHI_WUXING: Record<string, string> = {
+  子: "水", 丑: "土", 寅: "木", 卯: "木", 辰: "土", 巳: "火",
+  午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水",
+};
 
 interface CangganItem {
   gan: string;
@@ -128,6 +134,8 @@ export default function BaziChartCard({ result }: Props) {
             const isDayPillar = i === 2;
             const gan = p.gan || "";
             const zhi = p.zhi || "";
+            const ganWx = p.wuxing_gan || GAN_WUXING[gan] || "";
+            const zhiWx = p.wuxing_zhi || ZHI_WUXING[zhi] || "";
             return (
               <div
                 key={i}
@@ -137,7 +145,6 @@ export default function BaziChartCard({ result }: Props) {
                   background: isDayPillar ? "var(--accent-glow)" : "transparent",
                 }}
               >
-                {/* 日主 badge */}
                 {isDayPillar && (
                   <span
                     className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded font-bold"
@@ -147,34 +154,32 @@ export default function BaziChartCard({ result }: Props) {
                   </span>
                 )}
 
-                {/* 十神 */}
                 <span className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
                   {isDayPillar ? "日主" : p.shishen_gan || p.shishen || "—"}
                 </span>
 
-                {/* 天干 */}
                 <span
-                  className="text-2xl font-bold px-3 py-1.5 rounded-xl mb-1"
+                  className="text-3xl font-bold px-3 py-2 rounded-xl mb-1"
                   style={{
-                    color: p.wuxing_gan ? WUXING_COLORS[p.wuxing_gan] : "inherit",
-                    background: p.wuxing_gan ? WUXING_BG[p.wuxing_gan] : "transparent",
+                    color: ganWx ? WUXING_COLORS[ganWx] : "var(--text-primary)",
+                    background: ganWx ? WUXING_BG[ganWx] : "transparent",
+                    textShadow: ganWx ? `0 0 8px ${WUXING_COLORS[ganWx]}40` : "none",
                   }}
                 >
                   {gan || "—"}
                 </span>
 
-                {/* 分割线 */}
                 <div
                   className="w-8 my-2"
                   style={{ borderTop: "1px dashed var(--border)" }}
                 />
 
-                {/* 地支 */}
                 <span
-                  className="text-2xl font-bold px-3 py-1.5 rounded-xl mb-2"
+                  className="text-3xl font-bold px-3 py-2 rounded-xl mb-2"
                   style={{
-                    color: p.wuxing_zhi ? WUXING_COLORS[p.wuxing_zhi] : "inherit",
-                    background: p.wuxing_zhi ? WUXING_BG[p.wuxing_zhi] : "transparent",
+                    color: zhiWx ? WUXING_COLORS[zhiWx] : "var(--text-primary)",
+                    background: zhiWx ? WUXING_BG[zhiWx] : "transparent",
+                    textShadow: zhiWx ? `0 0 8px ${WUXING_COLORS[zhiWx]}40` : "none",
                   }}
                 >
                   {zhi || "—"}

@@ -179,7 +179,7 @@ export default function AnalyzePage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("LLM") || msg.includes("503")) {
-        setReportMsg("LLM 服务未配置，无法生成详批报告");
+        setReportMsg("需配置 LLM_API_KEY 环境变量（见 .env.example）");
       } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
         setReportMsg("无法连接服务器，请检查后端是否运行");
       } else {
@@ -426,8 +426,8 @@ export default function AnalyzePage() {
           )}
 
           {analysisResult && (
-            <div className="lg:grid lg:grid-cols-12 lg:gap-8 space-y-8 lg:space-y-0">
-              <div className="lg:col-span-7 space-y-8 stagger-in">
+            <div className="lg:grid lg:grid-cols-12 lg:gap-6 space-y-6 lg:space-y-0">
+              <div className="lg:col-span-8 space-y-6 stagger-in">
                 <BaziChartCard result={analysisResult} />
                 <StrengthSlider
                   verdict={wangshuai?.verdict}
@@ -448,14 +448,13 @@ export default function AnalyzePage() {
                 )}
               </div>
 
-              <div className="lg:col-span-5 space-y-6 stagger-in">
-                <div className="grid grid-cols-3 gap-3">
+              <div className="lg:col-span-4 space-y-5 stagger-in">
+                <div className="grid grid-cols-3 gap-2">
                   <div
-                    className="rounded-xl p-4 text-center"
+                    className="rounded-xl p-3 text-center"
                     style={{
                       background: "var(--bg-card)",
                       border: "1px solid var(--border)",
-                      boxShadow: "var(--shadow-sm)",
                     }}
                   >
                     <div
@@ -472,11 +471,10 @@ export default function AnalyzePage() {
                     </div>
                   </div>
                   <div
-                    className="rounded-xl p-4 text-center"
+                    className="rounded-xl p-3 text-center"
                     style={{
                       background: "var(--bg-card)",
                       border: "1px solid var(--border)",
-                      boxShadow: "var(--shadow-sm)",
                     }}
                   >
                     <div
@@ -493,11 +491,10 @@ export default function AnalyzePage() {
                     </div>
                   </div>
                   <div
-                    className="rounded-xl p-4 text-center"
+                    className="rounded-xl p-3 text-center"
                     style={{
                       background: "var(--bg-card)",
                       border: "1px solid var(--border)",
-                      boxShadow: "var(--shadow-sm)",
                     }}
                   >
                     <div
