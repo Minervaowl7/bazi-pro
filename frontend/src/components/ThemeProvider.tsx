@@ -37,7 +37,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   if (!mounted) {
-    return <div style={{ visibility: "hidden" }}>{children}</div>;
+    return (
+      <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        {children}
+      </ThemeContext.Provider>
+    );
   }
 
   return (
