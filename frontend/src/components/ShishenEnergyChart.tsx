@@ -1,5 +1,7 @@
 "use client";
 
+import { ChineseTag } from "./ui/ChineseTag";
+
 const SHISHEN_GROUPS = [
   { label: "同我", items: ["比肩", "劫财"], wx: "同" },
   { label: "我生", items: ["食神", "伤官"], wx: "生" },
@@ -75,7 +77,7 @@ export default function ShishenEnergyChart({ result }: Props) {
               </div>
               <div
                 className="h-5 rounded-md overflow-hidden flex"
-                style={{ background: "var(--bg-secondary)" }}
+                style={{ background: "var(--bg-hover)" }}
               >
                 {group.items.map((item, ii) => {
                   const val = counts[item] || 0;
@@ -89,7 +91,7 @@ export default function ShishenEnergyChart({ result }: Props) {
                         width: `${pct}%`,
                         background: color,
                         opacity: ii === 0 ? 0.85 : 0.6,
-                        color: "var(--bg-primary)",
+                        color: "#FFFFFF",
                       }}
                       title={`${item}: ${pct.toFixed(1)}%`}
                     >
@@ -100,8 +102,8 @@ export default function ShishenEnergyChart({ result }: Props) {
               </div>
               <div className="flex gap-3 mt-1">
                 {group.items.map((item) => (
-                  <span key={item} className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                    {item} {((counts[item] || 0) / total * 100).toFixed(0)}%
+                  <span key={item} className="text-[10px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
+                    <ChineseTag type="shishen">{item}</ChineseTag> {((counts[item] || 0) / total * 100).toFixed(0)}%
                   </span>
                 ))}
               </div>

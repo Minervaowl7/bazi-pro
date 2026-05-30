@@ -7,28 +7,28 @@ export const WUXING_COLORS: Record<string, string> = {
 };
 
 export const WUXING_BG: Record<string, string> = {
-  木: "rgba(74,222,128,0.12)",
-  火: "rgba(248,113,113,0.12)",
-  土: "rgba(251,191,36,0.12)",
-  金: "rgba(192,192,208,0.15)",
-  水: "rgba(96,165,250,0.12)",
+  木: "var(--wood-dim)",
+  火: "var(--fire-dim)",
+  土: "var(--earth-dim)",
+  金: "var(--metal-dim)",
+  水: "var(--water-dim)",
 };
 
 export const WUXING_GLOW: Record<string, string> = {
-  木: "rgba(74,222,128,0.4)",
-  火: "rgba(248,113,113,0.4)",
-  土: "rgba(251,191,36,0.4)",
-  金: "rgba(192,192,208,0.4)",
-  水: "rgba(96,165,250,0.4)",
+  木: "rgba(74,158,110,0.25)",
+  火: "rgba(212,64,48,0.25)",
+  土: "rgba(139,94,60,0.25)",
+  金: "rgba(193,154,66,0.25)",
+  水: "rgba(63,111,159,0.25)",
 };
 
 export const RELATION_COLORS: Record<string, string> = {
-  合: "#22c55e",
-  冲: "#ef4444",
-  刑: "#f97316",
-  害: "#a855f7",
-  合化: "#22c55e",
-  化: "#22c55e",
+  合: "#C19A42",
+  冲: "#C53030",
+  刑: "#8A5C9E",
+  害: "#999999",
+  合化: "#C19A42",
+  化: "#C19A42",
 };
 
 export const GAN_WUXING: Record<string, string> = {

@@ -30,7 +30,7 @@ export default function GongweiPanel({ result }: Props) {
           <div
             key={label}
             className="rounded-xl p-3 text-center"
-            style={{ background: "var(--bg-secondary)" }}
+            style={{ background: "var(--bg-hover)" }}
           >
             <div className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>
               {label}

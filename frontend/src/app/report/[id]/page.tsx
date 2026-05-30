@@ -6,6 +6,8 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ThemeToggle } from "@/components/ThemeProvider";
+import { ChapterHeader } from "@/components/ui/ChapterHeader";
+import { VerdictBlock } from "@/components/ui/VerdictBlock";
 import {
   getAnalysis,
   getReport,
@@ -17,29 +19,33 @@ import {
 const SECTION_META: Array<{
   key: string;
   title: string;
-  icon: string;
+  volume: number;
 }> = [
-  { key: "overview", title: "命盘总论", icon: "☯" },
-  { key: "personality", title: "性格深度分析", icon: "🎭" },
-  { key: "career", title: "事业财运", icon: "💼" },
-  { key: "marriage", title: "感情婚姻", icon: "❤" },
-  { key: "health", title: "健康提醒", icon: "⚕" },
-  { key: "dayun_analysis", title: "大运流年详批", icon: "📅" },
-  { key: "lucky", title: "开运建议", icon: "🍀" },
+  { key: "overview", title: "命局总论", volume: 1 },
+  { key: "personality", title: "性情格局", volume: 2 },
+  { key: "career", title: "事业财运", volume: 3 },
+  { key: "marriage", title: "婚恋感情", volume: 4 },
+  { key: "health", title: "健康提醒", volume: 5 },
+  { key: "dayun_analysis", title: "大运流年", volume: 6 },
+  { key: "lucky", title: "趋吉避凶", volume: 7 },
 ];
 
 function SectionCard({
   title,
-  icon,
+  volume,
   content,
   defaultOpen = false,
 }: {
   title: string;
-  icon: string;
+  volume: number;
   content: string;
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+
+  const firstBreak = content.indexOf("\n\n");
+  const verdict = firstBreak > -1 ? content.slice(0, firstBreak) : content;
+  const rest = firstBreak > -1 ? content.slice(firstBreak).trimStart() : "";
 
   return (
     <div
@@ -52,14 +58,9 @@ function SectionCard({
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-6 py-5 text-left transition-colors duration-200"
-        style={{ background: open ? "var(--bg-secondary)" : "transparent" }}
+        style={{ background: open ? "var(--bg-hover)" : "transparent" }}
       >
-        <span className="flex items-center gap-3">
-          <span className="text-lg">{icon}</span>
-          <span className="text-base font-semibold" style={{ color: "var(--accent)" }}>
-            {title}
-          </span>
-        </span>
+        <ChapterHeader volume={volume} title={title} />
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -82,12 +83,22 @@ function SectionCard({
           className="px-6 pb-6 pt-2 animate-fade-in"
           style={{ borderTop: "1px solid var(--border)" }}
         >
-          <div
-            className="prose-sm"
-            style={{ color: "var(--text-secondary)", lineHeight: 1.85 }}
-          >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-          </div>
+          <VerdictBlock>
+            <div
+              className="prose-sm"
+              style={{ color: "var(--text-secondary)", lineHeight: 1.85 }}
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{verdict}</ReactMarkdown>
+            </div>
+          </VerdictBlock>
+          {rest && (
+            <div
+              className="prose-sm mt-4"
+              style={{ color: "var(--text-secondary)", lineHeight: 1.85 }}
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{rest}</ReactMarkdown>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -269,7 +280,7 @@ export default function ReportPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div
               className="rounded-xl p-4 text-center"
-              style={{ background: "var(--bg-secondary)" }}
+              style={{ background: "var(--bg-hover)" }}
             >
               <div className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
                 八字
@@ -280,7 +291,7 @@ export default function ReportPage() {
             </div>
             <div
               className="rounded-xl p-4 text-center"
-              style={{ background: "var(--bg-secondary)" }}
+              style={{ background: "var(--bg-hover)" }}
             >
               <div className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
                 格局
@@ -291,7 +302,7 @@ export default function ReportPage() {
             </div>
             <div
               className="rounded-xl p-4 text-center"
-              style={{ background: "var(--bg-secondary)" }}
+              style={{ background: "var(--bg-hover)" }}
             >
               <div className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
                 用神
@@ -302,7 +313,7 @@ export default function ReportPage() {
             </div>
             <div
               className="rounded-xl p-4 text-center"
-              style={{ background: "var(--bg-secondary)" }}
+              style={{ background: "var(--bg-hover)" }}
             >
               <div className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
                 旺衰
@@ -324,7 +335,7 @@ export default function ReportPage() {
               className="px-8 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
                 background: "var(--accent)",
-                color: "#0c0c14",
+                color: "#FFFFFF",
               }}
             >
               生成详批报告
@@ -415,7 +426,7 @@ export default function ReportPage() {
                 <SectionCard
                   key={s.key}
                   title={s.title}
-                  icon={s.icon}
+                  volume={s.volume}
                   content={content}
                   defaultOpen={i === 0}
                 />
@@ -437,7 +448,7 @@ export default function ReportPage() {
               className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
                 background: "var(--accent)",
-                color: "#0c0c14",
+                color: "#FFFFFF",
               }}
             >
               导出PDF
@@ -457,7 +468,7 @@ export default function ReportPage() {
               onClick={() => router.push(`/analyze/${analysisId}`)}
               className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
-                background: "var(--bg-secondary)",
+                background: "var(--bg-hover)",
                 color: "var(--text-secondary)",
                 border: "1px solid var(--border)",
               }}

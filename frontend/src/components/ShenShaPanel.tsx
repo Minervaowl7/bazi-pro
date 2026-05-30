@@ -34,7 +34,7 @@ export default function ShenShaPanel({ result }: Props) {
     >
       <button
         className="w-full px-6 py-4 flex items-center justify-between"
-        style={{ background: "var(--bg-secondary)" }}
+        style={{ background: "var(--bg-hover)" }}
         onClick={() => setExpanded(!expanded)}
       >
         <h3

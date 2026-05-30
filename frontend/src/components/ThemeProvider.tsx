@@ -9,19 +9,19 @@ interface ThemeContextValue {
   toggleTheme: () => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue>({ theme: "dark", toggleTheme: () => {} });
+const ThemeContext = createContext<ThemeContextValue>({ theme: "light", toggleTheme: () => {} });
 
 export function useTheme() {
   return useContext(ThemeContext);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("theme") as Theme | null;
-    const initial = stored === "light" || stored === "dark" ? stored : "dark";
+    const initial = stored === "light" || stored === "dark" ? stored : "light";
     setTheme(initial); // eslint-disable-line react-hooks/set-state-in-effect
     document.documentElement.setAttribute("data-theme", initial);
     setMounted(true);
@@ -59,7 +59,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
         background: "var(--bg-card)",
         color: "var(--text-secondary)",
       }}
-      title={theme === "dark" ? "切换到亮色模式" : "切换到暗色模式"}
+      title={theme === "light" ? "切换到暗色模式" : "切换到亮色模式"}
       aria-label="切换主题"
     >
       <svg
@@ -71,9 +71,9 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         className="w-[18px] h-[18px] transition-transform duration-500"
-        style={{ transform: theme === "dark" ? "rotate(0deg)" : "rotate(180deg)" }}
+        style={{ transform: theme === "light" ? "rotate(0deg)" : "rotate(180deg)" }}
       >
-        {theme === "dark" ? (
+        {theme === "light" ? (
           <>
             <circle cx="12" cy="12" r="4.5" />
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />

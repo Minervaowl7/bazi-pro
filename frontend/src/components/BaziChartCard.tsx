@@ -10,6 +10,15 @@ import {
   GAN_WUXING,
   ZHI_WUXING,
 } from "@/lib/constants";
+import { ChineseTag } from "./ui/ChineseTag";
+
+const WX_TAG: Record<string, "wood" | "fire" | "earth" | "metal" | "water"> = {
+  木: "wood",
+  火: "fire",
+  土: "earth",
+  金: "metal",
+  水: "water",
+};
 
 interface CangganItem {
   gan: string;
@@ -104,18 +113,18 @@ export default function BaziChartCard({ result }: Props) {
       >
         <div
           className="px-6 py-4 flex items-center justify-between"
-          style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+          style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-hover)" }}
         >
           <h2
             className="text-base font-semibold tracking-wide"
-            style={{ color: "var(--accent)" }}
+            style={{ color: "var(--gold)" }}
           >
             四柱命盘
           </h2>
           <div className="flex items-center gap-3">
             <span
               className="text-xs px-2.5 py-1 rounded-full font-medium"
-              style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--border-accent)" }}
+              style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--gold-dim)" }}
             >
               {wangshuai?.verdict || "—"}
             </span>
@@ -139,24 +148,30 @@ export default function BaziChartCard({ result }: Props) {
                 className="flex flex-col items-center py-5 px-2 relative"
                 style={{
                   borderRight: i < 3 ? "1px solid var(--border-subtle)" : "none",
-                  background: isDayPillar ? "var(--accent-glow)" : "transparent",
+                  background: isDayPillar ? "var(--accent-dim)" : "transparent",
+                  border: isDayPillar ? "1px solid var(--accent)" : undefined,
                 }}
               >
                 {isDayPillar && (
                   <span
                     className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded font-bold"
-                    style={{ background: "var(--day-master-bg)", color: "var(--day-master-text)" }}
+                    style={{ background: "var(--accent)", color: "#FFFFFF" }}
                   >
                     日主
                   </span>
                 )}
 
-                <span className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
-                  {isDayPillar ? "日主" : p.shishen_gan || p.shishen || "—"}
-                </span>
+                {isDayPillar ? (
+                  <span className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>日主</span>
+                ) : (
+                  <ChineseTag type="shishen" className="mb-2">
+                    {p.shishen_gan || p.shishen || "—"}
+                  </ChineseTag>
+                )}
 
-                <span
-                  className="text-3xl font-bold px-3 py-2 rounded-xl mb-1"
+                <ChineseTag
+                  type="tiangan"
+                  className="text-3xl mb-1"
                   style={{
                     color: ganWx ? WUXING_COLORS[ganWx] : "var(--text-primary)",
                     background: ganWx ? WUXING_BG[ganWx] : "transparent",
@@ -164,15 +179,16 @@ export default function BaziChartCard({ result }: Props) {
                   }}
                 >
                   {gan || "—"}
-                </span>
+                </ChineseTag>
 
                 <div
                   className="w-8 my-2"
                   style={{ borderTop: "1px dashed var(--border)" }}
                 />
 
-                <span
-                  className="text-3xl font-bold px-3 py-2 rounded-xl mb-2"
+                <ChineseTag
+                  type="dizhi"
+                  className="text-3xl mb-2"
                   style={{
                     color: zhiWx ? WUXING_COLORS[zhiWx] : "var(--text-primary)",
                     background: zhiWx ? WUXING_BG[zhiWx] : "transparent",
@@ -180,7 +196,7 @@ export default function BaziChartCard({ result }: Props) {
                   }}
                 >
                   {zhi || "—"}
-                </span>
+                </ChineseTag>
 
                 {/* 藏干 */}
                 <div className="flex flex-col items-center gap-0.5 mb-2 min-h-[40px]">
@@ -190,9 +206,17 @@ export default function BaziChartCard({ result }: Props) {
                       <span
                         key={j}
                         className="text-xs inline-flex items-center gap-0.5"
-                        style={{ color: cg.wuxing ? WUXING_COLORS[cg.wuxing] : "inherit" }}
                       >
-                        {cg.gan}
+                        <ChineseTag
+                          type="tiangan"
+                          style={{
+                            padding: "0 2px",
+                            fontSize: "0.75rem",
+                            color: cg.wuxing ? WUXING_COLORS[cg.wuxing] : "inherit",
+                          }}
+                        >
+                          {cg.gan}
+                        </ChineseTag>
                         <span
                           className="text-[9px] px-1 rounded"
                           style={{
@@ -256,15 +280,12 @@ export default function BaziChartCard({ result }: Props) {
             const val = percent[wx] || 0;
             return (
               <div key={wx} className="flex items-center gap-3">
-                <span
-                  className="text-xs font-medium w-7 text-center rounded-md px-1.5 py-0.5"
-                  style={{ color: WUXING_COLORS[wx], background: WUXING_BG[wx] }}
-                >
+                <ChineseTag type={WX_TAG[wx]} className="w-7 text-center">
                   {wx}
-                </span>
+                </ChineseTag>
                 <div
                   className="flex-1 rounded-full"
-                  style={{ height: 10, background: "var(--bg-secondary)" }}
+                  style={{ height: 10, background: "var(--bg-hover)" }}
                 >
                   <div
                     className="h-full rounded-full transition-all duration-700"
@@ -363,18 +384,14 @@ export default function BaziChartCard({ result }: Props) {
               {formation.type || "会局"}
             </span>
             <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-              {(formation.branches || []).join(" ")}
+              {(formation.branches || []).map((b, bi) => (
+                <ChineseTag key={bi} type="dizhi" style={{ fontSize: "0.875rem", padding: "2px 6px" }}>{b}</ChineseTag>
+              ))}
             </span>
             {formation.element && (
-              <span
-                className="text-xs px-2 py-0.5 rounded-md"
-                style={{
-                  color: WUXING_COLORS[formation.element],
-                  background: WUXING_BG[formation.element],
-                }}
-              >
+              <ChineseTag type={WX_TAG[formation.element]}>
                 {formation.element}
-              </span>
+              </ChineseTag>
             )}
           </div>
         </div>

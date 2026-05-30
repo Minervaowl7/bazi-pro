@@ -18,10 +18,21 @@ import ExportPanel from "@/components/ExportPanel";
 import HistorySidebar from "@/components/HistorySidebar";
 import { ThemeToggle } from "@/components/ThemeProvider";
 import Link from "next/link";
-import { SCHOOL_OPTIONS_WITH_ALL } from "@/lib/constants";
+import { SCHOOL_OPTIONS_WITH_ALL, GAN_WUXING, ZHI_WUXING, WUXING_COLORS, WUXING_BG } from "@/lib/constants";
 import { generateReport } from "@/lib/api";
 
 const SCHOOL_OPTIONS = SCHOOL_OPTIONS_WITH_ALL;
+
+type TabKey = "chart" | "overview" | "wuxing" | "dayun" | "classical" | "deep";
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "chart", label: "排盘" },
+  { key: "overview", label: "命盘总览" },
+  { key: "wuxing", label: "五行能量" },
+  { key: "dayun", label: "大运流年" },
+  { key: "classical", label: "古籍引证" },
+  { key: "deep", label: "深度解读" },
+];
 
 function SkeletonCard() {
   return (
@@ -41,23 +52,23 @@ function SkeletonCard() {
           <div
             key={i}
             className="text-center p-5 rounded-xl"
-            style={{ background: "var(--bg-secondary)" }}
+            style={{ background: "var(--bg-hover)" }}
           >
             <div
               className="h-3 rounded-md w-14 mx-auto mb-3"
-              style={{ background: "var(--bg-hover)" }}
+              style={{ background: "var(--bg-elevated)" }}
             />
             <div
               className="h-9 rounded-md w-10 mx-auto mb-2"
-              style={{ background: "var(--bg-hover)" }}
+              style={{ background: "var(--bg-elevated)" }}
             />
             <div
               className="h-9 rounded-md w-10 mx-auto mb-2"
-              style={{ background: "var(--bg-hover)" }}
+              style={{ background: "var(--bg-elevated)" }}
             />
             <div
               className="h-3 rounded-md w-12 mx-auto"
-              style={{ background: "var(--bg-hover)" }}
+              style={{ background: "var(--bg-elevated)" }}
             />
           </div>
         ))}
@@ -102,6 +113,60 @@ function SkeletonNarration() {
   );
 }
 
+function MiniPillarChart({ result }: { result: Record<string, unknown> }) {
+  const shishen = result.shishen as { pillars?: Array<{ gan?: string; zhi?: string; wuxing_gan?: string; wuxing_zhi?: string }> } | undefined;
+  const pillars = shishen?.pillars || [];
+  const positionLabels = ["年", "月", "日", "时"];
+
+  return (
+    <div className="flex items-center gap-1">
+      {pillars.map((p, i) => {
+        const isDay = i === 2;
+        const gan = p.gan || "";
+        const zhi = p.zhi || "";
+        const ganWx = p.wuxing_gan || GAN_WUXING[gan] || "";
+        const zhiWx = p.wuxing_zhi || ZHI_WUXING[zhi] || "";
+
+        return (
+          <div
+            key={i}
+            className="flex flex-col items-center px-2.5 py-1.5 rounded-lg transition-all duration-200"
+            style={{
+              background: isDay ? "var(--accent)" : "var(--bg-hover)",
+              border: isDay ? "1px solid var(--accent)" : "1px solid var(--border)",
+            }}
+          >
+            <span
+              className="text-base font-bold leading-tight"
+              style={{
+                color: isDay ? "#FFFFFF" : ganWx ? WUXING_COLORS[ganWx] : "var(--text-primary)",
+              }}
+            >
+              {gan || "—"}
+            </span>
+            <span
+              className="text-base font-bold leading-tight"
+              style={{
+                color: isDay ? "#FFFFFF" : zhiWx ? WUXING_COLORS[zhiWx] : "var(--text-primary)",
+              }}
+            >
+              {zhi || "—"}
+            </span>
+            <span
+              className="text-[9px] mt-0.5 font-medium"
+              style={{
+                color: isDay ? "rgba(255,255,255,0.7)" : "var(--text-muted)",
+              }}
+            >
+              {positionLabels[i]}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AnalyzePage() {
   const params = useParams();
   const router = useRouter();
@@ -117,10 +182,12 @@ export default function AnalyzePage() {
     reset,
   } = useAnalysisStore();
   const prevIdRef = useRef<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>("chart");
   const [selectedSchool, setSelectedSchool] = useState("ziping");
   const [schoolDropdownOpen, setSchoolDropdownOpen] = useState(false);
   const [reportStatus, setReportStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [reportMsg, setReportMsg] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (!analysisId) return;
@@ -141,6 +208,15 @@ export default function AnalyzePage() {
     document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
   }, [schoolDropdownOpen]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDrawerOpen(false);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [drawerOpen]);
 
   const handleReanalyze = useCallback(async () => {
     if (!birthInput) return;
@@ -234,20 +310,77 @@ export default function AnalyzePage() {
   const currentSchool = (analysisResult?.school as string) || "ziping";
   const isCompareMode = currentSchool === "all";
 
+  const validation = analysisResult?.validation as {
+    day_master?: string;
+    bazi?: string;
+    gender?: string;
+  } | undefined;
+  const dayMaster = validation?.day_master || "";
+  const dayMasterWx = dayMaster ? GAN_WUXING[dayMaster] || "" : "";
+
+  const heroVerdictParts: string[] = [];
+  if (dayMaster) {
+    heroVerdictParts.push(`${dayMasterWx ? dayMasterWx : ""}${dayMaster}日主`);
+  }
+  if (pattern?.pattern) {
+    heroVerdictParts.push(pattern.pattern);
+  }
+  if (wangshuai?.verdict) {
+    heroVerdictParts.push(wangshuai.verdict);
+  }
+  if (yongshen?.yongshen) {
+    const favElements = [yongshen.yongshen, ...(yongshen.xishen || [])].filter(Boolean);
+    if (favElements.length > 0) {
+      heroVerdictParts.push(`取${favElements.join("")}`);
+    }
+  }
+  if (pattern?.confidence !== undefined) {
+    heroVerdictParts.push(`置信度 ${(pattern.confidence * 100).toFixed(0)}%`);
+  }
+
   return (
-    <div className="flex flex-1 min-h-screen">
-      <HistorySidebar />
+    <div className="flex flex-1 min-h-screen relative">
+      {drawerOpen && (
+        <div
+          className="fixed inset-0 z-40 transition-opacity duration-300"
+          style={{ background: "rgba(0,0,0,0.3)" }}
+          onClick={() => setDrawerOpen(false)}
+        />
+      )}
+      <div
+        className="fixed top-0 left-0 h-full z-50 transition-transform duration-300 ease-out"
+        style={{
+          transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
+          boxShadow: drawerOpen ? "var(--shadow-lg)" : "none",
+        }}
+      >
+        <HistorySidebar onClose={() => setDrawerOpen(false)} />
+      </div>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-10">
-            <Link
-              href="/"
-              className="text-sm transition-colors duration-200 hover:text-[var(--accent)]"
-              style={{ color: "var(--text-muted)" }}
-            >
-              ← 返回首页
-            </Link>
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setDrawerOpen(true)}
+                className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-[var(--bg-hover)]"
+                style={{ color: "var(--text-muted)" }}
+                title="历史记录"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="3" y1="9" x2="21" y2="9"/>
+                  <line x1="9" y1="21" x2="9" y2="9"/>
+                </svg>
+              </button>
+              <Link
+                href="/"
+                className="text-sm transition-colors duration-200 hover:text-[var(--accent)]"
+                style={{ color: "var(--text-muted)" }}
+              >
+                ← 返回首页
+              </Link>
+            </div>
             <div className="flex items-center gap-3">
               <div className="relative">
                 <button
@@ -274,7 +407,7 @@ export default function AnalyzePage() {
                     style={{
                       background: "var(--bg-card)",
                       border: "1px solid var(--border)",
-                      boxShadow: "var(--shadow)",
+                      boxShadow: "var(--shadow-md)",
                     }}
                   >
                     {SCHOOL_OPTIONS.map((s) => (
@@ -338,7 +471,7 @@ export default function AnalyzePage() {
                     className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-sm disabled:opacity-60"
                     style={{
                       background: "var(--accent)",
-                      color: "var(--bg-primary)",
+                      color: "#FFFFFF",
                     }}
                   >
                     <svg
@@ -426,150 +559,172 @@ export default function AnalyzePage() {
           )}
 
           {analysisResult && (
-            <div className="lg:grid lg:grid-cols-12 lg:gap-6 space-y-6 lg:space-y-0">
-              <div className="lg:col-span-8 space-y-6 stagger-in">
-                <BaziChartCard result={analysisResult} />
-                <StrengthSlider
-                  verdict={wangshuai?.verdict}
-                  dayMaster={(analysisResult?.validation as { day_master?: string } | undefined)?.day_master}
-                  deling={(analysisResult?.strength as Record<string, unknown> | undefined)?.deling as { status?: string; score?: number } | undefined}
-                  dedi={(analysisResult?.strength as Record<string, unknown> | undefined)?.dedi as { score?: number; level?: string } | undefined}
-                  deshi={(analysisResult?.strength as Record<string, unknown> | undefined)?.deshi as { score?: number; level?: string } | undefined}
-                />
-                <ShishenEnergyChart result={analysisResult} />
-                <RelationGraph result={analysisResult} />
-                {isCompareMode && schoolAnalyses ? (
-                  <SchoolComparePanel schoolAnalyses={schoolAnalyses} />
-                ) : (
-                  <SchoolPanel
-                    result={analysisResult}
-                    narration={narration as never}
-                  />
-                )}
+            <>
+              <div
+                className="rounded-2xl p-5 mb-6 animate-fade-in"
+                style={{
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border)",
+                  boxShadow: "var(--shadow-md)",
+                }}
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {heroVerdictParts.map((part, i) => (
+                      <span key={i} className="flex items-center gap-3">
+                        {i > 0 && (
+                          <span style={{ color: "var(--border)", fontSize: "12px" }}>·</span>
+                        )}
+                        <span
+                          className="text-sm font-semibold"
+                          style={{
+                            color: i === 0 ? "var(--accent)" : "var(--text-primary)",
+                          }}
+                        >
+                          {part}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                  <MiniPillarChart result={analysisResult} />
+                </div>
               </div>
 
-              <div className="lg:col-span-4 space-y-5 stagger-in">
-                <div className="grid grid-cols-3 gap-2">
-                  <div
-                    className="rounded-xl p-3 text-center"
+              <div
+                className="flex items-center gap-1 mb-6 overflow-x-auto pb-1"
+                style={{ borderBottom: "1px solid var(--border)" }}
+              >
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className="relative px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors duration-200"
                     style={{
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border)",
+                      color: activeTab === tab.key ? "var(--accent)" : "var(--text-muted)",
                     }}
                   >
-                    <div
-                      className="text-[11px] mb-2 font-medium uppercase tracking-wider"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      旺衰
-                    </div>
-                    <div
-                      className="text-base font-bold"
-                      style={{ color: "var(--accent)" }}
-                    >
-                      {wangshuai?.verdict || "—"}
-                    </div>
-                  </div>
-                  <div
-                    className="rounded-xl p-3 text-center"
-                    style={{
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border)",
-                    }}
-                  >
-                    <div
-                      className="text-[11px] mb-2 font-medium uppercase tracking-wider"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      格局
-                    </div>
-                    <div
-                      className="text-base font-bold"
-                      style={{ color: "var(--accent)" }}
-                    >
-                      {pattern?.pattern || "—"}
-                    </div>
-                  </div>
-                  <div
-                    className="rounded-xl p-3 text-center"
-                    style={{
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border)",
-                    }}
-                  >
-                    <div
-                      className="text-[11px] mb-2 font-medium uppercase tracking-wider"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      用神
-                    </div>
-                    <div
-                      className="text-base font-bold"
-                      style={{ color: "var(--accent)" }}
-                    >
-                      {yongshen?.yongshen || "—"}
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  className="rounded-2xl p-5"
-                  style={{
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  <h3
-                    className="text-sm font-semibold mb-4"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    喜忌用神
-                  </h3>
-                  <div className="grid grid-cols-3 gap-2.5 mb-3">
-                    <div
-                      className="rounded-xl p-3 text-center"
-                      style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)" }}
-                    >
-                      <div className="text-[10px] mb-1" style={{ color: "var(--success)" }}>用神</div>
-                      <div className="text-sm font-bold" style={{ color: "var(--success)" }}>
-                        {yongshen?.yongshen || "—"}
-                      </div>
-                    </div>
-                    <div
-                      className="rounded-xl p-3 text-center"
-                      style={{ background: "var(--accent-dim)", border: "1px solid var(--border-accent)" }}
-                    >
-                      <div className="text-[10px] mb-1" style={{ color: "var(--accent)" }}>喜神</div>
-                      <div className="text-sm font-bold" style={{ color: "var(--accent)" }}>
-                        {(yongshen?.xishen || []).join(" ") || "—"}
-                      </div>
-                    </div>
-                    <div
-                      className="rounded-xl p-3 text-center"
-                      style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)" }}
-                    >
-                      <div className="text-[10px] mb-1" style={{ color: "var(--danger)" }}>忌神</div>
-                      <div className="text-sm font-bold" style={{ color: "var(--danger)" }}>
-                        {(yongshen?.jishen || []).join(" ") || "—"}
-                      </div>
-                    </div>
-                  </div>
-                  {tiaohou?.has_tiaohou && (
-                    <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                    {tab.label}
+                    {activeTab === tab.key && (
                       <span
-                        className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                        style={{ background: "rgba(251,191,36,0.15)", color: "var(--warning)" }}
-                      >
-                        调候
-                      </span>
-                      <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                        {(tiaohou.tiaohou_gan || []).join(" ")}
-                      </span>
-                    </div>
+                        className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full"
+                        style={{ background: "var(--accent)" }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <div className="lg:grid lg:grid-cols-12 lg:gap-6 space-y-6 lg:space-y-0">
+                <div className="lg:col-span-8 space-y-6 stagger-in">
+                  {activeTab === "chart" && (
+                    <BaziChartCard result={analysisResult} />
+                  )}
+
+                  {activeTab === "overview" && (
+                    <>
+                      <StrengthSlider
+                        verdict={wangshuai?.verdict}
+                        dayMaster={validation?.day_master}
+                        deling={(analysisResult?.strength as Record<string, unknown> | undefined)?.deling as { status?: string; score?: number } | undefined}
+                        dedi={(analysisResult?.strength as Record<string, unknown> | undefined)?.dedi as { score?: number; level?: string } | undefined}
+                        deshi={(analysisResult?.strength as Record<string, unknown> | undefined)?.deshi as { score?: number; level?: string } | undefined}
+                      />
+                      <RelationGraph result={analysisResult} />
+                    </>
+                  )}
+
+                  {activeTab === "wuxing" && (
+                    <ShishenEnergyChart result={analysisResult} />
+                  )}
+
+                  {activeTab === "dayun" && (
+                    <>
+                      <DayunTimeline result={analysisResult} />
+                      <GongweiPanel result={analysisResult} />
+                      <ShenShaPanel result={analysisResult} />
+                    </>
+                  )}
+
+                  {activeTab === "classical" && (
+                    isCompareMode && schoolAnalyses ? (
+                      <SchoolComparePanel schoolAnalyses={schoolAnalyses} />
+                    ) : (
+                      <SchoolPanel
+                        result={analysisResult}
+                        narration={narration as never}
+                      />
+                    )
+                  )}
+
+                  {activeTab === "deep" && (
+                    <ChatPanel analysisId={analysisId} />
                   )}
                 </div>
 
-                {pattern?.reason && (
+                <div className="lg:col-span-4 space-y-5 stagger-in">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div
+                      className="rounded-xl p-3 text-center"
+                      style={{
+                        background: "var(--bg-card)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      <div
+                        className="text-[11px] mb-2 font-medium uppercase tracking-wider"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        旺衰
+                      </div>
+                      <div
+                        className="text-base font-bold"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        {wangshuai?.verdict || "—"}
+                      </div>
+                    </div>
+                    <div
+                      className="rounded-xl p-3 text-center"
+                      style={{
+                        background: "var(--bg-card)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      <div
+                        className="text-[11px] mb-2 font-medium uppercase tracking-wider"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        格局
+                      </div>
+                      <div
+                        className="text-base font-bold"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        {pattern?.pattern || "—"}
+                      </div>
+                    </div>
+                    <div
+                      className="rounded-xl p-3 text-center"
+                      style={{
+                        background: "var(--bg-card)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      <div
+                        className="text-[11px] mb-2 font-medium uppercase tracking-wider"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        用神
+                      </div>
+                      <div
+                        className="text-base font-bold"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        {yongshen?.yongshen || "—"}
+                      </div>
+                    </div>
+                  </div>
+
                   <div
                     className="rounded-2xl p-5"
                     style={{
@@ -578,65 +733,143 @@ export default function AnalyzePage() {
                     }}
                   >
                     <h3
-                      className="text-sm font-semibold mb-3"
+                      className="text-sm font-semibold mb-4"
                       style={{ color: "var(--text-secondary)" }}
                     >
-                      格局判定依据
+                      喜忌用神
                     </h3>
-                    <p
-                      className="text-sm leading-relaxed"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {pattern.reason}
-                    </p>
-                    {pattern.confidence !== undefined && (
-                      <div className="mt-3 flex items-center gap-3">
-                        <span
-                          className="text-xs"
-                          style={{ color: "var(--text-muted)" }}
-                        >
-                          置信度
-                        </span>
-                        <div
-                          className="flex-1 rounded-full"
-                          style={{
-                            height: 6,
-                            background: "var(--bg-secondary)",
-                          }}
-                        >
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{
-                              width: `${Math.min(pattern.confidence * 100, 100)}%`,
-                              background:
-                                pattern.confidence >= 0.8
-                                  ? "var(--success)"
-                                  : pattern.confidence >= 0.6
-                                    ? "var(--warning)"
-                                    : "var(--danger)",
-                            }}
-                          />
+                    <div className="grid grid-cols-3 gap-2.5 mb-3">
+                      <div
+                        className="rounded-xl p-3 text-center"
+                        style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)" }}
+                      >
+                        <div className="text-[10px] mb-1" style={{ color: "var(--success)" }}>用神</div>
+                        <div className="text-sm font-bold" style={{ color: "var(--success)" }}>
+                          {yongshen?.yongshen || "—"}
                         </div>
+                      </div>
+                      <div
+                        className="rounded-xl p-3 text-center"
+                        style={{ background: "var(--accent-dim)", border: "1px solid var(--gold-dim)" }}
+                      >
+                        <div className="text-[10px] mb-1" style={{ color: "var(--accent)" }}>喜神</div>
+                        <div className="text-sm font-bold" style={{ color: "var(--accent)" }}>
+                          {(yongshen?.xishen || []).join(" ") || "—"}
+                        </div>
+                      </div>
+                      <div
+                        className="rounded-xl p-3 text-center"
+                        style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)" }}
+                      >
+                        <div className="text-[10px] mb-1" style={{ color: "var(--danger)" }}>忌神</div>
+                        <div className="text-sm font-bold" style={{ color: "var(--danger)" }}>
+                          {(yongshen?.jishen || []).join(" ") || "—"}
+                        </div>
+                      </div>
+                    </div>
+                    {tiaohou?.has_tiaohou && (
+                      <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
                         <span
-                          className="text-xs tabular-nums"
-                          style={{ color: "var(--text-muted)" }}
+                          className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                          style={{ background: "rgba(251,191,36,0.15)", color: "var(--warning)" }}
                         >
-                          {(pattern.confidence * 100).toFixed(0)}%
+                          调候
+                        </span>
+                        <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                          {(tiaohou.tiaohou_gan || []).join(" ")}
                         </span>
                       </div>
                     )}
                   </div>
-                )}
 
-                <DayunTimeline result={analysisResult} />
+                  {pattern?.reason && (
+                    <div
+                      className="rounded-2xl p-5"
+                      style={{
+                        background: "var(--bg-card)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      <h3
+                        className="text-sm font-semibold mb-3"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        格局判定依据
+                      </h3>
+                      <p
+                        className="text-sm leading-relaxed"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        {pattern.reason}
+                      </p>
+                      {pattern.confidence !== undefined && (
+                        <div className="mt-3 flex items-center gap-3">
+                          <span
+                            className="text-xs"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            置信度
+                          </span>
+                          <div
+                            className="flex-1 rounded-full"
+                            style={{
+                              height: 6,
+                              background: "var(--bg-hover)",
+                            }}
+                          >
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{
+                                width: `${Math.min(pattern.confidence * 100, 100)}%`,
+                                background:
+                                  pattern.confidence >= 0.8
+                                    ? "var(--success)"
+                                    : pattern.confidence >= 0.6
+                                      ? "var(--warning)"
+                                      : "var(--danger)",
+                              }}
+                            />
+                          </div>
+                          <span
+                            className="text-xs tabular-nums"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            {(pattern.confidence * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                <GongweiPanel result={analysisResult} />
+                  {activeTab === "chart" && (
+                    <>
+                      <DayunTimeline result={analysisResult} />
+                      <GongweiPanel result={analysisResult} />
+                      <ShenShaPanel result={analysisResult} />
+                    </>
+                  )}
 
-                <ShenShaPanel result={analysisResult} />
+                  {activeTab === "overview" && (
+                    <ChatPanel analysisId={analysisId} />
+                  )}
 
-                <ChatPanel analysisId={analysisId} />
+                  {activeTab === "wuxing" && (
+                    <>
+                      <DayunTimeline result={analysisResult} />
+                      <ChatPanel analysisId={analysisId} />
+                    </>
+                  )}
+
+                  {activeTab === "dayun" && (
+                    <ChatPanel analysisId={analysisId} />
+                  )}
+
+                  {activeTab === "classical" && (
+                    <ChatPanel analysisId={analysisId} />
+                  )}
+                </div>
               </div>
-            </div>
+            </>
           )}
 
           {status === "completed" &&

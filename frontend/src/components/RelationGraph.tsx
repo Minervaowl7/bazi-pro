@@ -133,7 +133,7 @@ export default function RelationGraph({ result }: Props) {
     >
       <div
         className="px-6 py-4"
-        style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+        style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-hover)" }}
       >
         <h3
           className="text-sm font-semibold"

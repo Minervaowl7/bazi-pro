@@ -79,7 +79,7 @@ export default function ChatPanel({ analysisId }: Props) {
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl overflow-hidden animate-fade-in flex flex-col" style={{ boxShadow: "var(--shadow-sm)" }}>
-      <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0" style={{ background: "var(--bg-secondary)" }}>
+      <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0" style={{ background: "var(--bg-hover)" }}>
         <div className="flex items-center gap-2.5">
           <span
             className="w-7 h-7 rounded-lg flex items-center justify-center text-xs"
@@ -134,7 +134,7 @@ export default function ChatPanel({ analysisId }: Props) {
                   className="text-sm leading-relaxed px-4 py-2.5 rounded-2xl rounded-br-md whitespace-pre-wrap"
                   style={{
                     background: "var(--accent)",
-                    color: "var(--bg-primary)",
+                    color: "#FFFFFF",
                   }}
                 >
                   {msg.content}
@@ -181,7 +181,7 @@ export default function ChatPanel({ analysisId }: Props) {
                 disabled={loading}
                 className="text-xs px-3.5 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.03] hover:shadow-md disabled:opacity-50 disabled:hover:scale-100"
                 style={{
-                  background: "var(--bg-secondary)",
+                  background: "var(--bg-hover)",
                   border: "1px solid var(--border)",
                   color: "var(--text-secondary)",
                 }}
@@ -212,7 +212,7 @@ export default function ChatPanel({ analysisId }: Props) {
             rows={1}
             className="flex-1 resize-none text-sm px-3.5 py-2.5 rounded-xl focus:outline-none transition-colors"
             style={{
-              background: "var(--bg-secondary)",
+              background: "var(--bg-hover)",
               border: "1px solid var(--border)",
               color: "var(--text-primary)",
               maxHeight: 100,
@@ -225,7 +225,7 @@ export default function ChatPanel({ analysisId }: Props) {
             className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: "var(--accent)",
-              color: "var(--bg-primary)",
+              color: "#FFFFFF",
             }}
           >
             发送
@@ -280,13 +280,13 @@ export default function ChatPanel({ analysisId }: Props) {
         }
         .markdown-body :global(code) {
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-          background: var(--bg-secondary);
+          background: var(--bg-hover);
           padding: 0.125rem 0.375rem;
           border-radius: 0.25rem;
           font-size: 0.75rem;
         }
         .markdown-body :global(pre) {
-          background: var(--bg-secondary);
+          background: var(--bg-hover);
           border-radius: 0.75rem;
           padding: 1rem;
           overflow-x: auto;
@@ -327,7 +327,7 @@ export default function ChatPanel({ analysisId }: Props) {
           margin-bottom: 0.5rem;
         }
         .markdown-body :global(th) {
-          background: var(--bg-secondary);
+          background: var(--bg-hover);
           padding: 0.5rem 0.75rem;
           text-align: left;
           font-weight: 500;

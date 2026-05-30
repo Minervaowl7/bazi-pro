@@ -70,7 +70,7 @@ export default function AnalysisProgress() {
 
       <div
         className="w-full rounded-full overflow-hidden mb-4"
-        style={{ height: 4, background: "var(--bg-secondary)" }}
+        style={{ height: 4, background: "var(--bg-hover)" }}
       >
         <div
           className="h-full rounded-full transition-all duration-700 ease-out"
@@ -120,7 +120,7 @@ export default function AnalysisProgress() {
                   ? { background: "rgba(74,222,128,0.12)", color: "var(--success)" }
                   : isRunning
                     ? { background: "var(--accent-dim)", color: "var(--accent)" }
-                    : { background: "var(--bg-secondary)", color: "var(--text-muted)" }
+                    : { background: "var(--bg-hover)", color: "var(--text-muted)" }
               }
             >
               {isDone && (

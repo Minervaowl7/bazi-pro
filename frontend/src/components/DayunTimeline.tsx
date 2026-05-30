@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { WUXING_COLORS, WUXING_BG, GAN_WUXING } from "@/lib/constants";
+import { ChineseTag } from "./ui/ChineseTag";
 
 const TIANGAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
 const DIZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 const SHENGXIAO = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"];
+
+const WUXING_TAG_TYPE: Record<string, "wood" | "fire" | "earth" | "metal" | "water"> = {
+  木: "wood", 火: "fire", 土: "earth", 金: "metal", 水: "water",
+};
 
 function getYearGanzhi(year: number) {
   const ganIdx = (year - 4) % 10;
@@ -50,7 +54,7 @@ export default function DayunTimeline({ result }: Props) {
     >
       <div
         className="px-6 py-4 flex items-center justify-between"
-        style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+        style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-hover)" }}
       >
         <h3
           className="text-base font-semibold tracking-wide"
@@ -69,8 +73,6 @@ export default function DayunTimeline({ result }: Props) {
           const zhi = String(d.zhi || "");
           const ganWuxing = d.gan_wuxing as string | undefined;
           const zhiWuxing = d.zhi_wuxing as string | undefined;
-          const ganColor = ganWuxing ? WUXING_COLORS[ganWuxing] : "var(--text-primary)";
-          const zhiColor = zhiWuxing ? WUXING_COLORS[zhiWuxing] : "var(--text-primary)";
           const ageRange = String(d.age_range || "");
 
           const startAge = Number(d.start_age || 0);
@@ -92,13 +94,13 @@ export default function DayunTimeline({ result }: Props) {
                 {isCurrent && (
                   <span
                     className="text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0"
-                    style={{ background: "var(--accent)", color: "var(--bg-primary)" }}
+                    style={{ background: "var(--accent)", color: "#FFFFFF" }}
                   >
                     当前
                   </span>
                 )}
-                <span className="font-bold text-base" style={{ color: ganColor }}>{gan}</span>
-                <span className="font-bold text-base" style={{ color: zhiColor }}>{zhi}</span>
+                <ChineseTag type="tiangan">{gan}</ChineseTag>
+                <ChineseTag type="dizhi">{zhi}</ChineseTag>
                 <span className="text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
                   {ageRange || `${startAge}-${endAge}岁`}
                 </span>
@@ -109,20 +111,10 @@ export default function DayunTimeline({ result }: Props) {
                 )}
                 <div className="flex gap-1 ml-auto">
                   {ganWuxing && (
-                    <span
-                      className="text-[9px] px-1 py-px rounded"
-                      style={{ color: ganColor, background: WUXING_BG[ganWuxing] }}
-                    >
-                      {ganWuxing}
-                    </span>
+                    <ChineseTag type={WUXING_TAG_TYPE[ganWuxing]}>{ganWuxing}</ChineseTag>
                   )}
                   {zhiWuxing && (
-                    <span
-                      className="text-[9px] px-1 py-px rounded"
-                      style={{ color: zhiColor, background: WUXING_BG[zhiWuxing] }}
-                    >
-                      {zhiWuxing}
-                    </span>
+                    <ChineseTag type={WUXING_TAG_TYPE[zhiWuxing]}>{zhiWuxing}</ChineseTag>
                   )}
                 </div>
                 <svg
@@ -141,7 +133,7 @@ export default function DayunTimeline({ result }: Props) {
               {isExpanded && (
                 <div
                   className="px-6 pb-4 grid grid-cols-2 gap-1.5"
-                  style={{ background: "var(--bg-secondary)" }}
+                  style={{ background: "var(--bg-hover)" }}
                 >
                   {Array.from({ length: 10 }, (_, j) => {
                     const year = startYear > 0 ? startYear + j : 0;
@@ -149,8 +141,6 @@ export default function DayunTimeline({ result }: Props) {
                     const { gan: lnGan, zhi: lnZhi, shengxiao } = year > 0
                       ? getYearGanzhi(year)
                       : { gan: "—", zhi: "", shengxiao: "" };
-                    const lnGanWx = GAN_WUXING[lnGan] || "";
-                    const lnGanColor = lnGanWx ? WUXING_COLORS[lnGanWx] : "var(--text-primary)";
                     const isThisYear = year > 0 && year === currentYear;
                     return (
                       <div
@@ -158,11 +148,12 @@ export default function DayunTimeline({ result }: Props) {
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs"
                         style={{
                           background: isThisYear ? "var(--accent-dim)" : "transparent",
-                          border: isThisYear ? "1px solid var(--border-accent)" : "1px solid transparent",
+                          border: isThisYear ? "1px solid var(--gold-dim)" : "1px solid transparent",
                         }}
                       >
                         <span className="tabular-nums w-10" style={{ color: "var(--text-muted)" }}>{year > 0 ? year : `${age}岁`}</span>
-                        <span className="font-medium" style={{ color: lnGanColor }}>{lnGan}{lnZhi}</span>
+                        <ChineseTag type="tiangan">{lnGan}</ChineseTag>
+                        <ChineseTag type="dizhi">{lnZhi}</ChineseTag>
                         <span style={{ color: "var(--text-muted)" }}>{shengxiao}</span>
                         <span className="ml-auto tabular-nums" style={{ color: "var(--text-muted)" }}>{year > 0 ? `${age}岁` : ""}</span>
                       </div>

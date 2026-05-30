@@ -98,7 +98,7 @@ export default function BirthForm() {
                 }`}
                 style={
                   form.gender === g
-                    ? { background: "var(--accent)", color: "var(--bg-primary)" }
+                    ? { background: "var(--accent)", color: "#FFFFFF" }
                     : {}
                 }
               >
@@ -127,7 +127,7 @@ export default function BirthForm() {
               }}
               className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-all duration-200"
               style={{
-                background: "var(--bg-secondary)",
+                background: "var(--bg-hover)",
                 border: "1px solid var(--border)",
                 color: "var(--text-primary)",
               }}
@@ -150,7 +150,7 @@ export default function BirthForm() {
               }}
               className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-all duration-200"
               style={{
-                background: "var(--bg-secondary)",
+                background: "var(--bg-hover)",
                 border: "1px solid var(--border)",
                 color: "var(--text-primary)",
               }}
@@ -170,8 +170,8 @@ export default function BirthForm() {
           className="w-full py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
           style={{
             background: "var(--accent)",
-            color: "var(--bg-primary)",
-            boxShadow: "0 4px 16px rgba(201,169,110,0.25)",
+            color: "#FFFFFF",
+            boxShadow: "0 4px 16px rgba(138,59,42,0.25)",
           }}
         >
           {paipanLoading ? "排盘中..." : "排盘"}
@@ -201,11 +201,11 @@ export default function BirthForm() {
                 <div
                   key={p.position}
                   className="flex flex-col items-center gap-1 py-4 rounded-xl relative"
-                  style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
+                  style={{ background: "var(--bg-hover)", border: "1px solid var(--border)" }}
                 >
                   <span
                     className="text-[11px] font-medium mb-2 px-2 py-0.5 rounded-full"
-                    style={{ color: "var(--text-muted)", background: "var(--bg-hover)" }}
+                    style={{ color: "var(--text-muted)", background: "var(--bg-elevated)" }}
                   >
                     {p.position}
                   </span>
@@ -279,7 +279,7 @@ export default function BirthForm() {
                           borderWidth: "2px",
                           background: "var(--accent-dim)",
                         }
-                      : { background: "var(--bg-secondary)" }
+                      : { background: "var(--bg-hover)", border: "1px solid var(--border)" }
                   }
                 >
                   <div
@@ -310,9 +310,9 @@ export default function BirthForm() {
             disabled={status === "submitting" || status === "streaming"}
             className="w-full py-3.5 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] flex items-center justify-center gap-2"
             style={{
-              background: "linear-gradient(135deg, var(--accent), var(--accent-hover))",
-              color: "var(--bg-primary)",
-              boxShadow: "0 6px 20px rgba(201,169,110,0.3)",
+              background: "var(--accent)",
+              color: "#FFFFFF",
+              boxShadow: "0 6px 20px rgba(138,59,42,0.3)",
             }}
           >
             {status === "submitting" ? "提交中..." : "深度解读"}{" "}

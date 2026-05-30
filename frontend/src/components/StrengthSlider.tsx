@@ -52,7 +52,7 @@ export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi
       <div className="relative mb-4">
         <div
           className="h-2 rounded-full"
-          style={{ background: "var(--bg-secondary)" }}
+          style={{ background: "var(--bg-hover)" }}
         />
         {/* 填充条 */}
         <div
@@ -110,7 +110,7 @@ export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi
       <div className="grid grid-cols-3 gap-3">
         <div
           className="rounded-lg p-3 text-center"
-          style={{ background: "var(--bg-secondary)" }}
+          style={{ background: "var(--bg-hover)" }}
         >
           <div className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>
             得令
@@ -124,7 +124,7 @@ export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi
         </div>
         <div
           className="rounded-lg p-3 text-center"
-          style={{ background: "var(--bg-secondary)" }}
+          style={{ background: "var(--bg-hover)" }}
         >
           <div className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>
             得地
@@ -138,7 +138,7 @@ export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi
         </div>
         <div
           className="rounded-lg p-3 text-center"
-          style={{ background: "var(--bg-secondary)" }}
+          style={{ background: "var(--bg-hover)" }}
         >
           <div className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>
             得势
