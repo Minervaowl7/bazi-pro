@@ -7,11 +7,11 @@ export const WUXING_COLORS: Record<string, string> = {
 };
 
 export const WUXING_BG: Record<string, string> = {
-  木: "rgba(34,197,94,0.12)",
-  火: "rgba(239,68,68,0.12)",
-  土: "rgba(234,179,8,0.12)",
-  金: "rgba(245,158,11,0.12)",
-  水: "rgba(59,130,246,0.12)",
+  木: "rgba(74,222,128,0.12)",
+  火: "rgba(248,113,113,0.12)",
+  土: "rgba(251,191,36,0.12)",
+  金: "rgba(228,228,231,0.12)",
+  水: "rgba(96,165,250,0.12)",
 };
 
 export const RELATION_COLORS: Record<string, string> = {
