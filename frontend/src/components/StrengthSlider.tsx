@@ -78,7 +78,7 @@ export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi
               : position === 2
                 ? "var(--accent)"
                 : "var(--fire)",
-            boxShadow: "0 0 8px rgba(212,165,116,0.3)",
+            boxShadow: "0 0 8px rgba(138,59,42,0.2)",
           }}
         />
       </div>

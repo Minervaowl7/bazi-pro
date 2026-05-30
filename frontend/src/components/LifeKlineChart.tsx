@@ -112,9 +112,9 @@ export default function LifeKlineChart({
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "cross" },
-        backgroundColor: "rgba(24,24,42,0.95)",
-        borderColor: "var(--border)",
-        textStyle: { color: "#edece8", fontSize: 13 },
+        backgroundColor: "rgba(255,255,255,0.96)",
+        borderColor: "#EEEAE2",
+        textStyle: { color: "#1A1A1A", fontSize: 13 },
         formatter: (params: Array<{ seriesName: string; dataIndex: number; value: number | number[] }>) => {
           const idx = params[0]?.dataIndex ?? 0;
           const age = ages[idx];
@@ -125,15 +125,15 @@ export default function LifeKlineChart({
           const reason = reasons[idx];
 
           let html = `<div style="font-weight:600;margin-bottom:6px">${age}岁 · ${year}年 · ${gz}</div>`;
-          html += `<div>运势评分: <span style="color:#c9a96e;font-weight:600">${score}</span></div>`;
+          html += `<div>运势评分: <span style="color:#8A3B2A;font-weight:600">${score}</span></div>`;
           if (dayun) html += `<div>大运: ${dayun}</div>`;
-          if (reason) html += `<div style="color:#a8a4a0;font-size:12px;margin-top:4px">${reason}</div>`;
+          if (reason) html += `<div style="color:#999999;font-size:12px;margin-top:4px">${reason}</div>`;
           return html;
         },
       },
       axisPointer: {
         link: [{ xAxisIndex: "all" }],
-        label: { backgroundColor: "#c9a96e" },
+        label: { backgroundColor: "#C19A42" },
       },
       grid: [
         {
@@ -154,9 +154,9 @@ export default function LifeKlineChart({
           type: "category",
           data: xLabels,
           gridIndex: 0,
-          axisLine: { lineStyle: { color: "#24243a" } },
+          axisLine: { lineStyle: { color: "#EEEAE2" } },
           axisLabel: {
-            color: "#5a5a6e",
+            color: "#999999",
             fontSize: 11,
             interval: 9,
             formatter: (val: string) => val,
@@ -168,9 +168,9 @@ export default function LifeKlineChart({
           type: "category",
           data: years.map(String),
           gridIndex: 1,
-          axisLine: { lineStyle: { color: "#24243a" } },
+          axisLine: { lineStyle: { color: "#EEEAE2" } },
           axisLabel: {
-            color: "#5a5a6e",
+            color: "#999999",
             fontSize: 10,
             interval: 9,
           },
@@ -184,9 +184,9 @@ export default function LifeKlineChart({
           gridIndex: 0,
           min: 0,
           max: 100,
-          splitLine: { lineStyle: { color: "#1c1c30", type: "dashed" } },
+          splitLine: { lineStyle: { color: "#F2F0EA", type: "dashed" } },
           axisLine: { show: false },
-          axisLabel: { color: "#5a5a6e", fontSize: 11 },
+          axisLabel: { color: "#999999", fontSize: 11 },
           axisTick: { show: false },
         },
         {
@@ -212,18 +212,18 @@ export default function LifeKlineChart({
           xAxisIndex: [0, 1],
           bottom: 10,
           height: 24,
-          borderColor: "#24243a",
-          backgroundColor: "rgba(18,18,30,0.6)",
-          fillerColor: "rgba(201,169,110,0.12)",
-          handleStyle: { color: "#c9a96e", borderColor: "#c9a96e" },
-          textStyle: { color: "#5a5a6e" },
+          borderColor: "#EEEAE2",
+          backgroundColor: "rgba(250,249,246,0.8)",
+          fillerColor: "rgba(193,154,66,0.12)",
+          handleStyle: { color: "#C19A42", borderColor: "#C19A42" },
+          textStyle: { color: "#999999" },
           dataBackground: {
-            lineStyle: { color: "#24243a" },
-            areaStyle: { color: "rgba(201,169,110,0.06)" },
+            lineStyle: { color: "#EEEAE2" },
+            areaStyle: { color: "rgba(193,154,66,0.06)" },
           },
           selectedDataBackground: {
-            lineStyle: { color: "#c9a96e" },
-            areaStyle: { color: "rgba(201,169,110,0.15)" },
+            lineStyle: { color: "#C19A42" },
+            areaStyle: { color: "rgba(193,154,66,0.15)" },
           },
         },
       ],
@@ -235,21 +235,21 @@ export default function LifeKlineChart({
           yAxisIndex: 0,
           data: candleData,
           itemStyle: {
-            color: "#22c55e",
-            color0: "#ef4444",
-            borderColor: "#22c55e",
-            borderColor0: "#ef4444",
+            color: "#3B8D62",
+            color0: "#C53030",
+            borderColor: "#3B8D62",
+            borderColor0: "#C53030",
           },
           markLine: {
             silent: true,
             symbol: "none",
             lineStyle: {
-              color: "rgba(255,255,255,0.25)",
+              color: "rgba(0,0,0,0.12)",
               type: "dashed",
               width: 1,
             },
             label: {
-              color: "#a8a4a0",
+              color: "#999999",
               fontSize: 11,
               position: "insideEndTop",
               formatter: (params: { name?: string }) => params.name || "",
@@ -268,8 +268,8 @@ export default function LifeKlineChart({
           data: ma5,
           smooth: true,
           showSymbol: false,
-          lineStyle: { color: "#eab308", width: 1.5 },
-          itemStyle: { color: "#eab308" },
+          lineStyle: { color: "#C19A42", width: 1.5 },
+          itemStyle: { color: "#C19A42" },
         },
         {
           name: "MA10",
@@ -279,8 +279,8 @@ export default function LifeKlineChart({
           data: ma10,
           smooth: true,
           showSymbol: false,
-          lineStyle: { color: "#3b82f6", width: 1.5 },
-          itemStyle: { color: "#3b82f6" },
+          lineStyle: { color: "#3F6F9F", width: 1.5 },
+          itemStyle: { color: "#3F6F9F" },
         },
         {
           name: "评分",
@@ -291,8 +291,8 @@ export default function LifeKlineChart({
           itemStyle: {
             color: (params: { dataIndex: number }) => {
               const idx = params.dataIndex;
-              if (idx === 0) return scores[0] >= 50 ? "#22c55e" : "#ef4444";
-              return scores[idx] >= scores[idx - 1] ? "#22c55e" : "#ef4444";
+              if (idx === 0) return scores[0] >= 50 ? "#3B8D62" : "#C53030";
+              return scores[idx] >= scores[idx - 1] ? "#3B8D62" : "#C53030";
             },
           },
         },
@@ -309,7 +309,7 @@ export default function LifeKlineChart({
           border: "1px solid var(--border)",
         }}
       >
-        <h3 className="text-base font-semibold mb-4" style={{ color: "var(--accent)" }}>
+        <h3 className="text-base font-semibold mb-4" style={{ color: "var(--gold)" }}>
           人生K线
         </h3>
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
@@ -328,35 +328,35 @@ export default function LifeKlineChart({
       }}
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold" style={{ color: "var(--accent)" }}>
+        <h3 className="text-base font-semibold" style={{ color: "var(--gold)" }}>
           人生K线
         </h3>
         <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-muted)" }}>
           <span className="flex items-center gap-1.5">
             <span
               className="inline-block w-3 h-3 rounded-sm"
-              style={{ background: "#22c55e" }}
+              style={{ background: "#3B8D62" }}
             />
             吉运
           </span>
           <span className="flex items-center gap-1.5">
             <span
               className="inline-block w-3 h-3 rounded-sm"
-              style={{ background: "#ef4444" }}
+              style={{ background: "#C53030" }}
             />
             凶运
           </span>
           <span className="flex items-center gap-1.5">
             <span
               className="inline-block w-4 h-0.5"
-              style={{ background: "#eab308" }}
+              style={{ background: "#C19A42" }}
             />
             MA5
           </span>
           <span className="flex items-center gap-1.5">
             <span
               className="inline-block w-4 h-0.5"
-              style={{ background: "#3b82f6" }}
+              style={{ background: "#3F6F9F" }}
             />
             MA10
           </span>
