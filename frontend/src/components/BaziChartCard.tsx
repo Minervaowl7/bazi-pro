@@ -94,44 +94,33 @@ export default function BaziChartCard({ result }: Props) {
   const positionLabels = ["年柱", "月柱", "日柱", "时柱"];
 
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="animate-fade-in space-y-10">
       {/* 四柱卡片区 */}
       <div
-        className="rounded-2xl overflow-hidden"
-        style={{
-          background: "var(--bg-card)",
-          border: "1px solid var(--border)",
-          boxShadow: "var(--shadow)",
-        }}
+        className="border-b pb-10"
+        style={{ borderColor: "var(--color-border)" }}
       >
         {/* 头部 */}
-        <div
-          className="px-7 py-4 flex items-center justify-between"
-          style={{ borderBottom: "1px solid var(--border-subtle)" }}
-        >
-          <span
-            className="text-sm font-medium"
-            style={{ color: "var(--text-muted)" }}
+        <div className="flex items-center justify-between mb-8">
+          <h2
+            className="text-lg font-bold"
+            style={{ color: "var(--color-scholar-blue)", fontFamily: "var(--font-serif)" }}
           >
             四柱命盘
-          </span>
+          </h2>
           <div className="flex items-center gap-3">
             {wangshuai?.verdict && (
               <span
-                className="text-xs px-2.5 py-1 rounded-full font-medium"
-                style={{
-                  background: "var(--bg-elevated)",
-                  color: "var(--text-secondary)",
-                  border: "1px solid var(--border)",
-                }}
+                className="text-[11px] font-bold uppercase tracking-widest"
+                style={{ color: "var(--color-text-muted)" }}
               >
                 {wangshuai.verdict}
               </span>
             )}
             {dayMaster && (
               <span
-                className="text-sm font-semibold"
-                style={{ color: dayMasterWx ? WUXING_COLORS[dayMasterWx] : "var(--text-primary)" }}
+                className="text-sm font-bold"
+                style={{ color: dayMasterWx ? WUXING_COLORS[dayMasterWx] : "var(--color-text-primary)" }}
               >
                 {dayMaster}日主
               </span>
@@ -139,8 +128,8 @@ export default function BaziChartCard({ result }: Props) {
           </div>
         </div>
 
-        {/* 四柱纵向卡片 grid */}
-        <div className="grid grid-cols-4 gap-0">
+        {/* 四柱纵向 grid */}
+        <div className="grid grid-cols-4 gap-0 border" style={{ borderColor: "var(--color-border)" }}>
           {pillars.map((p, i) => {
             const isDayPillar = i === 2;
             const gan = p.gan || "";
@@ -152,105 +141,80 @@ export default function BaziChartCard({ result }: Props) {
                 key={i}
                 className="flex flex-col items-center py-8 px-3 relative"
                 style={{
-                  borderRight: i < 3 ? "1px solid var(--border-subtle)" : "none",
-                  background: isDayPillar ? "var(--bg-elevated)" : "transparent",
-                  borderTop: isDayPillar ? `3px solid ${dayMasterWx ? WUXING_COLORS[dayMasterWx] : "var(--accent)"}` : "3px solid transparent",
+                  borderRight: i < 3 ? "1px solid var(--color-border)" : "none",
+                  background: isDayPillar ? "var(--color-bg-panel)" : "transparent",
                 }}
               >
+                {/* 柱位标签 */}
+                <span
+                  className="text-[10px] font-bold uppercase tracking-widest mb-4"
+                  style={{ color: isDayPillar ? "var(--color-scholar-blue)" : "var(--color-text-muted)" }}
+                >
+                  {p.position ? `${p.position}柱` : positionLabels[i]}
+                </span>
+
                 {/* 十神标签 */}
                 <span
-                  className="text-[11px] px-2 py-0.5 rounded-md mb-3"
-                  style={{
-                    background: isDayPillar ? "var(--day-master-bg)" : "var(--bg-hover)",
-                    color: isDayPillar ? "var(--day-master-text)" : "var(--text-muted)",
-                    fontWeight: isDayPillar ? 600 : 400,
-                  }}
+                  className="text-[11px] mb-3"
+                  style={{ color: "var(--color-text-muted)" }}
                 >
                   {isDayPillar ? "日主" : p.shishen_gan || p.shishen || "—"}
                 </span>
 
-                {/* 天干 pill */}
+                {/* 天干 */}
                 <div
-                  className="rounded-xl px-5 py-3 mb-3 transition-transform hover:scale-[1.03]"
+                  className="px-4 py-2 mb-2 border"
                   style={{
-                    background: ganWx ? WUXING_PILL_BG[ganWx] : "var(--bg-hover)",
-                    border: `1px solid ${ganWx ? WUXING_PILL_BORDER[ganWx] : "var(--border)"}`,
+                    background: ganWx ? WUXING_PILL_BG[ganWx] : "transparent",
+                    borderColor: ganWx ? WUXING_PILL_BORDER[ganWx] : "var(--color-border)",
                   }}
                 >
                   <span
-                    className="text-4xl font-bold block text-center"
-                    style={{ color: ganWx ? WUXING_COLORS[ganWx] : "var(--text-primary)" }}
+                    className="text-3xl font-bold block text-center"
+                    style={{ color: ganWx ? WUXING_COLORS[ganWx] : "var(--color-text-primary)" }}
                   >
                     {gan || "—"}
                   </span>
                 </div>
 
-                {/* 分隔点 */}
-                <div className="flex gap-1 my-1">
-                  <span className="w-1 h-1 rounded-full" style={{ background: "var(--border)" }} />
-                  <span className="w-1 h-1 rounded-full" style={{ background: "var(--border)" }} />
-                  <span className="w-1 h-1 rounded-full" style={{ background: "var(--border)" }} />
-                </div>
-
-                {/* 地支 pill */}
+                {/* 地支 */}
                 <div
-                  className="rounded-xl px-5 py-3 mt-3 mb-4 transition-transform hover:scale-[1.03]"
+                  className="px-4 py-2 mb-4 border"
                   style={{
-                    background: zhiWx ? WUXING_PILL_BG[zhiWx] : "var(--bg-hover)",
-                    border: `1px solid ${zhiWx ? WUXING_PILL_BORDER[zhiWx] : "var(--border)"}`,
+                    background: zhiWx ? WUXING_PILL_BG[zhiWx] : "transparent",
+                    borderColor: zhiWx ? WUXING_PILL_BORDER[zhiWx] : "var(--color-border)",
                   }}
                 >
                   <span
-                    className="text-4xl font-bold block text-center"
-                    style={{ color: zhiWx ? WUXING_COLORS[zhiWx] : "var(--text-primary)" }}
+                    className="text-3xl font-bold block text-center"
+                    style={{ color: zhiWx ? WUXING_COLORS[zhiWx] : "var(--color-text-primary)" }}
                   >
                     {zhi || "—"}
                   </span>
                 </div>
 
                 {/* 藏干 */}
-                <div className="flex items-center gap-2 mb-3 min-h-[24px] flex-wrap justify-center">
+                <div className="flex items-center gap-2 mb-2 min-h-[20px] flex-wrap justify-center">
                   {(p.canggan || []).map((cg, j) => {
                     const touchu = isGanTouchu(cg.gan);
                     return (
                       <span
                         key={j}
-                        className="text-xs inline-flex items-center gap-0.5"
-                        style={{ color: cg.wuxing ? WUXING_COLORS[cg.wuxing] : "var(--text-muted)" }}
+                        className="text-xs"
+                        style={{ color: cg.wuxing ? WUXING_COLORS[cg.wuxing] : "var(--color-text-muted)" }}
                       >
-                        {cg.gan}
-                        {touchu && (
-                          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "#22c55e" }} />
-                        )}
+                        {cg.gan}{touchu ? "透" : ""}
                       </span>
                     );
                   })}
                 </div>
 
-                {/* 纳音 + 长生 */}
-                <div className="flex flex-col items-center gap-1">
-                  {p.nayin && (
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                      {p.nayin}
-                    </span>
-                  )}
-                  {p.changsheng && (
-                    <span
-                      className="text-[10px] px-1.5 py-0.5 rounded"
-                      style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}
-                    >
-                      {p.changsheng}
-                    </span>
-                  )}
-                </div>
-
-                {/* 柱位标签 */}
-                <span
-                  className="text-[11px] mt-4 font-medium"
-                  style={{ color: isDayPillar ? (dayMasterWx ? WUXING_COLORS[dayMasterWx] : "var(--text-primary)") : "var(--text-muted)" }}
-                >
-                  {p.position ? `${p.position}柱` : positionLabels[i]}
-                </span>
+                {/* 纳音 */}
+                {p.nayin && (
+                  <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                    {p.nayin}
+                  </span>
+                )}
               </div>
             );
           })}
@@ -337,7 +301,7 @@ export default function BaziChartCard({ result }: Props) {
           </div>
           <div className="space-y-3">
             {(expandedRelations ? relations : relations.slice(0, 3)).map((r, i) => {
-              const rColor = RELATION_COLORS[r.type || ""] || "var(--text-secondary)";
+              const rColor = RELATION_COLORS[r.type || ""] || "#a0a0b8";
               return (
                 <div key={i} className="flex items-start gap-3">
                   <span
@@ -420,6 +384,12 @@ export default function BaziChartCard({ result }: Props) {
           </h3>
           <div className="space-y-3">
             {breakConditions.map((bc, i) => {
+              const severityBg =
+                bc.severity === "high"
+                  ? "rgba(239,68,68,0.12)"
+                  : bc.severity === "medium"
+                    ? "rgba(245,158,11,0.12)"
+                    : "rgba(92,92,112,0.12)";
               const severityColor =
                 bc.severity === "high"
                   ? "var(--danger)"
@@ -430,7 +400,7 @@ export default function BaziChartCard({ result }: Props) {
                 <div key={i} className="flex items-start gap-3">
                   <span
                     className="text-xs px-2 py-0.5 rounded-md shrink-0 font-medium"
-                    style={{ background: `${severityColor}18`, color: severityColor }}
+                    style={{ background: severityBg, color: severityColor }}
                   >
                     {bc.severity === "high" ? "重" : bc.severity === "medium" ? "中" : "轻"}
                   </span>
