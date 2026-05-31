@@ -101,9 +101,9 @@ export default function BaziChartCard({ result }: Props) {
         style={{ borderColor: "var(--color-border)" }}
       >
         {/* 头部 */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <h2
-            className="text-lg font-bold"
+            className="text-base font-bold"
             style={{ color: "var(--color-scholar-blue)", fontFamily: "var(--font-serif)" }}
           >
             四柱命盘
@@ -129,7 +129,7 @@ export default function BaziChartCard({ result }: Props) {
         </div>
 
         {/* 四柱纵向 grid */}
-        <div className="grid grid-cols-4 gap-0 border" style={{ borderColor: "var(--color-border)" }}>
+        <div className="grid grid-cols-4 gap-0 rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-border)", background: "var(--surface)", boxShadow: "var(--shadow)" }}>
           {pillars.map((p, i) => {
             const isDayPillar = i === 2;
             const gan = p.gan || "";
@@ -225,15 +225,16 @@ export default function BaziChartCard({ result }: Props) {
 
       {/* 五行力量分布 */}
       <div
-        className="rounded-2xl p-7"
+        className="rounded-xl p-6"
         style={{
-          background: "var(--bg-card)",
-          border: "1px solid var(--border)",
+          background: "var(--surface)",
+          border: "1px solid var(--color-border)",
+          boxShadow: "var(--shadow)",
         }}
       >
         <h3
           className="text-sm font-medium mb-6"
-          style={{ color: "var(--text-muted)" }}
+          style={{ color: "var(--color-text-muted)" }}
         >
           五行力量分布
         </h3>
@@ -276,10 +277,11 @@ export default function BaziChartCard({ result }: Props) {
       {/* 刑冲合害 */}
       {relations && relations.length > 0 && (
         <div
-          className="rounded-2xl p-7"
+          className="rounded-xl p-6"
           style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
+            background: "var(--surface)",
+            border: "1px solid var(--color-border)",
+            boxShadow: "var(--shadow)",
           }}
         >
           <div className="flex items-center justify-between mb-5">

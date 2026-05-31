@@ -234,9 +234,9 @@ export default function AnalyzePage() {
   const isCompareMode = currentSchool === "all";
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{ background: "var(--background)" }}>
       <main className="flex-1 overflow-y-auto">
-        <div className="w-full px-6 md:px-12 lg:px-20 xl:px-32 py-10 sm:py-14">
+        <div className="w-full px-6 md:px-12 lg:px-16 xl:px-24 py-8">
           <div className="flex items-center justify-between mb-10">
             <Link
               href="/"

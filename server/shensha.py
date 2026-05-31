@@ -256,7 +256,7 @@ def calc_liunian_relations(liunian_gan: str, liunian_zhi: str,
             results.append({"type": "合", "target": f"{positions[idx]}支{nzhi}",
                             "desc": f"流年{liunian_zhi}合{positions[idx]}支{nzhi}"})
         xing_targets = LIUNIAN_XING.get(liunian_zhi, [])
-        if nzhi in xing_targets and nzhi != liunian_zhi:
+        if nzhi in xing_targets:
             results.append({"type": "刑", "target": f"{positions[idx]}支{nzhi}",
                             "desc": f"流年{liunian_zhi}刑{positions[idx]}支{nzhi}"})
         if LIUNIAN_HAI.get(liunian_zhi) == nzhi:

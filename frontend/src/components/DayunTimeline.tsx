@@ -21,6 +21,7 @@ const ZHI_XING: Record<string, string[]> = {
   子: ["卯"], 卯: ["子"],
   寅: ["巳", "申"], 巳: ["寅", "申"], 申: ["寅", "巳"],
   丑: ["未", "戌"], 未: ["丑", "戌"], 戌: ["丑", "未"],
+  辰: ["辰"], 午: ["午"], 酉: ["酉"], 亥: ["亥"],
 };
 const ZHI_HAI: Record<string, string> = {
   子: "未", 未: "子", 丑: "午", 午: "丑",
@@ -49,7 +50,7 @@ function calcLiunianRelations(lnGan: string, lnZhi: string, natalGans: string[],
     const nz = natalZhis[i];
     if (ZHI_CHONG[lnZhi] === nz) rels.push({ type: "冲", desc: `${lnZhi}冲${positions[i]}${nz}` });
     if (ZHI_HE[lnZhi] === nz) rels.push({ type: "合", desc: `${lnZhi}合${positions[i]}${nz}` });
-    if ((ZHI_XING[lnZhi] || []).includes(nz) && nz !== lnZhi) rels.push({ type: "刑", desc: `${lnZhi}刑${positions[i]}${nz}` });
+    if ((ZHI_XING[lnZhi] || []).includes(nz)) rels.push({ type: "刑", desc: `${lnZhi}刑${positions[i]}${nz}` });
     if (ZHI_HAI[lnZhi] === nz) rels.push({ type: "害", desc: `${lnZhi}害${positions[i]}${nz}` });
   }
   for (let i = 0; i < natalGans.length; i++) {
@@ -226,19 +227,22 @@ export default function DayunTimeline({ result }: Props) {
                         <span style={{ color: "var(--text-muted)" }}>{shengxiao}</span>
                         {rels.length > 0 && (
                           <span className="flex gap-1 ml-1">
-                            {rels.slice(0, 3).map((r, ri) => (
+                            {rels.slice(0, 3).map((r, ri) => {
+                              const relColor = RELATION_COLORS[r.type] || "#a0a0b8";
+                              return (
                               <span
                                 key={ri}
                                 className="text-[9px] px-1 py-px rounded font-medium"
                                 style={{
-                                  color: RELATION_COLORS[r.type] || "var(--text-muted)",
-                                  background: `${RELATION_COLORS[r.type] || "var(--text-muted)"}15`,
+                                  color: relColor,
+                                  background: `${relColor}15`,
                                 }}
                                 title={r.desc}
                               >
                                 {r.type}
                               </span>
-                            ))}
+                              );
+                            })}
                           </span>
                         )}
                         <span className="ml-auto tabular-nums" style={{ color: "var(--text-muted)" }}>{year > 0 ? `${age}岁` : ""}</span>

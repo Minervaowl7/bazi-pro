@@ -32,6 +32,8 @@ export default function ShenShaPanel({ result }: Props) {
     const items = shensha.filter((s) => s.position === pos);
     if (items.length > 0) grouped[pos] = items;
   }
+  const ungrouped = shensha.filter((s) => !POSITION_ORDER.includes(s.position));
+  if (ungrouped.length > 0) grouped["其他"] = ungrouped;
 
   return (
     <div
@@ -74,7 +76,7 @@ export default function ShenShaPanel({ result }: Props) {
           {Object.entries(grouped).map(([pos, items]) => (
             <div key={pos}>
               <div className="text-[11px] font-medium mb-2" style={{ color: "var(--text-muted)" }}>
-                {pos}柱
+                {POSITION_ORDER.includes(pos) ? `${pos}柱` : pos}
               </div>
               <div className="space-y-2">
                 {items.map((item, i) => {

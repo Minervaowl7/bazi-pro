@@ -98,7 +98,7 @@ export default function BirthForm() {
                 }`}
                 style={
                   form.gender === g
-                    ? { background: "var(--text-primary)", color: "var(--bg-primary)" }
+                    ? { background: "var(--color-scholar-blue)", color: "#ffffff" }
                     : {}
                 }
               >
@@ -169,9 +169,9 @@ export default function BirthForm() {
           disabled={isSubmitting}
           className="w-full py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
           style={{
-            background: "var(--text-primary)",
-            color: "var(--bg-primary)",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+            background: "var(--color-scholar-blue)",
+            color: "#ffffff",
+            boxShadow: "0 2px 8px rgba(44,62,107,0.3)",
           }}
         >
           {paipanLoading ? "排盘中..." : "排盘"}

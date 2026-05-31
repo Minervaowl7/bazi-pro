@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 pip install -e .                              # 最小安装（核心 + 检索）
 pip install -e ".[all]"                       # 完整安装（含 hybrid、report、pdf、tui、server）
 
-# 主测试 — 507 golden-case 边界回归测试
+# 主测试 — golden-case 边界回归测试
 python tests/run_golden.py
 
 # 全量 pytest（排除 server 依赖测试）
@@ -31,20 +31,20 @@ python -m pytest tests/test_schools.py -v
 # 环境诊断（15 项检查）
 python scripts/doctor.py
 
-# Lint
+# Python lint
 ruff check server/ bazi_pro/ tests/
-
-# Golden case 审计
-python scripts/audit_golden_cases.py
 
 # 编译检查（捕获语法错误）
 python -m compileall bazi_pro scripts tests -q
 
-# 启动后端 (端口 8711)
+# 启动后端 (端口 8711，与前端默认 API_BASE 匹配)
 python -m uvicorn server.app:app --host 127.0.0.1 --port 8711
 
-# 启动前端 (端口 3000，需先 cd frontend && pnpm install)
-cd frontend && pnpm dev
+# 前端（端口 3000）
+cd frontend && pnpm install
+cd frontend && pnpm dev          # 开发
+cd frontend && pnpm build        # 生产构建
+cd frontend && pnpm lint         # ESLint（零 warning 策略）
 ```
 
 ## Architecture
@@ -100,20 +100,29 @@ cd frontend && pnpm dev
 ## Web application (P0)
 
 **后端** (`server/`):
-- FastAPI 应用，默认端口 8711
+- FastAPI 应用，通过 uvicorn 启动（推荐端口 8711）
 - 原有路由 (`/api/analyze`, `/api/status/{id}`, `/api/result/{id}`) 使用 WebSocket 推送
 - 新路由 (`/api/v2/*`) 使用 SSE 流式 + SQLite 持久化
 - `POST /api/v2/analyze` 支持 `school` 参数（ziping/mangpai/xinpai/all）
 - `POST /api/v2/analyze/compare` 返回三流派对比分析
 - `server/db.py`: aiosqlite 存储层，`BAZI_DB_PATH` 环境变量配置路径
+- `server/nayin.py`: 60甲子纳音查表
+- `server/gongwei.py`: 宫位计算（胎元/命宫/身宫）
+- `server/shensha.py`: 神煞查表（13种常见神煞）
+- LLM 配置：`LLM_API_KEY` / `LLM_API_BASE` / `LLM_MODEL` 环境变量（见 `.env.example`）
 - CORS 默认允许 `localhost:3000`
 
 **前端** (`frontend/`):
-- Next.js 14 App Router + TypeScript + Tailwind CSS + Zustand + ECharts
-- `pnpm` 包管理，`NEXT_PUBLIC_API_URL` 配置后端地址（默认 `http://127.0.0.1:8710`）
-- 暗色主题（DeepOracle 风格），所有 UI 文本为中文
+- Next.js 16 App Router + TypeScript + Tailwind CSS v4 (PostCSS) + Zustand + ECharts
+- `pnpm` 包管理，`NEXT_PUBLIC_API_URL` 配置后端地址（默认 `http://127.0.0.1:8711`）
+- 暗色主题，所有 UI 文本为中文
 - 流派选择下拉框 + SchoolComparePanel 三列对比
-- BaziChartCard 显示 formation（方局信息）+ break_conditions（破格条件）
+- BaziChartCard: 纵向四柱卡片（含纳音/长生/藏干）
+- StrengthSlider: 日主强弱滑块（得令/得地/得势）
+- DayunTimeline: 大运 Accordion（展开显示流年）
+- ShishenEnergyChart: 十神能量分布
+- RelationGraph: ECharts 力导向关系图谱
+- GongweiPanel / ShenShaPanel: 宫位和神煞面板
 
 **叙述器** (`bazi_pro/narrator.py`):
 - 从计算结果直接生成 9 维度专业中文文本（旺衰/格局/用神/调候/五行/刑冲/性格/事业）
@@ -142,7 +151,11 @@ cd frontend && pnpm dev
 | `bazi_pro/generate_report.py` | 报告生成 CLI（3 种模式） |
 | `server/app.py` | FastAPI 应用（REST + SSE + WebSocket + 流派选择 + 对比端点） |
 | `server/db.py` | SQLite 存储层（aiosqlite） |
-| `server/analysis.py` | 异步分析编排（调用 core + schools 模块） |
+| `server/analysis.py` | 异步分析编排（调用 core + schools + nayin + gongwei + shensha） |
+| `server/nayin.py` | 60甲子纳音常量表 |
+| `server/gongwei.py` | 宫位计算（胎元/命宫/身宫） |
+| `server/shensha.py` | 神煞查表（天乙贵人/文昌/驿马/桃花/华盖等 13 种） |
+| `server/llm.py` | LLM 服务封装（OpenAI 兼容 API） |
 
 ## Critical constraints
 
@@ -152,7 +165,7 @@ cd frontend && pnpm dev
 4. **Golden case count can never decrease** — 当前 507。
 5. **推导 vs 推算** — 确定性映射（干→五行、干→十神）是推导（允许）；脆弱数学链是推算（禁止）。
 6. **Linear execution** — SKILL.md 10 步流程顺序执行，不回填。
-7. **DO NOT modify existing `server/analysis.py`** — 只扩展，不重写。
+7. **`server/analysis.py` 只追加，不重写** — 可添加新字段和 import，不改变现有函数签名和返回结构。
 8. **Narrator 零幻觉** — `narrator.py` 每句话必须可追溯到计算数据，不允许模糊表述。
 9. **SchoolAnalyzer 注册** — 新流派必须继承 `SchoolAnalyzer` 基类，调用 `register_school()` 注册，并在 `schools/__init__.py` 的 `_ensure_schools_loaded()` 中添加 lazy import。
 10. **破格检测必须有古籍依据** — 每个破格类型必须引用子平真诠/渊海子平/滴天髓/神峰通考原文。
@@ -203,6 +216,9 @@ cd frontend && pnpm dev
 - **Windows 兼容** — 子进程测试使用 `sys.executable`（非 `python3`），文件读写指定 `encoding="utf-8"`。
 - **Server 模块可选** — `server/` 依赖 fastapi/pydantic，不装也不影响核心功能，相关测试自动跳过。
 - **前端包管理** — 使用 `pnpm`（非 npm/yarn），lock 文件为 `pnpm-lock.yaml`。
+- **前端共享常量** — `frontend/src/lib/constants.ts` 导出 `WUXING_COLORS`/`WUXING_BG`/`WUXING_GLOW`/`GAN_WUXING`/`ZHI_WUXING`/`RELATION_COLORS`。组件不应本地重复定义这些映射。
+- **CSS 变量与 JS** — `WUXING_COLORS` 值是 `var(--wood)` 形式，不能在 JS 模板字符串中拼接 hex alpha（如 `${color}40`）。需要 rgba 值时用 `WUXING_GLOW`。
+- **Tailwind CSS v4** — 使用 `@tailwindcss/postcss` 插件，非 v3 的 `tailwind.config.js` 模式。
 - **SSE 事件缓冲** — `/api/v2/analysis/{id}/stream` 缓冲已发送事件，迟连接客户端可回放。
 - **Schools lazy loading** — `schools/__init__.py` 使用 `_ensure_schools_loaded()` 延迟导入，避免循环依赖。import 语句用 `import bazi_pro.core.schools.xxx` 风格（非 `from ... import`），加 `# noqa: F401`。
 - **register_school 位置** — 在各流派模块底部调用 `register_school()`，import 在顶部（ziping.py 需 `# noqa: E402`）。
