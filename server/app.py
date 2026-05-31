@@ -647,6 +647,15 @@ async def api_v2_paipan(payload: PaipanRequest):
         return error_response(400, "PAIPAN_ERROR", str(e))
 
 
+@app.get("/api/v2/cities")
+async def api_v2_cities():
+    """返回支持真太阳时校正的城市列表"""
+    from server.true_solar_time import CHINA_CITIES
+    cities = [{"name": name, "longitude": coords[0], "latitude": coords[1]}
+              for name, coords in CHINA_CITIES.items()]
+    return JSONResponse(content={"cities": cities})
+
+
 @app.post("/api/v2/analyze")
 async def api_v2_analyze(payload: BirthAnalyzeRequest):
     """P0 前端分析入口 — 存储到 SQLite + SSE 流式"""
@@ -654,8 +663,21 @@ async def api_v2_analyze(payload: BirthAnalyzeRequest):
     payload_dict = payload.model_dump(exclude_none=True)
     detail_level = payload_dict.pop("detail_level", "standard")
     school = payload_dict.pop("school", "ziping")
-    payload_dict.pop("longitude", None)
+    longitude = payload_dict.pop("longitude", None)
     payload_dict.pop("latitude", None)
+
+    if longitude and payload_dict.get("阳历"):
+        from datetime import datetime as _dt
+
+        from server.true_solar_time import correct_to_true_solar_time
+        try:
+            solar_str = payload_dict["阳历"]
+            solar_dt = _dt.fromisoformat(solar_str.replace("/", "-").replace(" ", "T"))
+            corrected = correct_to_true_solar_time(solar_dt, longitude)
+            payload_dict["阳历"] = corrected.strftime("%Y-%m-%d %H:%M")
+            payload_dict["真太阳时校正"] = True
+        except (ValueError, TypeError):
+            pass
 
     await insert_analysis(analysis_id, payload_dict, detail_level)
 
@@ -712,6 +734,100 @@ async def api_v2_analyze_compare(payload: CompareRequest):
     except Exception as e:
         logger.error("Compare analysis failed: %s", e)
         return error_response(500, "ANALYSIS_ERROR", f"分析失败: {str(e)}")
+
+
+class HehunRequest(BaseModel):
+    八字A: str = Field(description="甲方八字，空格分隔四柱")
+    日主A: str = Field(description="甲方日主天干")
+    性别A: str = Field(description="甲方性别")
+    八字B: str = Field(description="乙方八字，空格分隔四柱")
+    日主B: str = Field(description="乙方日主天干")
+    性别B: str = Field(description="乙方性别")
+
+
+@app.post("/api/v2/hehun")
+async def api_v2_hehun(payload: HehunRequest):
+    """合婚分析 — 两人八字兼容性评估"""
+    try:
+        from bazi_pro.compare_engine import CompareEngine
+        from bazi_pro.core import full_analysis
+    except ImportError:
+        return error_response(503, "MODULE_NOT_AVAILABLE", "合婚模块不可用")
+
+    try:
+        chart_a = full_analysis({"八字": payload.八字A, "日主": payload.日主A, "性别": payload.性别A})
+        chart_b = full_analysis({"八字": payload.八字B, "日主": payload.日主B, "性别": payload.性别B})
+
+        engine = CompareEngine()
+        engine.load_chart_a_dict(chart_a)
+        engine.load_chart_b_dict(chart_b)
+        result = engine.compare()
+
+        from dataclasses import asdict
+        return JSONResponse({"status": "completed", "result": asdict(result)})
+    except Exception as e:
+        logger.error("Hehun analysis failed: %s", e)
+        return error_response(500, "ANALYSIS_ERROR", f"合婚分析失败: {str(e)}")
+
+
+@app.get("/api/v2/fortune/daily/{analysis_id}")
+async def api_v2_daily_fortune(analysis_id: str):
+    """每日运势 — 基于已有分析结果的日主和用神"""
+    from datetime import date as _date
+
+    from server.daily_fortune import calc_daily_fortune
+
+    analysis = await get_analysis(analysis_id)
+    if not analysis:
+        return error_response(404, "NOT_FOUND", "分析不存在")
+
+    result = analysis.get("result", {})
+    validation = result.get("validation", {})
+    yongshen_data = result.get("yongshen", {})
+
+    day_master = validation.get("day_master", "")
+    yongshen_wx = yongshen_data.get("yongshen", "")
+    jishen_wx = yongshen_data.get("jishen", [])
+
+    if not day_master:
+        return error_response(400, "INVALID", "缺少日主数据")
+
+    fortune = calc_daily_fortune(day_master, yongshen_wx, jishen_wx, _date.today())
+    return JSONResponse(fortune)
+
+
+@app.get("/api/v2/fortune/monthly/{analysis_id}")
+async def api_v2_monthly_fortune(analysis_id: str, year: int = Query(default=0), month: int = Query(default=0)):
+    """每月运势"""
+    from datetime import date as _date
+
+    from server.daily_fortune import calc_monthly_fortune
+
+    if not year:
+        year = _date.today().year
+    if not month:
+        month = _date.today().month
+
+    analysis = await get_analysis(analysis_id)
+    if not analysis:
+        return error_response(404, "NOT_FOUND", "分析不存在")
+
+    result = analysis.get("result", {})
+    validation = result.get("validation", {})
+    yongshen_data = result.get("yongshen", {})
+
+    day_master = validation.get("day_master", "")
+    yongshen_wx = yongshen_data.get("yongshen", "")
+    jishen_wx = yongshen_data.get("jishen", [])
+
+    if not day_master:
+        return error_response(400, "INVALID", "缺少日主数据")
+
+    fortune = calc_monthly_fortune(day_master, yongshen_wx, jishen_wx, year, month)
+    return JSONResponse(fortune)
+
+
+_v2_active_ids: set[str] = set()
 
 
 async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level: str, school: str = 'ziping'):

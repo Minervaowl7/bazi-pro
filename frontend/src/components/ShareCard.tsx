@@ -1,0 +1,123 @@
+"use client";
+
+import { useRef, useState } from "react";
+import { WUXING_COLORS, GAN_WUXING } from "@/lib/constants";
+
+interface Props {
+  result: Record<string, unknown>;
+}
+
+export default function ShareCard({ result }: Props) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [generating, setGenerating] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const validation = result.validation as { day_master?: string; bazi?: string } | undefined;
+  const dayMaster = validation?.day_master || "";
+  const bazi = validation?.bazi || "";
+  const dayMasterWx = GAN_WUXING[dayMaster] || "";
+
+  const pattern = result.pattern as { pattern?: string } | undefined;
+  const strength = result.strength as { wangshuai?: { verdict?: string } } | undefined;
+  const yongshen = result.yongshen as { yongshen?: string; xishen?: string[] } | undefined;
+
+  const shishen = result.shishen as { pillars?: Array<{ gan?: string; zhi?: string }> } | undefined;
+  const pillars = shishen?.pillars || [];
+
+  const summary = `${dayMaster}日主 · ${strength?.wangshuai?.verdict || ""} · ${pattern?.pattern || ""}`;
+
+  async function handleGenerate() {
+    if (!cardRef.current) return;
+    setGenerating(true);
+    try {
+      const { default: html2pdf } = await import("html2pdf.js");
+      const el = cardRef.current;
+      const canvas: HTMLCanvasElement = await html2pdf()
+        .set({ html2canvas: { scale: 2, useCORS: true } })
+        .from(el)
+        .toCanvas();
+      const url = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = `八字命格_${dayMaster}日主.png`;
+      link.href = url;
+      link.click();
+    } catch {
+      alert("图片生成失败，请尝试截图保存");
+    }
+    setGenerating(false);
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setShowPreview(true)}
+        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+        style={{ background: "var(--color-bg-panel)", border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>
+        分享卡片
+      </button>
+
+      {showPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
+          <div className="w-full max-w-sm" style={{ background: "var(--surface)", borderRadius: 12, overflow: "hidden" }}>
+            <div ref={cardRef} className="p-8" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #2c3e6b 100%)" }}>
+              <div className="text-center mb-6">
+                <div className="text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  八字命格
+                </div>
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  {pillars.map((p, i) => (
+                    <div key={i} className="text-center">
+                      <div className="text-lg font-bold" style={{ color: WUXING_COLORS[GAN_WUXING[p.gan || ""] || ""] || "#fff" }}>
+                        {p.gan}
+                      </div>
+                      <div className="text-lg font-bold" style={{ color: "#e8e8f0" }}>
+                        {p.zhi}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-center mb-4">
+                <div className="text-xl font-bold mb-1" style={{ color: "#ffffff", fontFamily: "var(--font-serif)" }}>
+                  {dayMaster}日主 · {pattern?.pattern || "—"}
+                </div>
+                <div className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
+                  {strength?.wangshuai?.verdict || ""} · 用神{yongshen?.yongshen || "—"}
+                </div>
+              </div>
+
+              <div className="text-center pt-4 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                <div className="text-[9px] uppercase tracking-[0.15em]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  bazi-pro · 确定性命理引擎
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 flex gap-3">
+              <button
+                onClick={() => setShowPreview(false)}
+                className="flex-1 py-2.5 rounded-lg text-sm font-medium border"
+                style={{ borderColor: "var(--color-border)", color: "var(--color-text-secondary)" }}
+              >
+                关闭
+              </button>
+              <button
+                onClick={handleGenerate}
+                disabled={generating}
+                className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-50"
+                style={{ background: "var(--color-scholar-blue)" }}
+              >
+                {generating ? "生成中..." : "保存图片"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

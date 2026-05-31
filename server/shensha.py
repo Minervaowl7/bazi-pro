@@ -138,6 +138,92 @@ GUASU: dict[str, str] = {
     "亥": "戌", "子": "戌", "丑": "戌",
 }
 
+TAIJI_GUIREN: dict[str, list[str]] = {
+    "甲": ["子", "午"], "乙": ["子", "午"],
+    "丙": ["卯", "酉"], "丁": ["卯", "酉"],
+    "戊": ["辰", "戌", "丑", "未"], "己": ["辰", "戌", "丑", "未"],
+    "庚": ["寅", "亥"], "辛": ["寅", "亥"],
+    "壬": ["巳", "申"], "癸": ["巳", "申"],
+}
+
+KUIGUI: dict[str, str] = {
+    "庚": "辰", "辛": "辰", "壬": "戌", "癸": "戌",
+}
+
+TIANLUO: dict[str, str] = {
+    "辰": "巳", "巳": "辰",
+}
+
+DIWANG: dict[str, str] = {
+    "戌": "亥", "亥": "戌",
+}
+
+WANGCHEN: dict[str, str] = {
+    "寅": "辰", "卯": "辰", "辰": "辰",
+    "巳": "未", "午": "未", "未": "未",
+    "申": "戌", "酉": "戌", "戌": "戌",
+    "亥": "丑", "子": "丑", "丑": "丑",
+}
+
+TIANCHUSHA: dict[str, str] = {
+    "寅": "卯", "午": "卯", "戌": "卯",
+    "申": "酉", "子": "酉", "辰": "酉",
+    "巳": "午", "酉": "午", "丑": "午",
+    "亥": "子", "卯": "子", "未": "子",
+}
+
+TIANXI: dict[str, str] = {
+    "甲": "戌", "乙": "亥", "丙": "子", "丁": "丑", "戊": "寅",
+    "己": "卯", "庚": "辰", "辛": "巳", "壬": "午", "癸": "未",
+}
+
+HONGYAN: dict[str, str] = {
+    "甲": "午", "乙": "午", "丙": "寅", "丁": "未",
+    "戊": "辰", "己": "辰", "庚": "戌", "辛": "酉",
+    "壬": "子", "癸": "申",
+}
+
+LIUXIA: dict[str, str] = {
+    "甲": "酉", "乙": "申", "丙": "子", "丁": "亥",
+    "戊": "酉", "己": "申", "庚": "卯", "辛": "寅",
+    "壬": "午", "癸": "巳",
+}
+
+XUETANG: dict[str, str] = {
+    "甲": "亥", "乙": "午", "丙": "寅", "丁": "酉",
+    "戊": "寅", "己": "酉", "庚": "巳", "辛": "子",
+    "壬": "申", "癸": "卯",
+}
+
+CIGAN: dict[str, str] = {
+    "甲": "午", "乙": "巳", "丙": "寅", "丁": "卯",
+    "戊": "寅", "己": "卯", "庚": "亥", "辛": "子",
+    "壬": "申", "癸": "酉",
+}
+
+GUOYIN: dict[str, str] = {
+    "甲": "戌", "乙": "亥", "丙": "丑", "丁": "丑",
+    "戊": "丑", "己": "丑", "庚": "未", "辛": "未",
+    "壬": "辰", "癸": "辰",
+}
+
+SHENSHA_DESC_EXTRA: dict[str, str] = {
+    "太极贵人": "主聪慧好学，近道近佛，利玄学研究",
+    "魁罡": "主性格刚毅，聪明果断，有领导才能",
+    "天罗": "主做事多阻碍，宜谨慎行事",
+    "地网": "主做事多牵绊，宜稳中求进",
+    "亡神": "主机谋深远，善于策划，亦主暗损",
+    "天厨": "主食禄丰厚，利餐饮、厨艺",
+    "天喜": "主喜庆之事，利婚嫁、添丁",
+    "红艳": "主容貌出众，异性缘旺，亦主风流",
+    "流霞": "主血光之灾，宜注意安全",
+    "学堂": "主聪明好学，利学业、考试",
+    "词馆": "主文才出众，利文学、写作",
+    "国印": "主掌权印信，利公职、管理",
+}
+
+SHENSHA_DESC.update(SHENSHA_DESC_EXTRA)
+
 
 def calc_shensha(bazi_parts: list[str]) -> list[dict]:
     """计算命盘中的神煞"""
@@ -233,6 +319,67 @@ def calc_shensha(bazi_parts: list[str]) -> list[dict]:
         if zhi == gs_zhi:
             results.append({"name": "寡宿", "position": positions[idx],
                             "type": "凶", "desc": SHENSHA_DESC.get("寡宿", "")})
+
+    taiji_zhis = TAIJI_GUIREN.get(day_gan, [])
+    for idx, zhi in enumerate(all_zhis):
+        if zhi in taiji_zhis:
+            results.append({"name": "太极贵人", "position": positions[idx],
+                            "type": "吉", "desc": SHENSHA_DESC.get("太极贵人", "")})
+
+    kuigui_zhi = KUIGUI.get(day_gan, "")
+    if kuigui_zhi:
+        for idx, zhi in enumerate(all_zhis):
+            if zhi == kuigui_zhi:
+                results.append({"name": "魁罡", "position": positions[idx],
+                                "type": "吉", "desc": SHENSHA_DESC.get("魁罡", "")})
+
+    wangchen_zhi = WANGCHEN.get(day_zhi, "")
+    for idx, zhi in enumerate(all_zhis):
+        if zhi == wangchen_zhi and idx != 2:
+            results.append({"name": "亡神", "position": positions[idx],
+                            "type": "凶", "desc": SHENSHA_DESC.get("亡神", "")})
+
+    tianxi_zhi = TIANXI.get(day_gan, "")
+    for idx, zhi in enumerate(all_zhis):
+        if zhi == tianxi_zhi:
+            results.append({"name": "天喜", "position": positions[idx],
+                            "type": "吉", "desc": SHENSHA_DESC.get("天喜", "")})
+
+    hongyan_zhi = HONGYAN.get(day_gan, "")
+    for idx, zhi in enumerate(all_zhis):
+        if zhi == hongyan_zhi:
+            results.append({"name": "红艳", "position": positions[idx],
+                            "type": "中", "desc": SHENSHA_DESC.get("红艳", "")})
+
+    liuxia_zhi = LIUXIA.get(day_gan, "")
+    for idx, zhi in enumerate(all_zhis):
+        if zhi == liuxia_zhi:
+            results.append({"name": "流霞", "position": positions[idx],
+                            "type": "凶", "desc": SHENSHA_DESC.get("流霞", "")})
+
+    xuetang_zhi = XUETANG.get(day_gan, "")
+    for idx, zhi in enumerate(all_zhis):
+        if zhi == xuetang_zhi:
+            results.append({"name": "学堂", "position": positions[idx],
+                            "type": "吉", "desc": SHENSHA_DESC.get("学堂", "")})
+
+    cigan_zhi = CIGAN.get(day_gan, "")
+    for idx, zhi in enumerate(all_zhis):
+        if zhi == cigan_zhi:
+            results.append({"name": "词馆", "position": positions[idx],
+                            "type": "吉", "desc": SHENSHA_DESC.get("词馆", "")})
+
+    guoyin_zhi = GUOYIN.get(day_gan, "")
+    for idx, zhi in enumerate(all_zhis):
+        if zhi == guoyin_zhi:
+            results.append({"name": "国印", "position": positions[idx],
+                            "type": "吉", "desc": SHENSHA_DESC.get("国印", "")})
+
+    tianchusha_zhi = TIANCHUSHA.get(day_zhi, "")
+    for idx, zhi in enumerate(all_zhis):
+        if zhi == tianchusha_zhi:
+            results.append({"name": "天厨", "position": positions[idx],
+                            "type": "吉", "desc": SHENSHA_DESC.get("天厨", "")})
 
     return results
 

@@ -9,6 +9,21 @@ import {
   SCHOOL_OPTIONS,
 } from "@/lib/constants";
 
+const CITIES = [
+  { name: "北京", lng: 116.40 }, { name: "上海", lng: 121.47 },
+  { name: "广州", lng: 113.26 }, { name: "深圳", lng: 114.06 },
+  { name: "成都", lng: 104.07 }, { name: "重庆", lng: 106.55 },
+  { name: "武汉", lng: 114.30 }, { name: "杭州", lng: 120.15 },
+  { name: "南京", lng: 118.78 }, { name: "天津", lng: 117.20 },
+  { name: "西安", lng: 108.94 }, { name: "长沙", lng: 112.97 },
+  { name: "沈阳", lng: 123.43 }, { name: "哈尔滨", lng: 126.63 },
+  { name: "济南", lng: 117.00 }, { name: "青岛", lng: 120.38 },
+  { name: "郑州", lng: 113.65 }, { name: "昆明", lng: 102.73 },
+  { name: "兰州", lng: 103.83 }, { name: "乌鲁木齐", lng: 87.62 },
+  { name: "拉萨", lng: 91.11 }, { name: "台北", lng: 121.56 },
+  { name: "香港", lng: 114.17 }, { name: "澳门", lng: 113.55 },
+];
+
 export default function BirthForm() {
   const router = useRouter();
   const { submitPaipan, paipanResult, paipanLoading, startAnalysis, status } = useAnalysisStore();
@@ -18,6 +33,7 @@ export default function BirthForm() {
     solarDate: "",
     solarTime: "",
     school: "ziping",
+    city: "",
   });
   const [error, setError] = useState("");
   const [showPaipan, setShowPaipan] = useState(false);
@@ -61,6 +77,7 @@ export default function BirthForm() {
       : form.solarDate;
 
     try {
+      const cityLng = CITIES.find(c => c.name === form.city)?.lng;
       const analysisId = await startAnalysis({
         性别: paipanResult.性别,
         八字: paipanResult.八字,
@@ -68,6 +85,7 @@ export default function BirthForm() {
         阳历: solarDatetime,
         生肖: paipanResult.生肖,
         school: form.school,
+        ...(cityLng ? { longitude: cityLng } : {}),
       });
       router.push(`/analyze/${analysisId}`);
     } catch (err) {
@@ -156,6 +174,30 @@ export default function BirthForm() {
               }}
             />
           </div>
+        </div>
+
+        <div>
+          <label
+            className="block text-xs font-medium mb-2 uppercase tracking-wider"
+            style={{ color: "var(--text-muted)" }}
+          >
+            出生城市（真太阳时校正）
+          </label>
+          <select
+            value={form.city}
+            onChange={(e) => handleChange("city", e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--water)]/30 transition-all duration-200"
+            style={{
+              background: "var(--bg-secondary)",
+              border: "1px solid var(--border)",
+              color: form.city ? "var(--text-primary)" : "var(--text-muted)",
+            }}
+          >
+            <option value="">不校正（默认北京时间）</option>
+            {CITIES.map((c) => (
+              <option key={c.name} value={c.name}>{c.name} (东经{c.lng.toFixed(1)}°)</option>
+            ))}
+          </select>
         </div>
 
         {error && (

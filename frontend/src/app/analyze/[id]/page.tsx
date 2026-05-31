@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAnalysisStore } from "@/stores/analysisStore";
 import AnalysisProgress from "@/components/AnalysisProgress";
 import BaziChartCard from "@/components/BaziChartCard";
+import ShareCard from "@/components/ShareCard";
 import StrengthSlider from "@/components/StrengthSlider";
 import ShishenEnergyChart from "@/components/ShishenEnergyChart";
 import RelationGraph from "@/components/RelationGraph";
@@ -372,6 +373,7 @@ export default function AnalyzePage() {
                     result={analysisResult}
                     narration={narration}
                   />
+                  <ShareCard result={analysisResult} />
                 </>
               )}
             </div>
