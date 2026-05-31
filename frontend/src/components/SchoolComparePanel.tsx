@@ -5,7 +5,7 @@ interface Props {
 }
 
 const SCHOOL_META: Record<string, { label: string; icon: string; color: string }> = {
-  ziping: { label: "传统子平法", icon: "☯", color: "var(--accent)" },
+  ziping: { label: "传统子平法", icon: "☯", color: "var(--water)" },
   mangpai: { label: "盲派", icon: "👁", color: "#a855f7" },
   xinpai: { label: "新派", icon: "✧", color: "#22c55e" },
 };
@@ -21,14 +21,14 @@ function ZipingColumn({ data }: { data: Record<string, unknown> }) {
     <div className="space-y-4">
       <div className="rounded-xl p-4" style={{ background: "var(--bg-secondary)" }}>
         <div className="text-xs font-medium mb-2" style={{ color: "var(--text-muted)" }}>旺衰</div>
-        <div className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
+        <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
           {wangshuai?.verdict || "—"}
         </div>
       </div>
 
       <div className="rounded-xl p-4" style={{ background: "var(--bg-secondary)" }}>
         <div className="text-xs font-medium mb-2" style={{ color: "var(--text-muted)" }}>格局</div>
-        <div className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
+        <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
           {pattern?.pattern || "—"}
         </div>
         {pattern?.confidence !== undefined && (
@@ -316,12 +316,12 @@ export default function SchoolComparePanel({ schoolAnalyses }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 mb-2">
-        <h2 className="text-lg font-semibold" style={{ color: "var(--accent)" }}>
+        <h2 className="text-base font-medium" style={{ color: "var(--text-primary)" }}>
           全流派对比
         </h2>
         <span
           className="text-xs px-2.5 py-1 rounded-full font-medium"
-          style={{ background: "var(--accent-dim)", color: "var(--accent)" }}
+          style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}
         >
           {columns.length} 派
         </span>

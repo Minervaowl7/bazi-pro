@@ -79,15 +79,15 @@ export default function ChatPanel({ analysisId }: Props) {
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl overflow-hidden animate-fade-in flex flex-col" style={{ boxShadow: "var(--shadow-sm)" }}>
-      <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0" style={{ background: "var(--bg-secondary)" }}>
+      <div className="px-6 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
           <span
             className="w-7 h-7 rounded-lg flex items-center justify-center text-xs"
-            style={{ background: "var(--accent-dim)", color: "var(--accent)" }}
+            style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}
           >
             问
           </span>
-          <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+          <h3 className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
             命理问答
           </h3>
         </div>
@@ -133,8 +133,9 @@ export default function ChatPanel({ analysisId }: Props) {
                 <div
                   className="text-sm leading-relaxed px-4 py-2.5 rounded-2xl rounded-br-md whitespace-pre-wrap"
                   style={{
-                    background: "var(--accent)",
-                    color: "var(--bg-primary)",
+                    background: "var(--bg-elevated)",
+                    color: "var(--text-primary)",
+                    border: "1px solid var(--border)",
                   }}
                 >
                   {msg.content}
@@ -224,7 +225,7 @@ export default function ChatPanel({ analysisId }: Props) {
             disabled={loading || !input.trim()}
             className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              background: "var(--accent)",
+              background: "var(--text-primary)",
               color: "var(--bg-primary)",
             }}
           >

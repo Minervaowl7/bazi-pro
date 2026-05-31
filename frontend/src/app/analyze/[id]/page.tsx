@@ -243,7 +243,7 @@ export default function AnalyzePage() {
           <div className="flex items-center justify-between mb-10">
             <Link
               href="/"
-              className="text-sm transition-colors duration-200 hover:text-[var(--accent)]"
+              className="text-sm transition-colors duration-200 hover:text-[var(--text-primary)]"
               style={{ color: "var(--text-muted)" }}
             >
               ← 返回首页
@@ -292,7 +292,7 @@ export default function AnalyzePage() {
                         <div
                           className="text-sm font-medium"
                           style={{
-                            color: selectedSchool === s.value ? "var(--accent)" : "var(--text-primary)",
+                            color: selectedSchool === s.value ? "var(--water)" : "var(--text-primary)",
                           }}
                         >
                           {s.label}
@@ -314,7 +314,7 @@ export default function AnalyzePage() {
                         disabled={!birthInput || isLoading}
                         className="w-full px-4 py-3 text-sm font-medium transition-colors duration-150 disabled:opacity-50"
                         style={{
-                          color: "var(--accent)",
+                          color: "var(--water)",
                         }}
                       >
                         以「{SCHOOL_OPTIONS.find((s) => s.value === selectedSchool)?.label}」重新分析
@@ -337,8 +337,9 @@ export default function AnalyzePage() {
                     disabled={reportStatus === "loading"}
                     className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-sm disabled:opacity-60"
                     style={{
-                      background: "var(--accent)",
-                      color: "var(--bg-primary)",
+                      background: "var(--bg-elevated)",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border)",
                     }}
                   >
                     <svg
@@ -413,7 +414,7 @@ export default function AnalyzePage() {
                 >
                   <span
                     className="w-2 h-2 rounded-full animate-pulse shrink-0"
-                    style={{ background: "var(--accent)" }}
+                    style={{ background: "var(--water)" }}
                   />
                   <span className="text-sm" style={{ color: "var(--text-muted)" }}>
                     正在加载分析结果...
@@ -426,8 +427,8 @@ export default function AnalyzePage() {
           )}
 
           {analysisResult && (
-            <div className="lg:grid lg:grid-cols-12 lg:gap-6 space-y-6 lg:space-y-0">
-              <div className="lg:col-span-8 space-y-6 stagger-in">
+            <div className="lg:grid lg:grid-cols-12 lg:gap-8 space-y-8 lg:space-y-0">
+              <div className="lg:col-span-8 space-y-8 stagger-in">
                 <BaziChartCard result={analysisResult} />
                 <StrengthSlider
                   verdict={wangshuai?.verdict}
@@ -448,7 +449,7 @@ export default function AnalyzePage() {
                 )}
               </div>
 
-              <div className="lg:col-span-4 space-y-5 stagger-in">
+              <div className="lg:col-span-4 space-y-6 stagger-in">
                 <div className="grid grid-cols-3 gap-2">
                   <div
                     className="rounded-xl p-3 text-center"
@@ -465,7 +466,7 @@ export default function AnalyzePage() {
                     </div>
                     <div
                       className="text-base font-bold"
-                      style={{ color: "var(--accent)" }}
+                      style={{ color: "var(--text-primary)" }}
                     >
                       {wangshuai?.verdict || "—"}
                     </div>
@@ -485,7 +486,7 @@ export default function AnalyzePage() {
                     </div>
                     <div
                       className="text-base font-bold"
-                      style={{ color: "var(--accent)" }}
+                      style={{ color: "var(--text-primary)" }}
                     >
                       {pattern?.pattern || "—"}
                     </div>
@@ -505,7 +506,7 @@ export default function AnalyzePage() {
                     </div>
                     <div
                       className="text-base font-bold"
-                      style={{ color: "var(--accent)" }}
+                      style={{ color: "var(--text-primary)" }}
                     >
                       {yongshen?.yongshen || "—"}
                     </div>
@@ -520,8 +521,8 @@ export default function AnalyzePage() {
                   }}
                 >
                   <h3
-                    className="text-sm font-semibold mb-4"
-                    style={{ color: "var(--text-secondary)" }}
+                    className="text-sm font-medium mb-4"
+                    style={{ color: "var(--text-muted)" }}
                   >
                     喜忌用神
                   </h3>
@@ -537,10 +538,10 @@ export default function AnalyzePage() {
                     </div>
                     <div
                       className="rounded-xl p-3 text-center"
-                      style={{ background: "var(--accent-dim)", border: "1px solid var(--border-accent)" }}
+                      style={{ background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.15)" }}
                     >
-                      <div className="text-[10px] mb-1" style={{ color: "var(--accent)" }}>喜神</div>
-                      <div className="text-sm font-bold" style={{ color: "var(--accent)" }}>
+                      <div className="text-[10px] mb-1" style={{ color: "var(--water)" }}>喜神</div>
+                      <div className="text-sm font-bold" style={{ color: "var(--water)" }}>
                         {(yongshen?.xishen || []).join(" ") || "—"}
                       </div>
                     </div>
@@ -578,7 +579,7 @@ export default function AnalyzePage() {
                     }}
                   >
                     <h3
-                      className="text-sm font-semibold mb-3"
+                      className="text-sm font-medium mb-3"
                       style={{ color: "var(--text-secondary)" }}
                     >
                       格局判定依据

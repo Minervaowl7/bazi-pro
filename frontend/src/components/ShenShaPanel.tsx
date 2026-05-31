@@ -6,6 +6,7 @@ interface ShenShaItem {
   name: string;
   position: string;
   type: string;
+  desc?: string;
 }
 
 interface Props {
@@ -13,16 +14,24 @@ interface Props {
 }
 
 const TYPE_STYLES: Record<string, { bg: string; color: string }> = {
-  吉: { bg: "rgba(74,222,128,0.15)", color: "var(--success)" },
-  凶: { bg: "rgba(248,113,113,0.15)", color: "var(--danger)" },
-  中: { bg: "rgba(251,191,36,0.15)", color: "var(--warning)" },
+  吉: { bg: "rgba(74,222,128,0.12)", color: "var(--success)" },
+  凶: { bg: "rgba(251,113,133,0.12)", color: "var(--danger)" },
+  中: { bg: "rgba(251,191,36,0.12)", color: "var(--warning)" },
 };
+
+const POSITION_ORDER = ["年", "月", "日", "时"];
 
 export default function ShenShaPanel({ result }: Props) {
   const shensha = result.shensha as ShenShaItem[] | undefined;
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   if (!shensha || shensha.length === 0) return null;
+
+  const grouped: Record<string, ShenShaItem[]> = {};
+  for (const pos of POSITION_ORDER) {
+    const items = shensha.filter((s) => s.position === pos);
+    if (items.length > 0) grouped[pos] = items;
+  }
 
   return (
     <div
@@ -33,13 +42,12 @@ export default function ShenShaPanel({ result }: Props) {
       }}
     >
       <button
-        className="w-full px-6 py-4 flex items-center justify-between"
-        style={{ background: "var(--bg-secondary)" }}
+        className="w-full px-7 py-4 flex items-center justify-between"
         onClick={() => setExpanded(!expanded)}
       >
         <h3
-          className="text-sm font-semibold"
-          style={{ color: "var(--text-secondary)" }}
+          className="text-sm font-medium"
+          style={{ color: "var(--text-muted)" }}
         >
           神煞
         </h3>
@@ -62,22 +70,38 @@ export default function ShenShaPanel({ result }: Props) {
       </button>
 
       {expanded && (
-        <div className="px-6 py-4">
-          <div className="flex flex-wrap gap-2">
-            {shensha.map((item, i) => {
-              const style = TYPE_STYLES[item.type] || TYPE_STYLES["中"];
-              return (
-                <span
-                  key={i}
-                  className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg"
-                  style={{ background: style.bg, color: style.color }}
-                >
-                  <span className="font-medium">{item.name}</span>
-                  <span style={{ opacity: 0.7 }}>({item.position})</span>
-                </span>
-              );
-            })}
-          </div>
+        <div className="px-7 py-5 space-y-4" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+          {Object.entries(grouped).map(([pos, items]) => (
+            <div key={pos}>
+              <div className="text-[11px] font-medium mb-2" style={{ color: "var(--text-muted)" }}>
+                {pos}柱
+              </div>
+              <div className="space-y-2">
+                {items.map((item, i) => {
+                  const style = TYPE_STYLES[item.type] || TYPE_STYLES["中"];
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2.5 px-3 py-2 rounded-lg"
+                      style={{ background: "var(--bg-secondary)" }}
+                    >
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-md shrink-0 font-medium"
+                        style={{ background: style.bg, color: style.color }}
+                      >
+                        {item.name}
+                      </span>
+                      {item.desc && (
+                        <span className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                          {item.desc}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

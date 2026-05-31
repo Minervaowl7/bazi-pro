@@ -45,19 +45,19 @@ export default function ShishenEnergyChart({ result }: Props) {
 
   return (
     <div
-      className="rounded-2xl p-6"
+      className="rounded-2xl p-7"
       style={{
         background: "var(--bg-card)",
         border: "1px solid var(--border)",
       }}
     >
       <h3
-        className="text-sm font-semibold mb-5"
-        style={{ color: "var(--text-secondary)" }}
+        className="text-sm font-medium mb-6"
+        style={{ color: "var(--text-muted)" }}
       >
         十神能量分布
       </h3>
-      <div className="space-y-4">
+      <div className="space-y-5">
         {SHISHEN_GROUPS.map((group, gi) => {
           const groupTotal = group.items.reduce((sum, item) => sum + (counts[item] || 0), 0);
           const groupPct = (groupTotal / total) * 100;
@@ -65,7 +65,7 @@ export default function ShishenEnergyChart({ result }: Props) {
 
           return (
             <div key={group.label}>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium" style={{ color }}>
                   {group.label}
                 </span>
@@ -74,7 +74,7 @@ export default function ShishenEnergyChart({ result }: Props) {
                 </span>
               </div>
               <div
-                className="h-5 rounded-md overflow-hidden flex"
+                className="h-7 rounded-lg overflow-hidden flex"
                 style={{ background: "var(--bg-secondary)" }}
               >
                 {group.items.map((item, ii) => {
@@ -88,7 +88,7 @@ export default function ShishenEnergyChart({ result }: Props) {
                       style={{
                         width: `${pct}%`,
                         background: color,
-                        opacity: ii === 0 ? 0.85 : 0.6,
+                        opacity: ii === 0 ? 0.8 : 0.55,
                         color: "var(--bg-primary)",
                       }}
                       title={`${item}: ${pct.toFixed(1)}%`}
@@ -98,7 +98,7 @@ export default function ShishenEnergyChart({ result }: Props) {
                   );
                 })}
               </div>
-              <div className="flex gap-3 mt-1">
+              <div className="flex gap-3 mt-1.5">
                 {group.items.map((item) => (
                   <span key={item} className="text-[10px]" style={{ color: "var(--text-muted)" }}>
                     {item} {((counts[item] || 0) / total * 100).toFixed(0)}%

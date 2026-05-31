@@ -57,9 +57,9 @@ export default function AnalysisProgress() {
         <div className="flex items-center gap-2">
           <span
             className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
-            style={{ background: "var(--accent)" }}
+            style={{ background: "var(--water)" }}
           />
-          <h3 className="text-sm font-medium" style={{ color: "var(--accent)" }}>
+          <h3 className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
             正在分析
           </h3>
         </div>
@@ -76,7 +76,7 @@ export default function AnalysisProgress() {
           className="h-full rounded-full transition-all duration-700 ease-out"
           style={{
             width: `${pct}%`,
-            background: "linear-gradient(90deg, var(--accent), var(--accent-hover))",
+            background: "linear-gradient(90deg, var(--water), var(--wood))",
           }}
         />
       </div>
@@ -119,7 +119,7 @@ export default function AnalysisProgress() {
                 isDone
                   ? { background: "rgba(74,222,128,0.12)", color: "var(--success)" }
                   : isRunning
-                    ? { background: "var(--accent-dim)", color: "var(--accent)" }
+                    ? { background: "rgba(96,165,250,0.1)", color: "var(--water)" }
                     : { background: "var(--bg-secondary)", color: "var(--text-muted)" }
               }
             >

@@ -18,7 +18,7 @@ const SECTION_TITLES: Record<string, { label: string; icon: string }> = {
 };
 
 const SCHOOL_META: Record<string, { label: string; icon: string; color: string }> = {
-  ziping: { label: "传统子平法", icon: "☯", color: "var(--accent)" },
+  ziping: { label: "传统子平法", icon: "☯", color: "var(--water)" },
   mangpai: { label: "盲派", icon: "👁", color: "#a855f7" },
   xinpai: { label: "新派", icon: "✧", color: "#22c55e" },
 };
@@ -29,18 +29,18 @@ function SectionCard({ sectionKey, content, index }: { sectionKey: string; conte
 
   return (
     <div
-      className="rounded-r-xl p-6 animate-fade-in"
+      className="rounded-xl p-6 animate-fade-in"
       style={{
         background: "var(--bg-card)",
-        borderLeft: "2px solid var(--accent)",
-        animationDelay: `${index * 80}ms`,
+        border: "1px solid var(--border)",
+        animationDelay: `${index * 60}ms`,
       }}
     >
       <div className="flex items-center gap-2.5 mb-4">
         <span className="text-base">{meta.icon}</span>
         <h3
-          className="text-base font-semibold"
-          style={{ color: "var(--accent)" }}
+          className="text-sm font-medium"
+          style={{ color: "var(--text-primary)" }}
         >
           {meta.label}
         </h3>
@@ -62,16 +62,17 @@ function SchoolSectionCard({ title, icon, color, children, index }: {
 }) {
   return (
     <div
-      className="rounded-r-xl p-6 animate-fade-in"
+      className="rounded-xl p-6 animate-fade-in"
       style={{
         background: "var(--bg-card)",
-        borderLeft: `2px solid ${color}`,
-        animationDelay: `${index * 80}ms`,
+        border: "1px solid var(--border)",
+        borderLeft: `3px solid ${color}`,
+        animationDelay: `${index * 60}ms`,
       }}
     >
       <div className="flex items-center gap-2.5 mb-4">
         <span className="text-base">{icon}</span>
-        <h3 className="text-base font-semibold" style={{ color }}>
+        <h3 className="text-sm font-medium" style={{ color }}>
           {title}
         </h3>
       </div>
@@ -89,10 +90,10 @@ function ZipingSchoolView({ data, baseIndex }: { data: Record<string, unknown>; 
 
   return (
     <>
-      <SchoolSectionCard title="子平格局判定" icon="🏛" color="var(--accent)" index={baseIndex}>
+      <SchoolSectionCard title="子平格局判定" icon="🏛" color="var(--water)" index={baseIndex}>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold" style={{ color: "var(--accent)" }}>{pattern?.pattern || "—"}</span>
+            <span className="text-sm font-semibold" style={{ color: "var(--water)" }}>{pattern?.pattern || "—"}</span>
             {pattern?.confidence !== undefined && (
               <div className="flex items-center gap-2 flex-1">
                 <div className="flex-1 rounded-full" style={{ height: 4, background: "var(--bg-hover)" }}>
@@ -111,12 +112,12 @@ function ZipingSchoolView({ data, baseIndex }: { data: Record<string, unknown>; 
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>{pattern.reason}</p>
           )}
           {wangshuai?.verdict && (
-            <p className="text-sm">旺衰：<span className="font-semibold" style={{ color: "var(--accent)" }}>{wangshuai.verdict}</span></p>
+            <p className="text-sm">旺衰：<span className="font-semibold" style={{ color: "var(--text-primary)" }}>{wangshuai.verdict}</span></p>
           )}
         </div>
       </SchoolSectionCard>
 
-      <SchoolSectionCard title="子平用神（破格调整后）" icon="✦" color="var(--accent)" index={baseIndex + 1}>
+      <SchoolSectionCard title="子平用神（破格调整后）" icon="✦" color="var(--water)" index={baseIndex + 1}>
         <div className="space-y-2.5">
           <div className="flex items-center gap-2">
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(74,222,128,0.15)", color: "var(--success)" }}>用神</span>
@@ -155,7 +156,7 @@ function ZipingSchoolView({ data, baseIndex }: { data: Record<string, unknown>; 
       )}
 
       {dayunVerdict && dayunVerdict.length > 0 && (
-        <SchoolSectionCard title="大运吉凶（子平法）" icon="🌊" color="var(--accent)" index={baseIndex + 3}>
+        <SchoolSectionCard title="大运吉凶（子平法）" icon="🌊" color="var(--water)" index={baseIndex + 3}>
           <div className="space-y-1.5">
             {dayunVerdict.slice(0, 8).map((d, i) => (
               <div key={i} className="flex items-center gap-2 text-sm">
@@ -405,22 +406,22 @@ export default function SchoolPanel({ result, narration }: Props) {
   const schoolMeta = SCHOOL_META[school] || SCHOOL_META.ziping;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center gap-3 mb-2">
-        <h2 className="text-lg font-semibold" style={{ color: "var(--accent)" }}>
+        <h2 className="text-base font-medium" style={{ color: "var(--text-primary)" }}>
           命理解读
         </h2>
-        <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>
+        <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}>
           {sections.length} 维度
         </span>
         {hasSchoolData && (
-          <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: schoolMeta.color === "var(--accent)" ? "var(--accent-dim)" : `${schoolMeta.color}20`, color: schoolMeta.color }}>
+          <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: `${schoolMeta.color}15`, color: schoolMeta.color }}>
             {schoolMeta.icon} {schoolMeta.label}
           </span>
         )}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {sections.map((s, i) => (
           <SectionCard key={s.key} sectionKey={s.key} content={s.content} index={i} />
         ))}

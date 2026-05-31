@@ -7,19 +7,35 @@ export const WUXING_COLORS: Record<string, string> = {
 };
 
 export const WUXING_BG: Record<string, string> = {
-  木: "rgba(74,222,128,0.12)",
-  火: "rgba(248,113,113,0.12)",
+  木: "rgba(74,222,128,0.14)",
+  火: "rgba(251,113,133,0.14)",
   土: "rgba(251,191,36,0.12)",
-  金: "rgba(192,192,208,0.15)",
-  水: "rgba(96,165,250,0.12)",
+  金: "rgba(212,212,224,0.10)",
+  水: "rgba(96,165,250,0.14)",
 };
 
 export const WUXING_GLOW: Record<string, string> = {
-  木: "rgba(74,222,128,0.4)",
-  火: "rgba(248,113,113,0.4)",
-  土: "rgba(251,191,36,0.4)",
-  金: "rgba(192,192,208,0.4)",
-  水: "rgba(96,165,250,0.4)",
+  木: "rgba(74,222,128,0.25)",
+  火: "rgba(251,113,133,0.25)",
+  土: "rgba(251,191,36,0.25)",
+  金: "rgba(212,212,224,0.2)",
+  水: "rgba(96,165,250,0.25)",
+};
+
+export const WUXING_PILL_BG: Record<string, string> = {
+  木: "var(--wood-pill)",
+  火: "var(--fire-pill)",
+  土: "var(--earth-pill)",
+  金: "var(--metal-pill)",
+  水: "var(--water-pill)",
+};
+
+export const WUXING_PILL_BORDER: Record<string, string> = {
+  木: "var(--wood-pill-border)",
+  火: "var(--fire-pill-border)",
+  土: "var(--earth-pill-border)",
+  金: "var(--metal-pill-border)",
+  水: "var(--water-pill-border)",
 };
 
 export const RELATION_COLORS: Record<string, string> = {

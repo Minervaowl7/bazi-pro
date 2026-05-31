@@ -50,15 +50,15 @@ export default function RelationGraph({ result }: Props) {
         name: `${positions[i]}干·${gan}`,
         x: i * 120 + 60,
         y: 40,
-        symbolSize: 32,
+        symbolSize: 40,
         itemStyle: { color: ganWx ? WUXING_COLORS[ganWx] : "#888" },
         label: { show: true, color: "#f0f0f5", fontSize: 12 },
       });
       nodes.push({
         name: `${positions[i]}支·${zhi}`,
         x: i * 120 + 60,
-        y: 140,
-        symbolSize: 32,
+        y: 160,
+        symbolSize: 40,
         itemStyle: { color: zhiWx ? WUXING_COLORS[zhiWx] : "#888" },
         label: { show: true, color: "#f0f0f5", fontSize: 12 },
       });
@@ -132,24 +132,24 @@ export default function RelationGraph({ result }: Props) {
       }}
     >
       <div
-        className="px-6 py-4"
-        style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+        className="px-7 py-4"
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
       >
         <h3
-          className="text-sm font-semibold"
-          style={{ color: "var(--text-secondary)" }}
+          className="text-sm font-medium"
+          style={{ color: "var(--text-muted)" }}
         >
           关系图谱
         </h3>
       </div>
-      <div className="px-4 py-3">
+      <div className="px-4 py-4">
         <ReactECharts
           option={option}
-          style={{ height: 200, width: "100%" }}
+          style={{ height: 260, width: "100%" }}
           opts={{ renderer: "svg" }}
         />
       </div>
-      <div className="px-6 pb-4 flex items-center gap-4 flex-wrap">
+      <div className="px-7 pb-5 flex items-center gap-4 flex-wrap">
         {Object.entries(RELATION_COLORS).map(([type, color]) => (
           <div key={type} className="flex items-center gap-1.5">
             <span

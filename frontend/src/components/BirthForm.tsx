@@ -98,7 +98,7 @@ export default function BirthForm() {
                 }`}
                 style={
                   form.gender === g
-                    ? { background: "var(--accent)", color: "var(--bg-primary)" }
+                    ? { background: "var(--text-primary)", color: "var(--bg-primary)" }
                     : {}
                 }
               >
@@ -125,7 +125,7 @@ export default function BirthForm() {
                 handleChange("solarDate", e.target.value);
                 setShowPaipan(false);
               }}
-              className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-all duration-200"
+              className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--water)]/30 transition-all duration-200"
               style={{
                 background: "var(--bg-secondary)",
                 border: "1px solid var(--border)",
@@ -148,7 +148,7 @@ export default function BirthForm() {
                 handleChange("solarTime", e.target.value);
                 setShowPaipan(false);
               }}
-              className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-all duration-200"
+              className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--water)]/30 transition-all duration-200"
               style={{
                 background: "var(--bg-secondary)",
                 border: "1px solid var(--border)",
@@ -169,9 +169,9 @@ export default function BirthForm() {
           disabled={isSubmitting}
           className="w-full py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
           style={{
-            background: "var(--accent)",
+            background: "var(--text-primary)",
             color: "var(--bg-primary)",
-            boxShadow: "0 4px 16px rgba(201,169,110,0.25)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
           }}
         >
           {paipanLoading ? "排盘中..." : "排盘"}
@@ -186,7 +186,7 @@ export default function BirthForm() {
           <div className="flex items-center justify-between mb-5">
             <h3
               className="text-sm font-semibold tracking-wide"
-              style={{ color: "var(--accent)" }}
+              style={{ color: "var(--text-primary)" }}
             >
               八字命盘
             </h3>
@@ -275,9 +275,9 @@ export default function BirthForm() {
                   style={
                     form.school === s.value
                       ? {
-                          borderColor: "var(--accent)",
+                          borderColor: "var(--water)",
                           borderWidth: "2px",
-                          background: "var(--accent-dim)",
+                          background: "rgba(96,165,250,0.06)",
                         }
                       : { background: "var(--bg-secondary)" }
                   }
@@ -287,7 +287,7 @@ export default function BirthForm() {
                     style={{
                       color:
                         form.school === s.value
-                          ? "var(--accent)"
+                          ? "var(--water)"
                           : "var(--text-primary)",
                     }}
                   >
@@ -310,9 +310,9 @@ export default function BirthForm() {
             disabled={status === "submitting" || status === "streaming"}
             className="w-full py-3.5 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] flex items-center justify-center gap-2"
             style={{
-              background: "linear-gradient(135deg, var(--accent), var(--accent-hover))",
+              background: "var(--text-primary)",
               color: "var(--bg-primary)",
-              boxShadow: "0 6px 20px rgba(201,169,110,0.3)",
+              boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
             }}
           >
             {status === "submitting" ? "提交中..." : "深度解读"}{" "}

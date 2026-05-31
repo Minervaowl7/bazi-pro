@@ -181,8 +181,8 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
         disabled={exporting}
         className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-sm disabled:opacity-50"
         style={{
-          border: "1px solid var(--accent)",
-          color: "var(--accent)",
+          border: "1px solid var(--border)",
+          color: "var(--text-secondary)",
           background: "transparent",
         }}
         onMouseEnter={(e) => {

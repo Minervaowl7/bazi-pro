@@ -13,15 +13,15 @@ export default function GongweiPanel({ result }: Props) {
 
   return (
     <div
-      className="rounded-2xl p-6"
+      className="rounded-2xl p-7"
       style={{
         background: "var(--bg-card)",
         border: "1px solid var(--border)",
       }}
     >
       <h3
-        className="text-sm font-semibold mb-4"
-        style={{ color: "var(--text-secondary)" }}
+        className="text-sm font-medium mb-4"
+        style={{ color: "var(--text-muted)" }}
       >
         宫位信息
       </h3>
@@ -29,13 +29,13 @@ export default function GongweiPanel({ result }: Props) {
         {items.map(([label, value]) => (
           <div
             key={label}
-            className="rounded-xl p-3 text-center"
-            style={{ background: "var(--bg-secondary)" }}
+            className="rounded-xl p-4 text-center transition-colors"
+            style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}
           >
-            <div className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>
+            <div className="text-[10px] mb-2" style={{ color: "var(--text-muted)" }}>
               {label}
             </div>
-            <div className="text-lg font-bold" style={{ color: "var(--accent)" }}>
+            <div className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
               {value}
             </div>
           </div>

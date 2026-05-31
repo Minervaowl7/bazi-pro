@@ -151,7 +151,7 @@ export default function HistorySidebar() {
                         item.status === "completed"
                           ? "var(--success)"
                           : item.status === "processing"
-                            ? "var(--accent)"
+                            ? "var(--water)"
                             : "var(--text-muted)",
                     }}
                   />

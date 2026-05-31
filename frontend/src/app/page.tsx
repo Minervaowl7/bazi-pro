@@ -17,7 +17,7 @@ export default function Home() {
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 60% 50% at 30% 20%, rgba(201,169,110,0.04) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 75% 75%, rgba(201,169,110,0.03) 0%, transparent 60%)",
+              "radial-gradient(ellipse 60% 50% at 30% 20%, rgba(96,165,250,0.03) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 75% 75%, rgba(74,222,128,0.02) 0%, transparent 60%)",
           }}
         />
 
@@ -25,8 +25,8 @@ export default function Home() {
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none"
           style={{
             fontSize: "clamp(180px, 25vw, 320px)",
-            color: "var(--accent)",
-            opacity: 0.02,
+            color: "var(--text-muted)",
+            opacity: 0.015,
             fontWeight: 700,
             lineHeight: 1,
             letterSpacing: "-0.05em",
@@ -40,15 +40,15 @@ export default function Home() {
             <div
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium mb-6"
               style={{
-                background: "var(--accent-dim)",
-                color: "var(--accent)",
+                background: "var(--bg-hover)",
+                color: "var(--text-secondary)",
                 letterSpacing: "0.08em",
-                border: "1px solid rgba(201,169,110,0.15)",
+                border: "1px solid var(--border)",
               }}
             >
               <span
                 className="w-1.5 h-1.5 rounded-full"
-                style={{ background: "var(--accent)" }}
+                style={{ background: "var(--water)" }}
               />
               确定性计算引擎
             </div>
@@ -67,7 +67,7 @@ export default function Home() {
           </div>
 
           <div
-            className="rounded-2xl p-6 md:p-8 backdrop-blur-sm"
+            className="rounded-2xl p-6 md:p-8"
             style={{
               background: "var(--bg-card)",
               border: "1px solid var(--border)",

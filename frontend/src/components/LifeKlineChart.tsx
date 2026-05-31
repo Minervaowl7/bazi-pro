@@ -125,7 +125,7 @@ export default function LifeKlineChart({
           const reason = reasons[idx];
 
           let html = `<div style="font-weight:600;margin-bottom:6px">${age}岁 · ${year}年 · ${gz}</div>`;
-          html += `<div>运势评分: <span style="color:#c9a96e;font-weight:600">${score}</span></div>`;
+          html += `<div>运势评分: <span style="color:#60a5fa;font-weight:600">${score}</span></div>`;
           if (dayun) html += `<div>大运: ${dayun}</div>`;
           if (reason) html += `<div style="color:#a8a4a0;font-size:12px;margin-top:4px">${reason}</div>`;
           return html;
@@ -133,7 +133,7 @@ export default function LifeKlineChart({
       },
       axisPointer: {
         link: [{ xAxisIndex: "all" }],
-        label: { backgroundColor: "#c9a96e" },
+        label: { backgroundColor: "#60a5fa" },
       },
       grid: [
         {
@@ -214,16 +214,16 @@ export default function LifeKlineChart({
           height: 24,
           borderColor: "#24243a",
           backgroundColor: "rgba(18,18,30,0.6)",
-          fillerColor: "rgba(201,169,110,0.12)",
-          handleStyle: { color: "#c9a96e", borderColor: "#c9a96e" },
+          fillerColor: "rgba(96,165,250,0.08)",
+          handleStyle: { color: "#60a5fa", borderColor: "#60a5fa" },
           textStyle: { color: "#5a5a6e" },
           dataBackground: {
             lineStyle: { color: "#24243a" },
-            areaStyle: { color: "rgba(201,169,110,0.06)" },
+            areaStyle: { color: "rgba(96,165,250,0.04)" },
           },
           selectedDataBackground: {
-            lineStyle: { color: "#c9a96e" },
-            areaStyle: { color: "rgba(201,169,110,0.15)" },
+            lineStyle: { color: "#60a5fa" },
+            areaStyle: { color: "rgba(96,165,250,0.12)" },
           },
         },
       ],
@@ -309,7 +309,7 @@ export default function LifeKlineChart({
           border: "1px solid var(--border)",
         }}
       >
-        <h3 className="text-base font-semibold mb-4" style={{ color: "var(--accent)" }}>
+        <h3 className="text-base font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
           人生K线
         </h3>
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
@@ -328,7 +328,7 @@ export default function LifeKlineChart({
       }}
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold" style={{ color: "var(--accent)" }}>
+        <h3 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
           人生K线
         </h3>
         <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-muted)" }}>

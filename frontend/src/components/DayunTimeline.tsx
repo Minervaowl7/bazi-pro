@@ -1,11 +1,64 @@
 "use client";
 
 import { useState } from "react";
-import { WUXING_COLORS, WUXING_BG, GAN_WUXING } from "@/lib/constants";
+import { WUXING_COLORS, WUXING_BG, GAN_WUXING, RELATION_COLORS } from "@/lib/constants";
 
 const TIANGAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
 const DIZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 const SHENGXIAO = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"];
+
+const ZHI_CHONG: Record<string, string> = {
+  子: "午", 午: "子", 丑: "未", 未: "丑",
+  寅: "申", 申: "寅", 卯: "酉", 酉: "卯",
+  辰: "戌", 戌: "辰", 巳: "亥", 亥: "巳",
+};
+const ZHI_HE: Record<string, string> = {
+  子: "丑", 丑: "子", 寅: "亥", 亥: "寅",
+  卯: "戌", 戌: "卯", 辰: "酉", 酉: "辰",
+  巳: "申", 申: "巳", 午: "未", 未: "午",
+};
+const ZHI_XING: Record<string, string[]> = {
+  子: ["卯"], 卯: ["子"],
+  寅: ["巳", "申"], 巳: ["寅", "申"], 申: ["寅", "巳"],
+  丑: ["未", "戌"], 未: ["丑", "戌"], 戌: ["丑", "未"],
+};
+const ZHI_HAI: Record<string, string> = {
+  子: "未", 未: "子", 丑: "午", 午: "丑",
+  寅: "巳", 巳: "寅", 卯: "辰", 辰: "卯",
+  申: "亥", 亥: "申", 酉: "戌", 戌: "酉",
+};
+const GAN_HE: Record<string, string> = {
+  甲: "己", 己: "甲", 乙: "庚", 庚: "乙",
+  丙: "辛", 辛: "丙", 丁: "壬", 壬: "丁",
+  戊: "癸", 癸: "戊",
+};
+const GAN_CHONG: Record<string, string> = {
+  甲: "庚", 庚: "甲", 乙: "辛", 辛: "乙",
+  丙: "壬", 壬: "丙", 丁: "癸", 癸: "丁",
+};
+
+interface LiunianRelation {
+  type: string;
+  desc: string;
+}
+
+function calcLiunianRelations(lnGan: string, lnZhi: string, natalGans: string[], natalZhis: string[]): LiunianRelation[] {
+  const positions = ["年", "月", "日", "时"];
+  const rels: LiunianRelation[] = [];
+  for (let i = 0; i < natalZhis.length; i++) {
+    const nz = natalZhis[i];
+    if (ZHI_CHONG[lnZhi] === nz) rels.push({ type: "冲", desc: `${lnZhi}冲${positions[i]}${nz}` });
+    if (ZHI_HE[lnZhi] === nz) rels.push({ type: "合", desc: `${lnZhi}合${positions[i]}${nz}` });
+    if ((ZHI_XING[lnZhi] || []).includes(nz) && nz !== lnZhi) rels.push({ type: "刑", desc: `${lnZhi}刑${positions[i]}${nz}` });
+    if (ZHI_HAI[lnZhi] === nz) rels.push({ type: "害", desc: `${lnZhi}害${positions[i]}${nz}` });
+  }
+  for (let i = 0; i < natalGans.length; i++) {
+    const ng = natalGans[i];
+    if (GAN_HE[lnGan] === ng) rels.push({ type: "合", desc: `${lnGan}合${positions[i]}${ng}` });
+    if (GAN_CHONG[lnGan] === ng) rels.push({ type: "冲", desc: `${lnGan}冲${positions[i]}${ng}` });
+  }
+  return rels;
+}
 
 function getYearGanzhi(year: number) {
   const ganIdx = (year - 4) % 10;
@@ -40,6 +93,10 @@ export default function DayunTimeline({ result }: Props) {
   const currentYear = new Date().getFullYear();
   const currentAge = birthYear ? currentYear - birthYear : 0;
 
+  const shishen = result.shishen as { pillars?: Array<{ gan?: string; zhi?: string }> } | undefined;
+  const natalGans = (shishen?.pillars || []).map((p) => p.gan || "").filter(Boolean);
+  const natalZhis = (shishen?.pillars || []).map((p) => p.zhi || "").filter(Boolean);
+
   return (
     <div
       className="rounded-2xl overflow-hidden animate-fade-in"
@@ -49,12 +106,12 @@ export default function DayunTimeline({ result }: Props) {
       }}
     >
       <div
-        className="px-6 py-4 flex items-center justify-between"
-        style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+        className="px-7 py-4 flex items-center justify-between"
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
       >
         <h3
-          className="text-base font-semibold tracking-wide"
-          style={{ color: "var(--accent)" }}
+          className="text-sm font-medium"
+          style={{ color: "var(--text-muted)" }}
         >
           大运流年
         </h3>
@@ -83,16 +140,16 @@ export default function DayunTimeline({ result }: Props) {
           return (
             <div key={i}>
               <button
-                className="w-full px-6 py-3.5 flex items-center gap-3 transition-colors duration-150"
+                className="w-full px-7 py-4 flex items-center gap-3 transition-colors duration-150"
                 style={{
-                  background: isCurrent ? "var(--accent-glow)" : "transparent",
+                  background: isCurrent ? "rgba(96,165,250,0.04)" : "transparent",
                 }}
                 onClick={() => setExpandedIdx(isExpanded ? null : i)}
               >
                 {isCurrent && (
                   <span
                     className="text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0"
-                    style={{ background: "var(--accent)", color: "var(--bg-primary)" }}
+                    style={{ background: ganWuxing ? WUXING_COLORS[ganWuxing] : "var(--water)", color: "var(--bg-primary)" }}
                   >
                     当前
                   </span>
@@ -152,18 +209,38 @@ export default function DayunTimeline({ result }: Props) {
                     const lnGanWx = GAN_WUXING[lnGan] || "";
                     const lnGanColor = lnGanWx ? WUXING_COLORS[lnGanWx] : "var(--text-primary)";
                     const isThisYear = year > 0 && year === currentYear;
+                    const rels = (lnGan && lnZhi && natalGans.length >= 4)
+                      ? calcLiunianRelations(lnGan, lnZhi, natalGans, natalZhis)
+                      : [];
                     return (
                       <div
                         key={j}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
                         style={{
-                          background: isThisYear ? "var(--accent-dim)" : "transparent",
-                          border: isThisYear ? "1px solid var(--border-accent)" : "1px solid transparent",
+                          background: isThisYear ? "rgba(96,165,250,0.06)" : "transparent",
+                          border: isThisYear ? "1px solid rgba(96,165,250,0.15)" : "1px solid transparent",
                         }}
                       >
                         <span className="tabular-nums w-10" style={{ color: "var(--text-muted)" }}>{year > 0 ? year : `${age}岁`}</span>
                         <span className="font-medium" style={{ color: lnGanColor }}>{lnGan}{lnZhi}</span>
                         <span style={{ color: "var(--text-muted)" }}>{shengxiao}</span>
+                        {rels.length > 0 && (
+                          <span className="flex gap-1 ml-1">
+                            {rels.slice(0, 3).map((r, ri) => (
+                              <span
+                                key={ri}
+                                className="text-[9px] px-1 py-px rounded font-medium"
+                                style={{
+                                  color: RELATION_COLORS[r.type] || "var(--text-muted)",
+                                  background: `${RELATION_COLORS[r.type] || "var(--text-muted)"}15`,
+                                }}
+                                title={r.desc}
+                              >
+                                {r.type}
+                              </span>
+                            ))}
+                          </span>
+                        )}
                         <span className="ml-auto tabular-nums" style={{ color: "var(--text-muted)" }}>{year > 0 ? `${age}岁` : ""}</span>
                       </div>
                     );
