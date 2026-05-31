@@ -112,7 +112,7 @@ export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi
       )}
 
       {/* 三维得分 */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div
           className="rounded-xl p-4 text-center"
           style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}

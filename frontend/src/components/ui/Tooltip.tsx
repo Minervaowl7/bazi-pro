@@ -1,0 +1,47 @@
+"use client";
+
+import { cn } from "@/lib/utils";
+import { useState, useRef, useEffect, type ReactNode } from "react";
+
+function Tooltip({ children, content, className }: {
+  children: ReactNode;
+  content: ReactNode;
+  className?: string;
+}) {
+  const [show, setShow] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!show) return;
+    const handler = () => setShow(false);
+    document.addEventListener("scroll", handler, true);
+    return () => document.removeEventListener("scroll", handler, true);
+  }, [show]);
+
+  return (
+    <div
+      ref={ref}
+      className="relative inline-flex"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show && (
+        <div className={cn(
+          "absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2",
+          "px-2.5 py-1.5 rounded-md text-[11px] leading-tight",
+          "bg-[var(--color-text-primary)] text-[var(--background)]",
+          "shadow-lg whitespace-nowrap animate-fade-in",
+          className
+        )}>
+          {content}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
+            <div className="w-2 h-2 rotate-45 bg-[var(--color-text-primary)]" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export { Tooltip };

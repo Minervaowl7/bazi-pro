@@ -80,7 +80,7 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 └─────────────────────────────────────────┘
        │
        ├──→ FastAPI Server (server/)      ← REST + SSE + SQLite + 流派选择
-       ├──→ Next.js Frontend (frontend/)  ← 暗色主题 Web 应用 + 流派对比
+       ├──→ Next.js Frontend (frontend/)  ← 亮色/暗色双主题 Web 应用 + 流派对比
        ├──→ UI renderers (bazi_pro/ui/)   ← 接受 DashboardVM
        └──→ Plugin hooks (plugins/)
 ```
@@ -108,14 +108,21 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 - `server/db.py`: aiosqlite 存储层，`BAZI_DB_PATH` 环境变量配置路径
 - `server/nayin.py`: 60甲子纳音查表
 - `server/gongwei.py`: 宫位计算（胎元/命宫/身宫）
-- `server/shensha.py`: 神煞查表（13种常见神煞）
+- `server/shensha.py`: 神煞查表（25+ 种）
+- `server/true_solar_time.py`: 真太阳时修正（Jean Meeus 时差方程 + 38 城市经纬度）
+- `server/daily_fortune.py`: 每日/每月运势（6 维度评分）
+- `server/kline_ohlc.py`: 百年人生 K 线 OHLC 模型（4 维度）
+- `server/dayun_score.py`: 大运流年评分
+- 新增端点：`POST /api/v2/hehun`（合婚）、`GET /api/v2/fortune/daily/{id}`、`GET /api/v2/fortune/monthly/{id}`、`POST /api/v2/reverse-lookup`、`GET /api/v2/cities`
 - LLM 配置：`LLM_API_KEY` / `LLM_API_BASE` / `LLM_MODEL` 环境变量（见 `.env.example`）
 - CORS 默认允许 `localhost:3000`
 
 **前端** (`frontend/`):
 - Next.js 16 App Router + TypeScript + Tailwind CSS v4 (PostCSS) + Zustand + ECharts
 - `pnpm` 包管理，`NEXT_PUBLIC_API_URL` 配置后端地址（默认 `http://127.0.0.1:8711`）
-- 暗色主题，所有 UI 文本为中文
+- 亮色/暗色双主题（默认亮色），所有 UI 文本为中文
+- 全局 Navbar（排盘/合婚导航 + 主题切换）
+- 路由：`/`（首页表单）、`/analyze/[id]`（分析结果）、`/compare`（合婚）
 - 流派选择下拉框 + SchoolComparePanel 三列对比
 - BaziChartCard: 纵向四柱卡片（含纳音/长生/藏干）
 - StrengthSlider: 日主强弱滑块（得令/得地/得势）
@@ -123,6 +130,9 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 - ShishenEnergyChart: 十神能量分布
 - RelationGraph: ECharts 力导向关系图谱
 - GongweiPanel / ShenShaPanel: 宫位和神煞面板
+- DailyFortuneCard: 今日运势（6 维度）
+- LifeKlineChart: 百年人生 K 线图
+- ShareCard: 分享图片生成（html2pdf.js）
 
 **叙述器** (`bazi_pro/narrator.py`):
 - 从计算结果直接生成 9 维度专业中文文本（旺衰/格局/用神/调候/五行/刑冲/性格/事业）
@@ -154,8 +164,16 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 | `server/analysis.py` | 异步分析编排（调用 core + schools + nayin + gongwei + shensha） |
 | `server/nayin.py` | 60甲子纳音常量表 |
 | `server/gongwei.py` | 宫位计算（胎元/命宫/身宫） |
-| `server/shensha.py` | 神煞查表（天乙贵人/文昌/驿马/桃花/华盖等 13 种） |
+| `server/shensha.py` | 神煞查表（天乙贵人/文昌/驿马/桃花/华盖等 25+ 种） |
 | `server/llm.py` | LLM 服务封装（OpenAI 兼容 API） |
+| `server/true_solar_time.py` | 真太阳时修正（Jean Meeus 时差方程 + 38 城市经纬度） |
+| `server/daily_fortune.py` | 每日/每月运势（6 维度评分） |
+| `server/kline_ohlc.py` | 百年人生 K 线 OHLC 模型（4 维度） |
+| `server/personality.py` | 性格分析（10 题 + 分叉路径） |
+| `server/reverse_lookup.py` | 日柱反查 |
+| `server/cross_validate.py` | 三流派交叉验证 |
+| `server/interpretation_modes.py` | 解读模式（通俗/专业/技术） |
+| `server/dayun_score.py` | 大运流年评分 |
 
 ## Critical constraints
 
@@ -216,10 +234,12 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 - **Windows 兼容** — 子进程测试使用 `sys.executable`（非 `python3`），文件读写指定 `encoding="utf-8"`。
 - **Server 模块可选** — `server/` 依赖 fastapi/pydantic，不装也不影响核心功能，相关测试自动跳过。
 - **前端包管理** — 使用 `pnpm`（非 npm/yarn），lock 文件为 `pnpm-lock.yaml`。
-- **前端共享常量** — `frontend/src/lib/constants.ts` 导出 `WUXING_COLORS`/`WUXING_BG`/`WUXING_GLOW`/`GAN_WUXING`/`ZHI_WUXING`/`RELATION_COLORS`。组件不应本地重复定义这些映射。
+- **前端共享常量** — `frontend/src/lib/constants.ts` 导出 `WUXING_COLORS`/`WUXING_BG`/`WUXING_GLOW`/`WUXING_PILL_BG`/`WUXING_PILL_BORDER`/`GAN_WUXING`/`ZHI_WUXING`/`RELATION_COLORS`/`SCHOOL_OPTIONS`/`SCHOOL_OPTIONS_WITH_ALL`。组件不应本地重复定义这些映射。
 - **CSS 变量与 JS** — `WUXING_COLORS` 值是 `var(--wood)` 形式，不能在 JS 模板字符串中拼接 hex alpha（如 `${color}40`）。需要 rgba 值时用 `WUXING_GLOW`。
 - **Tailwind CSS v4** — 使用 `@tailwindcss/postcss` 插件，非 v3 的 `tailwind.config.js` 模式。
 - **SSE 事件缓冲** — `/api/v2/analysis/{id}/stream` 缓冲已发送事件，迟连接客户端可回放。
+- **React 19 + echarts-for-react 类型不兼容** — echarts-for-react 的类型定义与 React 19 严格类型冲突，使用 ECharts 的文件（RelationGraph、LifeKlineChart、ShishenEnergyChart）需要 `// @ts-nocheck`。
+- **全局 Navbar 布局** — `layout.tsx` 包含固定顶部 Navbar（h-14），内容区已有 `pt-14` 偏移，新页面无需额外处理。
 - **Schools lazy loading** — `schools/__init__.py` 使用 `_ensure_schools_loaded()` 延迟导入，避免循环依赖。import 语句用 `import bazi_pro.core.schools.xxx` 风格（非 `from ... import`），加 `# noqa: F401`。
 - **register_school 位置** — 在各流派模块底部调用 `register_school()`，import 在顶部（ziping.py 需 `# noqa: E402`）。
 - **破格检测函数签名** — `_screen_layer1/2/3` 和 `_build_jianlu_yuejie` 需要传入 `bazi_parts` 参数。

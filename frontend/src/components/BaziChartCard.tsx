@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { Badge } from "@/components/ui";
 
 import {
   WUXING_COLORS,
   WUXING_PILL_BG,
   WUXING_PILL_BORDER,
   WUXING_BG,
-  RELATION_COLORS,
   GAN_WUXING,
   ZHI_WUXING,
 } from "@/lib/constants";
@@ -129,7 +129,7 @@ export default function BaziChartCard({ result }: Props) {
         </div>
 
         {/* 四柱纵向 grid */}
-        <div className="grid grid-cols-4 gap-0 rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-border)", background: "var(--surface)", boxShadow: "var(--shadow)" }}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-0 rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-border)", background: "var(--surface)", boxShadow: "var(--shadow)" }}>
           {pillars.map((p, i) => {
             const isDayPillar = i === 2;
             const gan = p.gan || "";
@@ -301,19 +301,13 @@ export default function BaziChartCard({ result }: Props) {
           </div>
           <div className="space-y-3">
             {(expandedRelations ? relations : relations.slice(0, 3)).map((r, i) => {
-              const rColor = RELATION_COLORS[r.type || ""] || "#a0a0b8";
+              const rType = r.type || "关系";
+              const wuxingVariant = rType === "合" ? "water" : rType === "冲" ? "fire" : rType === "刑" ? "earth" : rType === "害" ? "metal" : "muted";
               return (
                 <div key={i} className="flex items-start gap-3">
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-md shrink-0 font-medium"
-                    style={{
-                      background: `${rColor}18`,
-                      color: rColor,
-                      border: `1px solid ${rColor}30`,
-                    }}
-                  >
-                    {r.type || "关系"}
-                  </span>
+                  <Badge variant={wuxingVariant as "water" | "fire" | "earth" | "metal" | "muted"}>
+                    {rType}
+                  </Badge>
                   <span
                     className="text-sm leading-relaxed"
                     style={{ color: "var(--text-secondary)" }}

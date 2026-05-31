@@ -38,7 +38,7 @@ function SkeletonCard() {
         className="h-5 rounded-md w-1/4 mb-6"
         style={{ background: "var(--bg-hover)" }}
       />
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
@@ -240,8 +240,7 @@ export default function AnalyzePage() {
     <div className="min-h-screen" style={{ background: "var(--background)" }}>
       <main className="flex-1 overflow-y-auto">
         <div className="w-full px-6 md:px-12 lg:px-16 xl:px-24 py-8">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 mb-8">
               <div className="relative">
                 <button
                   onClick={(e) => { e.stopPropagation(); setSchoolDropdownOpen(!schoolDropdownOpen); }}
@@ -360,7 +359,6 @@ export default function AnalyzePage() {
                   <ShareCard result={analysisResult} />
                 </>
               )}
-            </div>
           </div>
 
           {isLoading && <AnalysisProgress />}
@@ -412,7 +410,7 @@ export default function AnalyzePage() {
           {analysisResult ? (
             <div className="space-y-8 stagger-in">
               {/* 顶部摘要栏 */}
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 <div
                   className="rounded-xl p-4 text-center"
                   style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}

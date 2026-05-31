@@ -198,7 +198,7 @@ export default function DayunTimeline({ result }: Props) {
 
               {isExpanded && (
                 <div
-                  className="px-6 pb-4 grid grid-cols-2 gap-1.5"
+                  className="px-4 md:px-6 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-1.5"
                   style={{ background: "var(--bg-secondary)" }}
                 >
                   {Array.from({ length: 10 }, (_, j) => {
@@ -228,6 +228,12 @@ export default function DayunTimeline({ result }: Props) {
                         {rels.length > 0 && (
                           <span className="flex gap-1 ml-1">
                             {rels.slice(0, 3).map((r, ri) => {
+                              const relBgMap: Record<string, string> = {
+                                "冲": "rgba(212,64,48,0.1)",
+                                "合": "rgba(63,111,159,0.1)",
+                                "刑": "rgba(139,94,60,0.1)",
+                                "害": "rgba(193,154,66,0.1)",
+                              };
                               const relColor = RELATION_COLORS[r.type] || "#a0a0b8";
                               return (
                               <span
@@ -235,7 +241,7 @@ export default function DayunTimeline({ result }: Props) {
                                 className="text-[9px] px-1 py-px rounded font-medium"
                                 style={{
                                   color: relColor,
-                                  background: `${relColor}15`,
+                                  background: relBgMap[r.type] || "rgba(160,160,184,0.1)",
                                 }}
                                 title={r.desc}
                               >
