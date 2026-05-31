@@ -236,7 +236,7 @@ export default function AnalyzePage() {
   return (
     <div className="min-h-screen">
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+        <div className="w-full px-6 md:px-12 lg:px-20 xl:px-32 py-10 sm:py-14">
           <div className="flex items-center justify-between mb-10">
             <Link
               href="/"

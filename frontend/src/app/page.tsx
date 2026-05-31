@@ -11,7 +11,7 @@ export default function Home() {
       </div>
 
       <main className="flex items-center justify-center min-h-screen p-6 md:p-8">
-        <div className="w-full max-w-md relative z-[1]">
+        <div className="w-full max-w-lg relative z-[1]">
           <div className="mb-10 text-center">
             <h1
               className="text-3xl md:text-4xl font-bold tracking-wide mb-3"
