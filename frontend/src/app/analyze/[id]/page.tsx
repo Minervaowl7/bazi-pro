@@ -113,60 +113,6 @@ function SkeletonNarration() {
   );
 }
 
-function MiniPillarChart({ result }: { result: Record<string, unknown> }) {
-  const shishen = result.shishen as { pillars?: Array<{ gan?: string; zhi?: string; wuxing_gan?: string; wuxing_zhi?: string }> } | undefined;
-  const pillars = shishen?.pillars || [];
-  const positionLabels = ["年", "月", "日", "时"];
-
-  return (
-    <div className="flex items-center gap-1">
-      {pillars.map((p, i) => {
-        const isDay = i === 2;
-        const gan = p.gan || "";
-        const zhi = p.zhi || "";
-        const ganWx = p.wuxing_gan || GAN_WUXING[gan] || "";
-        const zhiWx = p.wuxing_zhi || ZHI_WUXING[zhi] || "";
-
-        return (
-          <div
-            key={i}
-            className="flex flex-col items-center px-2.5 py-1.5 rounded-lg transition-all duration-200"
-            style={{
-              background: isDay ? "var(--accent)" : "var(--bg-hover)",
-              border: isDay ? "1px solid var(--accent)" : "1px solid var(--border)",
-            }}
-          >
-            <span
-              className="text-base font-bold leading-tight"
-              style={{
-                color: isDay ? "#FFFFFF" : ganWx ? WUXING_COLORS[ganWx] : "var(--text-primary)",
-              }}
-            >
-              {gan || "—"}
-            </span>
-            <span
-              className="text-base font-bold leading-tight"
-              style={{
-                color: isDay ? "#FFFFFF" : zhiWx ? WUXING_COLORS[zhiWx] : "var(--text-primary)",
-              }}
-            >
-              {zhi || "—"}
-            </span>
-            <span
-              className="text-[9px] mt-0.5 font-medium"
-              style={{
-                color: isDay ? "rgba(255,255,255,0.7)" : "var(--text-muted)",
-              }}
-            >
-              {positionLabels[i]}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 export default function AnalyzePage() {
   const params = useParams();
   const router = useRouter();
@@ -452,58 +398,6 @@ export default function AnalyzePage() {
                 )}
               </div>
               <ThemeToggle />
-              <span
-                className="text-xs font-mono tabular-nums"
-                style={{ color: "var(--text-muted)", opacity: 0.5 }}
-              >
-                {analysisId}
-              </span>
-              {analysisResult && (
-                <>
-                  <button
-                    onClick={handleGenerateReport}
-                    disabled={reportStatus === "loading"}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-sm disabled:opacity-60"
-                    style={{
-                      background: "var(--accent)",
-                      color: "#FFFFFF",
-                    }}
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" />
-                      <line x1="16" y1="17" x2="8" y2="17" />
-                    </svg>
-                    {reportStatus === "loading" ? "生成中..." : "生成详批报告"}
-                  </button>
-                  {reportMsg && (
-                    <span
-                      className="text-xs px-2 py-1 rounded-lg"
-                      style={{
-                        color: reportStatus === "error" ? "var(--danger)" : "var(--success)",
-                        background: reportStatus === "error" ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.1)",
-                      }}
-                    >
-                      {reportMsg}
-                    </span>
-                  )}
-                  <ExportPanel
-                    analysisId={analysisId}
-                    result={analysisResult}
-                    narration={narration}
-                  />
-                </>
-              )}
             </div>
           </div>
 
@@ -556,52 +450,99 @@ export default function AnalyzePage() {
           {analysisResult && (
             <>
               <div
-                className="rounded-2xl p-5 mb-6 animate-fade-in"
+                className="rounded-2xl py-6 px-6 mb-4 animate-fade-in"
                 style={{
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
+                  borderLeft: "4px solid var(--accent)",
                   boxShadow: "var(--shadow-md)",
                 }}
               >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {heroVerdictParts.map((part, i) => (
-                      <span key={i} className="flex items-center gap-3">
-                        {i > 0 && (
-                          <span style={{ color: "var(--border)", fontSize: "12px" }}>·</span>
-                        )}
-                        <span
-                          className="text-sm font-semibold"
-                          style={{
-                            color: i === 0 ? "var(--accent)" : "var(--text-primary)",
-                          }}
-                        >
-                          {part}
-                        </span>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {heroVerdictParts.map((part, i) => (
+                    <span key={i} className="flex items-center gap-3">
+                      {i > 0 && (
+                        <span style={{ color: "var(--border)", fontSize: "14px" }}>·</span>
+                      )}
+                      <span
+                        className="text-lg font-bold"
+                        style={{
+                          color: i === 0 ? "var(--accent)" : "var(--text-primary)",
+                        }}
+                      >
+                        {part}
                       </span>
-                    ))}
-                  </div>
-                  <MiniPillarChart result={analysisResult} />
+                    </span>
+                  ))}
                 </div>
               </div>
 
+              {analysisResult && (
+                <div className="flex items-center gap-3 mb-6 flex-wrap">
+                  <button
+                    onClick={handleGenerateReport}
+                    disabled={reportStatus === "loading"}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-sm disabled:opacity-60"
+                    style={{
+                      background: "var(--accent)",
+                      color: "#FFFFFF",
+                    }}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                    {reportStatus === "loading" ? "生成中..." : "生成详批报告"}
+                  </button>
+                  {reportMsg && (
+                    <span
+                      className="text-xs px-2 py-1 rounded-lg"
+                      style={{
+                        color: reportStatus === "error" ? "var(--danger)" : "var(--success)",
+                        background: reportStatus === "error" ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.1)",
+                      }}
+                    >
+                      {reportMsg}
+                    </span>
+                  )}
+                  <ExportPanel
+                    analysisId={analysisId}
+                    result={analysisResult}
+                    narration={narration}
+                  />
+                </div>
+              )}
+
               <div
-                className="flex items-center gap-1 mb-6 overflow-x-auto pb-1"
+                className="flex items-center mb-6 overflow-x-auto"
                 style={{ borderBottom: "1px solid var(--border)" }}
               >
                 {TABS.map((tab) => (
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className="relative px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors duration-200"
+                    className="relative px-5 py-2.5 whitespace-nowrap transition-colors duration-200"
                     style={{
+                      fontSize: "13px",
+                      fontWeight: 500,
                       color: activeTab === tab.key ? "var(--accent)" : "var(--text-muted)",
                     }}
                   >
                     {tab.label}
                     {activeTab === tab.key && (
                       <span
-                        className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full"
+                        className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
                         style={{ background: "var(--accent)" }}
                       />
                     )}
@@ -657,16 +598,10 @@ export default function AnalyzePage() {
                 </div>
 
                 <div className="lg:col-span-4 space-y-5 stagger-in">
-                  <div className="grid grid-cols-3 gap-2">
-                    <div
-                      className="rounded-xl p-3 text-center"
-                      style={{
-                        background: "var(--bg-card)",
-                        border: "1px solid var(--border)",
-                      }}
-                    >
+                  <div className="grid grid-cols-3 gap-4 py-3">
+                    <div className="text-center">
                       <div
-                        className="text-[11px] mb-2 font-medium uppercase tracking-wider"
+                        className="text-[11px] mb-1 font-medium uppercase tracking-wider"
                         style={{ color: "var(--text-muted)" }}
                       >
                         旺衰
@@ -678,15 +613,9 @@ export default function AnalyzePage() {
                         {wangshuai?.verdict || "—"}
                       </div>
                     </div>
-                    <div
-                      className="rounded-xl p-3 text-center"
-                      style={{
-                        background: "var(--bg-card)",
-                        border: "1px solid var(--border)",
-                      }}
-                    >
+                    <div className="text-center">
                       <div
-                        className="text-[11px] mb-2 font-medium uppercase tracking-wider"
+                        className="text-[11px] mb-1 font-medium uppercase tracking-wider"
                         style={{ color: "var(--text-muted)" }}
                       >
                         格局
@@ -698,15 +627,9 @@ export default function AnalyzePage() {
                         {pattern?.pattern || "—"}
                       </div>
                     </div>
-                    <div
-                      className="rounded-xl p-3 text-center"
-                      style={{
-                        background: "var(--bg-card)",
-                        border: "1px solid var(--border)",
-                      }}
-                    >
+                    <div className="text-center">
                       <div
-                        className="text-[11px] mb-2 font-medium uppercase tracking-wider"
+                        className="text-[11px] mb-1 font-medium uppercase tracking-wider"
                         style={{ color: "var(--text-muted)" }}
                       >
                         用神
@@ -721,43 +644,34 @@ export default function AnalyzePage() {
                   </div>
 
                   <div
-                    className="rounded-2xl p-5"
+                    className="py-4"
                     style={{
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border)",
+                      borderTop: "1px solid var(--border)",
+                      borderBottom: "1px solid var(--border)",
                     }}
                   >
                     <h3
-                      className="text-sm font-semibold mb-4"
-                      style={{ color: "var(--text-secondary)" }}
+                      className="text-xs font-semibold mb-3 uppercase tracking-wider"
+                      style={{ color: "var(--text-muted)" }}
                     >
                       喜忌用神
                     </h3>
-                    <div className="grid grid-cols-3 gap-2.5 mb-3">
-                      <div
-                        className="rounded-xl p-3 text-center"
-                        style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)" }}
-                      >
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
                         <div className="text-[10px] mb-1" style={{ color: "var(--success)" }}>用神</div>
-                        <div className="text-sm font-bold" style={{ color: "var(--success)" }}>
+                        <div className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
                           {yongshen?.yongshen || "—"}
                         </div>
                       </div>
-                      <div
-                        className="rounded-xl p-3 text-center"
-                        style={{ background: "var(--accent-dim)", border: "1px solid var(--gold-dim)" }}
-                      >
+                      <div>
                         <div className="text-[10px] mb-1" style={{ color: "var(--accent)" }}>喜神</div>
-                        <div className="text-sm font-bold" style={{ color: "var(--accent)" }}>
+                        <div className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
                           {(yongshen?.xishen || []).join(" ") || "—"}
                         </div>
                       </div>
-                      <div
-                        className="rounded-xl p-3 text-center"
-                        style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)" }}
-                      >
+                      <div>
                         <div className="text-[10px] mb-1" style={{ color: "var(--danger)" }}>忌神</div>
-                        <div className="text-sm font-bold" style={{ color: "var(--danger)" }}>
+                        <div className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
                           {(yongshen?.jishen || []).join(" ") || "—"}
                         </div>
                       </div>

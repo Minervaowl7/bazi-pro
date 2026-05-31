@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAnalysisStore } from "@/stores/analysisStore";
 import { submitAnalysis } from "@/lib/api";
 import {
@@ -11,7 +10,6 @@ import {
 } from "@/lib/constants";
 
 export default function BirthForm() {
-  const router = useRouter();
   const { submitPaipan, paipanResult, paipanLoading, startAnalysis, status } = useAnalysisStore();
 
   const [form, setForm] = useState({
@@ -85,7 +83,7 @@ export default function BirthForm() {
     <div>
       {!hydrated && (
         <div
-          className="mb-4 px-4 py-3 rounded-lg text-sm"
+          className="mb-4 px-4 py-3 rounded-xl text-sm"
           style={{ background: "var(--warning-dim)", color: "var(--gold-text)" }}
         >
           页面加载中，请稍候...
@@ -95,7 +93,7 @@ export default function BirthForm() {
       <form onSubmit={handlePaipan} className="space-y-5">
         <div>
           <label
-            className="block text-xs font-medium mb-2 uppercase tracking-wider"
+            className="block text-[11px] font-semibold mb-2.5 tracking-[0.1em]"
             style={{ color: "var(--text-muted)" }}
           >
             性别
@@ -106,15 +104,19 @@ export default function BirthForm() {
                 key={g}
                 type="button"
                 onClick={() => handleChange("gender", g)}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  form.gender === g
-                    ? ""
-                    : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
-                }`}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
                 style={
                   form.gender === g
-                    ? { background: "var(--accent)", color: "#FFFFFF" }
-                    : {}
+                    ? {
+                        background: "var(--accent)",
+                        color: "#FFFFFF",
+                        boxShadow: "0 2px 8px rgba(138,59,42,0.2)",
+                      }
+                    : {
+                        background: "var(--bg-hover)",
+                        border: "1px solid var(--border)",
+                        color: "var(--text-secondary)",
+                      }
                 }
               >
                 {g}
@@ -126,11 +128,10 @@ export default function BirthForm() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label
-              className="block text-xs font-medium mb-2 uppercase tracking-wider"
+              className="block text-[11px] font-semibold mb-2.5 tracking-[0.1em]"
               style={{ color: "var(--text-muted)" }}
             >
-              出生日期{" "}
-              <span style={{ color: "var(--danger)" }}>*</span>
+              出生日期 <span style={{ color: "var(--danger)" }}>*</span>
             </label>
             <input
               type="date"
@@ -140,7 +141,7 @@ export default function BirthForm() {
                 handleChange("solarDate", e.target.value);
                 setShowPaipan(false);
               }}
-              className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-all duration-200"
+              className="w-full px-3.5 py-2.5 rounded-xl text-sm transition-all duration-200"
               style={{
                 background: "var(--bg-hover)",
                 border: "1px solid var(--border)",
@@ -150,7 +151,7 @@ export default function BirthForm() {
           </div>
           <div>
             <label
-              className="block text-xs font-medium mb-2 uppercase tracking-wider"
+              className="block text-[11px] font-semibold mb-2.5 tracking-[0.1em]"
               style={{ color: "var(--text-muted)" }}
             >
               出生时间
@@ -163,7 +164,7 @@ export default function BirthForm() {
                 handleChange("solarTime", e.target.value);
                 setShowPaipan(false);
               }}
-              className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-all duration-200"
+              className="w-full px-3.5 py-2.5 rounded-xl text-sm transition-all duration-200"
               style={{
                 background: "var(--bg-hover)",
                 border: "1px solid var(--border)",
@@ -175,7 +176,7 @@ export default function BirthForm() {
 
         {error && (
           <div
-            className="px-4 py-3 rounded-lg text-sm font-medium"
+            className="px-4 py-3 rounded-xl text-sm font-medium"
             style={{ background: "var(--danger-dim)", color: "var(--danger)" }}
           >
             {error}
@@ -185,11 +186,11 @@ export default function BirthForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+          className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
           style={{
             background: "var(--accent)",
             color: "#FFFFFF",
-            boxShadow: "0 4px 16px rgba(138,59,42,0.25)",
+            boxShadow: "0 2px 12px rgba(138,59,42,0.2)",
           }}
         >
           {paipanLoading ? "排盘中..." : "排盘"}
@@ -198,86 +199,103 @@ export default function BirthForm() {
 
       {showPaipan && paipanResult && paipanResult.status === "completed" && (
         <div
-          className="mt-7 pt-7 border-t animate-fade-in"
-          style={{ borderColor: "var(--border)" }}
+          className="mt-8 pt-8 animate-fade-in"
+          style={{ borderTop: "1px solid var(--border)" }}
         >
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-6">
             <h3
-              className="text-sm font-semibold tracking-wide"
-              style={{ color: "var(--accent)" }}
+              className="text-sm font-bold tracking-[0.06em]"
+              style={{ color: "var(--text-primary)" }}
             >
               八字命盘
             </h3>
-            <span className="text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
+            <span
+              className="text-xs px-2.5 py-1 rounded-lg"
+              style={{ color: "var(--accent)", background: "var(--accent-dim)" }}
+            >
               {paipanResult.生肖} · {paipanResult.日主}日主
             </span>
           </div>
 
-          <div className="overflow-x-auto mb-5">
-            <div className="grid grid-cols-4 gap-3">
-              {paipanResult.pillars.map((p: { position: string; gan: string; zhi: string; wuxing_gan: string; wuxing_zhi: string }) => (
-                <div
-                  key={p.position}
-                  className="flex flex-col items-center gap-1 py-4 rounded-xl relative"
-                  style={{ background: "var(--bg-hover)", border: "1px solid var(--border)" }}
-                >
-                  <span
-                    className="text-[11px] font-medium mb-2 px-2 py-0.5 rounded-full"
-                    style={{ color: "var(--text-muted)", background: "var(--bg-elevated)" }}
+          <div className="overflow-x-auto mb-6">
+            <div className="grid grid-cols-4 gap-2.5">
+              {paipanResult.pillars.map((p: { position: string; gan: string; zhi: string; wuxing_gan: string; wuxing_zhi: string }, idx: number) => {
+                const isDay = idx === 2;
+                return (
+                  <div
+                    key={p.position}
+                    className="flex flex-col items-center gap-1 py-5 rounded-xl relative"
+                    style={{
+                      background: isDay ? "var(--accent-dim)" : "var(--bg-hover)",
+                      border: isDay ? "1.5px solid var(--accent)" : "1px solid var(--border)",
+                    }}
                   >
-                    {p.position}
-                  </span>
-                  <span
-                    className="text-2xl font-bold leading-none"
-                    style={{ color: p.wuxing_gan ? WUXING_COLORS[p.wuxing_gan] : "inherit" }}
-                  >
-                    {p.gan || "—"}
-                  </span>
-                  <span
-                    className="w-6 my-1.5"
-                    style={{ height: "1px", background: "var(--border)" }}
-                  />
-                  <span
-                    className="text-2xl font-bold leading-none"
-                    style={{ color: p.wuxing_zhi ? WUXING_COLORS[p.wuxing_zhi] : "inherit" }}
-                  >
-                    {p.zhi || "—"}
-                  </span>
-                  <div className="flex gap-1 mt-2">
-                    {p.gan && (
+                    {isDay && (
                       <span
-                        className="text-[10px] px-1.5 py-0.5 rounded"
-                        style={{
-                          color: WUXING_COLORS[p.wuxing_gan] || "inherit",
-                          background: WUXING_BG[p.wuxing_gan] || "transparent",
-                        }}
+                        className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: "var(--accent)", color: "#FFFFFF" }}
                       >
-                        {p.wuxing_gan}
+                        日主
                       </span>
                     )}
-                    {p.zhi && (
-                      <span
-                        className="text-[10px] px-1.5 py-0.5 rounded"
-                        style={{
-                          color: WUXING_COLORS[p.wuxing_zhi] || "inherit",
-                          background: WUXING_BG[p.wuxing_zhi] || "transparent",
-                        }}
-                      >
-                        {p.wuxing_zhi}
-                      </span>
-                    )}
+                    <span
+                      className="text-[10px] font-semibold mb-2 tracking-wider"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      {p.position}
+                    </span>
+                    <span
+                      className="text-[22px] font-bold leading-none"
+                      style={{ color: p.wuxing_gan ? WUXING_COLORS[p.wuxing_gan] : "inherit" }}
+                    >
+                      {p.gan || "—"}
+                    </span>
+                    <span
+                      className="w-5 my-2"
+                      style={{ height: "1px", background: isDay ? "var(--accent)" : "var(--border)" }}
+                    />
+                    <span
+                      className="text-[22px] font-bold leading-none"
+                      style={{ color: p.wuxing_zhi ? WUXING_COLORS[p.wuxing_zhi] : "inherit" }}
+                    >
+                      {p.zhi || "—"}
+                    </span>
+                    <div className="flex gap-1 mt-2">
+                      {p.gan && (
+                        <span
+                          className="text-[9px] px-1.5 py-0.5 rounded-md font-medium"
+                          style={{
+                            color: WUXING_COLORS[p.wuxing_gan] || "inherit",
+                            background: WUXING_BG[p.wuxing_gan] || "transparent",
+                          }}
+                        >
+                          {p.wuxing_gan}
+                        </span>
+                      )}
+                      {p.zhi && (
+                        <span
+                          className="text-[9px] px-1.5 py-0.5 rounded-md font-medium"
+                          style={{
+                            color: WUXING_COLORS[p.wuxing_zhi] || "inherit",
+                            background: WUXING_BG[p.wuxing_zhi] || "transparent",
+                          }}
+                        >
+                          {p.wuxing_zhi}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
-          <div className="mb-5">
+          <div className="mb-6">
             <label
-              className="block text-xs font-medium mb-2.5 uppercase tracking-wider"
+              className="block text-[11px] font-semibold mb-2.5 tracking-[0.1em]"
               style={{ color: "var(--text-muted)" }}
             >
-              选择解读流派
+              解读流派
             </label>
             <div className="grid grid-cols-3 gap-2">
               {SCHOOL_OPTIONS.map((s) => (
@@ -285,23 +303,23 @@ export default function BirthForm() {
                   key={s.value}
                   type="button"
                   onClick={() => handleChange("school", s.value)}
-                  className={`p-3 rounded-xl text-left transition-all duration-200 ${
-                    form.school === s.value
-                      ? ""
-                      : "border border-[var(--border)] hover:border-[var(--text-muted)]"
-                  }`}
+                  className="p-3 rounded-xl text-left transition-all duration-200"
                   style={
                     form.school === s.value
                       ? {
                           borderColor: "var(--accent)",
-                          borderWidth: "2px",
+                          borderWidth: "1.5px",
                           background: "var(--accent-dim)",
+                          borderStyle: "solid",
                         }
-                      : { background: "var(--bg-hover)", border: "1px solid var(--border)" }
+                      : {
+                          background: "var(--bg-hover)",
+                          border: "1px solid var(--border)",
+                        }
                   }
                 >
                   <div
-                    className="text-xs font-semibold"
+                    className="text-xs font-bold"
                     style={{
                       color:
                         form.school === s.value
@@ -312,7 +330,7 @@ export default function BirthForm() {
                     {s.label}
                   </div>
                   <div
-                    className="text-[11px] mt-0.5"
+                    className="text-[10px] mt-1 leading-snug"
                     style={{ color: "var(--text-muted)" }}
                   >
                     {s.desc}
@@ -326,23 +344,16 @@ export default function BirthForm() {
             type="button"
             onClick={handleDeepAnalysis}
             disabled={status === "submitting" || status === "streaming"}
-            className="w-full py-3.5 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] flex items-center justify-center gap-2"
             style={{
               background: "var(--accent)",
               color: "#FFFFFF",
-              boxShadow: "0 6px 20px rgba(138,59,42,0.3)",
+              boxShadow: "0 4px 16px rgba(138,59,42,0.25)",
             }}
           >
-            {status === "submitting" ? "提交中..." : "深度解读"}{" "}
+            {status === "submitting" ? "提交中..." : "深度解读"}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </button>
-
-          <p
-            className="text-center text-[11px] mt-3"
-            style={{ color: "var(--text-muted)", opacity: 0.6 }}
-          >
-            旺衰判定 · 格局筛查 · 喜用神推导 · 古籍引证
-          </p>
         </div>
       )}
     </div>
