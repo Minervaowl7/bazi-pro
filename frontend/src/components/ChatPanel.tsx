@@ -148,16 +148,22 @@ export default function ChatPanel({ analysisId }: Props) {
         {loading && (
           <div className="mb-4 pr-8">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-xs" style={{ color: "var(--accent)" }}>☯</span>
-              <span className="text-xs font-medium" style={{ color: "var(--accent)" }}>命理师</span>
+              <span className="text-xs" style={{ color: "var(--color-scholar-blue)" }}>☯</span>
+              <span className="text-xs font-medium" style={{ color: "var(--color-scholar-blue)" }}>命理师</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "var(--accent)", animationDelay: "0ms" }} />
-                <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "var(--accent)", animationDelay: "150ms" }} />
-                <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "var(--accent)", animationDelay: "300ms" }} />
+            <div className="p-3 rounded-lg text-xs space-y-1.5" style={{ background: "var(--color-bg-panel)", border: "1px solid var(--color-border)" }}>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--color-scholar-blue)" }} />
+                <span style={{ color: "var(--color-text-muted)" }}>正在分析命盘数据...</span>
               </div>
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>正在思考...</span>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--color-scholar-blue)", animationDelay: "200ms" }} />
+                <span style={{ color: "var(--color-text-muted)" }}>检索古籍条文...</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--color-scholar-blue)", animationDelay: "400ms" }} />
+                <span style={{ color: "var(--color-text-muted)" }}>生成解读...</span>
+              </div>
             </div>
           </div>
         )}

@@ -827,6 +827,21 @@ async def api_v2_monthly_fortune(analysis_id: str, year: int = Query(default=0),
     return JSONResponse(fortune)
 
 
+class ReverseLookupRequest(BaseModel):
+    day_pillar: str = Field(description="日柱干支，如 '戊辰'")
+    start_year: int = Field(default=2020)
+    end_year: int = Field(default=2030)
+
+
+@app.post("/api/v2/reverse-lookup")
+async def api_v2_reverse_lookup(payload: ReverseLookupRequest):
+    """四柱反查 — 根据日柱反推可能的出生日期"""
+    from server.reverse_lookup import reverse_lookup_day_pillar
+
+    results = reverse_lookup_day_pillar(payload.day_pillar, payload.start_year, payload.end_year)
+    return JSONResponse({"dates": results, "day_pillar": payload.day_pillar})
+
+
 _v2_active_ids: set[str] = set()
 
 
