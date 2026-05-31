@@ -980,7 +980,7 @@ async def api_v2_get_chat(analysis_id: str):
 
 @app.post("/api/v2/report")
 async def api_v2_create_report(payload: ReportRequest):
-    """生成七维度综合分析报告"""
+    """生成七维度综合分析报告（异步）"""
     if not is_llm_configured():
         return error_response(503, "LLM_NOT_CONFIGURED", "LLM 服务未配置。请设置 LLM_API_KEY 环境变量。")
 
@@ -991,50 +991,68 @@ async def api_v2_create_report(payload: ReportRequest):
     if record.get("status") != "completed":
         return error_response(400, "ANALYSIS_NOT_COMPLETED", "分析尚未完成，无法生成报告")
 
-    result = record.get("full_result")
-    if isinstance(result, str):
+    existing = await get_report(payload.analysis_id)
+    if existing and existing.get("status") == "completed":
+        return JSONResponse({
+            "report_id": existing["id"],
+            "analysis_id": payload.analysis_id,
+            "status": "completed",
+            "report": existing["report_data"],
+        })
+
+    if existing and existing.get("status") == "generating":
+        return JSONResponse({
+            "report_id": existing["id"],
+            "analysis_id": payload.analysis_id,
+            "status": "generating",
+        })
+
+    import asyncio
+    report_id = await save_report(payload.analysis_id, {"status": "generating"})
+
+    async def _generate():
         try:
-            result = json.loads(result)
-        except (json.JSONDecodeError, TypeError):
-            result = {}
+            result = record.get("full_result")
+            if isinstance(result, str):
+                try:
+                    result = json.loads(result)
+                except (json.JSONDecodeError, TypeError):
+                    result = {}
 
-    if not isinstance(result, dict) or result.get("status") != "completed":
-        return error_response(400, "INVALID_RESULT", "分析结果数据异常，无法生成报告")
+            narration = {}
+            try:
+                from bazi_pro.narrator import narrate_analysis
+                narration = narrate_analysis(result)
+            except Exception:
+                pass
 
-    narration = {}
-    try:
-        from bazi_pro.narrator import narrate_analysis
-        narration = narrate_analysis(result)
-    except Exception:
-        pass
+            birth_json = record.get("birth_json", {})
+            if isinstance(birth_json, str):
+                try:
+                    birth_json = json.loads(birth_json)
+                except (json.JSONDecodeError, TypeError):
+                    birth_json = {}
 
-    birth_json = record.get("birth_json", {})
-    if isinstance(birth_json, str):
-        try:
-            birth_json = json.loads(birth_json)
-        except (json.JSONDecodeError, TypeError):
-            birth_json = {}
+            dayun_data = birth_json.get("大运", None)
 
-    dayun_data = birth_json.get("大运", None)
+            system_prompt = build_report_system_prompt(result, narration, dayun_data)
+            messages = [{"role": "system", "content": system_prompt}]
 
-    system_prompt = build_report_system_prompt(result, narration, dayun_data)
-    messages = [{"role": "system", "content": system_prompt}]
+            raw_reply = await chat_completion(messages, temperature=0.7, max_tokens=8192)
+            report_data = _parse_report_json(raw_reply)
+            report_data["status"] = "completed"
+            await save_report(payload.analysis_id, report_data)
+            logger.info("Report generated for %s", payload.analysis_id)
+        except Exception as e:
+            logger.error("Report generation failed for %s: %s", payload.analysis_id, e)
+            await save_report(payload.analysis_id, {"status": "failed", "error": str(e)})
 
-    try:
-        raw_reply = await chat_completion(messages, temperature=0.7, max_tokens=8192)
-    except Exception as e:
-        logger.error("Report LLM call failed for analysis %s: %s", payload.analysis_id, e)
-        err_msg = str(e) or type(e).__name__
-        return error_response(500, "LLM_ERROR", f"LLM 调用失败: {err_msg}")
-
-    report_data = _parse_report_json(raw_reply)
-
-    report_id = await save_report(payload.analysis_id, report_data)
+    asyncio.create_task(_generate())
 
     return JSONResponse({
         "report_id": report_id,
         "analysis_id": payload.analysis_id,
-        "report": report_data,
+        "status": "generating",
     })
 
 
@@ -1045,10 +1063,14 @@ async def api_v2_get_report(analysis_id: str):
     if not record:
         return error_response(404, "NOT_FOUND", "报告不存在，请先通过 POST /api/v2/report 生成")
 
+    report_data = record.get("report_data", {})
+    report_status = report_data.get("status", "completed") if isinstance(report_data, dict) else "completed"
+
     return JSONResponse({
         "report_id": record["id"],
         "analysis_id": record["analysis_id"],
-        "report": record["report_data"],
+        "status": report_status,
+        "report": report_data,
         "created_at": record["created_at"],
     })
 

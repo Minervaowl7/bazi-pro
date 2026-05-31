@@ -175,16 +175,33 @@ export interface ReportResponse {
 }
 
 export async function generateReport(analysisId: string): Promise<ReportResponse> {
-  const res = await fetch(`${API_BASE}/api/v2/report`, {
+  const submitRes = await fetch(`${API_BASE}/api/v2/report`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ analysis_id: analysisId }),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `生成报告失败 (${res.status})`);
+  if (!submitRes.ok) {
+    const err = await submitRes.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `提交报告生成失败 (${submitRes.status})`);
   }
-  return res.json();
+  const submitData = await submitRes.json();
+  if (submitData.status === "completed") {
+    return submitData;
+  }
+
+  for (let i = 0; i < 120; i++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const pollRes = await fetch(`${API_BASE}/api/v2/report/${analysisId}`);
+    if (!pollRes.ok) continue;
+    const pollData = await pollRes.json();
+    if (pollData.status === "completed") {
+      return pollData;
+    }
+    if (pollData.status === "failed") {
+      throw new Error(pollData.report?.error || "报告生成失败");
+    }
+  }
+  throw new Error("报告生成超时，请稍后刷新页面查看");
 }
 
 export async function getReport(analysisId: string): Promise<ReportResponse | null> {
