@@ -7,19 +7,19 @@ export const WUXING_COLORS: Record<string, string> = {
 };
 
 export const WUXING_BG: Record<string, string> = {
-  木: "rgba(74,222,128,0.14)",
-  火: "rgba(251,113,133,0.14)",
-  土: "rgba(251,191,36,0.12)",
-  金: "rgba(212,212,224,0.10)",
-  水: "rgba(96,165,250,0.14)",
+  木: "rgba(74,158,110,0.08)",
+  火: "rgba(212,64,48,0.08)",
+  土: "rgba(139,94,60,0.08)",
+  金: "rgba(193,154,66,0.06)",
+  水: "rgba(63,111,159,0.08)",
 };
 
 export const WUXING_GLOW: Record<string, string> = {
-  木: "rgba(74,222,128,0.25)",
-  火: "rgba(251,113,133,0.25)",
-  土: "rgba(251,191,36,0.25)",
-  金: "rgba(212,212,224,0.2)",
-  水: "rgba(96,165,250,0.25)",
+  木: "rgba(74,158,110,0.2)",
+  火: "rgba(212,64,48,0.2)",
+  土: "rgba(139,94,60,0.2)",
+  金: "rgba(193,154,66,0.15)",
+  水: "rgba(63,111,159,0.2)",
 };
 
 export const WUXING_PILL_BG: Record<string, string> = {
