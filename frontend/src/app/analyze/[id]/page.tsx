@@ -175,7 +175,6 @@ export default function AnalyzePage() {
     status,
     result,
     error,
-    analysisId: storeAnalysisId,
     birthInput,
     fetchResult,
     startAnalysis,
@@ -193,14 +192,10 @@ export default function AnalyzePage() {
     if (!analysisId) return;
     if (analysisId !== prevIdRef.current) {
       prevIdRef.current = analysisId;
-      if (analysisId !== storeAnalysisId) {
-        reset();
-        fetchResult(analysisId);
-      }
-    } else if (status === "idle") {
+      reset();
       fetchResult(analysisId);
     }
-  }, [analysisId, status, storeAnalysisId, fetchResult, reset]);
+  }, [analysisId, fetchResult, reset]);
 
   useEffect(() => {
     if (!schoolDropdownOpen) return;

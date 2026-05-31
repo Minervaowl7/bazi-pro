@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAnalysisStore } from "@/stores/analysisStore";
+import { submitAnalysis } from "@/lib/api";
 import {
   WUXING_COLORS,
   WUXING_BG,
@@ -66,7 +67,7 @@ export default function BirthForm() {
       : form.solarDate;
 
     try {
-      const analysisId = await startAnalysis({
+      const resp = await submitAnalysis({
         性别: paipanResult.性别,
         八字: paipanResult.八字,
         日主: paipanResult.日主,
@@ -74,7 +75,7 @@ export default function BirthForm() {
         生肖: paipanResult.生肖,
         school: form.school,
       });
-      router.push(`/analyze/${analysisId}`);
+      window.location.href = `/analyze/${resp.analysis_id}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "提交失败");
     }
@@ -214,7 +215,7 @@ export default function BirthForm() {
 
           <div className="overflow-x-auto mb-5">
             <div className="grid grid-cols-4 gap-3">
-              {paipanResult.pillars.map((p) => (
+              {paipanResult.pillars.map((p: { position: string; gan: string; zhi: string; wuxing_gan: string; wuxing_zhi: string }) => (
                 <div
                   key={p.position}
                   className="flex flex-col items-center gap-1 py-4 rounded-xl relative"

@@ -4,11 +4,9 @@ import {
   type BirthInput,
   type PaipanInput,
   type PaipanResult,
-  type SSEEvent,
   getAnalysis,
   submitAnalysis,
   submitPaipan,
-  subscribeSSE,
 } from "@/lib/api";
 
 export interface ProgressStep {
@@ -35,6 +33,9 @@ interface AnalysisState {
   reset: () => void;
 }
 
+const POLL_INTERVAL = 2000;
+const MAX_POLLS = 150;
+
 export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   birthInput: null,
   analysisId: null,
@@ -52,24 +53,6 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
     try {
       const resp = await submitAnalysis(input);
       set({ analysisId: resp.analysis_id, status: "streaming", birthInput: input });
-
-      const es = subscribeSSE(
-        resp.analysis_id,
-        (event: SSEEvent) => {
-          if (event.event === "progress") {
-            const step = event.data as unknown as ProgressStep;
-            set((state) => ({ progress: [...state.progress, step] }));
-          } else if (event.event === "done") {
-            es.close();
-            get().fetchResult(resp.analysis_id);
-          }
-        },
-        () => {
-          es.close();
-          setTimeout(() => get().fetchResult(resp.analysis_id), 1000);
-        },
-      );
-
       return resp.analysis_id;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "未知错误";
@@ -79,13 +62,40 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   },
 
   fetchResult: async (analysisId) => {
-    try {
-      const data = await getAnalysis(analysisId);
-      set({ result: data, status: data.status === "failed" ? "failed" : "completed" });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "获取结果失败";
-      set({ status: "failed", error: msg });
-    }
+    let pollCount = 0;
+    const poll = async (): Promise<void> => {
+      try {
+        const data = await getAnalysis(analysisId);
+        if (data.status === "failed") {
+          set({ result: data, status: "failed" });
+          return;
+        }
+        if (data.status === "completed") {
+          set({ result: data, status: "completed" });
+          return;
+        }
+        pollCount++;
+        if (pollCount >= MAX_POLLS) {
+          set({ status: "failed", error: "分析超时，请稍后刷新重试" });
+          return;
+        }
+        set({ result: data, status: "streaming" });
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL));
+        if (get().analysisId === analysisId || !get().analysisId) {
+          await poll();
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "获取结果失败";
+        pollCount++;
+        if (pollCount >= MAX_POLLS) {
+          set({ status: "failed", error: msg });
+          return;
+        }
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL));
+        await poll();
+      }
+    };
+    await poll();
   },
 
   submitPaipan: async (input) => {
