@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAnalysisStore } from "@/stores/analysisStore";
 import {
@@ -21,6 +21,11 @@ export default function BirthForm() {
   });
   const [error, setError] = useState("");
   const [showPaipan, setShowPaipan] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   const isSubmitting = status === "submitting" || paipanLoading;
 
@@ -77,6 +82,15 @@ export default function BirthForm() {
 
   return (
     <div>
+      {!hydrated && (
+        <div
+          className="mb-4 px-4 py-3 rounded-lg text-sm"
+          style={{ background: "var(--warning-dim)", color: "var(--gold-text)" }}
+        >
+          页面加载中，请稍候...
+        </div>
+      )}
+
       <form onSubmit={handlePaipan} className="space-y-5">
         <div>
           <label
@@ -159,9 +173,12 @@ export default function BirthForm() {
         </div>
 
         {error && (
-          <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
+          <div
+            className="px-4 py-3 rounded-lg text-sm font-medium"
+            style={{ background: "var(--danger-dim)", color: "var(--danger)" }}
+          >
             {error}
-          </p>
+          </div>
         )}
 
         <button
