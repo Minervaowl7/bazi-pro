@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAnalysisStore } from "@/stores/analysisStore";
 import AnalysisProgress from "@/components/AnalysisProgress";
 import BaziChartCard from "@/components/BaziChartCard";
+import DailyFortuneCard from "@/components/DailyFortuneCard";
 import ShareCard from "@/components/ShareCard";
 import StrengthSlider from "@/components/StrengthSlider";
 import ShishenEnergyChart from "@/components/ShishenEnergyChart";
@@ -457,6 +458,9 @@ export default function AnalyzePage() {
                   </div>
                 )}
               </div>
+
+              {/* 今日运势 */}
+              <DailyFortuneCard analysisId={analysisId} />
 
               {/* 四柱命盘 — 全宽 */}
               <BaziChartCard result={analysisResult} />
