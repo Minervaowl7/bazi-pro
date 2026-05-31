@@ -1,16 +1,11 @@
 "use client";
 
 import BirthForm from "@/components/BirthForm";
-import { ThemeToggle } from "@/components/ThemeProvider";
 
 export default function Home() {
   return (
-    <div className="min-h-screen" style={{ background: "var(--background)" }}>
-      <div className="absolute top-6 right-6 z-10">
-        <ThemeToggle />
-      </div>
-
-      <main className="flex items-center justify-center min-h-screen p-6 md:p-8">
+    <div className="min-h-[calc(100vh-3.5rem)]" style={{ background: "var(--background)" }}>
+      <main className="flex items-center justify-center min-h-[calc(100vh-3.5rem)] p-6 md:p-8">
         <div className="w-full max-w-md relative z-[1]">
           <div className="mb-8 text-center">
             <h1

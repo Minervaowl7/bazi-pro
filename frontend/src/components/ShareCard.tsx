@@ -14,8 +14,6 @@ export default function ShareCard({ result }: Props) {
 
   const validation = result.validation as { day_master?: string; bazi?: string } | undefined;
   const dayMaster = validation?.day_master || "";
-  const bazi = validation?.bazi || "";
-  const dayMasterWx = GAN_WUXING[dayMaster] || "";
 
   const pattern = result.pattern as { pattern?: string } | undefined;
   const strength = result.strength as { wangshuai?: { verdict?: string } } | undefined;
@@ -23,8 +21,6 @@ export default function ShareCard({ result }: Props) {
 
   const shishen = result.shishen as { pillars?: Array<{ gan?: string; zhi?: string }> } | undefined;
   const pillars = shishen?.pillars || [];
-
-  const summary = `${dayMaster}日主 · ${strength?.wangshuai?.verdict || ""} · ${pattern?.pattern || ""}`;
 
   async function handleGenerate() {
     if (!cardRef.current) return;

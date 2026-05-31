@@ -221,8 +221,6 @@ export default function BaziChartCard({ result }: Props) {
         </div>
       </div>
 
-      {/* PLACEHOLDER_WUXING_SECTION */}
-
       {/* 五行力量分布 */}
       <div
         className="rounded-xl p-6"
