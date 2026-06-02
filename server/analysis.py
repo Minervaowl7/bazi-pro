@@ -307,7 +307,6 @@ def _derive_shishen(mcp_json: dict, bazi_parts: list[str]) -> dict:
         if len(token) < 2:
             continue
         gan, zhi = token[0], token[1]
-        canggan = get_canggan(zhi)
         shishen_gan = derive_shishen(day_master, gan)
         canggan_list = get_canggan(zhi)
         main_cg_gan = canggan_list[0][0] if canggan_list else ''

@@ -683,7 +683,7 @@ async def api_v2_analyze(payload: BirthAnalyzeRequest):
     longitude = payload_dict.pop("longitude", None)
     payload_dict.pop("latitude", None)
 
-    if longitude and payload_dict.get("阳历"):
+    if longitude is not None and payload_dict.get("阳历"):
         from datetime import datetime as _dt
 
         from server.true_solar_time import correct_to_true_solar_time
@@ -1124,7 +1124,7 @@ async def api_v2_chat(payload: ChatRequest):
     if payload.retrieval_depth != "basic" and isinstance(result, dict):
         try:
             analysis_context = _extract_analysis_context(result)
-            retrieval_results = retrieve_for_chat(payload.message, analysis_context, k=5)
+            retrieval_results = await asyncio.to_thread(retrieve_for_chat, payload.message, analysis_context, k=5)
             # 只返回格式化后的引用文本给前端，不返回完整检索结构
             from server.rag_engine import _format_retrieval_for_prompt
             citations = _format_retrieval_for_prompt(retrieval_results)
@@ -1144,7 +1144,7 @@ async def api_v2_chat(payload: ChatRequest):
 
     try:
         reply = await chat_completion(messages)
-        await insert_chat_message(payload.analysis_id, "assistant", reply, school=payload.school)
+        await insert_chat_message(payload.analysis_id, "assistant", reply, citations=citations or "", school=payload.school)
         response_payload = {"reply": reply}
         if citations is not None:
             response_payload["citations"] = citations
@@ -1201,7 +1201,7 @@ async def api_v2_create_report(payload: ReportRequest):
         except (json.JSONDecodeError, TypeError):
             birth_json = {}
 
-    dayun_data = birth_json.get("大运", None)
+    dayun_data = result.get("dayun") or birth_json.get("大运", None)
 
     retrieval_results = None
     citations = None
@@ -1216,7 +1216,7 @@ async def api_v2_create_report(payload: ReportRequest):
             citations = {}
             from server.rag_engine import _format_retrieval_for_prompt
             for chapter_key in chapter_keys:
-                chapter_result = retrieve_for_report(chapter_key, analysis_context, k=5)
+                chapter_result = await asyncio.to_thread(retrieve_for_report, chapter_key, analysis_context, k=5)
                 retrieval_results[chapter_key] = chapter_result
                 citations[chapter_key] = _format_retrieval_for_prompt(chapter_result)
         except Exception as exc:
@@ -1234,7 +1234,7 @@ async def api_v2_create_report(payload: ReportRequest):
 
     report_data = _parse_report_json(raw_reply)
 
-    report_id = await save_report(payload.analysis_id, report_data)
+    report_id = await save_report(payload.analysis_id, report_data, citations=citations)
 
     response_payload = {
         "status": "completed",
@@ -1260,6 +1260,7 @@ async def api_v2_get_report(analysis_id: str):
         "analysis_id": record["analysis_id"],
         "report_id": record["id"],
         "sections": record["report_data"],
+        "citations": record.get("citations"),
         "created_at": record["created_at"],
     })
 
@@ -1396,7 +1397,7 @@ async def api_v2_update_llm_settings(req: LLMSettingsRequest, _auth=Depends(_ver
 def main():
     import uvicorn
     host = os.environ.get("BAZI_HOST", "0.0.0.0")
-    port = _get_int_env("BAZI_PORT", 8710)
+    port = _get_int_env("BAZI_PORT", 8711)
     log_level = os.environ.get("BAZI_LOG_LEVEL", "info")
     workers = _get_int_env("BAZI_WORKERS", 1)
     if workers > 1:

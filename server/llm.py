@@ -131,7 +131,13 @@ async def chat_completion(messages: list[dict], temperature: float = 0.7, max_to
                 continue
             resp.raise_for_status()
             data = resp.json()
-            return data["choices"][0]["message"]["content"]
+            choices = data.get("choices", [])
+            if not choices:
+                raise RuntimeError("LLM 返回空 choices")
+            content = choices[0].get("message", {}).get("content")
+            if not content:
+                raise RuntimeError("LLM 返回空 content")
+            return content
     raise RuntimeError("unreachable")
 
 
@@ -163,7 +169,7 @@ async def chat_completion_stream(messages: list[dict], temperature: float = 0.7,
                     break
                 try:
                     chunk = json.loads(data_str)
-                    delta = chunk.get("choices", [{}])[0].get("delta", {})
+                    delta = chunk.get("choices", [{}])[0].get("delta") or {}
                     content = delta.get("content", "")
                     if content:
                         yield content
@@ -694,6 +700,22 @@ def _format_retrieval_results(retrieval_results: dict | list | str | None) -> st
         return "\n".join(lines)
 
     if isinstance(retrieval_results, dict):
+        # Chat 场景：顶层有 "results" list（来自 retrieve_for_chat）
+        if "results" in retrieval_results and isinstance(retrieval_results.get("results"), list):
+            lines = ["\n## 古籍检索结果"]
+            for idx, item in enumerate(retrieval_results["results"][:5], 1):
+                if isinstance(item, dict):
+                    source = item.get("source", "")
+                    content = item.get("content") or ""
+                    topic = item.get("topic", "")
+                    label = f"{source}@{topic}" if topic else source
+                    lines.append(f"  {idx}. [{label}] {content[:200]}")
+                else:
+                    lines.append(f"  {idx}. {item}")
+            lines.append("")
+            return "\n".join(lines)
+
+        # Report 场景：chapter_key -> retrieval_result 映射
         lines = ["\n## 古籍检索结果"]
         for chapter_key, results in retrieval_results.items():
             lines.append(f"\n### {chapter_key}")
@@ -706,7 +728,7 @@ def _format_retrieval_results(retrieval_results: dict | list | str | None) -> st
                 for idx, item in enumerate(items, 1):
                     if isinstance(item, dict):
                         source = item.get("source", "")
-                        content = item.get("content", "")
+                        content = item.get("content") or ""
                         topic = item.get("topic", "")
                         label = f"{source}@{topic}" if topic else source
                         lines.append(f"  {idx}. [{label}] {content[:200]}")

@@ -207,7 +207,7 @@ def _build_retrieval_query(question: str, category: str, analysis_context: dict)
     templates = RETRIEVAL_TEMPLATES[category]
 
     day_master = _extract_context_value(analysis_context, "day_master", "")
-    pattern = _extract_context_value(analysis_context, "pattern.name", "")
+    pattern = _extract_context_value(analysis_context, "pattern.pattern", "")
     wangshuai = _extract_context_value(analysis_context, "wangshuai.verdict", "")
     yongshen = _extract_context_value(analysis_context, "yongshen.yongshen", "")
     category_label = CATEGORY_LABELS.get(category, "综合运势")
@@ -315,7 +315,7 @@ def retrieve_for_report(chapter_key: str, analysis_context: dict, k: int = 5) ->
     category = CHAPTER_TO_CATEGORY.get(chapter_key, "general")
     # 报告章节检索：直接构造 query，不走 _build_retrieval_query（避免 pseudo_question 被模板二次拼接）
     day_master = _extract_context_value(analysis_context, "day_master", "")
-    pattern = _extract_context_value(analysis_context, "pattern.name", "")
+    pattern = _extract_context_value(analysis_context, "pattern.pattern", "")
     category_label = CATEGORY_LABELS.get(category, "综合运势")
     query = f"{day_master}日柱 {pattern} {category_label}" if day_master else f"{pattern} {category_label}"
     query = " ".join(query.split())  # 清理多余空格
