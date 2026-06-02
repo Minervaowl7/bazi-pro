@@ -1,5 +1,53 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8711";
 
+class ApiError extends Error {
+  status: number;
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+function _getApiKey(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem("bazi_api_key") || "";
+  } catch {
+    return "";
+  }
+}
+
+async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
+  const apiKey = _getApiKey();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(init?.headers as Record<string, string>),
+  };
+  if (apiKey) {
+    headers["X-API-Key"] = apiKey;
+  }
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  } catch (networkErr) {
+    const message = networkErr instanceof Error ? networkErr.message : "网络连接失败";
+    throw new ApiError(message, 0, "NETWORK_ERROR");
+  }
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new ApiError("资源不存在", 404, "NOT_FOUND");
+    }
+    const err = await res.json().catch(() => ({}));
+    const message =
+      err?.error?.message || err?.detail || `请求失败 (${res.status})`;
+    throw new ApiError(message, res.status, err?.error?.code);
+  }
+  return res.json();
+}
+
 export interface BirthInput {
   性别: string;
   八字: string;
@@ -33,6 +81,7 @@ export interface AnalysisResult {
   day_master?: string;
   pattern?: string;
   yongshen?: string;
+  error?: string;
   result?: Record<string, unknown>;
   narration?: Record<string, unknown>;
 }
@@ -56,32 +105,19 @@ export interface HistoryResponse {
 }
 
 export async function submitAnalysis(input: BirthInput): Promise<AnalysisSubmitResponse> {
-  const res = await fetch(`${API_BASE}/api/v2/analyze`, {
+  return fetchApi("/api/v2/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `请求失败 (${res.status})`);
-  }
-  return res.json();
 }
 
 export async function getAnalysis(analysisId: string): Promise<AnalysisResult> {
-  const res = await fetch(`${API_BASE}/api/v2/analysis/${analysisId}`);
-  if (!res.ok) {
-    throw new Error(`获取分析结果失败 (${res.status})`);
-  }
-  return res.json();
+  return fetchApi(`/api/v2/analysis/${analysisId}`);
 }
 
 export async function getHistory(page = 1, pageSize = 20): Promise<HistoryResponse> {
-  const res = await fetch(`${API_BASE}/api/v2/history?page=${page}&page_size=${pageSize}`);
-  if (!res.ok) {
-    throw new Error(`获取历史记录失败 (${res.status})`);
-  }
-  return res.json();
+  return fetchApi(`/api/v2/history?page=${page}&page_size=${pageSize}`);
 }
 
 export interface PaipanInput {
@@ -111,16 +147,11 @@ export interface PaipanResult {
 }
 
 export async function submitPaipan(input: PaipanInput): Promise<PaipanResult> {
-  const res = await fetch(`${API_BASE}/api/v2/paipan`, {
+  return fetchApi("/api/v2/paipan", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `排盘请求失败 (${res.status})`);
-  }
-  return res.json();
 }
 
 export interface ChatMessage {
@@ -132,31 +163,24 @@ export interface ChatMessage {
 
 export interface ChatResponse {
   reply: string;
+  citations?: string;
 }
 
 export interface ChatHistoryResponse {
   messages: ChatMessage[];
 }
 
-export async function sendChatMessage(analysisId: string, message: string): Promise<ChatResponse> {
-  const res = await fetch(`${API_BASE}/api/v2/chat`, {
+export async function sendChatMessage(analysisId: string, message: string, school: string = "ziping"): Promise<ChatResponse> {
+  return fetchApi("/api/v2/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ analysis_id: analysisId, message }),
+    body: JSON.stringify({ analysis_id: analysisId, message, school }),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `对话请求失败 (${res.status})`);
-  }
-  return res.json();
 }
 
-export async function getChatHistory(analysisId: string): Promise<ChatHistoryResponse> {
-  const res = await fetch(`${API_BASE}/api/v2/chat/${analysisId}`);
-  if (!res.ok) {
-    throw new Error(`获取对话历史失败 (${res.status})`);
-  }
-  return res.json();
+export async function getChatHistory(analysisId: string, school?: string): Promise<ChatHistoryResponse> {
+  const params = school ? `?school=${encodeURIComponent(school)}` : "";
+  return fetchApi(`/api/v2/chat/${analysisId}${params}`);
 }
 
 export interface ReportSection {
@@ -168,40 +192,90 @@ export interface ReportResponse {
   analysis_id: string;
   status: "generating" | "completed" | "failed";
   sections?: Record<string, string>;
+  citations?: Record<string, string>;
   created_at?: string;
   completed_at?: string;
   error?: string;
 }
 
-export async function generateReport(analysisId: string): Promise<ReportResponse> {
-  const res = await fetch(`${API_BASE}/api/v2/report`, {
+export async function generateReport(analysisId: string, school: string = "ziping"): Promise<ReportResponse> {
+  return fetchApi("/api/v2/report", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ analysis_id: analysisId }),
+    body: JSON.stringify({ analysis_id: analysisId, school }),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `生成报告失败 (${res.status})`);
-  }
-  return res.json();
 }
 
 export async function getReport(analysisId: string): Promise<ReportResponse | null> {
-  const res = await fetch(`${API_BASE}/api/v2/report/${analysisId}`);
-  if (res.status === 404) return null;
-  if (!res.ok) {
-    throw new Error(`获取报告失败 (${res.status})`);
+  try {
+    return await fetchApi<ReportResponse>(`/api/v2/report/${analysisId}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
   }
-  return res.json();
 }
+
+export interface LLMSettings {
+  api_key: string;
+  api_base: string;
+  model: string;
+}
+
+export interface LLMSettingsResponse {
+  api_base: string;
+  api_key_set: boolean;
+  model: string;
+}
+
+export async function getLLMSettings(): Promise<LLMSettingsResponse> {
+  return fetchApi("/api/v2/settings/llm");
+}
+
+export async function updateLLMSettings(settings: LLMSettings): Promise<LLMSettingsResponse> {
+  return fetchApi("/api/v2/settings/llm", {
+    method: "POST",
+    body: JSON.stringify(settings),
+  });
+}
+
+export interface DailyFortune {
+  date: string;
+  gan_zhi: string;
+  overall_level: string;
+  dimensions: Record<string, { score: number; level: string }>;
+}
+
+export async function getDailyFortune(analysisId: string): Promise<DailyFortune> {
+  return fetchApi(`/api/v2/fortune/daily/${analysisId}`);
+}
+
+export interface DayunLiunianResponse {
+  analysis_id: string;
+  dayun_scores: Array<Record<string, unknown>>;
+  liunian_scores: Array<{ year: number; age: number; gan_zhi: string; score: number; level?: string; reason?: string }>;
+  warning?: string;
+}
+
+export async function getDayunLiunian(analysisId: string): Promise<DayunLiunianResponse> {
+  return fetchApi(`/api/v2/dayun-liunian/${analysisId}`);
+}
+
+const SSE_TIMEOUT_MS = 120000;
 
 export function subscribeSSE(
   analysisId: string,
   onEvent: (event: SSEEvent) => void,
   onError?: (err: Event) => void,
 ): EventSource {
-  const url = `${API_BASE}/api/v2/analysis/${analysisId}/stream`;
+  const apiKey = _getApiKey();
+  let url = `${API_BASE}/api/v2/analysis/${analysisId}/stream`;
+  if (apiKey) {
+    url += `?token=${encodeURIComponent(apiKey)}`;
+  }
   const es = new EventSource(url);
+
+  let done = false;
+  let timedOut = false;
 
   const handleEvent = (type: string) => (e: MessageEvent) => {
     try {
@@ -213,11 +287,37 @@ export function subscribeSSE(
   };
 
   es.addEventListener("progress", handleEvent("progress"));
-  es.addEventListener("done", handleEvent("done"));
-  es.addEventListener("error", (e) => {
-    if (es.readyState === EventSource.CLOSED) return;
-    onError?.(e);
+  es.addEventListener("done", (e) => {
+    done = true;
+    handleEvent("done")(e);
   });
+
+  es.addEventListener("analysis-error", (e: MessageEvent) => {
+    done = true;
+    try {
+      const data = JSON.parse(e.data);
+      onEvent({ event: "error", data });
+    } catch {
+      onEvent({ event: "error", data: { raw: e.data, message: "分析过程出错" } });
+    }
+  });
+
+  const timeoutId = setTimeout(() => {
+    if (!done) {
+      timedOut = true;
+      es.close();
+      onError?.(new Event("timeout") as unknown as Event);
+    }
+  }, SSE_TIMEOUT_MS);
+
+  const origOnError = es.onerror;
+  es.onerror = (e: Event) => {
+    clearTimeout(timeoutId);
+    if (!done && !timedOut) {
+      onError?.(e);
+    }
+    origOnError?.call(es, e);
+  };
 
   return es;
 }

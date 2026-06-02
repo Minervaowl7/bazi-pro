@@ -15,7 +15,10 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import Depends, FastAPI, Query, Security, WebSocket, WebSocketDisconnect
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
+
+from fastapi import Depends, FastAPI, Query, Request, Security, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -40,7 +43,8 @@ from server.db import (
     update_analysis_result,
     update_analysis_status,
 )
-from server.llm import build_chat_system_prompt, build_report_system_prompt, chat_completion, is_llm_configured
+from server.llm import build_chat_system_prompt, build_report_system_prompt, chat_completion, get_llm_config, is_llm_configured, update_llm_config
+from server.rag_engine import retrieve_for_chat, retrieve_for_report
 from server.ratelimiter import MemoryRateLimiter, RateLimiter, RedisRateLimiter, create_rate_limiter
 from server.schemas import BaziAnalysisRequest
 from server.taskstore import MemoryTaskStore, RedisTaskStore, create_task_store
@@ -163,10 +167,14 @@ async def _api_key_error_handler(request, exc):
     return error_response(401, "UNAUTHORIZED", "API key 无效或缺失")
 
 
-async def _verify_api_key(api_key: str = Security(_api_key_scheme)):
+async def _verify_api_key(request: Request, api_key: str = Security(_api_key_scheme)):
     if not _API_KEY:
         return True
     if api_key and hmac.compare_digest(api_key, _API_KEY):
+        return True
+    # SSE/EventSource 无法发送自定义 Header，支持通过查询参数传递 token
+    token = request.query_params.get("token", "")
+    if token and hmac.compare_digest(token, _API_KEY):
         return True
     raise _APIKeyError()
 
@@ -576,6 +584,8 @@ async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
     _task_store.update(run_id, {'status': 'running'})
     try:
         result = await run_analysis(mcp_json, run_id, detail_level)
+        if result is None:
+            result = {"status": "failed", "error": "分析引擎返回空结果"}
         _task_store.update(run_id, {'status': result.get('status', 'completed')})
         cache = get_cache()
         cache.set(f'result:{run_id}', result, ttl=_TASK_TTL_SECONDS)
@@ -591,6 +601,8 @@ async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
 _sse_subscribers: dict[str, list[asyncio.Queue]] = {}
 _sse_buffers: dict[str, list[str]] = {}
 _v2_active_ids: set[str] = set()
+_sse_lock = asyncio.Lock()
+_SSE_BUFFER_MAX = 100
 
 
 _original_ws_send_progress = manager.send_progress
@@ -630,10 +642,14 @@ class PaipanRequest(BaseModel):
 class ChatRequest(BaseModel):
     analysis_id: str = Field(..., description="分析记录 ID")
     message: str = Field(..., description="用户消息")
+    school: str = Field(default="ziping", description="派别视角: ziping/mangpai/xinpai")
+    retrieval_depth: str = Field(default="enhanced", description="检索深度: basic/enhanced")
 
 
 class ReportRequest(BaseModel):
     analysis_id: str = Field(..., description="分析记录 ID")
+    school: str = Field(default="ziping", description="派别视角: ziping/mangpai/xinpai")
+    retrieval_depth: str = Field(default="enhanced", description="检索深度: basic/enhanced")
 
 
 @app.post("/api/v2/paipan")
@@ -641,7 +657,8 @@ async def api_v2_paipan(payload: PaipanRequest):
     """排盘 API — 根据出生时间生成八字四柱"""
     try:
         from bazi_pro.paipan import paipan_from_datetime
-        result = paipan_from_datetime(payload.阳历, payload.性别, payload.农历 or "")
+        solar = payload.阳历 or ""
+        result = paipan_from_datetime(solar, payload.性别, payload.农历 or "")
         return JSONResponse(result)
     except Exception as e:
         return error_response(400, "PAIPAN_ERROR", str(e))
@@ -671,11 +688,12 @@ async def api_v2_analyze(payload: BirthAnalyzeRequest):
 
         from server.true_solar_time import correct_to_true_solar_time
         try:
-            solar_str = payload_dict["阳历"]
-            solar_dt = _dt.fromisoformat(solar_str.replace("/", "-").replace(" ", "T"))
-            corrected = correct_to_true_solar_time(solar_dt, longitude)
-            payload_dict["阳历"] = corrected.strftime("%Y-%m-%d %H:%M")
-            payload_dict["真太阳时校正"] = True
+            solar_str = payload_dict["阳历"] or ""
+            if solar_str:
+                solar_dt = _dt.fromisoformat(solar_str.replace("/", "-").replace(" ", "T"))
+                corrected = correct_to_true_solar_time(solar_dt, longitude)
+                payload_dict["阳历"] = corrected.strftime("%Y-%m-%d %H:%M")
+                payload_dict["真太阳时校正"] = True
         except (ValueError, TypeError):
             pass
 
@@ -781,9 +799,14 @@ async def api_v2_daily_fortune(analysis_id: str):
     if not analysis:
         return error_response(404, "NOT_FOUND", "分析不存在")
 
-    result = analysis.get("result", {})
-    validation = result.get("validation", {})
-    yongshen_data = result.get("yongshen", {})
+    result = analysis.get("full_result", {})
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except (json.JSONDecodeError, TypeError):
+            result = {}
+    validation = result.get("validation", {}) if isinstance(result, dict) else {}
+    yongshen_data = result.get("yongshen", {}) if isinstance(result, dict) else {}
 
     day_master = validation.get("day_master", "")
     yongshen_wx = yongshen_data.get("yongshen", "")
@@ -812,9 +835,14 @@ async def api_v2_monthly_fortune(analysis_id: str, year: int = Query(default=0),
     if not analysis:
         return error_response(404, "NOT_FOUND", "分析不存在")
 
-    result = analysis.get("result", {})
-    validation = result.get("validation", {})
-    yongshen_data = result.get("yongshen", {})
+    result = analysis.get("full_result", {})
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except (json.JSONDecodeError, TypeError):
+            result = {}
+    validation = result.get("validation", {}) if isinstance(result, dict) else {}
+    yongshen_data = result.get("yongshen", {}) if isinstance(result, dict) else {}
 
     day_master = validation.get("day_master", "")
     yongshen_wx = yongshen_data.get("yongshen", "")
@@ -842,11 +870,12 @@ async def api_v2_reverse_lookup(payload: ReverseLookupRequest):
     return JSONResponse({"dates": results, "day_pillar": payload.day_pillar})
 
 
-_v2_active_ids: set[str] = set()
-
-
 async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level: str, school: str = 'ziping'):
     """P0 后台分析 — 发送 SSE 事件 + 存储结果"""
+    for key in list(mcp_json.keys()):
+        if mcp_json[key] is None:
+            mcp_json[key] = ''
+
     _v2_active_ids.add(analysis_id)
     try:
         await _sse_broadcast(analysis_id, "progress", {
@@ -855,43 +884,53 @@ async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level:
 
         result = await run_analysis(mcp_json, analysis_id, detail_level, school)
 
+        if result is None:
+            result = {"status": "failed", "error": "分析引擎返回空结果"}
+
         await update_analysis_result(analysis_id, result)
         await _sse_broadcast(analysis_id, "done", {"analysis_id": analysis_id})
 
     except Exception as e:
-        logger.error("V2 analysis failed for %s: %s", analysis_id, e)
-        await update_analysis_status(analysis_id, "failed", str(e))
-        await _sse_broadcast(analysis_id, "error", {"message": str(e)})
+        import traceback as _tb
+        logger.error("V2 analysis failed for %s: %s\n%s", analysis_id, e, _tb.format_exc())
+        client_msg = str(e) or type(e).__name__
+        await update_analysis_status(analysis_id, "failed", client_msg)
+        await _sse_broadcast(analysis_id, "analysis-error", {"message": client_msg})
     finally:
         _v2_active_ids.discard(analysis_id)
         await asyncio.sleep(2)
-        _sse_subscribers.pop(analysis_id, None)
-        _sse_buffers.pop(analysis_id, None)
+        async with _sse_lock:
+            _sse_subscribers.pop(analysis_id, None)
+            _sse_buffers.pop(analysis_id, None)
 
 
 async def _sse_broadcast(analysis_id: str, event: str, data: dict):
     """向所有订阅该 analysis_id 的 SSE 客户端广播事件，同时缓存"""
     msg = f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
-    buf = _sse_buffers.get(analysis_id)
-    if buf is not None:
-        buf.append(msg)
-    queues = _sse_subscribers.get(analysis_id, [])
+    async with _sse_lock:
+        buf = _sse_buffers.get(analysis_id)
+        if buf is not None:
+            buf.append(msg)
+            if len(buf) > _SSE_BUFFER_MAX:
+                del buf[:len(buf) - _SSE_BUFFER_MAX]
+        queues = list(_sse_subscribers.get(analysis_id, []))
     for q in queues:
         await q.put(msg)
 
 
 @app.get("/api/v2/analysis/{analysis_id}/stream")
-async def api_v2_stream(analysis_id: str):
+async def api_v2_stream(analysis_id: str, _auth=Depends(_verify_api_key)):
     """SSE 流式端点 — 实时推送分析进度（含缓冲回放）"""
     queue: asyncio.Queue = asyncio.Queue()
 
-    buffered = _sse_buffers.get(analysis_id, [])
-    for msg in buffered:
-        await queue.put(msg)
+    async with _sse_lock:
+        buffered = _sse_buffers.get(analysis_id, [])
+        for msg in buffered:
+            await queue.put(msg)
 
-    if analysis_id not in _sse_subscribers:
-        _sse_subscribers[analysis_id] = []
-    _sse_subscribers[analysis_id].append(queue)
+        if analysis_id not in _sse_subscribers:
+            _sse_subscribers[analysis_id] = []
+        _sse_subscribers[analysis_id].append(queue)
 
     already_done = any('"done"' in m or '"error"' in m for m in buffered)
 
@@ -908,9 +947,10 @@ async def api_v2_stream(analysis_id: str):
                         break
                     yield ": keepalive\n\n"
         finally:
-            subs = _sse_subscribers.get(analysis_id, [])
-            if queue in subs:
-                subs.remove(queue)
+            async with _sse_lock:
+                subs = _sse_subscribers.get(analysis_id, [])
+                if queue in subs:
+                    subs.remove(queue)
 
     return StreamingResponse(
         event_generator(),
@@ -1079,21 +1119,36 @@ async def api_v2_chat(payload: ChatRequest):
         except Exception:
             pass
 
-    system_prompt = build_chat_system_prompt(result or {}, narration)
+    retrieval_results = None
+    citations = None
+    if payload.retrieval_depth != "basic" and isinstance(result, dict):
+        try:
+            analysis_context = _extract_analysis_context(result)
+            retrieval_results = retrieve_for_chat(payload.message, analysis_context, k=5)
+            # 只返回格式化后的引用文本给前端，不返回完整检索结构
+            from server.rag_engine import _format_retrieval_for_prompt
+            citations = _format_retrieval_for_prompt(retrieval_results)
+        except Exception as exc:
+            logger.warning("RAG retrieval failed for chat %s: %s", payload.analysis_id, exc)
 
-    history = await get_chat_messages(payload.analysis_id, limit=20)
+    system_prompt = build_chat_system_prompt(result or {}, narration, school=payload.school, retrieval_results=retrieval_results)
+
+    history = await get_chat_messages(payload.analysis_id, limit=20, school=payload.school)
 
     messages = [{"role": "system", "content": system_prompt}]
     for msg in history:
         messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": payload.message})
 
-    await insert_chat_message(payload.analysis_id, "user", payload.message)
+    await insert_chat_message(payload.analysis_id, "user", payload.message, school=payload.school)
 
     try:
         reply = await chat_completion(messages)
-        await insert_chat_message(payload.analysis_id, "assistant", reply)
-        return JSONResponse({"reply": reply})
+        await insert_chat_message(payload.analysis_id, "assistant", reply, school=payload.school)
+        response_payload = {"reply": reply}
+        if citations is not None:
+            response_payload["citations"] = citations
+        return JSONResponse(response_payload)
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
@@ -1103,9 +1158,9 @@ async def api_v2_chat(payload: ChatRequest):
 
 
 @app.get("/api/v2/chat/{analysis_id}")
-async def api_v2_get_chat(analysis_id: str):
+async def api_v2_get_chat(analysis_id: str, school: str = Query(default=None)):
     """获取对话历史"""
-    messages = await get_chat_messages(analysis_id, limit=100)
+    messages = await get_chat_messages(analysis_id, limit=100, school=school)
     return JSONResponse({"messages": messages})
 
 
@@ -1148,7 +1203,26 @@ async def api_v2_create_report(payload: ReportRequest):
 
     dayun_data = birth_json.get("大运", None)
 
-    system_prompt = build_report_system_prompt(result, narration, dayun_data)
+    retrieval_results = None
+    citations = None
+    if payload.retrieval_depth != "basic":
+        try:
+            analysis_context = _extract_analysis_context(result)
+            chapter_keys = [
+                "overview", "past_validation", "future_luck", "career_wealth",
+                "marriage_love", "family", "health", "guidance",
+            ]
+            retrieval_results = {}
+            citations = {}
+            from server.rag_engine import _format_retrieval_for_prompt
+            for chapter_key in chapter_keys:
+                chapter_result = retrieve_for_report(chapter_key, analysis_context, k=5)
+                retrieval_results[chapter_key] = chapter_result
+                citations[chapter_key] = _format_retrieval_for_prompt(chapter_result)
+        except Exception as exc:
+            logger.warning("RAG retrieval failed for report %s: %s", payload.analysis_id, exc)
+
+    system_prompt = build_report_system_prompt(result, narration, dayun_data, school=payload.school, retrieval_results=retrieval_results)
     messages = [{"role": "system", "content": system_prompt}]
 
     try:
@@ -1162,11 +1236,16 @@ async def api_v2_create_report(payload: ReportRequest):
 
     report_id = await save_report(payload.analysis_id, report_data)
 
-    return JSONResponse({
-        "report_id": report_id,
+    response_payload = {
+        "status": "completed",
         "analysis_id": payload.analysis_id,
-        "report": report_data,
-    })
+        "report_id": report_id,
+        "sections": report_data,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if citations is not None:
+        response_payload["citations"] = citations
+    return JSONResponse(response_payload)
 
 
 @app.get("/api/v2/report/{analysis_id}")
@@ -1177,14 +1256,51 @@ async def api_v2_get_report(analysis_id: str):
         return error_response(404, "NOT_FOUND", "报告不存在，请先通过 POST /api/v2/report 生成")
 
     return JSONResponse({
-        "report_id": record["id"],
+        "status": "completed",
         "analysis_id": record["analysis_id"],
-        "report": record["report_data"],
+        "report_id": record["id"],
+        "sections": record["report_data"],
         "created_at": record["created_at"],
     })
 
 
+def _extract_analysis_context(result: dict) -> dict:
+    """从分析结果中提取 RAG 检索所需的上下文信息。"""
+    context: dict = {}
+    validation = result.get("validation", {}) if isinstance(result, dict) else {}
+    if isinstance(validation, dict):
+        context["day_master"] = validation.get("day_master", "")
+        context["bazi"] = validation.get("bazi", "")
+
+    pattern = result.get("pattern", {}) if isinstance(result, dict) else {}
+    if isinstance(pattern, dict):
+        context["pattern"] = pattern
+    else:
+        context["pattern"] = {"name": str(pattern) if pattern else ""}
+
+    # 旺衰数据在 result['strength']['wangshuai'] 下
+    strength_info = result.get("strength", {}) if isinstance(result, dict) else {}
+    if isinstance(strength_info, dict) and "wangshuai" in strength_info:
+        context["wangshuai"] = strength_info["wangshuai"]
+    else:
+        # 兼容：可能直接在 result['wangshuai']
+        wangshuai = result.get("wangshuai", {}) if isinstance(result, dict) else {}
+        if isinstance(wangshuai, dict):
+            context["wangshuai"] = wangshuai
+        else:
+            context["wangshuai"] = {"verdict": str(wangshuai) if wangshuai else ""}
+
+    yongshen = result.get("yongshen", {}) if isinstance(result, dict) else {}
+    if isinstance(yongshen, dict):
+        context["yongshen"] = yongshen
+    else:
+        context["yongshen"] = {"yongshen": str(yongshen) if yongshen else ""}
+
+    return context
+
+
 def _parse_report_json(raw_reply: str) -> dict:
+    """解析LLM返回的JSON报告，支持新旧两种格式"""
     try:
         cleaned = raw_reply.strip()
         if cleaned.startswith("```json"):
@@ -1196,22 +1312,85 @@ def _parse_report_json(raw_reply: str) -> dict:
         cleaned = cleaned.strip()
         parsed = json.loads(cleaned)
         if isinstance(parsed, dict):
-            required_keys = {"overview", "personality", "career", "marriage", "health", "dayun_analysis", "lucky"}
-            if required_keys.issubset(parsed.keys()):
-                return parsed
-            return {k: parsed.get(k, "") for k in required_keys}
-    except (json.JSONDecodeError, TypeError):
-        pass
+            # 新格式8个章节
+            new_keys = {"overview", "past_validation", "future_luck", "career_wealth", "marriage_love", "family", "health", "guidance"}
+            # 旧格式7个章节（兼容）
+            old_keys = {"overview", "personality", "career", "marriage", "health", "dayun_analysis", "lucky"}
 
+            if new_keys.issubset(parsed.keys()):
+                return parsed
+            if old_keys.issubset(parsed.keys()):
+                # 旧格式转换为新格式
+                return {
+                    "overview": parsed.get("overview", ""),
+                    "past_validation": "",
+                    "future_luck": parsed.get("dayun_analysis", ""),
+                    "career_wealth": parsed.get("career", ""),
+                    "marriage_love": parsed.get("marriage", ""),
+                    "family": "",
+                    "health": parsed.get("health", ""),
+                    "guidance": parsed.get("lucky", ""),
+                }
+            # 部分匹配，填充缺失字段
+            return {
+                "overview": parsed.get("overview", ""),
+                "past_validation": parsed.get("past_validation", ""),
+                "future_luck": parsed.get("future_luck", parsed.get("dayun_analysis", "")),
+                "career_wealth": parsed.get("career_wealth", parsed.get("career", "")),
+                "marriage_love": parsed.get("marriage_love", parsed.get("marriage", "")),
+                "family": parsed.get("family", ""),
+                "health": parsed.get("health", ""),
+                "guidance": parsed.get("guidance", parsed.get("lucky", "")),
+            }
+    except (json.JSONDecodeError, TypeError) as e:
+        logger.warning("Failed to parse report JSON: %s", e)
+
+    # 解析失败，返回默认结构
     return {
-        "overview": "",
-        "personality": "",
-        "career": "",
-        "marriage": "",
+        "overview": raw_reply,
+        "past_validation": "",
+        "future_luck": "",
+        "career_wealth": "",
+        "marriage_love": "",
+        "family": "",
         "health": "",
-        "dayun_analysis": raw_reply,
-        "lucky": "",
+        "guidance": "",
     }
+
+
+class LLMSettingsRequest(BaseModel):
+    api_key: str = Field(default="", description="LLM API Key")
+    api_base: str = Field(default="https://api.openai.com/v1", description="API Base URL")
+    model: str = Field(default="gpt-4o-mini", description="模型名称")
+
+
+@app.get("/api/v2/settings/llm")
+async def api_v2_get_llm_settings(_auth=Depends(_verify_api_key)):
+    cfg = get_llm_config()
+    return JSONResponse({
+        "api_base": cfg["api_base"],
+        "api_key_set": cfg["api_key_set"],
+        "model": cfg["model"],
+    })
+
+
+@app.post("/api/v2/settings/llm")
+async def api_v2_update_llm_settings(req: LLMSettingsRequest, _auth=Depends(_verify_api_key)):
+    try:
+        update_llm_config(
+            api_key=req.api_key or None,
+            api_base=req.api_base or None,
+            model=req.model or None,
+        )
+    except ValueError as e:
+        return error_response(400, "INVALID_INPUT", str(e))
+    cfg = get_llm_config()
+    return JSONResponse({
+        "ok": True,
+        "api_base": cfg["api_base"],
+        "api_key_set": cfg["api_key_set"],
+        "model": cfg["model"],
+    })
 
 
 def main():
@@ -1220,6 +1399,9 @@ def main():
     port = _get_int_env("BAZI_PORT", 8710)
     log_level = os.environ.get("BAZI_LOG_LEVEL", "info")
     workers = _get_int_env("BAZI_WORKERS", 1)
+    if workers > 1:
+        logger.warning("SQLite does not support multi-worker mode; forcing workers=1")
+        workers = 1
     if os.environ.get("DEBUG", "").lower() in ("1", "true", "yes"):
         logger.warning("⚠️  DEBUG mode is enabled — do not use in production!")
     uvicorn.run(app, host=host, port=port, log_level=log_level, workers=workers)

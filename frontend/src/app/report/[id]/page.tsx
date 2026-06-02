@@ -6,6 +6,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ThemeToggle } from "@/components/ThemeProvider";
+import { SCHOOL_OPTIONS } from "@/lib/constants";
 import {
   getAnalysis,
   getReport,
@@ -14,29 +15,33 @@ import {
   type ReportResponse,
 } from "@/lib/api";
 
+// 8章详批报告结构
 const SECTION_META: Array<{
   key: string;
   title: string;
   icon: string;
 }> = [
-  { key: "overview", title: "命盘总论", icon: "☯" },
-  { key: "personality", title: "性格深度分析", icon: "🎭" },
-  { key: "career", title: "事业财运", icon: "💼" },
-  { key: "marriage", title: "感情婚姻", icon: "❤" },
-  { key: "health", title: "健康提醒", icon: "⚕" },
-  { key: "dayun_analysis", title: "大运流年详批", icon: "📅" },
-  { key: "lucky", title: "开运建议", icon: "🍀" },
+  { key: "overview", title: "命盘总览", icon: "☯" },
+  { key: "past_validation", title: "过往验证", icon: "📜" },
+  { key: "future_luck", title: "运势流年", icon: "📅" },
+  { key: "career_wealth", title: "事业财运", icon: "💼" },
+  { key: "marriage_love", title: "婚恋感情", icon: "❤" },
+  { key: "family", title: "家庭六亲", icon: "👨‍👩‍👧‍👦" },
+  { key: "health", title: "健康提示", icon: "⚕" },
+  { key: "guidance", title: "趋吉避凶", icon: "🍀" },
 ];
 
 function SectionCard({
   title,
   icon,
   content,
+  citation,
   defaultOpen = false,
 }: {
   title: string;
   icon: string;
   content: string;
+  citation?: string;
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -88,6 +93,18 @@ function SectionCard({
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
           </div>
+          {citation && citation.trim().length > 0 && (
+            <div
+              className="mt-4 px-3 py-2.5 rounded-md text-xs leading-relaxed"
+              style={{
+                background: "var(--bg-secondary)",
+                color: "var(--text-muted)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              {citation}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -145,25 +162,31 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSchool, setSelectedSchool] = useState("ziping");
+  const [schoolDropdownOpen, setSchoolDropdownOpen] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
+    let analysisData: AnalysisResult | null = null;
+    let reportData: ReportResponse | null = null;
     try {
-      const [analysisData, reportData] = await Promise.all([
-        getAnalysis(analysisId),
-        getReport(analysisId),
-      ]);
+      analysisData = await getAnalysis(analysisId);
+    } catch {}
+    try {
+      reportData = await getReport(analysisId);
+    } catch {}
+    if (!analysisData) {
+      setError("加载分析数据失败");
+    } else {
       setAnalysis(analysisData);
       setReport(reportData);
-    } catch {
-      setError("加载数据失败");
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   }, [analysisId]);
 
   useEffect(() => {
-    fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
+    fetchData();
   }, [fetchData]);
 
   useEffect(() => {
@@ -183,11 +206,23 @@ export default function ReportPage() {
     }
   }, [report?.status, analysisId]);
 
+  // 点击外部关闭下拉框
+  useEffect(() => {
+    if (!schoolDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setSchoolDropdownOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [schoolDropdownOpen]);
+
   const handleGenerate = async () => {
     setGenerating(true);
     setError(null);
     try {
-      const resp = await generateReport(analysisId);
+      const resp = await generateReport(analysisId, selectedSchool);
       setReport(resp);
     } catch (e) {
       setError(e instanceof Error ? e.message : "生成报告失败");
@@ -319,6 +354,89 @@ export default function ReportPage() {
             <p className="text-base mb-6" style={{ color: "var(--text-secondary)" }}>
               尚未生成详批报告
             </p>
+
+            {/* 派别选择 */}
+            <div className="mb-6 flex justify-center" ref={dropdownRef}>
+              <div className="relative inline-block text-left">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSchoolDropdownOpen(!schoolDropdownOpen);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+                  style={{
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  <span style={{ color: "var(--text-muted)" }}>分析视角：</span>
+                  <span className="font-semibold">
+                    {SCHOOL_OPTIONS.find((s) => s.value === selectedSchool)?.label || "传统子平法"}
+                  </span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      transform: schoolDropdownOpen ? "rotate(180deg)" : "none",
+                      transition: "transform 0.2s",
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                {schoolDropdownOpen && (
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 z-50 rounded-xl overflow-hidden"
+                    style={{
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+                    }}
+                  >
+                    {SCHOOL_OPTIONS.map((s) => (
+                      <button
+                        key={s.value}
+                        onClick={() => {
+                          setSelectedSchool(s.value);
+                          setSchoolDropdownOpen(false);
+                        }}
+                        className="w-full px-5 py-3 text-left transition-colors hover:bg-[var(--bg-hover)]"
+                        style={{
+                          fontSize: 13,
+                          background:
+                            selectedSchool === s.value
+                              ? "var(--accent-dim, rgba(45,125,91,0.08))"
+                              : "transparent",
+                        }}
+                      >
+                        <div
+                          className="font-medium"
+                          style={{
+                            color:
+                              selectedSchool === s.value
+                                ? "var(--accent)"
+                                : "var(--text-primary)",
+                          }}
+                        >
+                          {s.label}
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                          {s.desc}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <button
               onClick={handleGenerate}
               className="px-8 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
@@ -337,7 +455,7 @@ export default function ReportPage() {
             <div className="flex items-center justify-center gap-3 py-4">
               <div className="animate-pulse-glow w-3 h-3 rounded-full" style={{ background: "var(--accent)" }} />
               <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-                正在生成报告，请稍候...
+                正在以「{SCHOOL_OPTIONS.find((s) => s.value === selectedSchool)?.label || "传统子平法"}」视角生成报告，请稍候...
               </span>
             </div>
             {Array.from({ length: 3 }).map((_, i) => (
@@ -417,6 +535,7 @@ export default function ReportPage() {
                   title={s.title}
                   icon={s.icon}
                   content={content}
+                  citation={report.citations?.[s.key]}
                   defaultOpen={i === 0}
                 />
               );

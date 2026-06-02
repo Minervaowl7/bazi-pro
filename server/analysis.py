@@ -7,6 +7,8 @@ bazi-pro 异步分析编排 v5.0
 import asyncio
 import hashlib
 import json
+import logging
+import traceback
 from datetime import datetime, timezone
 
 from bazi_pro import GAN_WUXING, ZHI_WUXING, derive_shishen
@@ -26,7 +28,7 @@ from bazi_pro.paipan import paipan_from_datetime
 from server.cache import get_cache
 from server.gongwei import calc_gongwei
 from server.nayin import lookup_nayin
-from server.shensha import calc_shensha
+from server.shensha import calc_shensha_enhanced
 from server.ws import manager
 
 try:
@@ -38,6 +40,10 @@ except ImportError:
 async def run_analysis(mcp_json: dict, run_id: str,
                        detail_level: str = 'standard',
                        school: str = 'ziping') -> dict:
+    for key in list(mcp_json.keys()):
+        if mcp_json[key] is None:
+            mcp_json[key] = ''
+
     cache = get_cache()
 
     cache_key = _make_cache_key(mcp_json, detail_level, school)
@@ -63,7 +69,7 @@ async def run_analysis(mcp_json: dict, run_id: str,
 
     try:
         await manager.send_progress(run_id, '1', 'running', '数据校验中...')
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0)
         validation = _validate_input(mcp_json)
         await manager.send_progress(run_id, '1', 'done', '数据校验完成', validation)
         result['validation'] = validation
@@ -75,14 +81,14 @@ async def run_analysis(mcp_json: dict, run_id: str,
                                          f'输入数据校验失败: {validation.get("errors", [])}')
             return result
 
-        bazi = mcp_json.get('八字', '')
-        day_master = mcp_json.get('日主', '')
+        bazi = mcp_json.get('八字') or ''
+        day_master = mcp_json.get('日主') or ''
         bazi_parts = bazi.split()
         month_zhi = bazi_parts[1][1] if len(bazi_parts) >= 2 and len(bazi_parts[1]) >= 2 else ''
 
         paipan_result = None
-        solar = mcp_json.get('阳历', '')
-        gender = mcp_json.get('性别', '')
+        solar = mcp_json.get('阳历') or ''
+        gender = mcp_json.get('性别') or ''
         if solar and gender:
             try:
                 paipan_result = paipan_from_datetime(solar, gender)
@@ -94,10 +100,12 @@ async def run_analysis(mcp_json: dict, run_id: str,
         await manager.send_progress(run_id, '0', 'done',
                                      f'检索完成，命中 {len(retrieval.get("results", []))} 条',
                                      retrieval)
+        # 预留 analysis_context，后续在 pattern/yongshen/strength 计算完成后回填
+        retrieval.setdefault('analysis_context', {})
         result['retrieval'] = retrieval
 
         await manager.send_progress(run_id, '2', 'running', '日主旺衰判断中...')
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0)
         strength = _estimate_strength(mcp_json, bazi_parts, month_zhi)
         await manager.send_progress(run_id, '2', 'done',
                                      f'旺衰: {strength.get("wangshuai", {}).get("verdict", "未知")}',
@@ -107,7 +115,7 @@ async def run_analysis(mcp_json: dict, run_id: str,
         element_forces = _estimate_elements(mcp_json, bazi_parts, month_zhi)
 
         await manager.send_progress(run_id, '3', 'running', '格局判定中...')
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0)
         pattern = _estimate_pattern(mcp_json, bazi_parts,
                                      strength.get('wangshuai', {}),
                                      element_forces)
@@ -117,7 +125,7 @@ async def run_analysis(mcp_json: dict, run_id: str,
         result['pattern'] = pattern
 
         await manager.send_progress(run_id, '4', 'running', '十神推导中...')
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0)
         shishen = _derive_shishen(mcp_json, bazi_parts)
         await manager.send_progress(run_id, '4', 'done', '十神推导完成', shishen)
         result['shishen'] = shishen
@@ -126,12 +134,12 @@ async def run_analysis(mcp_json: dict, run_id: str,
         if gongwei:
             result['gongwei'] = gongwei
 
-        shensha = calc_shensha(bazi_parts)
+        shensha = await calc_shensha_enhanced(bazi_parts, solar, 1 if gender == "男" else 0)
         if shensha:
             result['shensha'] = shensha
 
         await manager.send_progress(run_id, '4b', 'running', '喜用神候选推导中...')
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0)
         yongshen = _derive_yongshen(day_master, bazi_parts,
                                      pattern, strength.get('wangshuai', {}),
                                      element_forces)
@@ -141,12 +149,12 @@ async def run_analysis(mcp_json: dict, run_id: str,
         result['yongshen'] = yongshen
 
         await manager.send_progress(run_id, '5', 'running', '五行力量分析中...')
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0)
         await manager.send_progress(run_id, '5', 'done', '五行力量分析完成', element_forces)
         result['elements'] = element_forces
 
         await manager.send_progress(run_id, '5b', 'running', '调候查表中...')
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0)
         try:
             from bazi_pro.core.tiaohou import lookup_tiaohou
             tiaohou = lookup_tiaohou(day_master, month_zhi)
@@ -156,16 +164,31 @@ async def run_analysis(mcp_json: dict, run_id: str,
         result['tiaohou'] = tiaohou
 
         await manager.send_progress(run_id, '7', 'running', '刑冲合害检测中...')
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0)
         relations = _detect_relations(bazi_parts)
         await manager.send_progress(run_id, '7', 'done',
                                      f'检测到 {len(relations)} 条刑冲合害关系',
                                      relations)
         result['relations'] = relations
 
+        # 将分析上下文回填到 retrieval，供下游 RAG/LLM 使用
+        if 'retrieval' in result:
+            result['retrieval']['analysis_context'] = {
+                'day_master': day_master,
+                'bazi': bazi,
+                'gender': gender,
+                'wangshuai': strength.get('wangshuai', {}),
+                'pattern': pattern,
+                'yongshen': yongshen,
+                'elements': element_forces,
+                'tiaohou': tiaohou,
+                'relations': relations,
+                'shishen': shishen,
+                'school': school,
+            }
+
         await manager.send_progress(run_id, '9', 'done', '全部分析步骤完成')
 
-        # 提取出生年份
         if solar:
             try:
                 import re
@@ -204,8 +227,10 @@ async def run_analysis(mcp_json: dict, run_id: str,
         cache.set(cache_key, result, ttl=3600)
 
     except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("run_analysis failed: %s\n%s", e, traceback.format_exc())
         result['status'] = 'failed'
-        result['error'] = str(e)
+        result['error'] = str(e) or type(e).__name__
         await manager.send_progress(run_id, 'error', 'failed', str(e))
 
     return result

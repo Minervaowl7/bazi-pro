@@ -2,17 +2,103 @@
 LLM 服务模块 — 支持 OpenAI 兼容 API (OpenAI, DeepSeek, 通义千问, Ollama 等)
 """
 import json
+import asyncio
 import logging
 import os
+import re
 
 import httpx
 
+from bazi_pro.paipan import DIZHI, TIANGAN
+
 logger = logging.getLogger("bazi-pro.llm")
+
+
+def _get_year_ganzhi(year: int) -> str:
+    """根据公历年份计算年柱干支"""
+    gan_idx = (year - 4) % 10
+    zhi_idx = (year - 4) % 12
+    return TIANGAN[gan_idx] + DIZHI[zhi_idx]
+
+
+def _get_month_ganzhi(year: int, month: int) -> str:
+    """根据公历年月计算月柱干支（使用排盘引擎确保准确）"""
+    try:
+        from bazi_pro.paipan import paipan_from_datetime
+        solar_str = f"{year:04d}-{month:02d}-15 12:00"
+        result = paipan_from_datetime(solar_str, "男")
+        if result.get("status") == "completed":
+            pillars = result.get("pillars", [])
+            if pillars and len(pillars) >= 2:
+                return pillars[1].get("gan", "") + pillars[1].get("zhi", "")
+    except Exception:
+        pass
+    # 降级：五虎遁简化计算
+    year_gan_idx = (year - 4) % 10
+    year_gan = TIANGAN[year_gan_idx]
+    # 甲己之年丙作首，乙庚之岁戊为头...
+    base_map = {"甲": 2, "己": 2, "乙": 4, "庚": 4, "丙": 6, "辛": 6, "丁": 8, "壬": 8, "戊": 0, "癸": 0}
+    base_idx = base_map.get(year_gan, 2)
+    gan_idx = (base_idx + month - 1) % 10
+    zhi_idx = (month + 1) % 12  # 寅月为正月
+    return TIANGAN[gan_idx] + DIZHI[zhi_idx]
+
+
+def _get_day_ganzhi(d) -> str:
+    """根据公历日期计算日柱干支（使用排盘引擎确保准确）"""
+    try:
+        from bazi_pro.paipan import paipan_from_datetime
+        from datetime import date
+        if isinstance(d, date):
+            solar_str = f"{d.year:04d}-{d.month:02d}-{d.day:02d} 12:00"
+            result = paipan_from_datetime(solar_str, "男")
+            if result.get("status") == "completed":
+                pillars = result.get("pillars", [])
+                if pillars and len(pillars) >= 3:
+                    return pillars[2].get("gan", "") + pillars[2].get("zhi", "")
+    except Exception:
+        pass
+    # 降级：简化计算（1900-01-01 为甲戌日）
+    from datetime import date
+    base = date(1900, 1, 1)
+    if isinstance(d, date):
+        delta = (d - base).days
+        gan_idx = (delta + 0) % 10  # 甲=0
+        zhi_idx = (delta + 10) % 12  # 戌=10
+        return TIANGAN[gan_idx] + DIZHI[zhi_idx]
+    return ""
 
 _LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://api.openai.com/v1")
 _LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
 _LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
 _LLM_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "300"))
+
+
+def get_llm_config() -> dict:
+    return {
+        "api_base": _LLM_API_BASE,
+        "api_key_set": bool(_LLM_API_KEY),
+        "model": _LLM_MODEL,
+    }
+
+
+def update_llm_config(api_key: str | None = None, api_base: str | None = None, model: str | None = None):
+    global _LLM_API_KEY, _LLM_API_BASE, _LLM_MODEL
+    if api_key is not None:
+        if not isinstance(api_key, str) or len(api_key) > 512:
+            raise ValueError("api_key 格式不合法")
+        _LLM_API_KEY = api_key
+    if api_base is not None:
+        if not isinstance(api_base, str):
+            raise ValueError("api_base 必须为字符串")
+        if api_base and not re.match(r'^https?://[\w.\-]+(:\d+)?(/.*)?$', api_base):
+            raise ValueError("api_base URL 格式不合法")
+        _LLM_API_BASE = api_base
+    if model is not None:
+        if not isinstance(model, str) or not re.match(r'^[a-zA-Z0-9._\-/]+$', model):
+            raise ValueError("model 名称格式不合法")
+        _LLM_MODEL = model
+    logger.info("[llm] config updated: base=%s model=%s key_set=%s", _LLM_API_BASE, _LLM_MODEL, bool(_LLM_API_KEY))
 
 
 def is_llm_configured() -> bool:
@@ -35,11 +121,18 @@ async def chat_completion(messages: list[dict], temperature: float = 0.7, max_to
         "max_tokens": max_tokens,
     }
 
-    async with httpx.AsyncClient(timeout=_LLM_TIMEOUT) as client:
-        resp = await client.post(url, headers=headers, json=payload)
-        resp.raise_for_status()
-        data = resp.json()
-        return data["choices"][0]["message"]["content"]
+    max_retries = 2
+    for attempt in range(max_retries + 1):
+        async with httpx.AsyncClient(timeout=_LLM_TIMEOUT) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+            if resp.status_code >= 500 and attempt < max_retries:
+                logger.warning("[llm] server error %d, retry %d/%d", resp.status_code, attempt + 1, max_retries)
+                await asyncio.sleep(1 * (attempt + 1))
+                continue
+            resp.raise_for_status()
+            data = resp.json()
+            return data["choices"][0]["message"]["content"]
+    raise RuntimeError("unreachable")
 
 
 async def chat_completion_stream(messages: list[dict], temperature: float = 0.7, max_tokens: int = 4096):
@@ -78,141 +171,686 @@ async def chat_completion_stream(messages: list[dict], temperature: float = 0.7,
                     continue
 
 
-def build_analysis_system_prompt(analysis_result: dict, narration: dict) -> str:
-    validation = analysis_result.get("validation", {})
-    strength = analysis_result.get("strength", {})
-    pattern_info = analysis_result.get("pattern", {})
-    yongshen_info = analysis_result.get("yongshen", {})
-    elements = analysis_result.get("elements", {})
-    relations = analysis_result.get("relations", [])
-    tiaohou = analysis_result.get("tiaohou", {})
-    shishen = analysis_result.get("shishen", {})
+def _format_analysis_context(analysis_result: dict, narration: dict, school: str = "ziping") -> str:
+    """格式化命盘数据为文本上下文，支持不同派别视角"""
+    if not isinstance(analysis_result, dict):
+        analysis_result = {}
+    if not isinstance(narration, dict):
+        narration = {}
 
-    day_master = validation.get("day_master", "")
-    bazi = validation.get("bazi", "")
-    gender = validation.get("gender", "")
+    validation = analysis_result.get("validation", {}) if isinstance(analysis_result.get("validation"), dict) else {}
+    strength = analysis_result.get("strength", {}) if isinstance(analysis_result.get("strength"), dict) else {}
+    pattern_info = analysis_result.get("pattern", {}) if isinstance(analysis_result.get("pattern"), dict) else {}
+    yongshen_info = analysis_result.get("yongshen", {}) if isinstance(analysis_result.get("yongshen"), dict) else {}
+    elements = analysis_result.get("elements", {}) if isinstance(analysis_result.get("elements"), dict) else {}
+    relations = analysis_result.get("relations", []) if isinstance(analysis_result.get("relations"), list) else []
+    tiaohou = analysis_result.get("tiaohou", {}) if isinstance(analysis_result.get("tiaohou"), dict) else {}
+    shishen = analysis_result.get("shishen", {}) if isinstance(analysis_result.get("shishen"), dict) else {}
+    shensha = analysis_result.get("shensha", {}) if isinstance(analysis_result.get("shensha"), dict) else {}
+    gongwei = analysis_result.get("gongwei", {}) if isinstance(analysis_result.get("gongwei"), dict) else {}
 
-    ws = strength.get("wangshuai", {})
-    pattern = pattern_info.get("pattern", "")
-    yongshen = yongshen_info.get("yongshen", "")
-    xishen = yongshen_info.get("xishen", [])
-    jishen = yongshen_info.get("jishen", [])
+    day_master = validation.get("day_master", "") if isinstance(validation, dict) else ""
+    bazi = validation.get("bazi", "") if isinstance(validation, dict) else ""
+    gender = validation.get("gender", "") if isinstance(validation, dict) else ""
+
+    ws = strength.get("wangshuai", {}) if isinstance(strength, dict) else {}
+    pattern = pattern_info.get("pattern", "") if isinstance(pattern_info, dict) else ""
+    yongshen = yongshen_info.get("yongshen", "") if isinstance(yongshen_info, dict) else ""
+    xishen = yongshen_info.get("xishen", []) if isinstance(yongshen_info, dict) else []
+    jishen = yongshen_info.get("jishen", []) if isinstance(yongshen_info, dict) else []
 
     pillars_info = ""
-    for p in shishen.get("pillars", []):
+    for p in (shishen.get("pillars", []) if isinstance(shishen, dict) else []):
+        if not isinstance(p, dict):
+            continue
         pos = p.get("position", "")
         gan = p.get("gan", "")
         zhi = p.get("zhi", "")
         ss_gan = p.get("shishen_gan", "")
         ss_zhi = p.get("shishen_zhi", "")
-        canggan = p.get("canggan", [])
-        cg_str = " ".join(f"{c['gan']}({c.get('shishen','')})" for c in canggan)
+        canggan = p.get("canggan", []) if isinstance(p.get("canggan"), list) else []
+        cg_str = " ".join(f"{c.get('gan','')}({c.get('shishen','')})" for c in canggan if isinstance(c, dict))
         pillars_info += f"  {pos}: {gan}{zhi} 天干十神={ss_gan} 地支十神={ss_zhi} 藏干={cg_str}\n"
 
     relations_str = ""
     for r in relations:
-        relations_str += f"  {r.get('type','')}: {r.get('description','')}\n"
+        if isinstance(r, dict):
+            relations_str += f"  {r.get('type','')}: {r.get('description','')}\n"
 
-    percent = elements.get("percent", {})
-    elements_str = " ".join(f"{k}:{v:.1f}%" for k, v in sorted(percent.items(), key=lambda x: -x[1]))
+    percent = elements.get("percent", {}) if isinstance(elements, dict) else {}
+    try:
+        elements_str = " ".join(f"{k}:{v:.1f}%" for k, v in sorted(percent.items(), key=lambda x: -x[1]))
+    except Exception:
+        elements_str = ""
 
-    return f"""你是一位精通中国传统命理学的资深命理师，擅长子平八字、穷通宝鉴、滴天髓等多种流派。
+    # 神煞信息
+    shensha_str = ""
+    if shensha and isinstance(shensha, dict):
+        for category, items in shensha.items():
+            if items:
+                if isinstance(items, list):
+                    shensha_str += f"  {category}: {', '.join(str(i) for i in items)}\n"
+                elif isinstance(items, dict):
+                    shensha_str += f"  {category}: {items}\n"
 
-## 命盘数据
-- 八字: {bazi}
-- 日主: {day_master}（{gender}命）
-- 生肖: {validation.get('生肖', '')}
+    # 宫位信息
+    gongwei_str = ""
+    if gongwei and isinstance(gongwei, dict):
+        for key, val in gongwei.items():
+            gongwei_str += f"  {key}: {val}\n"
 
-## 四柱详情
-{pillars_info}
+    # 派别特定数据
+    school_analyses = analysis_result.get("school_analyses", {}) if isinstance(analysis_result.get("school_analyses"), dict) else {}
+    school_data = school_analyses.get(school, {}) if isinstance(school_analyses, dict) else {}
+    school_str = ""
+    if school_data and isinstance(school_data, dict):
+        try:
+            school_json = json.dumps(school_data, ensure_ascii=False, indent=2)
+            # 将JSON中的 { 和 } 替换为安全字符，避免f-string解析问题
+            school_str = "\n## " + school + "派分析数据\n" + school_json + "\n"
+        except Exception:
+            school_str = ""
 
-## 旺衰判定
-- 得令: {strength.get('deling', {}).get('status', '')} (分数: {strength.get('deling', {}).get('score', 0)})
-- 得地分数: {strength.get('dedi', {}).get('score', 0)}
-- 得势分数: {strength.get('deshi', {}).get('score', 0)}
-- 综合判定: {ws.get('verdict', '')}
+    # 安全获取嵌套值
+    deling_status = ""
+    deling_score = 0
+    if isinstance(strength, dict):
+        deling = strength.get("deling", {})
+        if isinstance(deling, dict):
+            deling_status = deling.get("status", "")
+            deling_score = deling.get("score", 0)
 
-## 格局
-- 格局: {pattern} (第{pattern_info.get('layer', '?')}层, 置信度: {pattern_info.get('confidence', 0):.0%})
-- 判定理由: {pattern_info.get('reason', '')}
+    dedi_score = 0
+    deshi_score = 0
+    if isinstance(strength, dict):
+        dedi = strength.get("dedi", {})
+        deshi = strength.get("deshi", {})
+        if isinstance(dedi, dict):
+            dedi_score = dedi.get("score", 0)
+        if isinstance(deshi, dict):
+            deshi_score = deshi.get("score", 0)
 
-## 喜用神
-- 用神: {yongshen}
-- 喜神: {'、'.join(xishen)}
-- 忌神: {'、'.join(jishen)}
+    ws_verdict = ""
+    if isinstance(ws, dict):
+        ws_verdict = ws.get("verdict", "")
 
-## 调候
-- 调候用神: {'、'.join(tiaohou.get('tiaohou_gan', []))} ({'、'.join(tiaohou.get('tiaohou_wx', []))})
+    pattern_layer = "?"
+    pattern_confidence = 0
+    pattern_reason = ""
+    if isinstance(pattern_info, dict):
+        pattern_layer = pattern_info.get("layer", "?")
+        pattern_confidence = pattern_info.get("confidence", 0)
+        pattern_reason = pattern_info.get("reason", "")
 
-## 五行力量
-{elements_str}
+    tiaohou_gan = []
+    tiaohou_wx = []
+    if isinstance(tiaohou, dict):
+        tiaohou_gan = tiaohou.get("tiaohou_gan", []) if isinstance(tiaohou.get("tiaohou_gan"), list) else []
+        tiaohou_wx = tiaohou.get("tiaohou_wx", []) if isinstance(tiaohou.get("tiaohou_wx"), list) else []
 
-## 刑冲合害
-{relations_str if relations_str else '无'}
+    xishen_str = "、".join(str(x) for x in xishen) if isinstance(xishen, list) else ""
+    jishen_str = "、".join(str(j) for j in jishen) if isinstance(jishen, list) else ""
 
-## 确定性叙述
-{json.dumps(narration, ensure_ascii=False, indent=2)}
+    shengxiao = validation.get("生肖", "") if isinstance(validation, dict) else ""
+
+    # 出生年份与年龄计算
+    birth_year = analysis_result.get("birth_year", 0)
+    from datetime import datetime
+    now = datetime.now()
+    current_year = now.year
+    current_month = now.month
+    current_day = now.day
+    current_hour = now.hour
+    current_minute = now.minute
+    current_age = current_year - birth_year if birth_year else 0
+    current_liunian_gan_zhi = _get_year_ganzhi(current_year)
+    current_liuyue_gan_zhi = _get_month_ganzhi(current_year, current_month)
+    current_liuri_gan_zhi = _get_day_ganzhi(now.date())
+
+    # 大运数据
+    dayun_list = analysis_result.get("dayun", []) if isinstance(analysis_result.get("dayun"), list) else []
+    qiyun_age = analysis_result.get("qiyun_age", 0)
+    dayun_str = ""
+    current_dayun = ""
+    for dy in dayun_list:
+        if isinstance(dy, dict):
+            age_range = dy.get("age_range", "")
+            gan_zhi = dy.get("gan_zhi", "")
+            dayun_str += f"  {age_range}: {gan_zhi}\n"
+            # 判断当前正在走的大运
+            if age_range and "-" in age_range:
+                try:
+                    start, end = age_range.split("-")
+                    start_age = int(start.strip())
+                    end_age = int(end.strip())
+                    if start_age <= current_age <= end_age:
+                        current_dayun = gan_zhi
+                except (ValueError, TypeError):
+                    pass
+
+    narration_str = ""
+    try:
+        narration_str = json.dumps(narration, ensure_ascii=False, indent=2)
+    except Exception:
+        narration_str = "{}"
+
+    # 使用字符串拼接而非f-string，避免JSON中的{和}被解析为格式占位符
+    parts = [
+        "## 命盘数据",
+        f"- 八字: {bazi}",
+        f"- 日主: {day_master}（{gender}命）",
+        f"- 生肖: {shengxiao}",
+        f"- 出生年份: {birth_year}年" if birth_year else "",
+        f"- 当前时间: {current_year}年{current_month}月{current_day}日 {current_hour:02d}:{current_minute:02d}",
+        f"- 当前流年: {current_liunian_gan_zhi}（{current_year}年）",
+        f"- 当前流月: {current_liuyue_gan_zhi}（{current_month}月）",
+        f"- 当前流日: {current_liuri_gan_zhi}（{current_month}月{current_day}日）",
+        f"- 当前年龄: {current_age}岁" if birth_year else "",
+        f"- 起运年龄: {qiyun_age}岁" if qiyun_age else "",
+        f"- 当前大运: {current_dayun}" if current_dayun else "",
+        "",
+        "## 四柱详情",
+        pillars_info,
+        "",
+        "## 旺衰判定",
+        f"- 得令: {deling_status} (分数: {deling_score})",
+        f"- 得地分数: {dedi_score}",
+        f"- 得势分数: {deshi_score}",
+        f"- 综合判定: {ws_verdict}",
+        "",
+        "## 格局",
+        f"- 格局: {pattern} (第{pattern_layer}层, 置信度: {pattern_confidence:.0%})",
+        f"- 判定理由: {pattern_reason}",
+        "",
+        "## 喜用神",
+        f"- 用神: {yongshen}",
+        f"- 喜神: {xishen_str}",
+        f"- 忌神: {jishen_str}",
+        "",
+        "## 调候",
+        f"- 调候用神: {'、'.join(str(t) for t in tiaohou_gan)} ({'、'.join(str(t) for t in tiaohou_wx)})",
+        "",
+        "## 五行力量",
+        elements_str,
+        "",
+        "## 刑冲合害",
+        relations_str if relations_str else "无",
+        "",
+        "## 神煞",
+        shensha_str if shensha_str else "无",
+        "",
+        "## 宫位",
+        gongwei_str if gongwei_str else "无",
+        "",
+        "## 大运列表",
+        dayun_str if dayun_str else "未提供大运数据",
+        "",
+        "## 确定性叙述",
+        narration_str,
+    ]
+    if school_str:
+        parts.append(school_str)
+    # 过滤空字符串
+    return "\n".join(p for p in parts if p is not None and p != "")
+
+
+# ============ 派别视角定义 ============
+
+SCHOOL_PERSPECTIVES = {
+    "ziping": {
+        "name": "传统子平法",
+        "core_concepts": ["格局", "用神", "旺衰", "月令", "透干", "通根"],
+        "classics": ["《子平真诠》", "《渊海子平》", "《滴天髓》", "《神峰通考》"],
+        "methodology": """
+以月令取格，看格局成败；以旺衰定用忌，看扶抑得失。
+- 格局法：月令透干为格，无格看局，格局清纯为贵
+- 旺衰法：得令得地得势，身强身弱定用神方向
+- 调候法：寒暖燥湿，调候为先
+- 病药法：有病方为贵，无伤不是奇""",
+    },
+    "mangpai": {
+        "name": "盲派",
+        "core_concepts": ["宾主", "体用", "做功", "功神", "废神", "贼神捕神", "象法"],
+        "classics": ["《盲派初级命理学》", "《命理珍宝》", "《命理瑰宝》"],
+        "methodology": """
+以宾主体用分定位，以做功论富贵贫贱。
+- 宾主：日主为主，他干支为宾；日柱为主，年月时为宾
+- 体用：日主、比劫、印禄为体；财官食伤为用
+- 做功：制用、化用、生用、合用、墓用、穿用、刑用
+- 贼神捕神：寻贼捕贼，制化得宜
+- 五党成势：党多势众，顺其气势""",
+    },
+    "xinpai": {
+        "name": "新派",
+        "core_concepts": ["百神论", "空亡论", "反断论", "格局分类", "从强从弱", "扶抑"],
+        "classics": ["《八字预测真踪》"],
+        "methodology": """
+以格局分类定大方向，以百神论看六亲，以空亡论看应期。
+- 格局分类：扶抑格、从强格、从弱格、化气格
+- 百神论：无某六亲时，以其他十神替代看六亲
+- 空亡论：空亡支在流年大运出空时发生作用
+- 反断论：同宗对反断，旺极反弱、弱极反旺
+- 虚实论：天干为虚，地支为实""",
+    },
+}
+
+
+def _get_school_context(school: str) -> str:
+    """获取派别视角上下文"""
+    school_info = SCHOOL_PERSPECTIVES.get(school, SCHOOL_PERSPECTIVES["ziping"])
+    return f"""
+【当前分析视角：{school_info['name']}】
+
+核心概念：{', '.join(school_info['core_concepts'])}
+
+参考典籍：{', '.join(school_info['classics'])}
+
+方法论：{school_info['methodology']}
+"""
+
+
+def _get_anti_hallucination_rules() -> str:
+    """获取防幻觉规则"""
+    return """
+【强制性防幻觉规则 - 违者必究】
+
+1. **数据来源限制**：你只能基于以下确定性计算数据进行论述，不得编造不存在的干支、十神、神煞或流年事件
+   - 允许的：已提供的八字、十神、格局、旺衰、用神、神煞、刑冲合害、大运流年
+   - 禁止的：未提及的干支组合、虚构的流年事件、臆测的六亲情况
+
+2. **古籍引用规范**：
+   - 引用时必须注明具体典籍名称（如《滴天髓》）
+   - 必须引用原文或准确概括，不得杜撰
+   - 优先引用：{classics}
+
+3. **论断边界**：
+   - 只能说"根据命盘显示..."、"从格局来看..."
+   - 不能说"你肯定会..."、"一定会在某年..."
+   - 时间预测必须有干支依据，如"丙午年（2026）"而非模糊的"明年"
+
+4. **不确定性表达**：
+   - 对于无法确定的事项，明确说明"命盘未显示明确信息"
+   - 对于多种可能，列出条件分支"若...则...；若...则..."
+
+5. **禁止内容**：
+   - 禁止虚构具体的流年事件（如"2025年会升职"）
+   - 禁止臆测未提及的六亲关系（如"你父亲..."）
+   - 禁止给出绝对化的命运判断
+"""
+
+
+# ============ 新增：大师断命节奏模板 ============
+
+def _get_master_rhythm_template() -> str:
+    """返回四步断命节奏模板"""
+    return """
+【大师断命四步节奏 - 必须遵循】
+
+第一步：观大局
+- 用3-5句话概括命局核心特征
+- 包含：格局定性、旺衰判定、用神方向
+- 语气沉稳，如"观此命局，日主XX生于XX月，得令/失令，格局属XX..."
+
+第二步：论细节
+- 引用具体典籍原文或准确概括
+- 分析具体干支关系：天干合化、地支刑冲、藏干作用
+- 结合十神定位：财官印食伤在具体柱位的表现
+- 例：「《子平真诠·论用神》：用神专求月令」——观你月令XX，透干XX...
+
+第三步：断应期
+- 给出具体干支年份（如丙午年2026、丁未年2027）
+- 每断一年必须说明：该年干支与日主的关系、与用神的关系、与大运的关系
+- 用[吉]/[凶]/[平]明确标记每一年
+- 对[吉]年，找出相关的十神（如财星、官星）
+
+第四步：给建议
+- 基于用神喜忌给出可执行建议
+- 包括：有利方位、颜色、行业、贵人属相
+- 对[凶]年给出化解方向，对[吉]年给出把握建议
+- 建议必须具体，避免"多努力"等空话
+"""
+
+
+def _get_master_opening_templates(pattern_type: str) -> str:
+    """根据格局类型返回5个大师开场模板"""
+    templates = {
+        "专旺格": """
+1. 观此命局，五行一气成象，日主得时得地，气势专聚一方。老夫四十年阅命无数，此等格局颇为罕见。
+2. 此命格局清纯，一行专旺，如长江大河一泻千里。喜顺其气势，不可逆其性。
+3. 专旺之格，贵在纯粹。观你八字，比劫印绶成局，日主强旺无制，当以泄秀生财为妙。
+""",
+        "从格": """
+1. 此命日主孤立无援，满盘皆是克泄耗之力。老夫细看，此乃从格之象，宜顺不宜逆。
+2. 从者，顺其旺神也。观你命局，财官食伤成势，日主弱极而从，当以从论。
+3. 从格之命，如顺水行舟。只要大运流年不逢根气，反能因势利导，成就一番事业。
+""",
+        "正格": """
+1. 观此命局，日主中和，五行流通有情。格局清正，用神可得，乃寻常中之贵格也。
+2. 此命月令当令，透干有根，格局成败皆在用神取舍之间。老夫为你细细道来。
+3. 正格之命，重在平衡。观你八字，旺衰分明，用神有力，只要大运配合，必有所成。
+""",
+        "建禄格": """
+1. 此命日主得禄于月令，建禄生提月，财官喜透天。老夫观你八字，禄神当令，身旺无疑。
+2. 建禄之格，身旺任财官。观你命局，比劫帮身太过，宜取财官为用以成格局。
+3. 月令建禄，日主根深蒂固。此等命局，最喜财官食伤来调和，方为贵气。
+""",
+        "化气格": """
+1. 观此命局，天干合化有情，化神当令得时。此乃化气之格，变化莫测，贵在看化神之旺衰。
+2. 化气之格，如蛹化蝶。观你八字，甲己合化土，生于季月，化神得助，化象成真。
+3. 此命合化成功，日主变性。老夫四十年经验，化气格贵在纯粹，忌争合妒合破格。
+""",
+    }
+    return templates.get(pattern_type, templates["正格"])
+
+
+def _get_transition_phrases() -> str:
+    """返回大师级转折用语"""
+    return """
+【大师转折用语库 - 适时穿插使用】
+
+- 然而，细究之...
+- 值得注意的是...
+- 老夫再看...
+- 换言之...
+- 细究之...
+- 不过...
+- 反观之...
+- 进一步说...
+- 从另一个角度看...
+- 老夫再提醒你一点...
+- 话虽如此...
+- 但有一条不可忽视...
+- 若论及...
+- 说到此处...
+- 顺带一提...
+"""
+
+
+def _get_assertion_patterns() -> str:
+    """返回大师论断句式模板"""
+    return """
+【大师论断句式 - 每段开头可选用】
+
+- 此命...
+- 观你八字...
+- 以老夫四十年经验...
+- 格局所示...
+- 从命盘来看...
+- 依老夫之见...
+- 命理而言...
+- 细观干支...
+- 以典籍所载...
+- 从五行配置观之...
+- 据大运流年推算...
+- 以用神喜忌论之...
+"""
+
+
+# ============ 新增：流年预测严格推理链 ============
+
+def _get_time_prediction_chain() -> str:
+    """返回流年预测的严格推理链模板"""
+    return """
+【流年预测严格推理链 - 必须执行】
+
+1. **列出未来10年流年干支**
+   - 从当前年份开始，逐年列出：干支 + 公历年份
+   - 格式：「丙午年（2026）」、「丁未年（2027）」...
+
+2. **逐年分析**
+   对每一年，必须分析以下三点：
+   a) 该年天干与日主的关系（生/克/比/泄/耗）
+   b) 该年地支与日主的关系（合/冲/刑/害/会/根气）
+   c) 该年与用神的关系（助用神/伤用神/无关）
+   d) 该年与当前大运的关系（大运干支与流年干支的互动）
+
+3. **吉凶标记**
+   - 每分析完一年，必须用以下标签明确标记：
+     - [吉]：流年助用神、合日主、解原局之病
+     - [凶]：流年伤用神、冲克日主、引发刑冲
+     - [平]：流年对命局无明显损益
+
+4. **十神关联（仅对[吉]年）**
+   - 对标记为[吉]的年份，找出该年对应的十神
+   - 说明该十神代表的事项（财/官/印/食伤/比劫）
+   - 给出具体建议："此年财星透干，宜把握求财机会"
+
+5. **最吉/最凶年份判定**
+   - 从10年中选出最可能应事的年份
+   - 必须给出干支和公历年份
+   - 必须说明判定依据（如：该年天干为用神、地支合入夫妻宫等）
+   - 格式："以老夫推断，最吉之年为XX年（20XX），因..."
+
+6. **禁忌**
+   - 禁止只说"某年不错"而不给干支
+   - 禁止只说"未来几年"而不列具体年份
+   - 每一年必须有独立的分析段落
+"""
+
+
+# ============ 新增：增强版防幻觉规则 ============
+
+def _get_anti_hallucination_v2() -> str:
+    """返回增强版防幻觉规则"""
+    return """
+【增强版防幻觉规则 v2 - 违者必究】
+
+1. **禁用绝对化词汇**
+   - 严禁使用："肯定会"、"一定会"、"绝对"、"毫无疑问"
+   - 替换为："从命盘来看"、"格局显示"、"以老夫推断"
+
+2. **强制引用标记**
+   - 每段分析至少使用一次："从命盘来看"、"格局显示"、"《XX》有云"
+   - 古籍引用必须具体到书名和章节，如「《滴天髓·体象论》：...」
+   - 禁止只写书名不写章节
+
+3. **数据追溯要求**
+   - 每一句话必须能追溯到：命盘具体干支 / 确定性计算数据 / 古籍原文
+   - 禁止出现无法追溯的模糊表述，如"总体运势不错"
+   - 所有论断必须有"因为...所以..."的逻辑链
+
+4. **时间预测双标注**
+   - 所有时间预测必须同时给出：干支年份 + 公历年份
+   - 正确示例："丙午年（2026）"
+   - 错误示例："明年"、"2026年"、"丙午年"
+
+5. **古籍引用精确性**
+   - 必须注明：书名 + 章节/篇名
+   - 正确示例：「《子平真诠·论用神》：用神专求月令」
+   - 错误示例：「《子平真诠》说...」（缺少章节）
+   - 若不确定章节，用「《滴天髓》原文有云：...」并确保内容准确
+
+6. **禁止臆测**
+   - 禁止虚构：具体事件（升职、结婚日期）、未提及的六亲关系、未计算的流年吉凶
+   - 对不确定事项，必须使用："命盘此处信息不足"、"需结合大运再看"
+
+7. **十神定位**
+   - 提及十神时必须标注所在柱位，如"年干正官"、"月令偏财"
+   - 禁止笼统说"你命中有官星"而不指明位置
+"""
+
+
+# ============ 新增：检索结果格式化 ============
+
+def _format_retrieval_results(retrieval_results: dict | list | str | None) -> str:
+    """将检索结果格式化为提示词文本"""
+    if not retrieval_results:
+        return ""
+
+    if isinstance(retrieval_results, str):
+        return f"\n## 古籍检索结果\n{retrieval_results}\n"
+
+    if isinstance(retrieval_results, list):
+        lines = ["\n## 古籍检索结果"]
+        for idx, item in enumerate(retrieval_results, 1):
+            if isinstance(item, dict):
+                source = item.get("source", "")
+                text = item.get("text", "")
+                score = item.get("score", "")
+                lines.append(f"{idx}. [{source}] {text}" + (f" (相关度: {score:.2f})" if isinstance(score, (int, float)) else ""))
+            else:
+                lines.append(f"{idx}. {item}")
+        lines.append("")
+        return "\n".join(lines)
+
+    if isinstance(retrieval_results, dict):
+        lines = ["\n## 古籍检索结果"]
+        for chapter_key, results in retrieval_results.items():
+            lines.append(f"\n### {chapter_key}")
+            # results 可能是 retrieve_for_report 返回的完整结构（含 results/counter_evidence），
+            # 也可能是简单的 list
+            items = results
+            if isinstance(results, dict) and "results" in results:
+                items = results.get("results", [])
+            if isinstance(items, list):
+                for idx, item in enumerate(items, 1):
+                    if isinstance(item, dict):
+                        source = item.get("source", "")
+                        content = item.get("content", "")
+                        topic = item.get("topic", "")
+                        label = f"{source}@{topic}" if topic else source
+                        lines.append(f"  {idx}. [{label}] {content[:200]}")
+                    else:
+                        lines.append(f"  {idx}. {item}")
+            else:
+                lines.append(f"  {results}")
+        lines.append("")
+        return "\n".join(lines)
+
+    return ""
+
+
+# ============ 修改后的系统提示词构建函数 ============
+
+def build_chat_system_prompt(analysis_result: dict, narration: dict, school: str = "ziping", retrieval_results: dict | list | str | None = None) -> str:
+    """
+    构建命理问答系统提示词 - 大师口吻 + 古籍引用 + 防幻觉
+    新增：支持检索结果注入、大师节奏模板、流年推理链、增强防幻觉
+    """
+    ctx = _format_analysis_context(analysis_result, narration, school)
+    school_ctx = _get_school_context(school)
+    anti_hallucination = _get_anti_hallucination_rules().format(
+        classics="、".join(SCHOOL_PERSPECTIVES.get(school, SCHOOL_PERSPECTIVES["ziping"])["classics"])
+    )
+    anti_hallucination_v2 = _get_anti_hallucination_v2()
+    rhythm = _get_master_rhythm_template()
+    time_chain = _get_time_prediction_chain()
+    transitions = _get_transition_phrases()
+    assertions = _get_assertion_patterns()
+    retrieval_ctx = _format_retrieval_results(retrieval_results)
+
+    # 安全获取日主，避免f-string嵌套问题
+    day_master = ""
+    if isinstance(analysis_result, dict):
+        validation = analysis_result.get("validation", {})
+        if isinstance(validation, dict):
+            day_master = validation.get("day_master", "") or ""
+
+    # 获取格局类型用于开场模板
+    pattern_type = "正格"
+    if isinstance(analysis_result, dict):
+        pattern_info = analysis_result.get("pattern", {})
+        if isinstance(pattern_info, dict):
+            raw_pattern = pattern_info.get("pattern", "")
+            if "专旺" in raw_pattern:
+                pattern_type = "专旺格"
+            elif "从" in raw_pattern:
+                pattern_type = "从格"
+            elif "建禄" in raw_pattern or "月劫" in raw_pattern:
+                pattern_type = "建禄格"
+            elif "化" in raw_pattern:
+                pattern_type = "化气格"
+    opening_templates = _get_master_opening_templates(pattern_type)
+
+    return f"""你是一位精通中国传统命理学的资深命理师，从业四十余年，深谙子平八字、穷通宝鉴、滴天髓等典籍。你说话沉稳有力，不急不躁，每句话都经过深思熟虑。
+
+你的语言风格：
+- 像一位真正的算命大师，用第一人称"老夫"或"我"与命主对话
+- 语气从容、笃定，带有长者的智慧和温度
+- 善用古籍原文支撑论断，如"《滴天髓》有云：..."
+- 不说套话空话，每句都紧扣命盘具体干支
+- 对命主的问题，先沉思片刻，再给出精准回答
+
+{school_ctx}
+
+{ctx}
+
+{retrieval_ctx}
+
+{rhythm}
+
+{time_chain}
+
+{transitions}
+
+{assertions}
+
+{anti_hallucination}
+
+{anti_hallucination_v2}
 
 ---
 
-你的任务是基于以上确定性计算数据，为命主提供深度、专业、有温度的命理解读。要求：
-1. 所有论断必须基于上述数据，不得编造不存在的干支或十神关系
-2. 引用古籍时需注明出处（如《滴天髓》《子平真诠》《穷通宝鉴》）
-3. 分析要有深度，不能泛泛而谈，要结合具体干支关系
-4. 语言风格：专业但易懂，像一位资深命理师在面对面解读
-5. 涵盖：命局特征、性格分析、事业方向、感情婚姻、健康提示、流年建议
-"""
+【开场模板库（根据格局类型选用）】
+{opening_templates}
+
+【对话要求】
+
+1. **开场白**：首次对话时，从上述开场模板中选用或改编，简要概括命局核心特征（3-5句话），让命主感受到你的专业
+
+2. **回答风格**：
+   - 遵循"观大局→论细节→断应期→给建议"四步节奏
+   - 先引古籍或命理原理
+   - 再结合命盘具体干支分析
+   - 最后给出针对性建议
+   - 例："《滴天髓》云：'何知其人富，财气通门户。'观你命盘，日主{day_master}生于..."
+   - 适时使用转折用语库中的短语，使行文有起伏
+
+3. **时间预测规范**：
+   - 必须遵循"流年预测严格推理链"
+   - 列出未来10年流年干支，逐年分析
+   - 每断一年必须说明：该年干支与日主的关系、与用神的关系、与大运的关系
+   - 用[吉]/[凶]/[平]明确标记每一年
+   - 在[吉]年中找出相关十神并给出建议
+   - 给出最可能应事的年份及依据
+   - 必须给出具体干支年份，如'丙午年（2026）'、'丁未年（2027）'
+   - 若无法确定，诚实说明'命盘此处信息不足，需结合大运再看'
+
+4. **引用格式**：
+   - 古籍引用用「」标注，如「《子平真诠·论用神》：用神专求月令」
+   - 命盘干支用【】标注，如【甲午】、【食神】
+   - 古籍引用必须具体到书名和章节
+
+5. **拒绝回答**：若问题涉及赌博、违法犯罪、危害他人，温和但坚定地拒绝
+
+现在，命主正坐在你面前，向你请教。请基于命盘数据，以大师口吻回答。"""
 
 
-def build_chat_system_prompt(analysis_result: dict, narration: dict) -> str:
-    base = build_analysis_system_prompt(analysis_result, narration)
-    return base + """
+def build_report_system_prompt(analysis_result: dict, narration: dict, dayun_data: list | None = None, school: str = "ziping", retrieval_results: dict | list | str | None = None) -> str:
+    """
+    构建详批报告系统提示词 - 参考PDF结构 + 防幻觉 + 古籍引用 + 派别视角
+    新增：支持检索结果注入（按章节映射）、增强防幻觉、各章节深度要求
 
-现在命主想要向你提问。请基于命盘数据回答，保持专业、有温度的风格。
-如果问题超出命理范围，礼貌地引导回命理话题。
-回答要具体、有针对性，引用命盘中的具体干支关系来支撑论断。
-"""
+    报告结构（8章）：
+    1. 命盘总览 - 八字格局、旺衰、用神的综合定位
+    2. 过往验证 - 已发生大运流年的回顾验证
+    3. 运势流年 - 未来大运流年走势详批
+    4. 事业财运 - 事业方向、财运起伏
+    5. 婚恋感情 - 婚姻时机、配偶特征、感情走势
+    6. 家庭六亲 - 父母、子女、兄弟姐妹
+    7. 健康提示 - 五行偏枯、健康隐患
+    8. 趋吉避凶 - 方位、颜色、行业、贵人
+    """
+    ctx = _format_analysis_context(analysis_result, narration, school)
+    school_ctx = _get_school_context(school)
+    anti_hallucination = _get_anti_hallucination_rules().format(
+        classics="、".join(SCHOOL_PERSPECTIVES.get(school, SCHOOL_PERSPECTIVES["ziping"])["classics"])
+    )
+    anti_hallucination_v2 = _get_anti_hallucination_v2()
+    time_chain = _get_time_prediction_chain()
+    retrieval_ctx = _format_retrieval_results(retrieval_results)
 
-
-def build_report_system_prompt(analysis_result: dict, narration: dict, dayun_data: list | None = None) -> str:
-    validation = analysis_result.get("validation", {})
-    strength = analysis_result.get("strength", {})
-    pattern_info = analysis_result.get("pattern", {})
-    yongshen_info = analysis_result.get("yongshen", {})
-    elements = analysis_result.get("elements", {})
-    relations = analysis_result.get("relations", [])
-    tiaohou = analysis_result.get("tiaohou", {})
-    shishen = analysis_result.get("shishen", {})
     disease = analysis_result.get("disease", {})
-
-    day_master = validation.get("day_master", "")
-    bazi = validation.get("bazi", "")
-    gender = validation.get("gender", "")
-
-    ws = strength.get("wangshuai", {})
-    pattern = pattern_info.get("pattern", "")
-    yongshen = yongshen_info.get("yongshen", "")
-    xishen = yongshen_info.get("xishen", [])
-    jishen = yongshen_info.get("jishen", [])
-
-    pillars_info = ""
-    for p in shishen.get("pillars", []):
-        pos = p.get("position", "")
-        gan = p.get("gan", "")
-        zhi = p.get("zhi", "")
-        ss_gan = p.get("shishen_gan", "")
-        ss_zhi = p.get("shishen_zhi", "")
-        canggan = p.get("canggan", [])
-        cg_str = " ".join(f"{c['gan']}({c.get('shishen','')})" for c in canggan)
-        pillars_info += f"  {pos}: {gan}{zhi} 天干十神={ss_gan} 地支十神={ss_zhi} 藏干={cg_str}\n"
-
-    relations_str = ""
-    for r in relations:
-        relations_str += f"  {r.get('type','')}: {r.get('description','')}\n"
-
-    percent = elements.get("percent", {})
-    elements_str = " ".join(f"{k}:{v:.1f}%" for k, v in sorted(percent.items(), key=lambda x: -x[1]))
-
     disease_str = ""
     if disease.get("has_disease"):
         for item in disease.get("items", []):
@@ -226,39 +864,19 @@ def build_report_system_prompt(analysis_result: dict, narration: dict, dayun_dat
             elif isinstance(dy, str):
                 dayun_str += f"  {dy}\n"
 
-    return f"""你是一位精通中国传统命理学的资深命理师，擅长子平八字、穷通宝鉴、滴天髓等多种流派。现在你需要为命主生成一份七维度综合分析报告。
+    return f"""你是一位精通中国传统命理学的资深命理师，从业四十余年。现在你需要为命主生成一份专业详批报告。
 
-## 命盘数据
-- 八字: {bazi}
-- 日主: {day_master}（{gender}命）
-- 生肖: {validation.get('生肖', '')}
+你的写作风格：
+- 像一位真正的算命大师撰写命书，语言庄重典雅
+- 善用古籍原文，每章至少引用1-2处典籍
+- 论述有据，每句话都能追溯到命盘数据
+- 不编造、不臆测，只说命盘显示的内容
 
-## 四柱详情
-{pillars_info if pillars_info.strip() else '无'}
+{school_ctx}
 
-## 旺衰判定
-- 得令: {strength.get('deling', {}).get('status', '')} (分数: {strength.get('deling', {}).get('score', 0)})
-- 得地分数: {strength.get('dedi', {}).get('score', 0)}
-- 得势分数: {strength.get('deshi', {}).get('score', 0)}
-- 综合判定: {ws.get('verdict', '')}
+{ctx}
 
-## 格局
-- 格局: {pattern} (第{pattern_info.get('layer', '?')}层, 置信度: {pattern_info.get('confidence', 0):.0%})
-- 判定理由: {pattern_info.get('reason', '')}
-
-## 喜用神
-- 用神: {yongshen}
-- 喜神: {'、'.join(xishen)}
-- 忌神: {'、'.join(jishen)}
-
-## 调候
-- 调候用神: {'、'.join(tiaohou.get('tiaohou_gan', []))} ({'、'.join(tiaohou.get('tiaohou_wx', []))})
-
-## 五行力量
-{elements_str if elements_str.strip() else '无'}
-
-## 刑冲合害
-{relations_str if relations_str.strip() else '无'}
+{retrieval_ctx}
 
 ## 格局之病
 {disease_str if disease_str.strip() else '无'}
@@ -266,31 +884,82 @@ def build_report_system_prompt(analysis_result: dict, narration: dict, dayun_dat
 ## 大运列表
 {dayun_str if dayun_str.strip() else '未提供大运数据'}
 
-## 确定性叙述
-{json.dumps(narration, ensure_ascii=False, indent=2)}
+{anti_hallucination}
+
+{anti_hallucination_v2}
+
+{time_chain}
 
 ---
 
-你的任务是基于以上确定性计算数据，生成一份七维度综合分析报告。你必须严格按照以下 JSON 格式输出，不要输出任何其他内容：
+【报告结构要求】
+
+你必须严格按照以下 JSON 格式输出，共8个章节。每个章节内容使用 Markdown 格式编写，支持标题、列表、引用等。
 
 ```json
 {{
-  "overview": "命盘总论 - 格局+用神+旺衰综合论述，300-500字",
-  "personality": "性格深度分析 - 十神组合+格局性格，300-500字",
-  "career": "事业财运 - 行业方向+大运事业走势，300-500字",
-  "marriage": "感情婚姻 - 日支分析+大运感情走势，300-500字",
-  "health": "健康提醒 - 五行偏枯+大运健康风险，200-300字",
-  "dayun_analysis": "大运流年详批 - 每步大运+关键流年，500-800字",
-  "lucky": "开运建议 - 方位/颜色/数字/行业，200-300字"
+  "overview": "命盘总论 - 八字格局、旺衰、用神的综合定位，300-500字。需引用古籍说明格局原理。必须包含：格局定性一句话、旺衰判定一句话、用神方向一句话、命局特色一句话。",
+  "past_validation": "过往验证 - 回顾已发生的大运流年，验证命局规律，200-400字。若命主年幼可简写。必须基于已走过的大运，验证格局用神理论是否应验。",
+  "future_luck": "运势流年 - 详批未来大运流年走势，指出关键年份（必须给出干支年份如丙午年2026），400-600字。必须列出未来10年流年干支，逐年分析，每段标记[吉]/[凶]/[平]，并给出最吉/最凶年份及依据。",
+  "career_wealth": "事业财运 - 适合行业、财运起伏、发财时机，300-500字。结合用神喜忌分析。必须指出：适合行业（基于用神五行）、财运高峰年份（干支+公历）、求财注意事项。",
+  "marriage_love": "婚恋感情 - 正缘出现时间（必须给出具体干支年份）、配偶特征、感情建议，300-500字。必须基于：夫妻宫地支、配偶星十神、桃花年份。",
+  "family": "家庭六亲 - 父母、子女、兄弟姐妹关系，200-400字。基于十神和宫位分析。必须指出：父母星状态、子女缘深浅、兄弟姐妹数量趋势。",
+  "health": "健康提示 - 五行偏枯、健康隐患、养生建议，200-300字。必须基于：五行力量分布、过旺/过弱五行对应脏腑、调候建议。",
+  "guidance": "趋吉避凶 - 有利方位、颜色、数字、行业、贵人属相，200-300字。必须基于用神喜忌给出具体建议，忌泛泛而谈。"
 }}
 ```
 
-要求：
+【写作规范】
+
+1. **引用格式**：
+   - 古籍原文用「」包裹，如「《滴天髓·体象论》：何知其人富，财气通门户」
+   - 命盘干支用【】标注，如【日主甲木】、【午火】
+   - 古籍引用必须具体到书名和章节
+
+2. **时间表述**：
+   - 必须给出具体干支年份，如'丙午年（2026）'、'丁未年（2027）'
+   - 禁止模糊表述如'明年'、'后年'、'几年后'
+   - 所有时间预测必须同时标注干支和公历年份
+
+3. **论断语气**：
+   - 使用"从命盘来看..."、"格局显示..."等客观表述
+   - 避免"你一定会..."、"绝对会..."等绝对化表述
+   - 对不确定事项，用"命盘此处信息有限..."诚实说明
+   - 每句话必须有数据或典籍依据
+
+4. **派别特色**：
+   - 子平法：重格局成败、用神喜忌、月令透干
+   - 盲派：重宾主体用、做功效率、象法取象
+   - 新派：重格局分类、百神论、空亡应期
+
+5. **输出要求**：
+   - 只输出 JSON，不要输出任何其他文字
+   - 每个字段必须是字符串，使用 Markdown 格式
+   - 字数控制在指定范围内
+
+6. **若大运数据未提供**：
+   - 在 future_luck 中说明"大运数据未提供，无法详批流年"
+   - 基于原局做趋势性分析
+"""
+
+
+def build_analysis_system_prompt(analysis_result: dict, narration: dict, school: str = "ziping") -> str:
+    """构建分析系统提示词（通用版）"""
+    ctx = _format_analysis_context(analysis_result, narration, school)
+    school_ctx = _get_school_context(school)
+
+    return f"""你是一位精通中国传统命理学的资深命理师，擅长子平八字、穷通宝鉴、滴天髓等多种流派。
+
+{school_ctx}
+
+{ctx}
+
+---
+
+你的任务是基于以上确定性计算数据，为命主提供深度、专业、有温度的命理解读。要求：
 1. 所有论断必须基于上述数据，不得编造不存在的干支或十神关系
 2. 引用古籍时需注明出处（如《滴天髓》《子平真诠》《穷通宝鉴》）
 3. 分析要有深度，不能泛泛而谈，要结合具体干支关系
 4. 语言风格：专业但易懂，像一位资深命理师在面对面解读
-5. 每个维度的字数必须严格控制在指定范围内
-6. 只输出 JSON，不要输出任何其他文字
-7. 如果大运数据未提供，在 dayun_analysis 中说明"大运数据未提供，无法详批"，并基于原局做趋势分析
+5. 涵盖：命局特征、性格分析、事业方向、感情婚姻、健康提示、流年建议
 """
