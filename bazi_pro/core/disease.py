@@ -1,6 +1,25 @@
-"""格局之病检测 — 枭神夺食、伤官见官、官杀混杂、比劫争财、贪财坏印、七杀无制、用神被冲克
+"""格局之病检测模块 — 检测原局中破坏格局的病源，并给出药方建议
 
-依据《子平真诠》第九章"论用神成败救应"及《神峰通考》"病药说"
+核心概念：
+- 病（disease）：命局中破坏格局成立的十神组合，如枭神夺食、伤官见官等
+- 药（medicine）：化解病源的十神或五行，如财星制枭、印星化伤官等
+- 严重程度（severity）：active=病源透干（已发作），potential=病源仅藏干（潜伏）
+
+检测项目（共9种格局之病）：
+1. 枭神夺食 / 食神制杀逢枭 — 偏印克食神
+2. 伤官见官 — 伤官克正官（金水伤官除外）
+3. 比劫争财 — 比劫旺而财星弱
+4. 官杀混杂 — 正官与七杀同时有根且无制化
+5. 贪财坏印 — 财星克破轻印
+6. 七杀无制 / 财党杀无制 — 七杀无食神制或印星化
+7. 用神被冲 — 月支被其他地支冲克
+8. 身强印重透煞 — 身旺印旺又透七杀
+9. 伤官生财带煞 — 伤官生财又透七杀，财转党杀
+
+古籍依据：
+- 《子平真诠》第九章"论用神成败救应"
+- 《神峰通考》"病药说"
+- 《子平真诠》第四十一章"金水伤官喜见官"
 """
 
 from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_CHONG
@@ -10,7 +29,10 @@ from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP
 
 
 def _get_transparent_gans(bazi_parts: list[str]) -> set[str]:
-    """返回所有透干（天干）的干集合。"""
+    """返回所有透干（天干）的干集合
+
+    透干指四柱天干上出现的干，透干的十神力量远大于仅藏干者。
+    """
     return {p[0] for p in bazi_parts if len(p) >= 1}
 
 
@@ -19,9 +41,23 @@ def _find_shishen_instances(
     target_shishen: str,
     bazi_parts: list[str],
 ) -> list[dict]:
-    """
-    找出命盘中所有属于 target_shishen 的干（天干+藏干）。
-    返回列表，每项含 gan, position, is_transparent, qi_level, root_weight。
+    """找出命盘中所有属于 target_shishen 的干（天干+藏干）
+
+    遍历四柱天干和地支藏干，找出所有十神属性为 target_shishen 的干，
+    并记录其位置、是否透干、气之深浅、根气权重等信息。
+
+    参数：
+        day_master: 日主天干
+        target_shishen: 目标十神名（如"偏印"、"食神"、"七杀"等）
+        bazi_parts: 四柱干支列表
+
+    返回：
+        实例列表，每项含：
+        - gan: 天干字符
+        - position: 位置描述（如"月干"、"年支寅(本气)"）
+        - is_transparent: 是否透干
+        - qi_level: 气之深浅（'透干'/'本气'/'中气'/'余气'）
+        - root_weight: 根气权重（透干1.0/本气1.0/中气0.6/余气0.3）
     """
     transparent = _get_transparent_gans(bazi_parts)
     positions = ['年', '月', '日', '时']
@@ -33,7 +69,7 @@ def _find_shishen_instances(
         gan, zhi = part[0], part[1]
         pos = positions[i] if i < 4 else ''
 
-        # 天干
+        # 天干：透干力量最强，root_weight=1.0
         if derive_shishen(day_master, gan) == target_shishen:
             results.append({
                 'gan': gan,
@@ -43,7 +79,7 @@ def _find_shishen_instances(
                 'root_weight': 1.0,
             })
 
-        # 藏干
+        # 藏干：根据气之深浅赋予权重
         for cg, ql in get_canggan(zhi):
             if derive_shishen(day_master, cg) == target_shishen:
                 results.append({
@@ -54,7 +90,7 @@ def _find_shishen_instances(
                     'root_weight': CANGGAN_WEIGHT.get(ql, 0),
                 })
 
-    # 去重：同一个干只保留最强的一条
+    # 去重：同一个干只保留最强的一条（避免天干和藏干重复计数）
     seen: dict[str, dict] = {}
     for item in results:
         g = item['gan']
@@ -64,10 +100,17 @@ def _find_shishen_instances(
 
 
 def _severity(disease_instances: list[dict]) -> str:
-    """
-    根据病源干的存在方式判断严重程度。
-    active: 病源透干
-    potential: 病源只在藏干（不透干）
+    """根据病源干的存在方式判断严重程度
+
+    判定规则：
+    - active：病源透干（天干上出现），力量外显，已发作
+    - potential：病源只在藏干（不透干），力量潜伏，尚未发作
+
+    参数：
+        disease_instances: 病源干实例列表
+
+    返回：
+        'active' 或 'potential'
     """
     for inst in disease_instances:
         if inst['is_transparent']:
@@ -76,7 +119,17 @@ def _severity(disease_instances: list[dict]) -> str:
 
 
 def _best_instance(instances: list[dict]) -> dict:
-    """返回根气最强的一条实例。"""
+    """返回根气最强的一条实例
+
+    在多个同十神实例中，取 root_weight 最大的作为代表，
+    用于病源/受害神的定位和描述。
+
+    参数：
+        instances: 实例列表
+
+    返回：
+        root_weight 最大的实例字典
+    """
     return max(instances, key=lambda x: x['root_weight'])
 
 
@@ -85,17 +138,37 @@ def detect_disease(
     bazi_parts: list[str],
     element_forces: dict,
 ) -> dict:
-    """
-    检测原局格局之病。
+    """检测原局格局之病的顶层入口函数
 
-    返回:
-        {
-            'has_disease': bool,
-            'items': [DiseaseItem, ...],
-            'medicine_advice': str,
+    依次调用9种病检测函数，汇总结果并生成药方建议。
+    结果按严重程度排序：active 优先于 potential。
+
+    参数：
+        day_master: 日主天干
+        bazi_parts: 四柱干支列表
+        element_forces: 五行力量分布（部分检测函数需要）
+
+    返回：
+        dict {
+            'has_disease': 是否存在格局之病（bool），
+            'items': DiseaseItem 列表，按 severity 排序，
+            'medicine_advice': 药方建议汇总文本，
         }
 
-    DiseaseItem 字段见下方各检测函数。
+    DiseaseItem 字段：
+        - name: 病名（如"枭神夺食"、"伤官见官"）
+        - severity: 严重程度（'active'/'potential'）
+        - disease_god: 病源十神名
+        - disease_element: 病源五行
+        - disease_gan: 病源天干
+        - disease_position: 病源位置
+        - affected_god: 受害十神名
+        - affected_element: 受害五行
+        - affected_gan: 受害天干
+        - affected_position: 受害位置
+        - medicine: 药方描述
+        - medicine_element: 药方五行
+        - reason: 病因说明
     """
     dm_wx = GAN_WUXING.get(day_master, '')
     if not dm_wx:
@@ -115,6 +188,7 @@ def detect_disease(
     items.extend(_detect_shenqiang_yinzong_tousha(day_master, dm_wx, bazi_parts, element_forces))
     items.extend(_detect_shangguan_shengcai_daisa(day_master, dm_wx, bazi_parts))
 
+    # 汇总药方建议（去重）
     medicine_parts = []
     for item in items:
         med = item.get('medicine', '')
@@ -123,7 +197,7 @@ def detect_disease(
 
     advice = '；'.join(medicine_parts) if medicine_parts else ''
 
-    # Sort by severity: 'active' first, then 'potential'
+    # 按严重程度排序：active 优先于 potential
     items.sort(key=lambda x: (0 if x.get('severity') == 'active' else 1, x.get('name', '')))
 
     return {
@@ -139,7 +213,16 @@ def _detect_xiaoshen_duoshi(
     bazi_parts: list[str],
     element_forces: dict,
 ) -> list[dict]:
-    """枭神夺食 / 食神制杀逢枭"""
+    """枭神夺食 / 食神制杀逢枭
+
+    病源：偏印克食神
+    条件：偏印有根（本气/中气/透干）+ 食神有根
+    变体：若命局同时有七杀，则为"食神制杀逢枭"（食神制杀格被破）
+
+    药方：财星制枭 — 财星克偏印，解救食神
+
+    古籍依据：《子平真诠》"食神逢枭，食格败也"
+    """
     results = []
 
     pian_yin_instances = _find_shishen_instances(day_master, '偏印', bazi_parts)
@@ -148,7 +231,7 @@ def _detect_xiaoshen_duoshi(
     if not pian_yin_instances or not shishen_instances:
         return results
 
-    # 偏印需要有根（本气/中气/透干）
+    # 偏印需要有根（本气/中气/透干），root_weight≥0.6 确保非余气
     pian_yin_rooted = [x for x in pian_yin_instances if x['root_weight'] >= 0.6 or x['is_transparent']]
     if not pian_yin_rooted:
         return results
@@ -199,7 +282,18 @@ def _detect_shangguan_jianguan(
     dm_wx: str,
     bazi_parts: list[str],
 ) -> list[dict]:
-    """伤官见官 — 《子平真诠》"伤官见官，为祸百端，而金水见之，反为秀气" """
+    """伤官见官 — 《子平真诠》"伤官见官，为祸百端，而金水见之，反为秀气"
+
+    病源：伤官克正官
+    条件：伤官有根 + 正官有根 + 无财星通关 + 无印星制化
+    例外：金水伤官（庚/辛日主）除外 — 《子平真诠》"金水伤官喜见官"
+
+    药方：印星化伤官 — 印星克制伤官，保护正官
+
+    化解条件（任一即可化解此病）：
+    1. 财星通关：伤官→财星→正官，财星在中间通关
+    2. 印星制化：印星克制伤官，保护正官
+    """
     results = []
 
     # 金水伤官除外：《子平真诠》第四十一章"金水伤官喜见官"
@@ -218,7 +312,7 @@ def _detect_shangguan_jianguan(
     if not sg_rooted or not zg_rooted:
         return results
 
-    # 检查是否有财星通关（财星有根）
+    # 检查是否有财星通关（财星有根）— 伤官→财→正官，通关化解
     cai_instances = _find_shishen_instances(day_master, '正财', bazi_parts)
     cai_instances += _find_shishen_instances(day_master, '偏财', bazi_parts)
     cai_rooted = [x for x in cai_instances if x['root_weight'] > 0 or x['is_transparent']]
@@ -268,7 +362,15 @@ def _detect_bijie_zhengcai(
     bazi_parts: list[str],
     element_forces: dict,
 ) -> list[dict]:
-    """比劫争财"""
+    """比劫争财
+
+    病源：比劫旺而财星弱
+    条件：比劫≥2个透干或有本气根 + 财星无强根（root_weight<0.6且不透干）
+
+    药方：官杀制比劫 — 官杀克制比劫，保护财星
+
+    古籍依据：《子平真诠》"财格败：比劫争财"
+    """
     results = []
 
     bj_instances = (
@@ -291,7 +393,7 @@ def _detect_bijie_zhengcai(
     if not bj_strong:
         return results
 
-    # 财星弱：无根或仅余气
+    # 财星弱：无根或仅余气（root_weight<0.6 且不透干）
     cai_rooted = [x for x in cai_instances if x['root_weight'] >= 0.6 or x['is_transparent']]
     if cai_rooted:
         return results  # 财星有根，不成病
@@ -302,6 +404,7 @@ def _detect_bijie_zhengcai(
     cai_wx = GAN_WUXING.get(best_cai['gan'], '')
     ke_bj_wx = KE_MAP.get(dm_wx, '')  # 官杀克比劫
 
+    # 严重程度：≥2个透干=active，否则=potential
     sev = 'active' if len(bj_transparent) >= 2 else 'potential'
 
     results.append({
@@ -330,7 +433,19 @@ def _detect_guansha_hunza(
     dm_wx: str,
     bazi_parts: list[str],
 ) -> list[dict]:
-    """官杀混杂"""
+    """官杀混杂
+
+    病源：正官与七杀同时有根
+    条件：正官有根 + 七杀有根 + 无食伤制杀 + 无印星化杀
+
+    药方：食伤制杀 — 食伤克制七杀，保留正官清纯
+
+    化解条件（任一即可化解此病）：
+    1. 食伤制杀：食神/伤官克制七杀
+    2. 印星化杀：印星化泄七杀之力
+
+    古籍依据：《子平真诠》"官杀混杂，须去杀留官"
+    """
     results = []
 
     zg_instances = _find_shishen_instances(day_master, '正官', bazi_parts)
@@ -395,8 +510,13 @@ def _detect_tancai_huaiyin(
 ) -> list[dict]:
     """贪财坏印（财星破印）— 《子平真诠》"印轻逢财，印格败也"；《神峰通考》"用印以财为病"
 
-    关键条件：印星必须"轻"（无本气根或仅余气根），财星才能破印。
-    若印星强旺（有本气根+透干），财星破不了印。
+    病源：财星克破印星
+    条件：印星"轻"（无本气根或仅余气根）+ 财星有根 + 无官杀通关
+    关键：印星必须"轻"才能被财破。若印星强旺（有本气根+透干），财星破不了印。
+
+    药方：官杀泄财生印 — 官杀在财印之间通关（财→官→印）
+
+    化解条件：官杀通关 — 财生官→官生印，财不破印
     """
     results = []
 
@@ -471,7 +591,18 @@ def _detect_qisha_wuzhi(
     dm_wx: str,
     bazi_parts: list[str],
 ) -> list[dict]:
-    """七杀无制 — 《子平真诠》"七煞逢财无制，煞格败也"；《神峰通考》"偏官无制曰七杀，故宜制伏" """
+    """七杀无制 — 《子平真诠》"七煞逢财无制，煞格败也"；《神峰通考》"偏官无制曰七杀，故宜制伏"
+
+    病源：七杀无食神制或印星化
+    条件：七杀有根 + 无食神制杀 + 无印星化杀
+    变体：若同时有财星生杀，则为"财党杀无制"（更凶）
+
+    药方：食伤制杀 — 食伤克制七杀
+
+    化解条件（任一即可化解此病）：
+    1. 食神制杀
+    2. 印星化杀
+    """
     results = []
 
     sha_instances = _find_shishen_instances(day_master, '七杀', bazi_parts)
@@ -494,7 +625,7 @@ def _detect_qisha_wuzhi(
     if shishen_rooted or yin_rooted:
         return results  # 有制化，不成病
 
-    # 检查是否财党杀（财星生杀无制）
+    # 检查是否财党杀（财星生杀无制）— 财星生七杀使杀更凶
     cai_instances = (
         _find_shishen_instances(day_master, '正财', bazi_parts)
         + _find_shishen_instances(day_master, '偏财', bazi_parts)
@@ -536,9 +667,14 @@ def _detect_yongshen_chong(
     dm_wx: str,
     bazi_parts: list[str],
 ) -> list[dict]:
-    """用神被冲克 — 《子平真诠》"官逢刑冲破害，官格败也"
+    """用神被冲 — 《子平真诠》"官逢刑冲破害，官格败也"
 
-    检查月支（用神根基）是否被其他地支冲克
+    病源：月支被其他地支冲克
+    条件：月支与其他地支构成六冲（ZHI_CHONG 表）
+
+    药方：合解冲或制冲 — 通过地支合来化解冲
+
+    注意：月支是用神的根基（"用神专寻月令"），月支被冲则用神根基动摇。
     """
     results = []
 
@@ -550,12 +686,12 @@ def _detect_yongshen_chong(
 
     for i, zhi in enumerate(zhis):
         if i == 1:
-            continue
+            continue  # 跳过月支自身
         pair = frozenset({month_zhi, zhi})
         if pair in ZHI_CHONG:
             results.append({
                 'name': '用神被冲',
-                'severity': 'active',
+                'severity': 'active',  # 冲是直接作用，始终为 active
                 'disease_god': '冲',
                 'disease_element': '',
                 'disease_gan': '',
@@ -568,7 +704,7 @@ def _detect_yongshen_chong(
                 'medicine_element': '',
                 'reason': f'月支{month_zhi}被{zhi}冲，用神根基动摇',
             })
-            break  # 只报告一次
+            break  # 只报告一次（取第一个冲即可）
 
     return results
 
@@ -581,13 +717,20 @@ def _detect_shenqiang_yinzong_tousha(
 ) -> list[dict]:
     """身强印重透煞 — 《子平真诠》"印格败：身强印重而透煞"
 
-    身旺印旺又透七杀，印星太旺反为偏颇，杀得印助更凶。
-    条件：身强 + 印星有本气根+透干 + 天干透七杀。
+    病源：身旺印旺又透七杀
+    条件：身强（印比占比≥50%）+ 印星有本气根+透干 + 天干透七杀
+    原理：印星太旺反为偏颇，杀得印助更凶
+
+    药方：食伤制杀泄印 — 食伤克制七杀，同时泄印星之力
+
+    身强判断：
+    - 有五行力量数据时：印比占比≥50%
+    - 无力量数据时：比劫+印星数量≥2（粗判）
     """
     results = []
 
     # 《子平真诠》"身强印重" — 必须身强才构成此病
-    # 身强判断：印比≥60%或日主五行占比≥35%
+    # 身强判断：印比≥50%或日主五行占比≥35%
     if element_forces:
         pct = element_forces.get('percent', {})
         sheng_wo_wx = SHENG_MAP.get(dm_wx, '')
@@ -595,7 +738,7 @@ def _detect_shenqiang_yinzong_tousha(
         if yin_bi_pct < 50:
             return results  # 身不强，不构成此病
     else:
-        # 无力量数据时，用比劫数量粗判
+        # 无力量数据时，用比劫+印星数量粗判
         bj_count = len(_find_shishen_instances(day_master, '比肩', bazi_parts))
         bj_count += len(_find_shishen_instances(day_master, '劫财', bazi_parts))
         yin_count = len(_find_shishen_instances(day_master, '正印', bazi_parts))
@@ -618,7 +761,7 @@ def _detect_shenqiang_yinzong_tousha(
     if not yin_rooted or not sha_rooted:
         return results
 
-    # 印星"重"：有本气根
+    # 印星"重"：有本气根+透干 — 两者兼备才算"重"
     yin_benqi = [x for x in yin_rooted if x['qi_level'] == '本气']
     yin_transparent = [x for x in yin_rooted if x['is_transparent']]
     yin_is_heavy = len(yin_benqi) >= 1 and len(yin_transparent) >= 1
@@ -663,7 +806,13 @@ def _detect_shangguan_shengcai_daisa(
 ) -> list[dict]:
     """伤官生财带煞 — 《子平真诠》"伤官格败：生财生带煞"
 
-    伤官生财又透七杀，财转党杀，杀得财助反为祸。
+    病源：伤官生财又透七杀，财转党杀
+    条件：伤官有根 + 财星有根 + 七杀有根 + 无食神制杀
+    原理：伤官生财本为吉，但财又生杀，杀得财助反为祸
+
+    药方：食伤制杀 — 食神克制七杀，截断财→杀的传递链
+
+    化解条件：食神制杀 — 《子平真诠》"煞逢食制"，食神制杀可化解财党杀
     """
     results = []
 
