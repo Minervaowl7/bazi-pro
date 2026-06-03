@@ -25,27 +25,36 @@ ZHI_ORDER = '子丑寅卯辰巳午未申酉戌亥'
 
 
 def _get_kongwang(day_ganzhi: str) -> list:
-    """根据日柱干支查六甲旬空"""
+    """根据日柱干支查六甲旬空
+
+    六甲旬空法：将日柱干支代入六十甲子，找到所属旬首，
+    旬首后两位地支即为空亡。
+    """
     if len(day_ganzhi) != 2:
         return []
     gan = day_ganzhi[0]
     zhi = day_ganzhi[1]
     if gan not in GAN_ORDER or zhi not in ZHI_ORDER:
         return []
-    gan_idx = GAN_ORDER.index(gan)
-    zhi_idx = ZHI_ORDER.index(zhi)
-    xun_start_gan_idx = (gan_idx - (zhi_idx % 10)) % 10
-    xun_start_zhi_idx = (zhi_idx - (zhi_idx % 10)) % 12
-    if xun_start_zhi_idx < 0:
-        xun_start_zhi_idx += 12
-    offset = gan_idx - xun_start_gan_idx
-    if offset < 0:
-        offset += 10
-    xun_start_zhi_idx = (zhi_idx - offset) % 12
-    xun_start_gan = GAN_ORDER[xun_start_gan_idx]
-    xun_start_zhi = ZHI_ORDER[xun_start_zhi_idx]
-    xun_key = xun_start_gan + xun_start_zhi
-    return LIUJIA_XUN.get(xun_key, [])
+    # 在六十甲子中找到日柱序号
+    day_num = -1
+    g_idx, z_idx = 0, 0
+    for i in range(60):
+        if GAN_ORDER[g_idx] == gan and ZHI_ORDER[z_idx] == zhi:
+            day_num = i
+            break
+        g_idx = (g_idx + 1) % 10
+        z_idx = (z_idx + 1) % 12
+    if day_num < 0:
+        return []
+    # 旬首序号 = day_num - (day_num % 10)
+    xun_start = day_num - (day_num % 10)
+    # 旬首地支序号
+    xun_start_zhi_idx = xun_start % 12
+    # 空亡地支 = 旬首后第10、11位地支
+    kw1 = ZHI_ORDER[(xun_start_zhi_idx + 10) % 12]
+    kw2 = ZHI_ORDER[(xun_start_zhi_idx + 11) % 12]
+    return [kw1, kw2]
 
 KE_PAIRS_SET = {('木', '土'), ('土', '水'), ('水', '火'), ('火', '金'), ('金', '木')}
 

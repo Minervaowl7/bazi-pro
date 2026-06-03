@@ -224,8 +224,6 @@ def _narrate_yongshen(day_master, dm_wx, month_zhi, pattern_info, yongshen_info)
         lines.append(f"格局用神不明确，以旺衰扶抑法取用。{trace_reason}。")
     else:
         lines.append(f"用神：{yongshen}。")
-
-    lines.append(f"用神：{yongshen}。")
     if xishen:
         lines.append(f"喜神：{'、'.join(xishen)}（生助用神之五行）。")
     if jishen:

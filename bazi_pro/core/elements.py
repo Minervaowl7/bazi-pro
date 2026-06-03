@@ -160,7 +160,7 @@ def calc_element_forces(bazi_parts: list[str], month_zhi: str) -> dict:
         for g in item['gans']:
             g_wx = GAN_WUXING.get(g, '')
             if g_wx and g_wx != hua_wx:
-                # 只转移该天干贡献的力量（1.2或0.5），而非该五行全部力量
+                # 只转移该天干贡献的力量（1.0或0.4），而非该五行全部力量
                 # 先计算该天干贡献了多少力量
                 has_root = False
                 for p2 in bazi_parts:
