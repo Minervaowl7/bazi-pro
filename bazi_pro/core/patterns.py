@@ -576,6 +576,7 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
 
     # ── 正官格破格 ──
     # 《子平真诠》"官格败：官逢伤克刑冲"
+    # 《子平真诠》第九章带忌："透官而又逢合"
     if '正官格' in pattern_name:
         # (1) 伤官见官 — 正官最忌伤官
         # 《子平真诠》"伤官见官为祸百端"
@@ -585,7 +586,25 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                 'severity': 'high',
                 'detail': f'正官格天干透伤官{"".join(shishen_map["伤官"])}，伤官见官为祸百端',
             })
-        # (2) 官星逢刑冲 — 正官根基动摇
+        # (2) 官星逢合 — 正官被合去则官格不成
+        # 《子平真诠》第九章带忌："透官而又逢合"
+        # 检查正官天干是否与其他天干构成天干五合
+        guan_gans = shishen_map.get('正官', [])
+        for gg in guan_gans:
+            he_partner = GAN_HE.get(gg, '')
+            if he_partner:
+                # 检查合化对象是否在天干中（排除日主自身与正官的合）
+                for g in gans:
+                    if g == day_master or g == gg:
+                        continue
+                    if g == he_partner:
+                        breaks.append({
+                            'type': '官星逢合',
+                            'severity': 'high',
+                            'detail': f'正官格正官{gg}与{he_partner}相合，官星被合去，官格不成',
+                        })
+                        break
+        # (3) 官星逢刑冲 — 正官根基动摇
         # 检查月支（官星所在）是否被其他地支冲或刑
         month_zhi = zhis[1] if len(zhis) > 1 else ''
         for i, zhi in enumerate(zhis):
@@ -700,6 +719,17 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                     'severity': 'high',
                     'detail': f'印格印星重（有本气根+透干）又透七杀{"".join(sha_gans)}，身强印重透煞，印星太旺反为偏颇',
                 })
+        # (3) 透煞生印又透财 — 《子平真诠》第九章带忌
+        # "透煞以生印，而又透财，以去印存煞"
+        # 印用煞生，但财来去印，煞失去印的调和，反为祸
+        if '七杀' in shishen_map and ('正财' in shishen_map or '偏财' in shishen_map):
+            sha_gans = shishen_map.get('七杀', [])
+            cai_gans = shishen_map.get('正财', []) + shishen_map.get('偏财', [])
+            breaks.append({
+                'type': '透煞生印又透财',
+                'severity': 'medium',
+                'detail': f'印格透煞{"".join(sha_gans)}生印又透财{"".join(cai_gans)}，财去印存煞，煞失印调反为祸',
+            })
 
     # ── 食神格破格 ──
     # 《子平真诠》"食格败：食神逢枭，或生财露煞"

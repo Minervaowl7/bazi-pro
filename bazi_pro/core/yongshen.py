@@ -221,6 +221,13 @@ def _derive_jishen(pattern_name: str, dm_wx: str, yongshen_wx: str,
         # 从儿顺食伤势，忌印星(克食伤)+官杀(逆势)
         # 《滴天髓》"从儿不管身强弱，只要吾儿又得儿" — 比劫生食伤不逆势，不应为忌
         return [w for w in [sheng_wo, ke_wo] if w and w != yongshen_wx]
+    if '从势' in pattern_name:
+        # 从势格：日主孤立无气，顺最强之势
+        # 《滴天髓》"从得真者只论从" — 忌逆势五行
+        # 比劫在从势格中力量极弱（日主无根），不是主要威胁
+        # 忌神：克我(官杀)+我克(财星)+生我(印星)，皆为逆最强之势
+        # 但用神五行本身不应为忌，需排除
+        return [w for w in [ke_wo, wo_ke, sheng_wo] if w and w != yongshen_wx]
 
     # ── 扶抑格 ──
     if is_weak:
