@@ -34,7 +34,7 @@ def _score_to_level(score: int) -> str:
 def _get_today_pillars(d: date) -> dict:
     """使用排盘引擎获取指定日期的四柱干支（中午12点，性别男）"""
     solar_str = f"{d.year:04d}-{d.month:02d}-{d.day:02d} 12:00"
-    result = paipan_from_datetime(solar_str, "男")
+    result = paipan_from_datetime(solar_str, "男") or {}
     if result.get("status") != "completed":
         gan_idx = (d.year - 4) % 10
         zhi_idx = (d.year - 4) % 12
@@ -69,6 +69,9 @@ def _get_month_ganzhi(year: int, month: int) -> tuple[str, str]:
 def _calc_dimension_scores(day_master_wx: str, gan_wx: str, zhi_wx: str,
                            yongshen_wx: str, jishen_wx: list[str]) -> dict[str, int]:
     """计算六维度运势分数"""
+    if not gan_wx or not zhi_wx:
+        return {dim: 50 for dim in DIMENSIONS}
+
     base = 50
     scores = {}
 

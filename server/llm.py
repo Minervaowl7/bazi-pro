@@ -1,8 +1,8 @@
 """
 LLM 服务模块 — 支持 OpenAI 兼容 API (OpenAI, DeepSeek, 通义千问, Ollama 等)
 """
-import json
 import asyncio
+import json
 import logging
 import os
 import re
@@ -47,8 +47,9 @@ def _get_month_ganzhi(year: int, month: int) -> str:
 def _get_day_ganzhi(d) -> str:
     """根据公历日期计算日柱干支（使用排盘引擎确保准确）"""
     try:
-        from bazi_pro.paipan import paipan_from_datetime
         from datetime import date
+
+        from bazi_pro.paipan import paipan_from_datetime
         if isinstance(d, date):
             solar_str = f"{d.year:04d}-{d.month:02d}-{d.day:02d} 12:00"
             result = paipan_from_datetime(solar_str, "男")

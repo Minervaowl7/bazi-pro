@@ -90,24 +90,48 @@ def reverse_lookup_day_pillar(day_pillar: str, start_year: int = 2020,
     if (gan_idx % 2) != (zhi_idx % 2):
         return []
 
-    base_date = date(1900, 1, 31)
-    base_offset = 0
-
-    for offset in range(60):
-        if offset % 10 == gan_idx and offset % 12 == zhi_idx:
-            base_offset = offset
-            break
+    from bazi_pro.paipan import _julian_day_number
 
     start = date(start_year, 1, 1)
     end = date(end_year, 12, 31)
 
-    days_from_base_to_start = (start - base_date).days
-    first_match_offset = base_offset - (days_from_base_to_start % 60)
-    if first_match_offset < 0:
-        first_match_offset += 60
+    # 使用 JDN 计算日柱，与 paipan.py 保持一致
+    # 日柱天干索引 = (JDN + 9) % 10
+    # 日柱地支索引 = (JDN + 1) % 12
+    start_jdn = _julian_day_number(start.year, start.month, start.day)
+    start_gan_idx = (start_jdn + 9) % 10
+    start_zhi_idx = (start_jdn + 1) % 12
+
+    # 找到从 start 开始第一个满足目标天干地支的偏移天数
+    # 需要: (start_gan_idx + days) % 10 == gan_idx
+    #       (start_zhi_idx + days) % 12 == zhi_idx
+    # 即: days % 10 == (gan_idx - start_gan_idx) % 10
+    #     days % 12 == (zhi_idx - start_zhi_idx) % 12
+    gan_diff = (gan_idx - start_gan_idx) % 10
+    zhi_diff = (zhi_idx - start_zhi_idx) % 12
+
+    # 用中国剩余定理求解最小正天数
+    # days ≡ gan_diff (mod 10)
+    # days ≡ zhi_diff (mod 12)
+    # 因为 10 和 12 的 GCD=2，需要 gan_diff ≡ zhi_diff (mod 2)
+    # 前面已经检查了 (gan_idx % 2) == (zhi_idx % 2)
+    # 所以 (start_gan_idx + gan_diff) % 2 == gan_idx % 2
+    #      (start_zhi_idx + zhi_diff) % 2 == zhi_idx % 2
+    # gan_idx % 2 == zhi_idx % 2 (已验证)
+    # start_gan_idx % 2 == start_zhi_idx % 2 (因为日柱天干地支阴阳一致)
+    # 所以 gan_diff % 2 == zhi_diff % 2，有解
+
+    first_days = None
+    for days in range(60):
+        if days % 10 == gan_diff and days % 12 == zhi_diff:
+            first_days = days
+            break
+
+    if first_days is None:
+        return []
 
     results = []
-    current = start + timedelta(days=first_match_offset)
+    current = start + timedelta(days=first_days)
     while current <= end:
         results.append(current.isoformat())
         current += timedelta(days=60)

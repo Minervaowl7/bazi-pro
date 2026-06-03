@@ -17,8 +17,6 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
-
 from fastapi import Depends, FastAPI, Query, Request, Security, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,12 +42,21 @@ from server.db import (
     update_analysis_result,
     update_analysis_status,
 )
-from server.llm import build_chat_system_prompt, build_report_system_prompt, chat_completion, get_llm_config, is_llm_configured, update_llm_config
+from server.llm import (
+    build_chat_system_prompt,
+    build_report_system_prompt,
+    chat_completion,
+    get_llm_config,
+    is_llm_configured,
+    update_llm_config,
+)
 from server.rag_engine import retrieve_for_chat, retrieve_for_report
 from server.ratelimiter import MemoryRateLimiter, RateLimiter, RedisRateLimiter, create_rate_limiter
 from server.schemas import BaziAnalysisRequest
 from server.taskstore import MemoryTaskStore, RedisTaskStore, create_task_store
 from server.ws import manager
+
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
 
 logger = logging.getLogger("bazi-pro")
 
@@ -931,10 +938,20 @@ async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level:
         await _sse_broadcast(analysis_id, "analysis-error", {"message": client_msg})
     finally:
         _v2_active_ids.discard(analysis_id)
-        await asyncio.sleep(2)
-        async with _sse_lock:
-            _sse_subscribers.pop(analysis_id, None)
-            _sse_buffers.pop(analysis_id, None)
+        # 等待订阅者自行退出后再清理，最多等 5 秒
+        for _ in range(10):
+            async with _sse_lock:
+                subs = _sse_subscribers.get(analysis_id, [])
+                if not subs:
+                    _sse_subscribers.pop(analysis_id, None)
+                    _sse_buffers.pop(analysis_id, None)
+                    break
+            await asyncio.sleep(0.5)
+        else:
+            # 超时仍有订阅者，强制清理
+            async with _sse_lock:
+                _sse_subscribers.pop(analysis_id, None)
+                _sse_buffers.pop(analysis_id, None)
 
 
 async def _sse_broadcast(analysis_id: str, event: str, data: dict):
@@ -1040,9 +1057,17 @@ async def api_v2_get_analysis(analysis_id: str):
         except Exception:
             pass
 
-    return JSONResponse({
+    effective_status = record["status"]
+    effective_error = None
+    if isinstance(result, dict):
+        if "status" in result:
+            effective_status = result["status"]
+        if "error" in result:
+            effective_error = result["error"]
+
+    response = {
         "analysis_id": analysis_id,
-        "status": record["status"],
+        "status": effective_status,
         "created_at": record.get("created_at"),
         "completed_at": record.get("completed_at"),
         "day_master": record.get("day_master", ""),
@@ -1050,7 +1075,10 @@ async def api_v2_get_analysis(analysis_id: str):
         "yongshen": record.get("yongshen", ""),
         "result": result,
         "narration": narration,
-    })
+    }
+    if effective_error:
+        response["error"] = effective_error
+    return JSONResponse(response)
 
 
 @app.get("/api/v2/dayun-liunian/{analysis_id}")
@@ -1082,7 +1110,12 @@ async def api_v2_dayun_liunian(analysis_id: str):
         if isinstance(xishen_wx, str):
             xishen_wx = [xishen_wx] if xishen_wx else []
     else:
-        yongshen_wx = str(yongshen_info) if yongshen_info else ""
+        if isinstance(yongshen_info, list) and yongshen_info:
+            yongshen_wx = str(yongshen_info[0]) if yongshen_info[0] else ""
+        elif isinstance(yongshen_info, str):
+            yongshen_wx = yongshen_info
+        else:
+            yongshen_wx = str(yongshen_info) if yongshen_info else ""
         jishen_wx = []
         xishen_wx = []
 

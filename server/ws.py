@@ -64,14 +64,15 @@ class ConnectionManager:
                 self.disconnect(run_id, ws)
             except Exception as e:
                 logger.warning("WebSocket disconnect error for run_id=%s: %s", run_id, e)
-                # Force remove the dead connection
-                if run_id in self._connections:
+                # Force remove the dead connection if still present
+                conns_list = self._connections.get(run_id)
+                if conns_list is not None:
                     try:
-                        self._connections[run_id].remove(ws)
-                    except (ValueError, KeyError):
+                        conns_list.remove(ws)
+                    except ValueError:
                         pass
-                    if not self._connections[run_id]:
-                        del self._connections[run_id]
+                    if not conns_list:
+                        self._connections.pop(run_id, None)
 
     async def broadcast(self, message: dict) -> None:
         dead = []

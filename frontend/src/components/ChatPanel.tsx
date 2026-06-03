@@ -54,14 +54,16 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
   const [showQuick, setShowQuick] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     let cancelled = false;
+    mountedRef.current = true;
     getChatHistory(analysisId, school).then((data) => {
       if (cancelled) return;
       if (data.messages && data.messages.length > 0) { setMessages(data.messages); setShowQuick(false); }
     }).catch(() => {});
-    return () => { cancelled = true; };
+    return () => { cancelled = true; mountedRef.current = false; };
   }, [analysisId, school]);
 
   useEffect(() => {
@@ -76,13 +78,17 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
     setLoading(true);
     try{
       const data=await sendChatMessage(analysisId,message,school);
+      if(!mountedRef.current)return;
       setMessages(prev=>[...prev,{role:"assistant",content:data.reply,citations:data.citations}]);
     }catch(err){
+      if(!mountedRef.current)return;
       const errMsg=err instanceof Error?err.message:"发送失败";
       if(errMsg.includes("LLM")&&(errMsg.includes("未配置")||errMsg.includes("503")||errMsg.includes("not configured"))){
         setError("LLM 服务未配置。请在服务端设置 LLM_API_KEY 环境变量后重启。");
       }else{setError(errMsg);}
-    }finally{setLoading(false);}
+    }finally{
+      if(mountedRef.current)setLoading(false);
+    }
   }
 
   function handleKeyDown(e:React.KeyboardEvent){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend();}}

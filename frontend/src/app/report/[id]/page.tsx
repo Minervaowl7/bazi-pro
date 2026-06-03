@@ -176,17 +176,22 @@ export default function ReportPage() {
     try {
       reportData = await getReport(analysisId);
     } catch {}
-    if (!analysisData) {
-      setError("加载分析数据失败");
-    } else {
-      setAnalysis(analysisData);
-      setReport(reportData);
-    }
-    setLoading(false);
+    return { analysisData, reportData };
   }, [analysisId]);
 
   useEffect(() => {
-    fetchData();
+    let cancelled = false;
+    fetchData().then(({ analysisData, reportData }) => {
+      if (cancelled) return;
+      if (!analysisData) {
+        setError("加载分析数据失败");
+      } else {
+        setAnalysis(analysisData);
+        setReport(reportData);
+      }
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
   }, [fetchData]);
 
   useEffect(() => {

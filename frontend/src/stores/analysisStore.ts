@@ -125,7 +125,10 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
           retries++;
           continue;
         }
-        set({ result: data, status: data.status === "failed" ? "failed" : "completed", error: data.status === "failed" ? (data.result as Record<string,unknown> | undefined)?.error as string || data.error || "分析过程出错" : null });
+        const failedError = data.error
+          || (data.result && typeof data.result === "object" ? (data.result as Record<string, unknown>).error as string || undefined : undefined)
+          || "分析过程出错";
+        set({ result: data, status: data.status === "failed" ? "failed" : "completed", error: data.status === "failed" ? failedError : null });
         return;
       } catch (e) {
         const msg = e instanceof Error ? e.message : "获取结果失败";

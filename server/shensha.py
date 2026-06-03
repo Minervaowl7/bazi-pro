@@ -1,5 +1,10 @@
 """神煞查表 — 覆盖 40+ 种常见神煞，含含义说明和流年刑冲合害"""
 
+import json
+import os
+import re
+import tempfile
+
 TIANGAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
 DIZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
 
@@ -530,12 +535,6 @@ def calc_liunian_relations(liunian_gan: str, liunian_zhi: str,
     return results
 
 
-import json
-import re
-import subprocess
-import os
-import tempfile
-
 _BAZI_MCP_PATH: str | None = None
 
 def _find_bazi_mcp_path() -> str | None:
@@ -629,8 +628,8 @@ def _to_iso_datetime(solar: str | None) -> str:
     return s
 
 async def calc_shensha_from_mcp(solar_datetime: str, gender: int) -> list[dict]:
-    import logging
     import asyncio
+    import logging
     logger = logging.getLogger(__name__)
     mcp_path = _find_bazi_mcp_path()
     if not mcp_path:
