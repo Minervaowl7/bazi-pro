@@ -68,12 +68,14 @@ def calc_deshi(day_master: str, bazi_parts: list[str]) -> dict:
             # 月干/时干紧贴日干，帮身力大(2分)；年干远隔，力微(1分)
             if i == 1 or i == 3:  # 月干或时干
                 score = 2
+                distance = 1  # 紧贴日干
             else:  # 年干
                 score = 1
+                distance = 2  # 远隔日干
             total += score
             details.append({
                 'position': positions[i] if i < 4 else '',
-                'gan': gan, 'shishen': ss, 'score': score,
+                'gan': gan, 'shishen': ss, 'distance': distance, 'score': score,
             })
 
     for part in bazi_parts:

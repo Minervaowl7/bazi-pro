@@ -918,6 +918,14 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                 return result
 
     if month_zhi == JIANLU_MAP.get(day_master, ''):
+        # 《滴天髓》"日主孤立无气"之反面：建禄月印比极旺，无财官煞食透出，
+        # 日主从其旺势，应判从强格而非建禄格
+        if yin_bi_pct >= 80 and wangshuai.get('is_extreme_strong', False):
+            return {
+                'layer': 0, 'type': '从强格', 'pattern': '从强格',
+                'confidence': 0.85, 'reason': f'月支建禄但印比{yin_bi_pct}%≥80%且极旺，从强格优先',
+                'yongshen_direction': '印比',
+            }
         return None
 
     if month_zhi == YANGREN_MAP.get(day_master, ''):

@@ -141,9 +141,9 @@
       - 从弱
     yongshen:
       required_any:
-      - 火
-      - 克
-      - 官杀
+      - 土
+      - 金
+      - 印比
     evidence:
       required_terms_any:
       - 月令
@@ -318,8 +318,8 @@
       allowed:
       - 偏旺
       - 身旺
+      - 极旺
       - 中和偏旺
-      - 中和
       forbidden:
       - 极弱
     pattern:
