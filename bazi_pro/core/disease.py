@@ -112,7 +112,7 @@ def detect_disease(
     items.extend(_detect_qisha_wuzhi(day_master, dm_wx, bazi_parts))
     items.extend(_detect_yongshen_chong(day_master, dm_wx, bazi_parts))
     # 《子平真诠》第九章新增破格检测
-    items.extend(_detect_shenqiang_yinzong_tousha(day_master, dm_wx, bazi_parts))
+    items.extend(_detect_shenqiang_yinzong_tousha(day_master, dm_wx, bazi_parts, element_forces))
     items.extend(_detect_shangguan_shengcai_daisa(day_master, dm_wx, bazi_parts))
 
     medicine_parts = []
@@ -577,13 +577,31 @@ def _detect_shenqiang_yinzong_tousha(
     day_master: str,
     dm_wx: str,
     bazi_parts: list[str],
+    element_forces: dict = None,
 ) -> list[dict]:
     """身强印重透煞 — 《子平真诠》"印格败：身强印重而透煞"
 
     身旺印旺又透七杀，印星太旺反为偏颇，杀得印助更凶。
-    条件：印星有本气根+透干，且天干透七杀。
+    条件：身强 + 印星有本气根+透干 + 天干透七杀。
     """
     results = []
+
+    # 《子平真诠》"身强印重" — 必须身强才构成此病
+    # 身强判断：印比≥60%或日主五行占比≥35%
+    if element_forces:
+        pct = element_forces.get('percent', {})
+        sheng_wo_wx = SHENG_MAP.get(dm_wx, '')
+        yin_bi_pct = pct.get(dm_wx, 0) + pct.get(sheng_wo_wx, 0)
+        if yin_bi_pct < 50:
+            return results  # 身不强，不构成此病
+    else:
+        # 无力量数据时，用比劫数量粗判
+        bj_count = len(_find_shishen_instances(day_master, '比肩', bazi_parts))
+        bj_count += len(_find_shishen_instances(day_master, '劫财', bazi_parts))
+        yin_count = len(_find_shishen_instances(day_master, '正印', bazi_parts))
+        yin_count += len(_find_shishen_instances(day_master, '偏印', bazi_parts))
+        if bj_count + yin_count < 2:
+            return results  # 身不强，不构成此病
 
     yin_instances = (
         _find_shishen_instances(day_master, '正印', bazi_parts)
@@ -665,6 +683,13 @@ def _detect_shangguan_shengcai_daisa(
 
     if not sg_rooted or not cai_rooted or not sha_rooted:
         return results
+
+    # 检查是否有食神制杀 — 若有食神制杀，则七杀受制不为病
+    # 《子平真诠》"煞逢食制" — 食神制杀可化解财党杀
+    shishen_instances = _find_shishen_instances(day_master, '食神', bazi_parts)
+    shishen_rooted = [x for x in shishen_instances if x['root_weight'] > 0 or x['is_transparent']]
+    if shishen_rooted:
+        return results  # 食神制杀，不构成此病
 
     best_sg = _best_instance(sg_rooted)
     best_cai = _best_instance(cai_rooted)
