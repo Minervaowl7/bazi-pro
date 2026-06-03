@@ -325,7 +325,7 @@ def _derive_shishen(mcp_json: dict, bazi_parts: list[str]) -> dict:
             'canggan': [{'gan': cg, 'qi': ql,
                           'wuxing': GAN_WUXING.get(cg, ''),
                           'shishen': derive_shishen(day_master, cg)}
-                         for cg, ql in canggan],
+                         for cg, ql in canggan_list],
         })
     return {'pillars': pillars}
 

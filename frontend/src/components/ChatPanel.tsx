@@ -56,9 +56,12 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    let cancelled = false;
     getChatHistory(analysisId, school).then((data) => {
+      if (cancelled) return;
       if (data.messages && data.messages.length > 0) { setMessages(data.messages); setShowQuick(false); }
     }).catch(() => {});
+    return () => { cancelled = true; };
   }, [analysisId, school]);
 
   useEffect(() => {

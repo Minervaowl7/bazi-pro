@@ -588,7 +588,9 @@ async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
         result = await run_analysis(mcp_json, run_id, detail_level)
         if result is None:
             result = {"status": "failed", "error": "分析引擎返回空结果"}
-        _task_store.update(run_id, {'status': result.get('status', 'completed')})
+        # 从 result 中提取真实状态：若分析内部失败，status 为 'failed'
+        actual_status = result.get('status', 'completed')
+        _task_store.update(run_id, {'status': actual_status})
         cache = get_cache()
         cache.set(f'result:{run_id}', result, ttl=_TASK_TTL_SECONDS)
     except Exception as e:
@@ -814,6 +816,9 @@ async def api_v2_daily_fortune(analysis_id: str):
     day_master = validation.get("day_master", "")
     yongshen_wx = yongshen_data.get("yongshen", "")
     jishen_wx = yongshen_data.get("jishen", [])
+    # 确保 jishen_wx 是列表（防止旧数据中存储为字符串）
+    if isinstance(jishen_wx, str):
+        jishen_wx = [jishen_wx] if jishen_wx else []
 
     if not day_master:
         return error_response(400, "INVALID", "缺少日主数据")
@@ -850,6 +855,8 @@ async def api_v2_monthly_fortune(analysis_id: str, year: int = Query(default=0),
     day_master = validation.get("day_master", "")
     yongshen_wx = yongshen_data.get("yongshen", "")
     jishen_wx = yongshen_data.get("jishen", [])
+    if isinstance(jishen_wx, str):
+        jishen_wx = [jishen_wx] if jishen_wx else []
 
     if not day_master:
         return error_response(400, "INVALID", "缺少日主数据")
@@ -891,7 +898,17 @@ async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level:
             result = {"status": "failed", "error": "分析引擎返回空结果"}
 
         await update_analysis_result(analysis_id, result)
-        await _sse_broadcast(analysis_id, "done", {"analysis_id": analysis_id})
+
+        # 根据分析结果的实际状态决定发送哪种 SSE 事件
+        actual_status = result.get('status', 'completed')
+        if actual_status == 'failed':
+            error_msg = result.get('error', '分析失败')
+            await _sse_broadcast(analysis_id, "analysis-error", {"message": error_msg})
+        elif actual_status == 'invalid_input':
+            error_msg = result.get('error', '输入数据无效')
+            await _sse_broadcast(analysis_id, "analysis-error", {"message": error_msg})
+        else:
+            await _sse_broadcast(analysis_id, "done", {"analysis_id": analysis_id})
 
     except Exception as e:
         import traceback as _tb
@@ -1045,6 +1062,10 @@ async def api_v2_dayun_liunian(analysis_id: str):
         yongshen_wx = yongshen_info.get("yongshen", "")
         jishen_wx = yongshen_info.get("jishen", [])
         xishen_wx = yongshen_info.get("xishen", [])
+        if isinstance(jishen_wx, str):
+            jishen_wx = [jishen_wx] if jishen_wx else []
+        if isinstance(xishen_wx, str):
+            xishen_wx = [xishen_wx] if xishen_wx else []
     else:
         yongshen_wx = str(yongshen_info) if yongshen_info else ""
         jishen_wx = []
