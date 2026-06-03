@@ -417,9 +417,10 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                 })
 
     # ── 印格破格 ──
-    # 子平真诠："印格败：印轻逢财"
-    # 关键条件：印星必须"轻"（无本气根或仅余气根），财星才能破印
-    # 若印星强旺（有本气根+透干），财星破不了印
+    # 子平真诠："印格败：印轻逢财，或身强印重而透煞"
+    # 条件1：印星必须"轻"（无本气根或仅余气根），财星才能破印
+    # 条件2：若印星强旺（有本气根+透干），财星破不了印
+    # 条件3：身强印重而透煞 — 身旺印旺又透七杀，印星太旺反为偏颇
     if '印格' in pattern_name:
         if '正财' in shishen_map or '偏财' in shishen_map:
             # 检查印星是否"轻"：无本气根（仅有中气/余气根）
@@ -445,6 +446,32 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                     'type': '财星破印',
                     'severity': 'high',
                     'detail': f'印格天干透财星{"".join(cai_gans)}，印星无本气根（印轻），财星破印',
+                })
+        # 《子平真诠》"身强印重而透煞" — 身旺印旺又透七杀，印星太旺反为偏颇
+        if '七杀' in shishen_map:
+            yin_gans = shishen_map.get('正印', []) + shishen_map.get('偏印', [])
+            yin_wx_set = set()
+            for yg in yin_gans:
+                wx = GAN_WUXING.get(yg, '')
+                if wx:
+                    yin_wx_set.add(wx)
+            # 印星"重"：有本气根
+            yin_has_benqi_root = False
+            for part in bazi_parts:
+                if len(part) < 2:
+                    continue
+                for cg, ql in get_canggan(part[1]):
+                    if GAN_WUXING.get(cg, '') in yin_wx_set and ql == '本气':
+                        yin_has_benqi_root = True
+                        break
+                if yin_has_benqi_root:
+                    break
+            if yin_has_benqi_root and len(yin_gans) >= 1:
+                sha_gans = shishen_map.get('七杀', [])
+                breaks.append({
+                    'type': '身强印重透煞',
+                    'severity': 'high',
+                    'detail': f'印格印星重（有本气根+透干）又透七杀{"".join(sha_gans)}，身强印重透煞，印星太旺反为偏颇',
                 })
 
     # ── 食神格破格 ──
@@ -480,7 +507,7 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                 })
 
     # ── 伤官格破格 ──
-    # 子平真诠："伤官格败：伤官非金水而见官"
+    # 子平真诠："伤官格败：伤官非金水而见官，或生财生带煞，或佩印而伤轻身旺"
     # 补充：伤官佩印但印无根，亦为败格
     if '伤官格' in pattern_name:
         is_jin_dm = day_master in ('庚', '辛')
@@ -491,7 +518,17 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                 'severity': 'high',
                 'detail': f'伤官格天干透正官{"".join(shishen_map["正官"])}，伤官见官为祸百端',
             })
-        # (2) 伤官佩印但印无根 — 子平真诠"伤官佩印而伤官旺印有根"方为成格
+        # (2) 生财带煞 — 《子平真诠》"伤官生财生带煞"
+        # 伤官生财又透七杀，财转党杀，杀得财助反为祸
+        if ('正财' in shishen_map or '偏财' in shishen_map) and '七杀' in shishen_map:
+            sha_gans = shishen_map.get('七杀', [])
+            breaks.append({
+                'type': '生财带煞',
+                'severity': 'high',
+                'detail': f'伤官格生财又透七杀{"".join(sha_gans)}，财转党杀，杀得财助为祸',
+            })
+        # (3) 佩印而伤轻身旺 — 《子平真诠》"佩印而伤轻身旺"
+        # 伤官轻而身旺，印星制伤太过，伤官被制尽反为不美
         if ('正印' in shishen_map or '偏印' in shishen_map) and not is_jin_dm:
             yin_gans = shishen_map.get('正印', []) + shishen_map.get('偏印', [])
             # 检查印星是否有根（地支藏干中有印星五行本气根）

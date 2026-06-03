@@ -111,6 +111,9 @@ def detect_disease(
     items.extend(_detect_tancai_huaiyin(day_master, dm_wx, bazi_parts))
     items.extend(_detect_qisha_wuzhi(day_master, dm_wx, bazi_parts))
     items.extend(_detect_yongshen_chong(day_master, dm_wx, bazi_parts))
+    # 《子平真诠》第九章新增破格检测
+    items.extend(_detect_shenqiang_yinzong_tousha(day_master, dm_wx, bazi_parts))
+    items.extend(_detect_shangguan_shengcai_daisa(day_master, dm_wx, bazi_parts))
 
     medicine_parts = []
     for item in items:
@@ -567,4 +570,128 @@ def _detect_yongshen_chong(
             })
             break  # 只报告一次
 
+    return results
+
+
+def _detect_shenqiang_yinzong_tousha(
+    day_master: str,
+    dm_wx: str,
+    bazi_parts: list[str],
+) -> list[dict]:
+    """身强印重透煞 — 《子平真诠》"印格败：身强印重而透煞"
+
+    身旺印旺又透七杀，印星太旺反为偏颇，杀得印助更凶。
+    条件：印星有本气根+透干，且天干透七杀。
+    """
+    results = []
+
+    yin_instances = (
+        _find_shishen_instances(day_master, '正印', bazi_parts)
+        + _find_shishen_instances(day_master, '偏印', bazi_parts)
+    )
+    sha_instances = _find_shishen_instances(day_master, '七杀', bazi_parts)
+
+    if not yin_instances or not sha_instances:
+        return results
+
+    yin_rooted = [x for x in yin_instances if x['root_weight'] > 0 or x['is_transparent']]
+    sha_rooted = [x for x in sha_instances if x['root_weight'] > 0 or x['is_transparent']]
+
+    if not yin_rooted or not sha_rooted:
+        return results
+
+    # 印星"重"：有本气根
+    yin_benqi = [x for x in yin_rooted if x['qi_level'] == '本气']
+    yin_transparent = [x for x in yin_rooted if x['is_transparent']]
+    yin_is_heavy = len(yin_benqi) >= 1 and len(yin_transparent) >= 1
+
+    if not yin_is_heavy:
+        return results  # 印星不重，不构成此病
+
+    best_yin = _best_instance(yin_rooted)
+    best_sha = _best_instance(sha_rooted)
+    yin_wx = GAN_WUXING.get(best_yin['gan'], '')
+    sha_wx = GAN_WUXING.get(best_sha['gan'], '')
+    medicine_wx = WO_KE_MAP.get(dm_wx, '')  # 食伤制杀
+
+    sev = _severity(sha_rooted)
+
+    results.append({
+        'name': '身强印重透煞',
+        'severity': sev,
+        'disease_god': '七杀',
+        'disease_element': sha_wx,
+        'disease_gan': best_sha['gan'],
+        'disease_position': best_sha['position'],
+        'affected_god': '印星',
+        'affected_element': yin_wx,
+        'affected_gan': best_yin['gan'],
+        'affected_position': best_yin['position'],
+        'medicine': f'食伤({medicine_wx})制杀泄印',
+        'medicine_element': medicine_wx,
+        'reason': (
+            f'印星{best_yin["gan"]}{yin_wx}在{best_yin["position"]}重（有本气根+透干），'
+            f'七杀{best_sha["gan"]}{sha_wx}在{best_sha["position"]}，'
+            f'身强印重透煞，印星太旺反为偏颇'
+        ),
+    })
+    return results
+
+
+def _detect_shangguan_shengcai_daisa(
+    day_master: str,
+    dm_wx: str,
+    bazi_parts: list[str],
+) -> list[dict]:
+    """伤官生财带煞 — 《子平真诠》"伤官格败：生财生带煞"
+
+    伤官生财又透七杀，财转党杀，杀得财助反为祸。
+    """
+    results = []
+
+    sg_instances = _find_shishen_instances(day_master, '伤官', bazi_parts)
+    cai_instances = (
+        _find_shishen_instances(day_master, '正财', bazi_parts)
+        + _find_shishen_instances(day_master, '偏财', bazi_parts)
+    )
+    sha_instances = _find_shishen_instances(day_master, '七杀', bazi_parts)
+
+    if not sg_instances or not cai_instances or not sha_instances:
+        return results
+
+    sg_rooted = [x for x in sg_instances if x['root_weight'] > 0 or x['is_transparent']]
+    cai_rooted = [x for x in cai_instances if x['root_weight'] > 0 or x['is_transparent']]
+    sha_rooted = [x for x in sha_instances if x['root_weight'] > 0 or x['is_transparent']]
+
+    if not sg_rooted or not cai_rooted or not sha_rooted:
+        return results
+
+    best_sg = _best_instance(sg_rooted)
+    best_cai = _best_instance(cai_rooted)
+    best_sha = _best_instance(sha_rooted)
+    sg_wx = GAN_WUXING.get(best_sg['gan'], '')
+    cai_wx = GAN_WUXING.get(best_cai['gan'], '')
+    sha_wx = GAN_WUXING.get(best_sha['gan'], '')
+    medicine_wx = WO_KE_MAP.get(dm_wx, '')  # 食伤制杀
+
+    sev = _severity(sha_rooted)
+
+    results.append({
+        'name': '伤官生财带煞',
+        'severity': sev,
+        'disease_god': '七杀',
+        'disease_element': sha_wx,
+        'disease_gan': best_sha['gan'],
+        'disease_position': best_sha['position'],
+        'affected_god': '财星',
+        'affected_element': cai_wx,
+        'affected_gan': best_cai['gan'],
+        'affected_position': best_cai['position'],
+        'medicine': f'食伤({medicine_wx})制杀',
+        'medicine_element': medicine_wx,
+        'reason': (
+            f'伤官{best_sg["gan"]}{sg_wx}生财{best_cai["gan"]}{cai_wx}，'
+            f'又透七杀{best_sha["gan"]}{sha_wx}，财转党杀，杀得财助为祸'
+        ),
+    })
     return results
