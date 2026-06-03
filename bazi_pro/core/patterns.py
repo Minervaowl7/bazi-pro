@@ -610,11 +610,13 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
     # ── 财格破格 ──
     # 《子平真诠》"财格败：财轻比重，财透七煞"
     if '财格' in pattern_name:
-        # (1) 比劫争财 — 天干透比劫且无官杀制比劫
-        # 《子平真诠》"财轻比重"：比劫夺财，须官杀制之
+        # (1) 比劫争财 — 天干透比劫且无官杀制比劫或食伤通关
+        # 《子平真诠》"财轻比重"：比劫夺财，须官杀制之或食伤化之
+        # 《子平真诠》"财逢劫而透食以化之"：食伤可化比劫生财（通关）
         if '比肩' in shishen_map or '劫财' in shishen_map:
             has_guansha = '正官' in shishen_map or '七杀' in shishen_map
-            if not has_guansha:
+            has_shishen_tongguan = '食神' in shishen_map or '伤官' in shishen_map
+            if not has_guansha and not has_shishen_tongguan:
                 bijie_gans = shishen_map.get('比肩', []) + shishen_map.get('劫财', [])
                 breaks.append({
                     'type': '比劫争财',
@@ -666,6 +668,7 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                 })
 
         # 《子平真诠》"身强印重而透煞" — 身旺印旺又透七杀，印星太旺反为偏颇
+        # 三条件缺一不可：身强 + 印重 + 透煞
         if '七杀' in shishen_map:
             yin_gans = shishen_map.get('正印', []) + shishen_map.get('偏印', [])
             yin_wx_set = set()
@@ -684,8 +687,13 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                         break
                 if yin_has_benqi_root:
                     break
-            # 印星重（有本气根+透干）又透七杀 → 身强印重透煞
-            if yin_has_benqi_root and len(yin_gans) >= 1:
+            # 身强判断：天干有比劫或印星（与disease.py一致）
+            # 《子平真诠》"身强"：印比力量占主导
+            has_bijie = '比肩' in shishen_map or '劫财' in shishen_map
+            has_yin = len(yin_gans) >= 1
+            is_shenqiang = has_bijie or has_yin
+            # 印星重（有本气根+透干）+ 身强 + 透七杀 → 身强印重透煞
+            if yin_has_benqi_root and len(yin_gans) >= 1 and is_shenqiang:
                 sha_gans = shishen_map.get('七杀', [])
                 breaks.append({
                     'type': '身强印重透煞',
@@ -706,13 +714,20 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
             })
         # (2) 生财露煞 — 食神生财但天干又透七杀
         # 食→财→杀，杀得财助反为祸
+        # 《子平真诠》"煞逢食制" — 若有食神制杀，则七杀受制不为病
+        # 注意：食神格本身已有食神，食神制杀即格中食神克制七杀
+        # 但"生财露煞"特指食神生财→财生杀的传递链，食神已去生财而非制杀
+        # 故此处仍标记破格，但若天干另有食伤（非月令食神）制杀则可化解
         if ('正财' in shishen_map or '偏财' in shishen_map) and '七杀' in shishen_map:
-            sha_gans = shishen_map.get('七杀', [])
-            breaks.append({
-                'type': '生财露煞',
-                'severity': 'high',
-                'detail': f'食神格生财又透七杀{"".join(sha_gans)}，食神生财、财生杀，杀得财助为祸',
-            })
+            # 检查是否有伤官制杀（食神已去生财，但伤官可制杀）
+            has_shangguan_zhi_sha = '伤官' in shishen_map
+            if not has_shangguan_zhi_sha:
+                sha_gans = shishen_map.get('七杀', [])
+                breaks.append({
+                    'type': '生财露煞',
+                    'severity': 'high',
+                    'detail': f'食神格生财又透七杀{"".join(sha_gans)}，食神生财、财生杀，杀得财助为祸',
+                })
 
     # ── 七杀格破格 ──
     # 《子平真诠》"煞格败：七煞逢财无制"
@@ -743,13 +758,16 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
             })
         # (2) 生财带煞 — 《子平真诠》"伤官生财生带煞"
         # 伤官生财又透七杀，财转党杀，杀得财助反为祸
+        # 《子平真诠》"煞逢食制" — 若有食神制杀，则七杀受制不为病
         if ('正财' in shishen_map or '偏财' in shishen_map) and '七杀' in shishen_map:
-            sha_gans = shishen_map.get('七杀', [])
-            breaks.append({
-                'type': '生财带煞',
-                'severity': 'high',
-                'detail': f'伤官格生财又透七杀{"".join(sha_gans)}，财转党杀，杀得财助为祸',
-            })
+            has_shishen_zhi_sha = '食神' in shishen_map
+            if not has_shishen_zhi_sha:
+                sha_gans = shishen_map.get('七杀', [])
+                breaks.append({
+                    'type': '生财带煞',
+                    'severity': 'high',
+                    'detail': f'伤官格生财又透七杀{"".join(sha_gans)}，财转党杀，杀得财助为祸',
+                })
         # (3) 佩印无根 — 《子平真诠》"佩印而伤轻身旺"之延伸
         # 伤官格佩印但印星无本气根，印星制伤无力
         if ('正印' in shishen_map or '偏印' in shishen_map) and not is_jin_dm:
@@ -817,6 +835,7 @@ PATTERN_YONGSHEN = {
     # 从官杀格：顺势，用财生官杀
     '从官杀格': {'用神': ['官杀', '财星'], '忌神': ['比劫', '印星']},
     # 从儿格：顺势，用食伤生财（《滴天髓》"只要吾儿又得儿"）
+    # 忌神：印星(克食伤)、官杀(逆势)；比劫生食伤不逆势，不为忌
     '从儿格': {'用神': ['食伤', '财星'], '忌神': ['印星', '官杀']},
     # 从势格：顺势，用最强之势
     '从势格': {'用神': ['最强之势'], '忌神': ['逆势五行']},

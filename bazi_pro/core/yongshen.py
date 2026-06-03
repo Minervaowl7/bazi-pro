@@ -218,8 +218,9 @@ def _derive_jishen(pattern_name: str, dm_wx: str, yongshen_wx: str,
         # 从官杀顺杀势，忌比劫(同我)+印星(生我) — 皆为逆杀势
         return [w for w in [dm_wx, sheng_wo] if w and w != yongshen_wx]
     if '从儿' in pattern_name:
-        # 从儿顺食伤势，忌印星(克食伤)+官杀(逆势)+比劫(再生食伤加重偏颇)
-        return [w for w in [sheng_wo, ke_wo, dm_wx] if w and w != yongshen_wx]
+        # 从儿顺食伤势，忌印星(克食伤)+官杀(逆势)
+        # 《滴天髓》"从儿不管身强弱，只要吾儿又得儿" — 比劫生食伤不逆势，不应为忌
+        return [w for w in [sheng_wo, ke_wo] if w and w != yongshen_wx]
 
     # ── 扶抑格 ──
     if is_weak:
