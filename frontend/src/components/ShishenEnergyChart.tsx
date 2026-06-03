@@ -7,29 +7,15 @@ const SHISHEN_GROUPS = [
   { label: "克我", items: ["七杀", "正官"], wx: "被克" },
   { label: "生我", items: ["偏印", "正印"], wx: "被生" },
 ];
+const GROUP_COLORS = ["var(--el-earth)", "var(--el-wood)", "var(--el-fire)", "var(--el-metal)", "var(--el-water)"];
 
-const GROUP_COLORS = ["var(--earth)", "var(--wood)", "var(--fire)", "var(--metal)", "var(--water)"];
-
-interface CangganItem {
-  shishen?: string;
-  [key: string]: unknown;
-}
-
-interface PillarDetail {
-  shishen_gan?: string;
-  shishen_zhi?: string;
-  canggan?: CangganItem[];
-  [key: string]: unknown;
-}
-
-interface Props {
-  result: Record<string, unknown>;
-}
+interface CangganItem { shishen?: string; [key: string]: unknown; }
+interface PillarDetail { shishen_gan?: string; shishen_zhi?: string; canggan?: CangganItem[]; [key: string]: unknown; }
+interface Props { result: Record<string, unknown>; }
 
 export default function ShishenEnergyChart({ result }: Props) {
   const shishen = result.shishen as { pillars?: PillarDetail[] } | undefined;
   const pillars = shishen?.pillars || [];
-
   if (pillars.length === 0) return null;
 
   const counts: Record<string, number> = {};
@@ -40,24 +26,14 @@ export default function ShishenEnergyChart({ result }: Props) {
       if (cg.shishen) counts[cg.shishen] = (counts[cg.shishen] || 0) + 0.5;
     }
   }
-
   const total = Math.max(1, Object.values(counts).reduce((a, b) => a + b, 0));
 
   return (
-    <div
-      className="rounded-2xl p-7"
-      style={{
-        background: "var(--bg-card)",
-        border: "1px solid var(--border)",
-      }}
-    >
-      <h3
-        className="text-sm font-medium mb-6"
-        style={{ color: "var(--text-muted)" }}
-      >
-        十神能量分布
-      </h3>
-      <div className="space-y-5">
+    <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+      <div style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "16px 24px" }}>
+        <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>十神能量分布</h3>
+      </div>
+      <div className="p-7 space-y-6">
         {SHISHEN_GROUPS.map((group, gi) => {
           const groupTotal = group.items.reduce((sum, item) => sum + (counts[item] || 0), 0);
           const groupPct = (groupTotal / total) * 100;
@@ -65,43 +41,27 @@ export default function ShishenEnergyChart({ result }: Props) {
 
           return (
             <div key={group.label}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium" style={{ color }}>
-                  {group.label}
-                </span>
-                <span className="text-[11px] tabular-nums" style={{ color: "var(--text-muted)" }}>
-                  {groupPct.toFixed(0)}%
-                </span>
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-semibold" style={{ fontSize: 16, color, fontFamily: "var(--font-serif)" }}>{group.label}</span>
+                <span className="tabular-nums font-semibold" style={{ fontSize: 14, color: "var(--color-text-muted)" }}>{groupPct.toFixed(0)}%</span>
               </div>
-              <div
-                className="h-7 rounded-lg overflow-hidden flex"
-                style={{ background: "var(--bg-secondary)" }}
-              >
+              <div className="h-9 flex overflow-hidden" style={{ background: "var(--bg-secondary)" }}>
                 {group.items.map((item, ii) => {
                   const val = counts[item] || 0;
                   const pct = (val / total) * 100;
                   if (pct === 0) return null;
                   return (
-                    <div
-                      key={item}
-                      className="h-full flex items-center justify-center text-[9px] font-medium transition-all duration-500"
-                      style={{
-                        width: `${pct}%`,
-                        background: color,
-                        opacity: ii === 0 ? 0.8 : 0.55,
-                        color: "var(--bg-primary)",
-                      }}
-                      title={`${item}: ${pct.toFixed(1)}%`}
-                    >
+                    <div key={item} className="h-full flex items-center justify-center font-semibold transition-all duration-500" style={{ width: `${pct}%`, background: color, opacity: ii === 0 ? 0.85 : 0.5, color: "var(--bg-primary)", fontSize: pct > 8 ? 14 : 11 }} title={`${item}: ${pct.toFixed(1)}%`}>
                       {pct > 8 ? item : ""}
                     </div>
                   );
                 })}
               </div>
-              <div className="flex gap-3 mt-1.5">
+              <div className="flex gap-4 mt-2">
                 {group.items.map((item) => (
-                  <span key={item} className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                    {item} {((counts[item] || 0) / total * 100).toFixed(0)}%
+                  <span key={item} style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
+                    {item}{" "}
+                    <span className="tabular-nums font-medium" style={{ color: "var(--color-text-faint)" }}>{((counts[item]||0)/total*100).toFixed(0)}%</span>
                   </span>
                 ))}
               </div>
@@ -109,6 +69,6 @@ export default function ShishenEnergyChart({ result }: Props) {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

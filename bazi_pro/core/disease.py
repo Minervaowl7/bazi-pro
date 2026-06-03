@@ -113,6 +113,9 @@ def detect_disease(
 
     advice = '；'.join(medicine_parts) if medicine_parts else ''
 
+    # Sort by severity: 'active' first, then 'potential'
+    items.sort(key=lambda x: (0 if x.get('severity') == 'active' else 1, x.get('name', '')))
+
     return {
         'has_disease': len(items) > 0,
         'items': items,

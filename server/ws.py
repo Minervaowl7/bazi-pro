@@ -5,7 +5,11 @@ bazi-pro WebSocket 管理 v5.0
 支持同一 run_id 多连接
 """
 
+import logging
+
 from fastapi import WebSocket
+
+logger = logging.getLogger("bazi-pro.ws")
 
 
 class ConnectionManager:
@@ -49,18 +53,30 @@ class ConnectionManager:
             'data': data or {},
         }
         dead = []
-        for ws in conns:
+        for ws in list(conns):
             try:
                 await ws.send_json(msg)
-            except Exception:
+            except Exception as e:
                 dead.append(ws)
+                logger.debug("WebSocket send failed for run_id=%s: %s", run_id, e)
         for ws in dead:
-            self.disconnect(run_id, ws)
+            try:
+                self.disconnect(run_id, ws)
+            except Exception as e:
+                logger.warning("WebSocket disconnect error for run_id=%s: %s", run_id, e)
+                # Force remove the dead connection
+                if run_id in self._connections:
+                    try:
+                        self._connections[run_id].remove(ws)
+                    except (ValueError, KeyError):
+                        pass
+                    if not self._connections[run_id]:
+                        del self._connections[run_id]
 
     async def broadcast(self, message: dict) -> None:
         dead = []
-        for run_id, conns in self._connections.items():
-            for ws in conns:
+        for run_id, conns in list(self._connections.items()):
+            for ws in list(conns):
                 try:
                     await ws.send_json(message)
                 except Exception:

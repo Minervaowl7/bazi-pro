@@ -120,134 +120,137 @@ class RedisTaskStore(TaskStore):
     def _key(self, run_id: str) -> str:
         return f"{self._prefix}{run_id}"
 
-    def create(self, run_id: str, data: dict) -> None:
-        if self._redis:
+    def _ensure_fallback(self):
+        if self._fallback is None:
+            self._fallback = MemoryTaskStore()
+
+    def _try_redis(self, operation, *args, **kwargs):
+        if self._redis and not self._degraded:
             try:
-                pipe = self._redis.pipeline()
-                pipe.setex(
-                    self._key(run_id),
-                    self._default_ttl,
-                    json.dumps(data, ensure_ascii=False),
-                )
-                self._update_index(pipe, run_id, data.get("status", ""))
-                pipe.execute()
-                return
+                return operation(*args, **kwargs)
             except Exception as e:
-                logger.error("RedisTaskStore.create failed: %s", e)
+                logger.error("RedisTaskStore operation failed: %s", e)
                 self._degraded = True
-                if self._fallback:
-                    self._fallback.create(run_id, data)
-                return
-        if self._fallback:
+                self._redis = None
+                self._ensure_fallback()
+        return None
+
+    def create(self, run_id: str, data: dict) -> None:
+        result = self._try_redis(self._create_redis, run_id, data)
+        if result is None:
+            self._ensure_fallback()
             self._fallback.create(run_id, data)
 
+    def _create_redis(self, run_id: str, data: dict) -> bool:
+        pipe = self._redis.pipeline()
+        pipe.setex(
+            self._key(run_id),
+            self._default_ttl,
+            json.dumps(data, ensure_ascii=False),
+        )
+        self._update_index(pipe, run_id, data.get("status", ""))
+        pipe.execute()
+        return True
+
     def get(self, run_id: str) -> Optional[dict]:
-        if self._redis:
+        if self._redis and not self._degraded:
             try:
                 val = self._redis.get(self._key(run_id))
                 return json.loads(val) if val else None
             except Exception as e:
                 logger.error("RedisTaskStore.get failed: %s", e)
-                return None
-        if self._fallback:
-            return self._fallback.get(run_id)
-        return None
+                self._degraded = True
+                self._redis = None
+        self._ensure_fallback()
+        return self._fallback.get(run_id)
 
     def update(self, run_id: str, updates: dict) -> None:
-        if self._redis:
-            try:
-                current = self.get(run_id)
-                if current:
-                    current.update(updates)
-                    ttl = self._redis.ttl(self._key(run_id))
-                    effective_ttl = ttl if ttl and ttl > 0 else self._default_ttl
-                    pipe = self._redis.pipeline()
-                    pipe.setex(
-                        self._key(run_id),
-                        effective_ttl,
-                        json.dumps(current, ensure_ascii=False),
-                    )
-                    self._update_index(pipe, run_id, current.get("status", ""))
-                    pipe.execute()
-                return
-            except Exception as e:
-                logger.error("RedisTaskStore.update failed: %s", e)
-                self._degraded = True
-                if self._fallback:
-                    self._fallback.update(run_id, updates)
-                return
-        if self._fallback:
+        result = self._try_redis(self._update_redis, run_id, updates)
+        if result is None:
+            self._ensure_fallback()
             self._fallback.update(run_id, updates)
 
+    def _update_redis(self, run_id: str, updates: dict) -> bool:
+        current_str = self._redis.get(self._key(run_id))
+        current = json.loads(current_str) if current_str else {}
+        current.update(updates)
+        ttl = self._redis.ttl(self._key(run_id))
+        effective_ttl = ttl if ttl and ttl > 0 else self._default_ttl
+        pipe = self._redis.pipeline()
+        pipe.setex(
+            self._key(run_id),
+            effective_ttl,
+            json.dumps(current, ensure_ascii=False),
+        )
+        self._update_index(pipe, run_id, current.get("status", ""))
+        pipe.execute()
+        return True
+
     def delete(self, run_id: str) -> None:
-        if self._redis:
-            try:
-                pipe = self._redis.pipeline()
-                pipe.delete(self._key(run_id))
-                pipe.srem(self._INDEX_KEY, run_id)
-                pipe.srem(self._RUNNING_KEY, run_id)
-                pipe.execute()
-                return
-            except Exception as e:
-                logger.error("RedisTaskStore.delete failed: %s", e)
-        elif self._fallback:
+        result = self._try_redis(self._delete_redis, run_id)
+        if result is None:
+            self._ensure_fallback()
             self._fallback.delete(run_id)
 
+    def _delete_redis(self, run_id: str) -> bool:
+        pipe = self._redis.pipeline()
+        pipe.delete(self._key(run_id))
+        pipe.srem(self._INDEX_KEY, run_id)
+        pipe.srem(self._RUNNING_KEY, run_id)
+        pipe.execute()
+        return True
+
     def count_by_status(self, status: str) -> int:
-        if self._redis:
-            try:
-                if status == "running":
-                    self._reconcile_index(self._RUNNING_KEY)
-                    return self._redis.scard(self._RUNNING_KEY)
-                count = 0
-                for key in self._redis.scan_iter(f"{self._prefix}*"):
-                    val = self._redis.get(key)
-                    if val:
-                        data = json.loads(val)
-                        if data.get("status") == status:
-                            count += 1
-                return count
-            except Exception as e:
-                logger.error("RedisTaskStore.count_by_status failed: %s", e)
-                return 0
-        if self._fallback:
-            return self._fallback.count_by_status(status)
-        return 0
+        result = self._try_redis(self._count_by_status_redis, status)
+        if result is not None:
+            return result
+        self._ensure_fallback()
+        return self._fallback.count_by_status(status)
+
+    def _count_by_status_redis(self, status: str) -> int:
+        if status == "running":
+            self._reconcile_index(self._RUNNING_KEY)
+            return self._redis.scard(self._RUNNING_KEY)
+        count = 0
+        for key in self._redis.scan_iter(f"{self._prefix}*"):
+            val = self._redis.get(key)
+            if val:
+                data = json.loads(val)
+                if data.get("status") == status:
+                    count += 1
+        return count
 
     def count_active(self) -> int:
-        if self._redis:
-            try:
-                self._reconcile_index(self._INDEX_KEY)
-                return self._redis.scard(self._INDEX_KEY)
-            except Exception as e:
-                logger.error("RedisTaskStore.count_active failed: %s", e)
-                return 0
-        if self._fallback:
-            return self._fallback.count_active()
-        return 0
+        result = self._try_redis(self._count_active_redis)
+        if result is not None:
+            return result
+        self._ensure_fallback()
+        return self._fallback.count_active()
+
+    def _count_active_redis(self) -> int:
+        self._reconcile_index(self._INDEX_KEY)
+        return self._redis.scard(self._INDEX_KEY)
 
     def count_running(self) -> int:
-        if self._redis:
-            try:
-                self._reconcile_index(self._RUNNING_KEY)
-                return self._redis.scard(self._RUNNING_KEY)
-            except Exception as e:
-                logger.error("RedisTaskStore.count_running failed: %s", e)
-                return 0
-        if self._fallback:
-            return self._fallback.count_running()
-        return 0
+        result = self._try_redis(self._count_running_redis)
+        if result is not None:
+            return result
+        self._ensure_fallback()
+        return self._fallback.count_running()
+
+    def _count_running_redis(self) -> int:
+        self._reconcile_index(self._RUNNING_KEY)
+        return self._redis.scard(self._RUNNING_KEY)
 
     def cleanup_expired(self, ttl_seconds: int) -> int:
-        if self._redis:
-            try:
-                return self._reconcile_index(self._INDEX_KEY)
-            except Exception as e:
-                logger.error("RedisTaskStore.cleanup_expired failed: %s", e)
-                return 0
-        if self._fallback:
-            return self._fallback.cleanup_expired(ttl_seconds)
-        return 0
+        result = self._try_redis(self._cleanup_expired_redis)
+        if result is not None:
+            return result
+        self._ensure_fallback()
+        return self._fallback.cleanup_expired(ttl_seconds)
+
+    def _cleanup_expired_redis(self) -> int:
+        return self._reconcile_index(self._INDEX_KEY)
 
     def _update_index(self, pipe, run_id: str, status: str) -> None:
         if status in _ACTIVE_STATUSES:

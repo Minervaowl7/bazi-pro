@@ -2,11 +2,18 @@ from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING
 from bazi_pro.paipan import DIZHI, TIANGAN
 
 
+def _get_year_ganzhi(year: int) -> tuple[str, str]:
+    """根据公历年份计算年柱干支。立春前仍属上一年干支。"""
+    gan_idx = (year - 4) % 10
+    zhi_idx = (year - 4) % 12
+    return TIANGAN[gan_idx], DIZHI[zhi_idx]
+
+
 def score_dayun(dayun_list, yongshen_wx, jishen_wx, day_master):
     if not dayun_list:
         return []
 
-    jishen_set = set(jishen_wx) if isinstance(jishen_wx, list) else {jishen_wx}
+    jishen_set = set(jishen_wx) if isinstance(jishen_wx, list) else ({jishen_wx} if jishen_wx else set())
     results = []
     for step_info in dayun_list:
         score = 50
@@ -39,8 +46,8 @@ def score_liunian(dayun_list, yongshen_wx, jishen_wx, xishen_wx, day_master,
     if not birth_year:
         return []
 
-    jishen_set = set(jishen_wx) if isinstance(jishen_wx, list) else {jishen_wx}
-    xishen_set = set(xishen_wx) if isinstance(xishen_wx, list) else {xishen_wx}
+    jishen_set = set(jishen_wx) if isinstance(jishen_wx, list) else ({jishen_wx} if jishen_wx else set())
+    xishen_set = set(xishen_wx) if isinstance(xishen_wx, list) else ({xishen_wx} if xishen_wx else set())
 
     dayun_scored = score_dayun(dayun_list, yongshen_wx, jishen_wx, day_master)
     dayun_score_map = {}
@@ -63,10 +70,7 @@ def score_liunian(dayun_list, yongshen_wx, jishen_wx, xishen_wx, day_master,
     results = []
     for age in range(1, 101):
         year = birth_year + age - 1
-        gan_idx = (year - 4) % 10
-        zhi_idx = (year - 4) % 12
-        gan = TIANGAN[gan_idx]
-        zhi = DIZHI[zhi_idx]
+        gan, zhi = _get_year_ganzhi(year)
         gan_zhi = gan + zhi
         gan_wx = GAN_WUXING.get(gan, '')
         zhi_wx = ZHI_WUXING.get(zhi, '')

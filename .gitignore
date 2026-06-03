@@ -39,7 +39,15 @@ __pycache__/
 frontend/node_modules/
 frontend/.next/
 frontend/out/
+
+# bazi-mcp (server-side Node.js tool)
+server/tools/node_modules/
+server/tools/package-lock.json/
 frontend/.env.local
+
+# Environment files with secrets
+server/.env
+.env
 
 # Trae IDE
 .trae/

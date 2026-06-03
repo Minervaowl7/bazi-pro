@@ -66,6 +66,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
     set({ status: "submitting", error: null, progress: [], result: null, _sseRef: null });
     try {
       const resp = await submitAnalysis(input);
+      // Guard against race condition from double-click
+      if (get().status !== "submitting") return "";
       set({ analysisId: resp.analysis_id, status: "streaming", birthInput: input });
 
       const es = subscribeSSE(
@@ -119,7 +121,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
             set({ status: "failed", error: "分析超时，请稍后重试" });
             return;
           }
-          await new Promise((r) => setTimeout(r, 1500));
+          await new Promise((r) => setTimeout(r, 1500 * Math.pow(1.5, retries)));
           retries++;
           continue;
         }

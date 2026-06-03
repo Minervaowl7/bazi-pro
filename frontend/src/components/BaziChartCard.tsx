@@ -12,407 +12,227 @@ import {
   ZHI_WUXING,
 } from "@/lib/constants";
 
-interface CangganItem {
-  gan: string;
-  wuxing?: string;
-  shishen?: string;
-  qi?: string;
-}
-
+interface CangganItem { gan: string; wuxing?: string; shishen?: string; qi?: string; }
 interface PillarDetail {
-  position?: string;
-  gan?: string;
-  zhi?: string;
-  wuxing_gan?: string;
-  wuxing_zhi?: string;
-  shishen_gan?: string;
-  shishen_zhi?: string;
-  shishen?: string;
-  nayin?: string;
-  changsheng?: string;
-  canggan?: CangganItem[];
+  position?: string; gan?: string; zhi?: string;
+  wuxing_gan?: string; wuxing_zhi?: string;
+  shishen_gan?: string; shishen_zhi?: string; shishen?: string;
+  nayin?: string; changsheng?: string; canggan?: CangganItem[];
 }
-
-interface Props {
-  result: Record<string, unknown>;
-}
+interface Props { result: Record<string, unknown>; }
 
 export default function BaziChartCard({ result }: Props) {
   const shishen = result.shishen as { pillars?: PillarDetail[] } | undefined;
   const pillars = shishen?.pillars || [];
 
-  const strength = result.strength as {
-    wangshuai?: { verdict?: string; is_weak?: boolean; is_strong?: boolean };
-  } | undefined;
+  const strength = result.strength as { wangshuai?: { verdict?: string } } | undefined;
   const wangshuai = strength?.wangshuai;
 
-  const validation = result.validation as {
-    day_master?: string;
-    bazi?: string;
-    gender?: string;
-  } | undefined;
+  const validation = result.validation as { day_master?: string } | undefined;
   const dayMaster = validation?.day_master || "";
   const dayMasterWx = GAN_WUXING[dayMaster] || "";
+
   const elements = result.elements as { percent?: Record<string, number> } | undefined;
-  const relations = result.relations as Array<{
-    type?: string;
-    elements?: string[];
-    description?: string;
-  }> | undefined;
-
-  const pattern = result.pattern as {
-    pattern?: string;
-    confidence?: number;
-    formation?: {
-      has_formation?: boolean;
-      type?: string;
-      branches?: string[];
-      element?: string;
-    };
-    break_conditions?: Array<{
-      type?: string;
-      severity?: string;
-      detail?: string;
-    }>;
-  } | undefined;
-
-  const formation = pattern?.formation;
-  const breakConditions = pattern?.break_conditions;
-
   const percent = elements?.percent || {};
   const wuxingOrder = ["木", "火", "土", "金", "水"];
 
   const allTiangan = pillars.map((p) => p.gan || "");
+  const isGanTouchu = useCallback((gan: string) => allTiangan.includes(gan), [allTiangan]);
 
-  const isGanTouchu = useCallback(
-    (gan: string) => allTiangan.includes(gan),
-    [allTiangan]
-  );
-
+  const relations = result.relations as Array<{ type?: string; elements?: string[]; description?: string }> | undefined;
   const [expandedRelations, setExpandedRelations] = useState(false);
 
-  const positionLabels = ["年柱", "月柱", "日柱", "时柱"];
+  const pattern = result.pattern as {
+    formation?: { has_formation?: boolean; type?: string; branches?: string[]; element?: string };
+    break_conditions?: Array<{ type?: string; severity?: string; detail?: string }>;
+  } | undefined;
+  const formation = pattern?.formation;
+  const breakConditions = pattern?.break_conditions;
 
   return (
-    <div className="animate-fade-in space-y-10">
-      {/* 四柱卡片区 */}
-      <div
-        className="border-b pb-10"
-        style={{ borderColor: "var(--color-border)" }}
-      >
+    <div className="space-y-8">
+      {/* ===== 四柱命盘 ===== */}
+      <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
         {/* 头部 */}
-        <div className="flex items-center justify-between mb-6">
-          <h2
-            className="text-base font-bold"
-            style={{ color: "var(--color-scholar-blue)", fontFamily: "var(--font-serif)" }}
-          >
-            四柱命盘
+        <div style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "18px 24px" }} className="flex items-center justify-between">
+          <h2 className="text-lg font-bold" style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>
+            四柱命盘 · 命局排盘
           </h2>
           <div className="flex items-center gap-3">
             {wangshuai?.verdict && (
-              <span
-                className="text-[11px] font-bold uppercase tracking-widest"
-                style={{ color: "var(--color-text-muted)" }}
-              >
+              <span className="px-3 py-1 font-semibold" style={{ fontSize: 14, background: "var(--accent-dim)", color: "var(--color-scholar-blue)" }}>
                 {wangshuai.verdict}
               </span>
             )}
             {dayMaster && (
-              <span
-                className="text-sm font-bold"
-                style={{ color: dayMasterWx ? WUXING_COLORS[dayMasterWx] : "var(--color-text-primary)" }}
-              >
-                {dayMaster}日主
+              <span className="font-bold" style={{ fontSize: 16, color: dayMasterWx ? WUXING_COLORS[dayMasterWx] : "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>
+                日主：{dayMaster}
               </span>
             )}
           </div>
         </div>
 
-        {/* 四柱纵向 grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-0 rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-border)", background: "var(--surface)", boxShadow: "var(--shadow)" }}>
+        {/* 四柱 */}
+        <div className="grid grid-cols-4" style={{ borderTop: "1px solid var(--color-border-subtle)", borderBottom: "1px solid var(--color-border-subtle)" }}>
           {pillars.map((p, i) => {
             const isDayPillar = i === 2;
             const gan = p.gan || "";
             const zhi = p.zhi || "";
             const ganWx = p.wuxing_gan || GAN_WUXING[gan] || "";
             const zhiWx = p.wuxing_zhi || ZHI_WUXING[zhi] || "";
+
             return (
               <div
-                key={i}
-                className="flex flex-col items-center py-8 px-3 relative"
+                key={i} className="flex flex-col items-center py-8 px-4"
                 style={{
-                  borderRight: i < 3 ? "1px solid var(--color-border)" : "none",
-                  background: isDayPillar ? "var(--color-bg-panel)" : "transparent",
+                  background: isDayPillar ? "rgba(184,74,60,0.03)" : "transparent",
+                  borderRight: i < 3 ? "1px solid var(--color-border-subtle)" : "none",
                 }}
               >
-                {/* 柱位标签 */}
-                <span
-                  className="text-[10px] font-bold uppercase tracking-widest mb-4"
-                  style={{ color: isDayPillar ? "var(--color-scholar-blue)" : "var(--color-text-muted)" }}
-                >
-                  {p.position ? `${p.position}柱` : positionLabels[i]}
+                <span className="mb-4 font-semibold tracking-widest" style={{ fontSize: 12, color: isDayPillar ? "var(--color-cinnabar)" : "var(--color-text-faint)", letterSpacing: "0.15em" }}>
+                  {p.position ? `${p.position}柱` : ["年柱","月柱","日柱","时柱"][i]}
                 </span>
 
-                {/* 十神标签 */}
-                <span
-                  className="text-[11px] mb-3"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
+                <span className="mb-2" style={{ fontSize: 15, color: isDayPillar ? "var(--color-cinnabar)" : "var(--color-text-muted)" }}>
                   {isDayPillar ? "日主" : p.shishen_gan || p.shishen || "—"}
                 </span>
 
                 {/* 天干 */}
                 <div
-                  className="px-4 py-2 mb-2 border"
+                  className="flex items-center justify-center mb-2"
                   style={{
-                    background: ganWx ? WUXING_PILL_BG[ganWx] : "transparent",
-                    borderColor: ganWx ? WUXING_PILL_BORDER[ganWx] : "var(--color-border)",
+                    width: 72, height: 72, background: ganWx ? WUXING_PILL_BG[ganWx] : "var(--bg-secondary)",
+                    border: `2px solid ${ganWx ? WUXING_PILL_BORDER[ganWx] : "var(--color-border-strong)"}`,
                   }}
                 >
-                  <span
-                    className="text-3xl font-bold block text-center"
-                    style={{ color: ganWx ? WUXING_COLORS[ganWx] : "var(--color-text-primary)" }}
-                  >
+                  <span style={{ fontSize: 36, fontWeight: 700, color: ganWx ? WUXING_COLORS[ganWx] : "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>
                     {gan || "—"}
                   </span>
                 </div>
 
                 {/* 地支 */}
                 <div
-                  className="px-4 py-2 mb-4 border"
+                  className="flex items-center justify-center mb-3"
                   style={{
-                    background: zhiWx ? WUXING_PILL_BG[zhiWx] : "transparent",
-                    borderColor: zhiWx ? WUXING_PILL_BORDER[zhiWx] : "var(--color-border)",
+                    width: 72, height: 72, background: zhiWx ? WUXING_PILL_BG[zhiWx] : "var(--bg-secondary)",
+                    border: `2px solid ${zhiWx ? WUXING_PILL_BORDER[zhiWx] : "var(--color-border-strong)"}`,
                   }}
                 >
-                  <span
-                    className="text-3xl font-bold block text-center"
-                    style={{ color: zhiWx ? WUXING_COLORS[zhiWx] : "var(--color-text-primary)" }}
-                  >
+                  <span style={{ fontSize: 36, fontWeight: 700, color: zhiWx ? WUXING_COLORS[zhiWx] : "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>
                     {zhi || "—"}
                   </span>
                 </div>
 
                 {/* 藏干 */}
-                <div className="flex items-center gap-2 mb-2 min-h-[20px] flex-wrap justify-center">
-                  {(p.canggan || []).map((cg, j) => {
-                    const touchu = isGanTouchu(cg.gan);
-                    return (
-                      <span
-                        key={j}
-                        className="text-xs"
-                        style={{ color: cg.wuxing ? WUXING_COLORS[cg.wuxing] : "var(--color-text-muted)" }}
-                      >
-                        {cg.gan}{touchu ? "透" : ""}
-                      </span>
-                    );
-                  })}
+                <div className="flex items-center gap-2 mb-2 min-h-[22px] flex-wrap justify-center">
+                  {(p.canggan || []).map((cg, j) => (
+                    <span key={j} style={{ fontSize: 13, color: cg.wuxing ? WUXING_COLORS[cg.wuxing] : "var(--color-text-muted)", fontFamily: "var(--font-serif)" }}>
+                      {cg.gan}{isGanTouchu(cg.gan) ? "透" : ""}
+                    </span>
+                  ))}
                 </div>
 
-                {/* 纳音 */}
                 {p.nayin && (
-                  <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
-                    {p.nayin}
-                  </span>
+                  <span style={{ fontSize: 12, color: "var(--color-text-faint)", fontStyle: "italic", fontFamily: "var(--font-serif)" }}>{p.nayin}</span>
                 )}
               </div>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* 五行力量分布 */}
-      <div
-        className="rounded-xl p-6"
-        style={{
-          background: "var(--surface)",
-          border: "1px solid var(--color-border)",
-          boxShadow: "var(--shadow)",
-        }}
-      >
-        <h3
-          className="text-sm font-medium mb-6"
-          style={{ color: "var(--color-text-muted)" }}
-        >
-          五行力量分布
-        </h3>
-        <div className="space-y-4">
-          {wuxingOrder.map((wx) => {
-            const val = percent[wx] || 0;
-            return (
-              <div key={wx} className="flex items-center gap-3">
-                <span
-                  className="text-xs font-medium w-7 text-center rounded-md px-1.5 py-0.5"
-                  style={{ color: WUXING_COLORS[wx], background: WUXING_BG[wx] }}
-                >
-                  {wx}
-                </span>
-                <div
-                  className="flex-1 rounded-full overflow-hidden"
-                  style={{ height: 12, background: "var(--bg-secondary)" }}
-                >
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${Math.min(val, 100)}%`,
-                      background: WUXING_COLORS[wx],
-                      opacity: 0.8,
-                    }}
-                  />
-                </div>
-                <span
-                  className="text-xs w-11 text-right tabular-nums font-medium"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  {val.toFixed(0)}%
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 刑冲合害 */}
-      {relations && relations.length > 0 && (
-        <div
-          className="rounded-xl p-6"
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--color-border)",
-            boxShadow: "var(--shadow)",
-          }}
-        >
-          <div className="flex items-center justify-between mb-5">
-            <h3
-              className="text-sm font-medium"
-              style={{ color: "var(--text-muted)" }}
-            >
-              刑冲合害
-            </h3>
-            {relations.length > 3 && (
-              <button
-                className="text-xs px-2.5 py-1 rounded-md transition-colors"
-                style={{ color: "var(--text-secondary)", background: "var(--bg-hover)" }}
-                onClick={() => setExpandedRelations(!expandedRelations)}
-              >
-                {expandedRelations ? "收起" : `展开全部(${relations.length})`}
-              </button>
-            )}
+      {/* ===== 五行力量 + 刑冲合害 双栏 ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 五行 */}
+        <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+          <div style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "16px 24px" }}>
+            <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>五行力量分布</h3>
           </div>
-          <div className="space-y-3">
-            {(expandedRelations ? relations : relations.slice(0, 3)).map((r, i) => {
-              const rType = r.type || "关系";
-              const wuxingVariant = rType === "合" ? "water" : rType === "冲" ? "fire" : rType === "刑" ? "earth" : rType === "害" ? "metal" : "muted";
+          <div className="p-7 space-y-5">
+            {wuxingOrder.map((wx) => {
+              const val = percent[wx] || 0;
               return (
-                <div key={i} className="flex items-start gap-3">
-                  <Badge variant={wuxingVariant as "water" | "fire" | "earth" | "metal" | "muted"}>
-                    {rType}
-                  </Badge>
-                  <span
-                    className="text-sm leading-relaxed"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    {r.description || (r.elements || []).join(" ")}
+                <div key={wx} className="flex items-center gap-4">
+                  <span className="w-8 text-center font-bold shrink-0" style={{ fontSize: 15, color: WUXING_COLORS[wx], background: WUXING_BG[wx], fontFamily: "var(--font-serif)" }}>
+                    {wx}
                   </span>
+                  <div className="flex-1 h-3 overflow-hidden" style={{ background: "var(--bg-secondary)" }}>
+                    <div className="h-full" style={{ width: `${Math.min(val,100)}%`, transition:"width 0.7s", background: WUXING_COLORS[wx] }} />
+                  </div>
+                  <span className="tabular-nums font-semibold w-10 text-right" style={{ fontSize: 14, color: "var(--color-text-muted)" }}>{val.toFixed(0)}%</span>
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
+        </section>
+
+        {/* 刑冲合害 */}
+        {relations && relations.length > 0 && (
+          <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+            <div style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "16px 24px" }} className="flex items-center justify-between">
+              <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>刑冲合害</h3>
+              {relations.length > 3 && (
+                <button onClick={() => setExpandedRelations(!expandedRelations)} className="px-3 py-1 font-medium" style={{ fontSize: 13, color: "var(--color-text-secondary)", background: "var(--bg-secondary)" }}>
+                  {expandedRelations ? "收起" : `全部(${relations.length})`}
+                </button>
+              )}
+            </div>
+            <div className="p-7 space-y-3.5">
+              {(expandedRelations ? relations : relations.slice(0, 3)).map((r, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <Badge variant={(r.type === "合" ? "water" : r.type === "冲" ? "fire" : r.type === "刑" ? "earth" : "metal")}>
+                    {r.type}
+                  </Badge>
+                  <span style={{ fontSize: 15, color: "var(--color-text-secondary)" }}>{r.description || (r.elements||[]).join(" ")}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
 
       {/* 方局/三合局 */}
       {formation && formation.has_formation && (
-        <div
-          className="rounded-2xl p-7"
-          style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          <h3
-            className="text-sm font-medium mb-4"
-            style={{ color: "var(--text-muted)" }}
-          >
-            方局/三合局
-          </h3>
-          <div className="flex items-center gap-3">
-            <span
-              className="text-xs px-2.5 py-1 rounded-full font-medium"
-              style={{ background: "rgba(251,191,36,0.12)", color: "var(--earth)" }}
-            >
+        <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+          <div style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "16px 24px" }}>
+            <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>方局 / 三合局</h3>
+          </div>
+          <div className="p-7 flex items-center gap-4">
+            <span className="px-4 py-1.5 font-bold" style={{ fontSize: 14, background: "rgba(161,127,64,0.08)", color: "var(--color-gold)", fontFamily: "var(--font-serif)" }}>
               {formation.type || "会局"}
             </span>
-            <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-              {(formation.branches || []).join(" ")}
+            <span className="font-bold" style={{ fontSize: 20, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>
+              {(formation.branches||[]).join(" ")}
             </span>
             {formation.element && (
-              <span
-                className="text-xs px-2 py-0.5 rounded-md"
-                style={{
-                  color: WUXING_COLORS[formation.element],
-                  background: WUXING_BG[formation.element],
-                }}
-              >
+              <span className="px-3 py-1 font-semibold" style={{ fontSize: 14, color: WUXING_COLORS[formation.element], background: WUXING_BG[formation.element] }}>
                 {formation.element}
               </span>
             )}
           </div>
-        </div>
+        </section>
       )}
 
       {/* 破格条件 */}
       {breakConditions && breakConditions.length > 0 && (
-        <div
-          className="rounded-2xl p-7"
-          style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          <h3
-            className="text-sm font-medium mb-4"
-            style={{ color: "var(--text-muted)" }}
-          >
-            破格条件
-          </h3>
-          <div className="space-y-3">
-            {breakConditions.map((bc, i) => {
-              const severityBg =
-                bc.severity === "high"
-                  ? "rgba(239,68,68,0.12)"
-                  : bc.severity === "medium"
-                    ? "rgba(245,158,11,0.12)"
-                    : "rgba(92,92,112,0.12)";
-              const severityColor =
-                bc.severity === "high"
-                  ? "var(--danger)"
-                  : bc.severity === "medium"
-                    ? "var(--warning)"
-                    : "var(--text-muted)";
-              return (
-                <div key={i} className="flex items-start gap-3">
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-md shrink-0 font-medium"
-                    style={{ background: severityBg, color: severityColor }}
-                  >
-                    {bc.severity === "high" ? "重" : bc.severity === "medium" ? "中" : "轻"}
-                  </span>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                      {bc.type}
-                    </span>
-                    {bc.detail && (
-                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        {bc.detail}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+        <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+          <div style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "16px 24px" }}>
+            <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>破格条件</h3>
           </div>
-        </div>
+          <div className="p-7 space-y-4">
+            {breakConditions.map((bc, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <span className="px-2.5 py-1 font-bold shrink-0" style={{ fontSize: 13, background: bc.severity === "high" ? "rgba(196,60,44,0.08)" : bc.severity === "medium" ? "rgba(184,146,63,0.08)" : "rgba(168,168,148,0.06)", color: bc.severity === "high" ? "var(--danger)" : bc.severity === "medium" ? "var(--warning)" : "var(--color-text-muted)" }}>
+                  {bc.severity === "high" ? "重" : bc.severity === "medium" ? "中" : "轻"}
+                </span>
+                <div>
+                  <div className="font-semibold mb-0.5" style={{ fontSize: 15, color: "var(--color-text-primary)" }}>{bc.type}</div>
+                  {bc.detail && <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>{bc.detail}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

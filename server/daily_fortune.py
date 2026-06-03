@@ -3,7 +3,7 @@
 from datetime import date
 
 from bazi_pro import GAN_WUXING, ZHI_WUXING
-from bazi_pro.paipan import DIZHI, TIANGAN
+from bazi_pro.paipan import DIZHI, TIANGAN, paipan_from_datetime
 
 WUXING_SHENGKE = {
     ("木", "火"): "生", ("火", "土"): "生", ("土", "金"): "生",
@@ -31,20 +31,39 @@ def _score_to_level(score: int) -> str:
     return "平"
 
 
+def _get_today_pillars(d: date) -> dict:
+    """使用排盘引擎获取指定日期的四柱干支（中午12点，性别男）"""
+    solar_str = f"{d.year:04d}-{d.month:02d}-{d.day:02d} 12:00"
+    result = paipan_from_datetime(solar_str, "男")
+    if result.get("status") != "completed":
+        gan_idx = (d.year - 4) % 10
+        zhi_idx = (d.year - 4) % 12
+        return {
+            "year": (TIANGAN[gan_idx], DIZHI[zhi_idx]),
+            "month": ("", ""),
+            "day": ("", ""),
+        }
+    pillars = result.get("pillars", [])
+    if not pillars or len(pillars) < 3:
+        return {"year": ("", ""), "month": ("", ""), "day": ("", "")}
+    return {
+        "year": (pillars[0].get("gan", ""), pillars[0].get("zhi", "")),
+        "month": (pillars[1].get("gan", ""), pillars[1].get("zhi", "")),
+        "day": (pillars[2].get("gan", ""), pillars[2].get("zhi", "")),
+    }
+
+
 def _get_day_ganzhi(d: date) -> tuple[str, str]:
-    """计算某日的天干地支"""
-    offset = (d - date(1900, 1, 31)).days
-    gan_idx = offset % 10
-    zhi_idx = offset % 12
-    return TIANGAN[gan_idx], DIZHI[zhi_idx]
+    """根据日期计算日柱干支，使用排盘引擎"""
+    pillars = _get_today_pillars(d)
+    return pillars["day"]
 
 
 def _get_month_ganzhi(year: int, month: int) -> tuple[str, str]:
-    """计算某月的天干地支（以节气为准的简化版）"""
-    base = (year - 4) * 12 + month + 1
-    gan_idx = base % 10
-    zhi_idx = (month + 1) % 12
-    return TIANGAN[gan_idx], DIZHI[zhi_idx]
+    """计算某月的天干地支，使用排盘引擎（取该月15日）"""
+    d = date(year, month, 15)
+    pillars = _get_today_pillars(d)
+    return pillars["month"]
 
 
 def _calc_dimension_scores(day_master_wx: str, gan_wx: str, zhi_wx: str,

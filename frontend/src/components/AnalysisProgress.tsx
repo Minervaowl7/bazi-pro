@@ -46,90 +46,69 @@ export default function AnalysisProgress() {
   };
 
   return (
-    <div
-      className="rounded-xl p-5 mb-6"
-      style={{
-        background: "var(--bg-card)",
-        border: "1px solid var(--border)",
-      }}
-    >
-      <div className="flex items-center justify-between mb-4">
+    <div className="rounded-2xl bg-[var(--surface)] border border-[var(--color-border)] mb-5">
+      <div className="px-6 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span
-            className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
-            style={{ background: "var(--water)" }}
-          />
-          <h3 className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-            正在分析
-          </h3>
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0 bg-[var(--water)]" />
+          <h3 className="text-sm font-medium text-[var(--text-muted)]">正在分析</h3>
         </div>
-        <span className="text-xs font-mono tabular-nums" style={{ color: "var(--text-muted)" }}>
+        <span className="text-[10px] font-mono tabular-nums text-[var(--text-muted)]">
           {formatTime(elapsed)}
         </span>
       </div>
 
-      <div
-        className="w-full rounded-full overflow-hidden mb-4"
-        style={{ height: 4, background: "var(--bg-secondary)" }}
-      >
-        <div
-          className="h-full rounded-full transition-all duration-700 ease-out"
-          style={{
-            width: `${pct}%`,
-            background: "linear-gradient(90deg, var(--water), var(--wood))",
-          }}
-        />
-      </div>
-
-      {latestStep && (
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-sm" style={{ color: "var(--text-primary)" }}>
-            {STEP_LABELS[latestStep.step] || latestStep.name || `步骤 ${latestStep.step}`}
-          </span>
-          {latestStep.status === "running" && (
-            <span
-              className="text-xs animate-pulse"
-              style={{ color: "var(--text-muted)" }}
-            >
-              处理中...
-            </span>
-          )}
-          {latestStep.status === "done" && (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          )}
+      <div className="px-6 py-4">
+        <div className="w-full rounded-full overflow-hidden mb-4 h-1.5 bg-[var(--bg-secondary)]">
+          <div
+            className="h-full rounded-full transition-all duration-700 ease-out"
+            style={{
+              width: `${pct}%`,
+              background: "linear-gradient(90deg, var(--water), var(--wood))",
+            }}
+          />
         </div>
-      )}
 
-      <div className="flex flex-wrap gap-1.5">
-        {STEP_ORDER.map((step) => {
-          const stepProgress = progress.find((p) => p.step === step);
-          const isDone = stepProgress?.status === "done";
-          const isRunning = stepProgress?.status === "running";
-          return (
-            <span
-              key={step}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
-                isDone
-                  ? ""
-                  : isRunning
-                    ? "animate-pulse"
-                    : ""
-              }`}
-              style={
-                isDone
-                  ? { background: "rgba(74,222,128,0.12)", color: "var(--success)" }
-                  : isRunning
-                    ? { background: "rgba(96,165,250,0.1)", color: "var(--water)" }
-                    : { background: "var(--bg-secondary)", color: "var(--text-muted)" }
-              }
-            >
-              {isDone && (
-                <svg className="inline-block mr-1 -mt-px" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              )}
-              {STEP_LABELS[step]}
+        {latestStep && (
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xs text-[var(--text-primary)]">
+              {STEP_LABELS[latestStep.step] || latestStep.name || `步骤 ${latestStep.step}`}
             </span>
-          );
-        })}
+            {latestStep.status === "running" && (
+              <span className="text-[10px] animate-pulse text-[var(--text-muted)]">处理中...</span>
+            )}
+            {latestStep.status === "done" && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-1.5">
+          {STEP_ORDER.map((step) => {
+            const stepProgress = progress.find((p) => p.step === step);
+            const isDone = stepProgress?.status === "done";
+            const isRunning = stepProgress?.status === "running";
+            return (
+              <span
+                key={step}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all duration-200 ${
+                  isDone ? "" : isRunning ? "animate-pulse" : ""
+                }`}
+                style={
+                  isDone
+                    ? { background: "rgba(74,222,128,0.12)", color: "var(--success)" }
+                    : isRunning
+                      ? { background: "rgba(96,165,250,0.1)", color: "var(--water)" }
+                      : { background: "var(--bg-secondary)", color: "var(--text-muted)" }
+                }
+              >
+                {isDone && (
+                  <svg className="inline-block mr-1 -mt-px" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                )}
+                {STEP_LABELS[step]}
+              </span>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

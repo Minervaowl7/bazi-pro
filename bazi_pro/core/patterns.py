@@ -91,7 +91,7 @@ def _check_formation(bazi_parts, target_wx):
             if len(overlap) >= 2:
                 return {
                     'has_formation': True,
-                    'type': '会方',
+                    'type': '半会',
                     'branches': sorted(list(overlap)),
                     'element': target_wx,
                 }
@@ -99,7 +99,7 @@ def _check_formation(bazi_parts, target_wx):
         if banhe_set.issubset(branch_set) and banhe_wx == target_wx:
             return {
                 'has_formation': True,
-                'type': '三合',
+                'type': '半合局',
                 'branches': sorted(list(banhe_set)),
                 'element': target_wx,
             }
@@ -158,7 +158,7 @@ def _check_zhuanwang_break(day_master, dm_wx, bazi_parts, gans):
                     'severity': 'high',
                     'detail': f'天干{g}({ss})克日主{dm_wx}行，逆专旺之势',
                 })
-    hour_zhi = bazi_parts[-1][1] if len(bazi_parts) >= 1 and len(bazi_parts[-1]) >= 2 else ''
+    hour_zhi = bazi_parts[3][1] if len(bazi_parts) >= 4 and len(bazi_parts[3]) >= 2 else ''
     if hour_zhi:
         cs_map = SHIER_CHANGSHENG.get(day_master, {})
         cs_status = cs_map.get(hour_zhi, '')

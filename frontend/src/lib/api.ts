@@ -314,6 +314,7 @@ export function subscribeSSE(
 
   const origOnError = es.onerror;
   es.onerror = (e: Event) => {
+    if (done || timedOut) return;
     clearTimeout(timeoutId);
     if (!done && !timedOut) {
       onError?.(e);

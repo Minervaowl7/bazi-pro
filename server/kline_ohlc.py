@@ -6,6 +6,14 @@
 from bazi_pro import GAN_WUXING, ZHI_WUXING
 from bazi_pro.paipan import DIZHI, TIANGAN
 
+
+def _get_year_ganzhi(year: int) -> tuple[str, str]:
+    """根据公历年份计算年柱干支。立春前仍属上一年干支。"""
+    gan_idx = (year - 4) % 10
+    zhi_idx = (year - 4) % 12
+    return TIANGAN[gan_idx], DIZHI[zhi_idx]
+
+
 DIMENSION_WEIGHTS = {
     "career": {"yongshen_gan": 25, "yongshen_zhi": 20, "jishen_gan": -20, "jishen_zhi": -15},
     "wealth": {"yongshen_gan": 20, "yongshen_zhi": 15, "jishen_gan": -25, "jishen_zhi": -20},
@@ -25,16 +33,13 @@ def score_liunian_ohlc(dayun_list: list, yongshen_wx: str, jishen_wx,
     if not birth_year:
         return []
 
-    jishen_set = set(jishen_wx) if isinstance(jishen_wx, list) else {jishen_wx}
-    xishen_set = set(xishen_wx) if isinstance(xishen_wx, list) else {xishen_wx}
+    jishen_set = set(jishen_wx) if isinstance(jishen_wx, list) else ({jishen_wx} if jishen_wx else set())
+    xishen_set = set(xishen_wx) if isinstance(xishen_wx, list) else ({xishen_wx} if xishen_wx else set())
 
     results = []
     for age in range(1, 101):
         year = birth_year + age - 1
-        gan_idx = (year - 4) % 10
-        zhi_idx = (year - 4) % 12
-        gan = TIANGAN[gan_idx]
-        zhi = DIZHI[zhi_idx]
+        gan, zhi = _get_year_ganzhi(year)
         gan_wx = GAN_WUXING.get(gan, "")
         zhi_wx = ZHI_WUXING.get(zhi, "")
 

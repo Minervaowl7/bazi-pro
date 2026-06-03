@@ -239,7 +239,7 @@ export default function BirthForm() {
 
           <div className="overflow-x-auto mb-5">
             <div className="grid grid-cols-4 gap-3">
-              {paipanResult.pillars.map((p) => (
+              {(paipanResult.pillars || []).map((p) => (
                 <div
                   key={p.position}
                   className="flex flex-col items-center gap-1 py-4 rounded-xl relative"

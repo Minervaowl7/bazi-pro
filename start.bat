@@ -11,6 +11,34 @@ set "ROOT=%~dp0"
 set "BACKEND_PORT=8711"
 set "FRONTEND_PORT=3000"
 
+set "PYTHON_EXE="
+for %%c in (python py python3) do (
+    where %%c >nul 2>&1
+    if not errorlevel 1 (
+        set "PYTHON_EXE=%%c"
+        goto :found_python
+    )
+)
+echo  ERROR: Python not found in PATH!
+echo  Please install Python 3.10+ and add to PATH.
+pause
+exit /b 1
+:found_python
+
+set "PNPM_EXE="
+for %%c in (pnpm npx) do (
+    where %%c >nul 2>&1
+    if not errorlevel 1 (
+        set "PNPM_EXE=%%c"
+        goto :found_pnpm
+    )
+)
+echo  ERROR: pnpm/npx not found in PATH!
+echo  Please install Node.js and pnpm.
+pause
+exit /b 1
+:found_pnpm
+
 echo  [1/3] Checking ports...
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%BACKEND_PORT% " ^| findstr LISTENING') do (
     echo  ! Port %BACKEND_PORT% in use ^(PID %%a^), killing...
@@ -23,11 +51,11 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%FRONTEND_PORT% " ^| findst
 timeout /t 1 /nobreak >nul
 
 echo  [2/3] Starting backend ^(http://127.0.0.1:%BACKEND_PORT%^) ...
-start "Bazi-Backend" cmd /c "cd /d "%ROOT%" && python -m uvicorn server.app:app --host 127.0.0.1 --port %BACKEND_PORT% --reload"
+start "Bazi-Backend" cmd /c "cd /d "%ROOT%" && %PYTHON_EXE% -m uvicorn server.app:app --host 127.0.0.1 --port %BACKEND_PORT% --reload"
 
 echo  [3/3] Starting frontend ^(http://localhost:%FRONTEND_PORT%^) ...
 timeout /t 2 /nobreak >nul
-start "Bazi-Frontend" cmd /c "cd /d "%ROOT%frontend" && pnpm dev"
+start "Bazi-Frontend" cmd /c "cd /d "%ROOT%frontend" && %PNPM_EXE% dev"
 timeout /t 3 /nobreak >nul
 start http://localhost:%FRONTEND_PORT%
 

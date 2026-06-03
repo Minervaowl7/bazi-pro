@@ -23,6 +23,8 @@ class RateLimiter(ABC):
 
 class MemoryRateLimiter(RateLimiter):
 
+    _MAX_BUCKETS = 10000
+
     def __init__(self, max_requests: int = 30, window_seconds: int = 60):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
@@ -35,6 +37,8 @@ class MemoryRateLimiter(RateLimiter):
         if len(self._buckets[key]) >= self.max_requests:
             return False
         self._buckets[key].append(now)
+        if len(self._buckets) > self._MAX_BUCKETS:
+            self.cleanup(now)
         return True
 
     def cleanup(self, now: float) -> int:
@@ -93,6 +97,9 @@ class RedisRateLimiter(RateLimiter):
             except Exception as e:
                 logger.warning("Redis rate limit failed: %s, falling back to memory", e)
                 self._degraded = True
+                self._redis = None
+                if self._fallback is None:
+                    self._fallback = MemoryRateLimiter(self.max_requests, self.window_seconds)
         if self._fallback:
             return self._fallback.is_allowed(key)
         logger.error("Rate limiter has no backend available, denying request")

@@ -8,6 +8,7 @@ Redis 优先，未配置时降级为内存 LRU dict（支持 TTL）
 import json
 import logging
 import os
+import threading
 import time
 from collections import OrderedDict
 from typing import Optional
@@ -17,36 +18,58 @@ logger = logging.getLogger("bazi-pro.cache")
 
 class LRUDict:
 
-    def __init__(self, maxsize: int = 128):
+    def __init__(self, maxsize: int = 128, cleanup_interval: int = 300):
         self.maxsize = maxsize
         self._store: OrderedDict = OrderedDict()
+        self._lock = threading.RLock()
+        self._cleanup_interval = cleanup_interval
+        self._last_cleanup = time.time()
+
+    def _maybe_cleanup(self) -> None:
+        """Periodically purge expired entries to prevent memory buildup."""
+        now = time.time()
+        if now - self._last_cleanup < self._cleanup_interval:
+            return
+        expired_keys = [
+            k for k, entry in self._store.items()
+            if entry['_expires_at'] and now > entry['_expires_at']
+        ]
+        for k in expired_keys:
+            del self._store[k]
+        self._last_cleanup = now
 
     def get(self, key: str) -> Optional[dict]:
-        if key in self._store:
+        with self._lock:
+            self._maybe_cleanup()
+            if key not in self._store:
+                return None
             entry = self._store[key]
             if entry['_expires_at'] and time.time() > entry['_expires_at']:
-                self._store.pop(key)
+                del self._store[key]
                 return None
             self._store.move_to_end(key)
             return entry['value']
-        return None
 
     def set(self, key: str, value: dict, ttl: int = 0) -> None:
-        expires_at = time.time() + ttl if ttl > 0 else None
-        if key in self._store:
-            self._store.move_to_end(key)
-        self._store[key] = {'value': value, '_expires_at': expires_at}
-        while len(self._store) > self.maxsize:
-            self._store.popitem(last=False)
+        with self._lock:
+            expires_at = time.time() + ttl if ttl > 0 else None
+            if key in self._store:
+                self._store.move_to_end(key)
+            self._store[key] = {'value': value, '_expires_at': expires_at}
+            while len(self._store) > self.maxsize:
+                self._store.popitem(last=False)
 
     def delete(self, key: str) -> None:
-        self._store.pop(key, None)
+        with self._lock:
+            self._store.pop(key, None)
 
     def clear(self) -> None:
-        self._store.clear()
+        with self._lock:
+            self._store.clear()
 
     def __len__(self) -> int:
-        return len(self._store)
+        with self._lock:
+            return len(self._store)
 
 
 class CacheStore:

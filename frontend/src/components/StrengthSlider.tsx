@@ -25,137 +25,72 @@ interface Props {
 export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi }: Props) {
   const position = verdictToPosition(verdict);
   const pct = (position / (LEVELS.length - 1)) * 100;
+  const isWeak = position <= 1;
+  const isStrong = position >= 3;
+  const trackColor = isWeak ? "var(--el-water)" : isStrong ? "var(--el-fire)" : "var(--color-text-muted)";
 
   return (
-    <div
-      className="rounded-2xl p-7"
-      style={{
-        background: "var(--bg-card)",
-        border: "1px solid var(--border)",
-      }}
-    >
-      <div className="flex items-center justify-between mb-5">
-        <h3
-          className="text-sm font-medium"
-          style={{ color: "var(--text-muted)" }}
-        >
-          日主强弱
-        </h3>
+    <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+      <div style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "16px 24px" }} className="flex items-center justify-between">
+        <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>日主强弱</h3>
         {dayMaster && (
-          <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-            {dayMaster}
-          </span>
+          <span className="font-bold" style={{ fontSize: 17, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>{dayMaster}</span>
         )}
       </div>
 
-      {/* 滑块轨道 */}
-      <div className="relative mb-4">
-        <div
-          className="h-3 rounded-full"
-          style={{ background: "var(--bg-secondary)" }}
-        />
-        {/* 填充条 */}
-        <div
-          className="absolute top-0 left-0 h-3 rounded-full transition-all duration-700"
-          style={{
-            width: `${pct}%`,
-            background: position <= 1
-              ? "var(--water)"
-              : position === 2
-                ? "var(--text-muted)"
-                : "var(--fire)",
-          }}
-        />
-        {/* 指示点 */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 transition-all duration-700"
-          style={{
-            left: `${pct}%`,
-            transform: `translate(-50%, -50%)`,
-            background: "var(--bg-card)",
-            borderColor: position <= 1
-              ? "var(--water)"
-              : position === 2
-                ? "var(--text-muted)"
-                : "var(--fire)",
-            boxShadow: "0 0 8px rgba(0,0,0,0.3)",
-          }}
-        />
-      </div>
+      <div className="p-7">
+        {/* 滑轨 */}
+        <div className="relative mb-6">
+          <div style={{ height: 4, background: "var(--bg-secondary)" }} />
+          <div className="absolute top-0 left-0 transition-all duration-700" style={{ width: `${pct}%`, height: 4, background: trackColor }} />
 
-      {/* 刻度标签 */}
-      <div className="flex justify-between mb-2">
-        {LEVELS.map((level, i) => (
-          <span
-            key={level}
-            className="text-[11px] font-medium"
-            style={{
-              color: i === position
-                ? (position <= 1 ? "var(--water)" : position >= 3 ? "var(--fire)" : "var(--text-primary)")
-                : "var(--text-muted)",
-            }}
-          >
-            {level}
-          </span>
-        ))}
-      </div>
-      {verdict && (
-        <div className="text-center mb-5">
-          <span className="text-xs px-2.5 py-1 rounded-full font-medium"
-            style={{
-              background: position <= 1 ? "rgba(96,165,250,0.1)" : position >= 3 ? "rgba(251,113,133,0.1)" : "var(--bg-hover)",
-              color: position <= 1 ? "var(--water)" : position >= 3 ? "var(--fire)" : "var(--text-secondary)",
-            }}>
-            {verdict}
-          </span>
+          {/* 指示器 */}
+          <div className="absolute top-1/2" style={{ left: `${pct}%`, transform: "translate(-50%,-50%)" }}>
+            <div style={{ width: 20, height: 20, background: "var(--surface)", border: `3px solid ${trackColor}`, boxShadow: `0 0 0 4px ${trackColor}15` }} />
+          </div>
         </div>
-      )}
 
-      {/* 三维得分 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div
-          className="rounded-xl p-4 text-center"
-          style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}
-        >
-          <div className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>
-            得令
-          </div>
-          <div className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
-            {deling?.status || "—"}
-          </div>
-          <div className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-            {deling?.score !== undefined ? `${deling.score > 0 ? "+" : ""}${deling.score}` : ""}
-          </div>
+        {/* 刻度 */}
+        <div className="flex justify-between mb-6">
+          {LEVELS.map((l, i) => (
+            <span key={l} className="font-medium" style={{ fontSize: 14, color: i === position ? trackColor : "var(--color-text-faint)", fontWeight: i === position ? 700 : 400, fontFamily: "var(--font-serif)" }}>
+              {l}
+            </span>
+          ))}
         </div>
-        <div
-          className="rounded-xl p-4 text-center"
-          style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}
-        >
-          <div className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>
-            得地
+
+        {/* 判定标签 */}
+        {verdict && (
+          <div className="text-center mb-7">
+            <span className="inline-block px-5 py-1.5 font-bold" style={{ fontSize: 15, background: isWeak ? "rgba(53,94,133,0.08)" : isStrong ? "rgba(196,60,44,0.08)" : "var(--bg-secondary)", color: isWeak ? "var(--el-water)" : isStrong ? "var(--el-fire)" : "var(--color-text-secondary)" }}>
+              {verdict}
+            </span>
           </div>
-          <div className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
-            {dedi?.level || "—"}
-          </div>
-          <div className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-            {dedi?.score !== undefined ? `${dedi.score > 0 ? "+" : ""}${dedi.score.toFixed(1)}` : ""}
-          </div>
-        </div>
-        <div
-          className="rounded-xl p-4 text-center"
-          style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}
-        >
-          <div className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>
-            得势
-          </div>
-          <div className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
-            {deshi?.level || "—"}
-          </div>
-          <div className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-            {deshi?.score !== undefined ? `${deshi.score > 0 ? "+" : ""}${deshi.score.toFixed(1)}` : ""}
-          </div>
+        )}
+
+        {/* 得令/得地/得势 */}
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label: "得令", data: deling },
+            { label: "得地", data: dedi },
+            { label: "得势", data: deshi },
+          ].map((item) => {
+            const d = item.data as Record<string, unknown> | undefined;
+            const display = (d?.status as string | undefined) || (d?.level as string | undefined) || "—";
+            const scoreDisplay = typeof item.data?.score === "number"
+              ? `${item.data.score > 0 ? "+" : ""}${Number.isInteger(item.data.score) ? item.data.score : item.data.score.toFixed(1)}`
+              : "";
+
+            return (
+              <div key={item.label} className="text-center p-5" style={{ background: "var(--bg-secondary)" }}>
+                <div className="mb-2 font-semibold uppercase tracking-wider" style={{ fontSize: 12, color: "var(--color-text-faint)", letterSpacing: "0.08em" }}>{item.label}</div>
+                <div className="font-bold mb-1" style={{ fontSize: 18, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>{display}</div>
+                {scoreDisplay && <div style={{ fontSize: 14, color: "var(--color-text-muted)" }}>{scoreDisplay}</div>}
+              </div>
+            );
+          })}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

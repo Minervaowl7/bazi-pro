@@ -47,21 +47,20 @@ export default function ShareCard({ result }: Props) {
     <>
       <button
         onClick={() => setShowPreview(true)}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-        style={{ background: "var(--color-bg-panel)", border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--color-border)] bg-[var(--surface)] text-[var(--color-text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
         </svg>
-        分享卡片
+        分享
       </button>
 
       {showPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
-          <div className="w-full max-w-sm" style={{ background: "var(--surface)", borderRadius: 12, overflow: "hidden" }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden bg-[var(--surface)] border border-[var(--color-border)]">
             <div ref={cardRef} className="p-8" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #2c3e6b 100%)" }}>
               <div className="text-center mb-6">
-                <div className="text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: "rgba(255,255,255,0.5)" }}>
+                <div className="text-[10px] uppercase tracking-[0.2em] mb-2 text-white/50">
                   八字命格
                 </div>
                 <div className="flex items-center justify-center gap-3 mb-4">
@@ -70,7 +69,7 @@ export default function ShareCard({ result }: Props) {
                       <div className="text-lg font-bold" style={{ color: WUXING_COLORS[GAN_WUXING[p.gan || ""] || ""] || "#fff" }}>
                         {p.gan}
                       </div>
-                      <div className="text-lg font-bold" style={{ color: "#e8e8f0" }}>
+                      <div className="text-lg font-bold text-[#e8e8f0]">
                         {p.zhi}
                       </div>
                     </div>
@@ -79,16 +78,16 @@ export default function ShareCard({ result }: Props) {
               </div>
 
               <div className="text-center mb-4">
-                <div className="text-xl font-bold mb-1" style={{ color: "#ffffff", fontFamily: "var(--font-serif)" }}>
+                <div className="text-xl font-bold mb-1 text-white" style={{ fontFamily: "var(--font-serif)" }}>
                   {dayMaster}日主 · {pattern?.pattern || "—"}
                 </div>
-                <div className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
+                <div className="text-sm text-white/70">
                   {strength?.wangshuai?.verdict || ""} · 用神{yongshen?.yongshen || "—"}
                 </div>
               </div>
 
-              <div className="text-center pt-4 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                <div className="text-[9px] uppercase tracking-[0.15em]" style={{ color: "rgba(255,255,255,0.4)" }}>
+              <div className="text-center pt-4 border-t border-white/10">
+                <div className="text-[9px] uppercase tracking-[0.15em] text-white/40">
                   bazi-pro · 确定性命理引擎
                 </div>
               </div>
@@ -97,16 +96,14 @@ export default function ShareCard({ result }: Props) {
             <div className="p-4 flex gap-3">
               <button
                 onClick={() => setShowPreview(false)}
-                className="flex-1 py-2.5 rounded-lg text-sm font-medium border"
-                style={{ borderColor: "var(--color-border)", color: "var(--color-text-secondary)" }}
+                className="flex-1 py-2.5 rounded-lg text-xs font-medium border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 关闭
               </button>
               <button
                 onClick={handleGenerate}
                 disabled={generating}
-                className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-50"
-                style={{ background: "var(--color-scholar-blue)" }}
+                className="flex-1 py-2.5 rounded-lg text-xs font-medium text-white disabled:opacity-50 bg-[var(--color-scholar-blue)] hover:opacity-90 transition-opacity"
               >
                 {generating ? "生成中..." : "保存图片"}
               </button>

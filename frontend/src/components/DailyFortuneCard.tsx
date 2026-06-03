@@ -1,75 +1,42 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getDailyFortune, type DailyFortune } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8711";
+const LEVEL_COLORS:{[k:string]:string}={"大吉":"var(--el-wood)","吉":"var(--el-wood)","中吉":"var(--color-scholar-blue)","平":"var(--color-text-muted)","小凶":"var(--el-fire)","凶":"var(--el-fire)"};
+interface Props { analysisId:string; }
 
-interface DailyFortune {
-  date: string;
-  gan_zhi: string;
-  overall_level: string;
-  dimensions: Record<string, { score: number; level: string }>;
-}
+export default function DailyFortuneCard({ analysisId }:Props) {
+  const [fortune,setFortune]=useState<DailyFortune|null>(null);
 
-const LEVEL_COLORS: Record<string, string> = {
-  "大吉": "var(--el-wood)",
-  "吉": "var(--el-wood)",
-  "中吉": "var(--color-scholar-blue)",
-  "平": "var(--color-text-muted)",
-  "小凶": "var(--el-fire)",
-  "凶": "var(--el-fire)",
-};
-
-interface Props {
-  analysisId: string;
-}
-
-export default function DailyFortuneCard({ analysisId }: Props) {
-  const [fortune, setFortune] = useState<DailyFortune | null>(null);
-
-  useEffect(() => {
-    fetch(`${API_BASE}/api/v2/fortune/daily/${analysisId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.date) setFortune(data);
-      })
-      .catch(() => {});
-  }, [analysisId]);
+  useEffect(()=>{
+    const ac=new AbortController();
+    getDailyFortune(analysisId).then(data=>{if(!ac.signal.aborted&&data.date)setFortune(data);}).catch(()=>{});
+    return ()=>{ac.abort();};
+  },[analysisId]);
 
   if (!fortune) return null;
-
-  const levelColor = LEVEL_COLORS[fortune.overall_level] || "var(--color-text-muted)";
+  const levelColor=LEVEL_COLORS[fortune.overall_level]||"var(--color-text-muted)";
 
   return (
-    <div
-      className="rounded-xl p-5"
-      style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow)" }}
-    >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium" style={{ color: "var(--color-text-muted)" }}>
-          今日运势
-        </h3>
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-          {fortune.gan_zhi}日
-        </span>
+    <section style={{background:"var(--surface)",border:"1px solid var(--color-border)",boxShadow:"var(--shadow-sm)"}}>
+      <div style={{borderBottom:"2px solid var(--color-border-strong)",padding:"16px 24px"}} className="flex items-center justify-between">
+        <h3 className="font-bold" style={{fontSize:16,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)"}}>今日运势</h3>
+        <span style={{fontSize:13,color:"var(--color-text-faint)"}}>{fortune.gan_zhi}日</span>
       </div>
-
-      <div className="text-center mb-4">
-        <span className="text-2xl font-bold" style={{ color: levelColor }}>
-          {fortune.overall_level}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        {Object.entries(fortune.dimensions).filter(([k]) => k !== "整体").slice(0, 6).map(([dim, data]) => (
-          <div key={dim} className="text-center py-2">
-            <div className="text-[10px] mb-1" style={{ color: "var(--color-text-muted)" }}>{dim}</div>
-            <div className="text-xs font-medium" style={{ color: LEVEL_COLORS[data.level] || "var(--color-text-muted)" }}>
-              {data.level}
+      <div className="p-7">
+        <div className="text-center mb-5">
+          <span className="font-bold" style={{fontSize:28,color:levelColor}}>{fortune.overall_level}</span>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {Object.entries(fortune.dimensions).filter(([k])=>k!=="整体").slice(0,6).map(([dim,data])=>(
+            <div key={dim} className="text-center py-3">
+              <div style={{fontSize:12,color:"var(--color-text-faint)"}}>{dim}</div>
+              <div className="font-semibold mt-1" style={{fontSize:15,color:LEVEL_COLORS[data.level]||"var(--color-text-muted)"}}>{data.level}</div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

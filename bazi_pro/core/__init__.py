@@ -56,13 +56,17 @@ from bazi_pro.core.yongshen import _pattern_yongshen_wx, derive_yongshen
 
 
 def full_analysis(mcp_json: dict) -> dict:
+    for key in list(mcp_json.keys()):
+        if mcp_json[key] is None:
+            mcp_json[key] = ''
+
     from bazi_pro.validation import validate_bazi_input
     validation = validate_bazi_input(mcp_json, require_gender=False)
     if not validation['valid']:
         return {'status': 'invalid_input', 'errors': validation['errors']}
 
-    bazi = mcp_json.get('八字', '')
-    day_master = mcp_json.get('日主', '')
+    bazi = mcp_json.get('八字') or ''
+    day_master = mcp_json.get('日主') or ''
     dayun = mcp_json.get('dayun', [])
 
     bazi_parts = bazi.split()

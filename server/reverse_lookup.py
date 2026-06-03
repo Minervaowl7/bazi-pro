@@ -1,22 +1,18 @@
 """四柱反查 — 输入四柱干支，反推 1900-2100 年间所有可能的出生日期"""
 
+import time
 from datetime import date, timedelta
 
 from bazi_pro.paipan import DIZHI, TIANGAN, paipan_from_datetime
 
+_MAX_REVERSE_LOOKUP_SECONDS = 10
+_MAX_REVERSE_LOOKUP_RESULTS = 20
+
 
 def reverse_lookup_pillars(bazi_str: str, start_year: int = 1940,
                            end_year: int = 2030) -> list[dict]:
-    """根据四柱干支反查可能的出生日期。
-
-    Args:
-        bazi_str: 空格分隔的四柱，如 "甲子 丙寅 戊辰 壬子"
-        start_year: 搜索起始年份
-        end_year: 搜索结束年份
-
-    Returns:
-        匹配的日期列表，每项含 date/gender/bazi
-    """
+    if not bazi_str:
+        return []
     parts = bazi_str.strip().split()
     if len(parts) != 4:
         return []
@@ -37,13 +33,23 @@ def reverse_lookup_pillars(bazi_str: str, start_year: int = 1940,
         if g == year_gan_idx and z == year_zhi_idx:
             candidate_years.append(y)
 
+    start_time = time.time()
+    max_year_month_checks = 5000
+    checks = 0
+
     for year in candidate_years:
         for month in range(1, 13):
             for day in range(1, 32):
+                if checks >= max_year_month_checks:
+                    return results
+                if time.time() - start_time > _MAX_REVERSE_LOOKUP_SECONDS:
+                    return results
+
                 try:
                     d = date(year, month, day)
                 except ValueError:
                     continue
+                checks += 1
 
                 for gender in ["男", "女"]:
                     try:
@@ -58,7 +64,7 @@ def reverse_lookup_pillars(bazi_str: str, start_year: int = 1940,
                     except Exception:
                         continue
 
-                if len(results) >= 20:
+                if len(results) >= _MAX_REVERSE_LOOKUP_RESULTS:
                     return results
 
     return results

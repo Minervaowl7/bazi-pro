@@ -4,10 +4,33 @@ $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendPort = 8711
 $FrontendPort = 3000
 
+$PythonExe = $null
+foreach ($cmd in @("python", "py", "python3")) {
+    try { $found = Get-Command $cmd -ErrorAction Stop; $PythonExe = $found.Source; break } catch {}
+}
+if (-not $PythonExe) {
+    Write-Host "  ERROR: Python not found in PATH!" -ForegroundColor Red
+    Write-Host "  Please install Python 3.10+ and add to PATH." -ForegroundColor Red
+    Read-Host "Press Enter to exit"; exit 1
+}
+
+$PnpmExe = $null
+foreach ($cmd in @("pnpm", "npx")) {
+    try { $found = Get-Command $cmd -ErrorAction Stop; $PnpmExe = $found.Source; break } catch {}
+}
+if (-not $PnpmExe) {
+    Write-Host "  ERROR: pnpm/npx not found in PATH!" -ForegroundColor Red
+    Write-Host "  Please install Node.js and pnpm." -ForegroundColor Red
+    Read-Host "Press Enter to exit"; exit 1
+}
+
 Write-Host ""
 Write-Host "  ======================================" -ForegroundColor Cyan
 Write-Host "       Bazi-Pro Quick Start" -ForegroundColor Cyan
 Write-Host "  ======================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Python: $PythonExe" -ForegroundColor DarkGray
+Write-Host "  pnpm:   $PnpmExe" -ForegroundColor DarkGray
 Write-Host ""
 
 Write-Host "  [1/4] Checking ports..." -ForegroundColor Yellow
@@ -23,7 +46,7 @@ foreach ($port in $ports) {
 Start-Sleep -Seconds 1
 
 Write-Host "  [2/4] Starting backend (http://127.0.0.1:${BackendPort}) ..." -ForegroundColor Yellow
-$backendProc = Start-Process -FilePath "python" `
+$backendProc = Start-Process -FilePath $PythonExe `
     -ArgumentList "-m", "uvicorn", "server.app:app", "--host", "127.0.0.1", "--port", $BackendPort, "--reload" `
     -WorkingDirectory $Root `
     -PassThru -WindowStyle Normal
@@ -48,7 +71,7 @@ if ($retries -ge $maxRetries) {
 
 Write-Host "  [4/4] Starting frontend (http://localhost:${FrontendPort}) ..." -ForegroundColor Yellow
 $frontendProc = Start-Process -FilePath "cmd" `
-    -ArgumentList "/c", "cd /d `"$Root\frontend`" && pnpm dev" `
+    -ArgumentList "/c", "cd /d `"$Root\frontend`" && `"$PnpmExe`" dev" `
     -PassThru -WindowStyle Normal
 
 Start-Sleep -Seconds 5

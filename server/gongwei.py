@@ -3,6 +3,24 @@
 TIANGAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
 DIZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
 
+_YEAR_GAN_MINGGONG_BASE = {
+    "甲": 0, "己": 0,
+    "乙": 2, "庚": 2,
+    "丙": 4, "辛": 4,
+    "丁": 6, "壬": 6,
+    "戊": 8, "癸": 8,
+}
+
+
+def _zhi_to_gan(year_gan: str, zhi: str) -> str:
+    """根据年干和地支推算天干（五虎遁/五鼠遁规则）"""
+    base = _YEAR_GAN_MINGGONG_BASE.get(year_gan, 0)
+    zhi_idx = DIZHI.index(zhi) if zhi in DIZHI else -1
+    if zhi_idx < 0:
+        return ""
+    gan_idx = (base + zhi_idx) % 10
+    return TIANGAN[gan_idx]
+
 
 def calc_taiyuan(month_gan: str, month_zhi: str) -> str:
     """胎元：月干进一位 + 月支进三位"""
@@ -50,6 +68,7 @@ def calc_gongwei(bazi_parts: list[str]) -> dict:
     if len(bazi_parts) < 4:
         return {}
 
+    year_gan = bazi_parts[0][0] if len(bazi_parts[0]) >= 2 else ""
     month_gan = bazi_parts[1][0] if len(bazi_parts[1]) >= 2 else ""
     month_zhi = bazi_parts[1][1] if len(bazi_parts[1]) >= 2 else ""
     hour_zhi = bazi_parts[3][1] if len(bazi_parts[3]) >= 2 else ""
@@ -59,12 +78,14 @@ def calc_gongwei(bazi_parts: list[str]) -> dict:
     if taiyuan:
         result["胎元"] = taiyuan
 
-    minggong = calc_minggong(month_zhi, hour_zhi)
-    if minggong:
-        result["命宫"] = minggong
+    minggong_zhi = calc_minggong(month_zhi, hour_zhi)
+    if minggong_zhi:
+        minggong_gan = _zhi_to_gan(year_gan, minggong_zhi) if year_gan else ""
+        result["命宫"] = (minggong_gan + minggong_zhi) if minggong_gan else minggong_zhi
 
-    shengong = calc_shengong(month_zhi, hour_zhi)
-    if shengong:
-        result["身宫"] = shengong
+    shengong_zhi = calc_shengong(month_zhi, hour_zhi)
+    if shengong_zhi:
+        shengong_gan = _zhi_to_gan(year_gan, shengong_zhi) if year_gan else ""
+        result["身宫"] = (shengong_gan + shengong_zhi) if shengong_gan else shengong_zhi
 
     return result

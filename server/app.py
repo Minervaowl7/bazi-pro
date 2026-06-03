@@ -9,6 +9,7 @@ import hmac
 import json
 import logging
 import os
+import re
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -51,6 +52,13 @@ from server.taskstore import MemoryTaskStore, RedisTaskStore, create_task_store
 from server.ws import manager
 
 logger = logging.getLogger("bazi-pro")
+
+_ANALYSIS_ID_PATTERN = re.compile(r'^ana_[0-9a-f]{8,24}$')
+
+
+def _validate_analysis_id(analysis_id: str) -> bool:
+    """Validate analysis_id format to prevent injection."""
+    return bool(_ANALYSIS_ID_PATTERN.match(analysis_id))
 
 
 def _get_int_env(name: str, default: int, min_value: int = 1) -> int:
@@ -169,6 +177,9 @@ async def _api_key_error_handler(request, exc):
 
 async def _verify_api_key(request: Request, api_key: str = Security(_api_key_scheme)):
     if not _API_KEY:
+        if os.environ.get('ENV', '').lower() in ('prod', 'production'):
+            logger.error("API key not configured in production environment!")
+            raise _APIKeyError()
         return True
     if api_key and hmac.compare_digest(api_key, _API_KEY):
         return True
@@ -272,8 +283,10 @@ app.add_middleware(
 
 @app.exception_handler(Exception)
 async def _global_exception_handler(request, exc):
+    error_id = uuid.uuid4().hex[:8]
+    logger.error("[%s] Unhandled %s: %s", error_id, exc.__class__.__name__, exc, exc_info=True)
     debug = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
-    message = str(exc) if debug else "服务器内部错误"
+    message = f"{exc} (error_id={error_id})" if debug else f"服务器内部错误 (error_id={error_id})"
     return error_response(500, "INTERNAL_ERROR", message)
 
 
@@ -986,6 +999,8 @@ async def api_v2_stream(analysis_id: str, _auth=Depends(_verify_api_key)):
 @app.get("/api/v2/analysis/{analysis_id}")
 async def api_v2_get_analysis(analysis_id: str):
     """获取分析完整结果"""
+    if not _validate_analysis_id(analysis_id):
+        return error_response(400, "INVALID_FORMAT", "analysis_id 格式不合法")
     record = await get_analysis(analysis_id)
     if not record:
         return error_response(404, "NOT_FOUND", "分析记录不存在")

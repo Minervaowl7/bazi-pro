@@ -348,13 +348,21 @@ def build_vm_from_result_json(json_path: str) -> DashboardVM:
 
 
 def _strip_md(text: str) -> str:
-    """剥离 Markdown 标记（**、*、__、` 等）"""
+    """剥离 Markdown 标记（**、*、__、`、链接、删除线、引用等）"""
     import re
-    # 去粗体/斜体
+    # Remove links but keep text
+    text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+    # Remove strikethrough
+    text = re.sub(r'~~([^~]+)~~', r'\1', text)
+    # Remove bold/italic markers
     text = re.sub(r'\*{1,3}([^*]+?)\*{1,3}', r'\1', text)
     text = re.sub(r'_{1,3}([^_]+?)_{1,3}', r'\1', text)
-    # 去行内代码
+    # Remove inline code markers
     text = re.sub(r'`([^`]+)`', r'\1', text)
+    # Remove block quotes
+    text = re.sub(r'^>\s+', '', text, flags=re.MULTILINE)
+    # Normalize whitespace
+    text = re.sub(r'[ \t]+', ' ', text)
     return text.strip()
 
 
