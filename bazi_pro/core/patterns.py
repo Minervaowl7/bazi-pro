@@ -94,6 +94,17 @@ def _check_formation(bazi_parts, target_wx):
                 'branches': sorted(list(he_set)),
                 'element': target_wx,
             }
+    # 同五行地支≥3：视为完整会方（比半会优先级更高）
+    # 《子平真诠》"论杂格"："壬癸全亥子"即润下格，不须丑
+    wx_count = sum(1 for b in branches if ZHI_WUXING.get(b, '') == target_wx)
+    if wx_count >= 3:
+        wx_branches = sorted([b for b in branches if ZHI_WUXING.get(b, '') == target_wx])
+        return {
+            'has_formation': True,
+            'type': '会方',
+            'branches': wx_branches,
+            'element': target_wx,
+        }
     for fang_set, fang_wx in ZHI_HUIFANG:
         if fang_wx == target_wx:
             overlap = fang_set & branch_set
@@ -122,15 +133,6 @@ def _check_formation(bazi_parts, target_wx):
                 'branches': sorted(list(siku_present)),
                 'element': target_wx,
             }
-    wx_count = sum(1 for b in branches if ZHI_WUXING.get(b, '') == target_wx)
-    if wx_count >= 3:
-        wx_branches = sorted([b for b in branches if ZHI_WUXING.get(b, '') == target_wx])
-        return {
-            'has_formation': True,
-            'type': '会方',
-            'branches': wx_branches,
-            'element': target_wx,
-        }
     return {
         'has_formation': False,
         'type': None,
