@@ -607,12 +607,12 @@ class TestDiseaseDetection:
 class TestCoreRulesZhonghe:
 
     def test_zhonghe_verdict(self):
-        """deling=1, dedi=2.0, deshi=3.0 应返回 中和"""
+        """deling=1, dedi=2.0, deshi=3.0 — 得令微利+偏得地+偏得势，综合偏旺"""
         from bazi_pro.core_rules import judge_wangshuai
         result = judge_wangshuai(1, 2.0, 3.0)
-        assert result['verdict'] == '中和'
+        assert result['verdict'] == '中和偏旺'
         assert result['is_weak'] is False
-        assert result['is_strong'] is False
+        assert result['is_strong'] is True
 
     def test_zhonghe_pianwang_verdict(self):
         """deling=2, dedi=2.0, deshi=3.0 应返回 中和偏旺"""

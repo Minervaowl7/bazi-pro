@@ -1,0 +1,24 @@
+{
+  "id": "poge_bijie_zhengcai",
+  "description": "破格-比劫争财 — 正财格+比劫透出争财",
+  "scenario": "丙火日主，月令酉金正财格，天干透丁火劫财争财",
+  "input": {
+    "day_master": "丙",
+    "bazi": "辛酉 丁酉 丙午 丁酉",
+    "month_branch": "酉",
+    "expected_pattern": "正财格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": -2,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "正财格"
+  ],
+  "must_not_include": [],
+  "notes": "丙火日主，月令酉金正财格，丁火劫财透干争财，财格破格",
+  "classical_support": [
+    "ZPZY_00008"
+  ]
+}

@@ -33,18 +33,21 @@ def detect_shishen_relations(day_master: str, bazi_parts: list[str]) -> list[dic
                              _best_instance(py_strong), _best_instance(ss)))
 
     # 伤官见官
+    # 《子平真诠》"金水伤官喜见官" — 庚辛日主除外
     sg = _rooted(_find_shishen_instances(day_master, '伤官', bazi_parts))
     zg = _rooted(_find_shishen_instances(day_master, '正官', bazi_parts))
-    cai = (_rooted(_find_shishen_instances(day_master, '正财', bazi_parts))
-           + _rooted(_find_shishen_instances(day_master, '偏财', bazi_parts)))
-    yin_sg = (_rooted(_find_shishen_instances(day_master, '正印', bazi_parts))
-              + _rooted(_find_shishen_instances(day_master, '偏印', bazi_parts)))
-    if sg and zg and not cai and not yin_sg:
-        from bazi_pro.core.disease import _best_instance
-        results.append(_make('伤官见官', '伤官', '正官',
-                             _best_instance(sg), _best_instance(zg)))
+    if day_master not in ('庚', '辛'):
+        cai = (_rooted(_find_shishen_instances(day_master, '正财', bazi_parts))
+               + _rooted(_find_shishen_instances(day_master, '偏财', bazi_parts)))
+        yin_sg = (_rooted(_find_shishen_instances(day_master, '正印', bazi_parts))
+                  + _rooted(_find_shishen_instances(day_master, '偏印', bazi_parts)))
+        if sg and zg and not cai and not yin_sg:
+            from bazi_pro.core.disease import _best_instance
+            results.append(_make('伤官见官', '伤官', '正官',
+                                 _best_instance(sg), _best_instance(zg)))
 
     # 财破印（需检查官杀通关：财生官→官生印，财不破印）
+    # 《子平真诠》"印轻逢财" — 印星强旺时财不破印
     cai_all = (_rooted(_find_shishen_instances(day_master, '正财', bazi_parts))
                + _rooted(_find_shishen_instances(day_master, '偏财', bazi_parts)))
     yin_all = (_rooted(_find_shishen_instances(day_master, '正印', bazi_parts))
@@ -52,7 +55,11 @@ def detect_shishen_relations(day_master: str, bazi_parts: list[str]) -> list[dic
     # 官杀通关：财生官→官生印，化解财破印
     guan_sha = (_rooted(_find_shishen_instances(day_master, '正官', bazi_parts))
                 + _rooted(_find_shishen_instances(day_master, '七杀', bazi_parts)))
-    if cai_all and yin_all and not guan_sha:
+    # 印星强旺（有本气根+透干）时财不破印
+    yin_benqi = [x for x in yin_all if x['qi_level'] == '本气']
+    yin_transparent = [x for x in yin_all if x['is_transparent']]
+    yin_is_heavy = len(yin_benqi) >= 1 and len(yin_transparent) >= 1
+    if cai_all and yin_all and not guan_sha and not yin_is_heavy:
         from bazi_pro.core.disease import _best_instance
         results.append(_make('财破印', '财星', '印星',
                              _best_instance(cai_all), _best_instance(yin_all)))

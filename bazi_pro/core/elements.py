@@ -1,5 +1,5 @@
 from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_BANHE, ZHI_HUIFANG, ZHI_SANHE
-from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING
+from bazi_pro.core.constants import GAN_WUXING
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.stems import GAN_HE
 
@@ -134,7 +134,9 @@ def calc_element_forces(bazi_parts: list[str], month_zhi: str) -> dict:
                         break
                 if has_root:
                     break
-            forces[gan_wx] += 1.2 if has_root else 0.5
+            # 《子平真诠》"干多不如根重" — 天干有根只是"不虚浮"，力量不应超过地支本气(1.0)
+            # 有根天干=1.0（与地支本气等同），无根天干=0.4（虚浮无力）
+            forces[gan_wx] += 1.0 if has_root else 0.4
 
         for cg, ql in get_canggan(zhi):
             cg_wx = GAN_WUXING.get(cg, '')
@@ -149,45 +151,77 @@ def calc_element_forces(bazi_parts: list[str], month_zhi: str) -> dict:
     hehua = _detect_hehua(bazi_parts, month_zhi)
     forces_adjusted = dict(forces)
 
+    # 天干合化修正：只转移参与合化的天干力量
+    # 《子平真诠》"合而化者，两失其本气" — 合化双方各失本气、归化神
     for item in hehua['gan_he']:
         if not item.get('adjacent', False):
             continue
         hua_wx = item['hua_wx']
         for g in item['gans']:
             g_wx = GAN_WUXING.get(g, '')
-            if g_wx and g_wx != hua_wx and g_wx in forces_adjusted:
-                # 原有五行力量转50%入化神（合化成功但非100%转化）
-                transfer = forces[g_wx] * 0.5
+            if g_wx and g_wx != hua_wx:
+                # 只转移该天干贡献的力量（1.2或0.5），而非该五行全部力量
+                # 先计算该天干贡献了多少力量
+                has_root = False
+                for p2 in bazi_parts:
+                    if len(p2) < 2:
+                        continue
+                    for cg, ql in get_canggan(p2[1]):
+                        if GAN_WUXING.get(cg, '') == g_wx and ql in ('本气', '中气'):
+                            has_root = True
+                            break
+                    if has_root:
+                        break
+                gan_contribution = 1.0 if has_root else 0.4
+                transfer = gan_contribution * 0.5
                 forces_adjusted[g_wx] -= transfer
                 forces_adjusted[hua_wx] += transfer
 
+    # 三合局修正：只转移参与三合的地支中非化神五行的藏干力量
+    # 《三命通会》"三合者，生旺墓之合" — 三支合为一气
     for item in hehua['zhi_sanhe']:
         hua_wx = item['hua_wx']
         for zhi in item['zhis']:
-            zhi_wx = ZHI_WUXING.get(zhi, '')
-            if zhi_wx and zhi_wx != hua_wx and zhi_wx in forces_adjusted:
-                transfer = forces[zhi_wx] * 0.5
-                forces_adjusted[zhi_wx] -= transfer
-                forces_adjusted[hua_wx] += transfer
+            for cg, ql in get_canggan(zhi):
+                cg_wx = GAN_WUXING.get(cg, '')
+                if cg_wx and cg_wx != hua_wx:
+                    weight = CANGGAN_WEIGHT.get(ql, 0)
+                    transfer = weight * 0.5
+                    forces_adjusted[cg_wx] -= transfer
+                    forces_adjusted[hua_wx] += transfer
 
     # 半合局力量修正：转化率20%，弱于三合局(50%)
     # 《三命通会》："若三字缺一则化不成局"——半合为待局
     for item in hehua['zhi_banhe']:
         hua_wx = item['hua_wx']
         for zhi in item['zhis']:
-            zhi_wx = ZHI_WUXING.get(zhi, '')
-            if zhi_wx and zhi_wx != hua_wx and zhi_wx in forces_adjusted:
-                transfer = forces[zhi_wx] * 0.2
-                forces_adjusted[zhi_wx] -= transfer
-                forces_adjusted[hua_wx] += transfer
+            for cg, ql in get_canggan(zhi):
+                cg_wx = GAN_WUXING.get(cg, '')
+                if cg_wx and cg_wx != hua_wx:
+                    weight = CANGGAN_WEIGHT.get(ql, 0)
+                    transfer = weight * 0.2
+                    forces_adjusted[cg_wx] -= transfer
+                    forces_adjusted[hua_wx] += transfer
 
+    # 会方修正：《滴天髓》"方是方兮局是局" — 会方三支同气，非化神五行被压制
+    # 会方不是凭空加力，而是同方异五行被转化为会方五行
     for item in hehua['zhi_huifang']:
         hui_wx = item['hui_wx']
-        bonus = forces.get(hui_wx, 0) * 0.3
-        forces_adjusted[hui_wx] += bonus
+        for zhi in item['zhis']:
+            for cg, ql in get_canggan(zhi):
+                cg_wx = GAN_WUXING.get(cg, '')
+                if cg_wx and cg_wx != hui_wx:
+                    weight = CANGGAN_WEIGHT.get(ql, 0)
+                    transfer = weight * 0.3
+                    forces_adjusted[cg_wx] -= transfer
+                    forces_adjusted[hui_wx] += transfer
 
     total_raw = max(0.01, sum(forces.values()))
     pct_raw = {k: round(v / total_raw * 100, 1) for k, v in forces.items()}
+
+    # 合化修正后力量不可为负 — 防御性保护
+    for k in forces_adjusted:
+        forces_adjusted[k] = max(0, forces_adjusted[k])
 
     total = max(0.01, sum(forces_adjusted.values()))
     pct_adjusted = {k: round(v / total * 100, 1) for k, v in forces_adjusted.items()}

@@ -1,0 +1,25 @@
+{
+  "id": "congcai_ge_true",
+  "description": "从财格（真从）— 甲日主无根，财星成势会财",
+  "scenario": "甲木日主，地支无本气/中气根，财星成势，但甲己合化土优先触发",
+  "input": {
+    "day_master": "甲",
+    "bazi": "己丑 戊辰 甲午 己未",
+    "month_branch": "辰",
+    "expected_pattern": "化土格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "化土格"
+  ],
+  "must_not_include": [],
+  "notes": "甲木日主，地支丑辰午未，甲无本气/中气根，甲己合化土优先于从财格触发。争合破格(high)+克化神破格(medium)",
+  "classical_support": [
+    "DTM_00030",
+    "ZPZY_00012"
+  ]
+}

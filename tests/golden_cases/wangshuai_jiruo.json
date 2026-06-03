@@ -1,0 +1,21 @@
+{
+  "id": "wangshuai_jiruo",
+  "description": "极弱 — 乙木日主，酉月绝地，不得地不得势",
+  "scenario": "乙木日主，酉月绝地，地支酉酉酉巳，全无根气，极弱",
+  "input": {
+    "day_master": "乙",
+    "bazi": "辛酉 丁酉 乙酉 辛巳",
+    "month_branch": "酉",
+    "expected_pattern": "火土成象格",
+    "expected_wangshuai": "极弱",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": -3,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "极弱"
+  ],
+  "must_not_include": [],
+  "notes": "乙木日主酉月绝地，地支酉酉酉巳，乙无本气/中气根，极弱。丁月干非庚故不触发乙庚合化金，克泄耗≥85%触发两行成象格"
+}

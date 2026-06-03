@@ -20,7 +20,8 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
              'method': '', 'reason': '', 'candidates_considered': []}
 
     yongshen_wx = _pattern_yongshen_wx(pattern_name, dm_wx, is_weak, is_strong,
-                                        pattern_type=pattern_type)
+                                        pattern_type=pattern_type,
+                                        pattern_result=pattern_result)
     if yongshen_wx:
         trace['method'] = 'pattern_based'
         trace['reason'] = f'格局"{pattern_name}"推导用神为{yongshen_wx}'
@@ -73,17 +74,21 @@ def _derive_xishen(pattern_name: str, dm_wx: str, yongshen_wx: str,
     }
 
     # 从格局用神表取第二候选作为喜神
-    for ss_name, info in PATTERN_YONGSHEN.items():
-        if ss_name in pattern_name:
-            yong_list = info.get('用神', [])
-            if len(yong_list) >= 2:
-                for candidate in yong_list[1:]:
-                    base = candidate.split('(')[0].strip()
-                    rel = SHISHEN_WUXING_REL.get(base, '')
-                    wx = _REL_TO_WX.get(rel, '')
-                    if wx and wx != yongshen_wx and wx not in jishen_wx:
-                        return [wx]
-            break
+    # 按键名长度降序匹配，避免"从强格"误匹配"假从强格"
+    sorted_keys = sorted(PATTERN_YONGSHEN.keys(), key=len, reverse=True)
+    for ss_name in sorted_keys:
+        if ss_name not in pattern_name:
+            continue
+        info = PATTERN_YONGSHEN[ss_name]
+        yong_list = info.get('用神', [])
+        if len(yong_list) >= 2:
+            for candidate in yong_list[1:]:
+                base = candidate.split('(')[0].strip()
+                rel = SHISHEN_WUXING_REL.get(base, '')
+                wx = _REL_TO_WX.get(rel, '')
+                if wx and wx != yongshen_wx and wx not in jishen_wx:
+                    return [wx]
+        break
 
     # 通用逻辑：生用神的五行（排除忌神）
     if yongshen_wx == SHENG_MAP.get(dm_wx, ''):
@@ -160,26 +165,31 @@ def _jishen_from_pattern_table(pattern_name: str, dm_wx: str, yongshen_wx: str) 
         '克我': KE_MAP.get(dm_wx, ''),
     }
 
-    for ss_name, info in PATTERN_YONGSHEN.items():
-        if ss_name in pattern_name:
-            ji_list = info.get('忌神', [])
-            result = []
-            for candidate in ji_list:
-                rel = SHISHEN_WUXING_REL.get(candidate, '')
-                if not rel:
-                    # 带括号注释的忌神如 '财星(无制时)' → 提取前缀
-                    base = candidate.split('(')[0].strip()
-                    rel = SHISHEN_WUXING_REL.get(base, '')
-                wx = _REL_TO_WX.get(rel, '')
-                if wx and wx != yongshen_wx and wx not in result:
-                    result.append(wx)
-            return result
+    # 按键名长度降序匹配，避免"从强格"误匹配"假从强格"
+    sorted_keys = sorted(PATTERN_YONGSHEN.keys(), key=len, reverse=True)
+    for ss_name in sorted_keys:
+        if ss_name not in pattern_name:
+            continue
+        info = PATTERN_YONGSHEN[ss_name]
+        ji_list = info.get('忌神', [])
+        result = []
+        for candidate in ji_list:
+            rel = SHISHEN_WUXING_REL.get(candidate, '')
+            if not rel:
+                # 带括号注释的忌神如 '财星(无制时)' → 提取前缀
+                base = candidate.split('(')[0].strip()
+                rel = SHISHEN_WUXING_REL.get(base, '')
+            wx = _REL_TO_WX.get(rel, '')
+            if wx and wx != yongshen_wx and wx not in result:
+                result.append(wx)
+        return result
     return []
 
 
 def _pattern_yongshen_wx(pattern_name: str, dm_wx: str,
                          is_weak: bool = False, is_strong: bool = False,
-                         pattern_type: str = '') -> str:
+                         pattern_type: str = '',
+                         pattern_result: dict = None) -> str:
     # 从格/专旺格：检查 pattern_name 和 pattern_type 两个维度
     is_cong_qiang = ('从强' in pattern_name or '假从强' in pattern_name
                      or '专旺' in pattern_name or pattern_type == '专旺格'
@@ -193,6 +203,32 @@ def _pattern_yongshen_wx(pattern_name: str, dm_wx: str,
     if '从儿' in pattern_name:
         return WO_SHENG_MAP.get(dm_wx, '')
 
+    # 化气格：《子平真诠》"运喜所化之物，与所化之印绶"
+    # 用神=化神五行，从 pattern_result 中获取
+    if '化' in pattern_name and pattern_result:
+        hua_wx = pattern_result.get('yongshen_direction', '')
+        # yongshen_direction 格式为 "化神X"，提取五行
+        if hua_wx.startswith('化神'):
+            return hua_wx[2:]  # "化神土" → "土"
+        # 从 pattern_name 推导：化土格→土、化金格→金 等
+        hua_names = {'化土格': '土', '化金格': '金', '化水格': '水',
+                     '化木格': '木', '化火格': '火'}
+        for name, wx in hua_names.items():
+            if name in pattern_name:
+                return wx
+
+    # 从势格：《滴天髓》"五阴从势无情义" — 用神取最强之势
+    if '从势' in pattern_name:
+        # 优先从 element_forces 参数获取（通过 derive_yongshen 传入）
+        # 备选从 pattern_result._element_forces 获取
+        pct = {}
+        if pattern_result and pattern_result.get('_element_forces'):
+            pct = pattern_result['_element_forces'].get('percent', {})
+        if not pct:
+            return WO_SHENG_MAP.get(dm_wx, '')  # fallback: 食伤
+        strongest = max(pct, key=pct.get)
+        return strongest
+
     _REL_TO_WX = {
         '同我': lambda w: w,
         '生我': lambda w: SHENG_MAP.get(w, ''),
@@ -203,40 +239,61 @@ def _pattern_yongshen_wx(pattern_name: str, dm_wx: str,
 
     # 建禄月劫格特殊处理：用神由"透X"决定
     # 《子平真诠》："建禄月劫，无官煞则用食伤，食伤亦无则用财"
-    if '建禄格' in pattern_name or '月劫格' in pattern_name or '羊刃格' in pattern_name:
-        if '透' in pattern_name:
-            tou_ss = pattern_name.split('透')[-1]
+    if '建禄格' in pattern_name or '月劫格' in pattern_name:
+        # 精确匹配"透X"：pattern_name 格式为"建禄格，透正官"或"建禄格，无财官煞食透出"
+        # "无...透出"不应匹配，只有"透X"才应匹配
+        if '，透' in pattern_name:
+            tou_ss = pattern_name.split('，透')[-1]
             rel = SHISHEN_WUXING_REL.get(tou_ss, '')
             if rel:
                 return _REL_TO_WX.get(rel, lambda w: '')(dm_wx)
-        # 无透干：身强取官杀，身弱取印比
+        # 无透干：《子平真诠》"建禄月劫，无官煞则用食伤，食伤亦无则用财"
+        # 身强时优先取食伤（泄秀法）
+        # 《子平真诠》"论建禄月劫取运"："禄劫而用伤食，财运最宜"
         if is_strong:
-            return KE_MAP.get(dm_wx, '')
-        return SHENG_MAP.get(dm_wx, '')
+            return WO_SHENG_MAP.get(dm_wx, '')  # 食伤（泄秀法）
+        return SHENG_MAP.get(dm_wx, '')  # 印星（扶弱法）
+
+    # 羊刃格特殊处理：《子平真诠》"阳刃喜官杀制伏"
+    # 羊刃格与建禄格不同，羊刃性刚暴，必须用官杀制伏，非泄秀
+    if '羊刃格' in pattern_name:
+        if '，透' in pattern_name:
+            tou_ss = pattern_name.split('，透')[-1]
+            rel = SHISHEN_WUXING_REL.get(tou_ss, '')
+            if rel:
+                return _REL_TO_WX.get(rel, lambda w: '')(dm_wx)
+        # 无透干：羊刃格取官杀制伏
+        # 《子平真诠》"阳刃喜官杀制伏，刃旺杀强，功名显达"
+        return KE_MAP.get(dm_wx, '')  # 官杀（制伏法）
 
     _WEAK_PREFERRED = {'生我', '同我'}
     _STRONG_PREFERRED = {'克我', '我生', '我克'}
 
-    for ss_name, info in PATTERN_YONGSHEN.items():
-        if ss_name in pattern_name:
-            yong_list = info.get('用神', [])
-            if not yong_list:
-                continue
+    for ss_name in sorted(PATTERN_YONGSHEN.keys(), key=len, reverse=True):
+        if ss_name not in pattern_name:
+            continue
+        info = PATTERN_YONGSHEN[ss_name]
+        yong_list = info.get('用神', [])
+        if not yong_list:
+            continue
 
-            if is_weak and len(yong_list) >= 2:
-                for candidate in yong_list:
-                    rel = SHISHEN_WUXING_REL.get(candidate, '')
-                    if rel in _WEAK_PREFERRED:
-                        return _REL_TO_WX.get(rel, lambda w: '')(dm_wx)
+        if is_weak and len(yong_list) >= 2:
+            for candidate in yong_list:
+                base = candidate.split('(')[0].strip()
+                rel = SHISHEN_WUXING_REL.get(base, '')
+                if rel in _WEAK_PREFERRED:
+                    return _REL_TO_WX.get(rel, lambda w: '')(dm_wx)
 
-            if is_strong and len(yong_list) >= 2:
-                for candidate in yong_list:
-                    rel = SHISHEN_WUXING_REL.get(candidate, '')
-                    if rel in _STRONG_PREFERRED:
-                        return _REL_TO_WX.get(rel, lambda w: '')(dm_wx)
+        if is_strong and len(yong_list) >= 2:
+            for candidate in yong_list:
+                base = candidate.split('(')[0].strip()
+                rel = SHISHEN_WUXING_REL.get(base, '')
+                if rel in _STRONG_PREFERRED:
+                    return _REL_TO_WX.get(rel, lambda w: '')(dm_wx)
 
-            first = yong_list[0]
-            rel = SHISHEN_WUXING_REL.get(first, '')
-            return _REL_TO_WX.get(rel, lambda w: '')(dm_wx)
+        first = yong_list[0]
+        base = first.split('(')[0].strip()
+        rel = SHISHEN_WUXING_REL.get(base, '')
+        return _REL_TO_WX.get(rel, lambda w: '')(dm_wx)
 
     return ''

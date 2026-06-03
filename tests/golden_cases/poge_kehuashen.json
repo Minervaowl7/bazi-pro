@@ -1,0 +1,24 @@
+{
+  "id": "poge_kehuashen",
+  "description": "破格-克化神 — 化气格+克化神破格",
+  "scenario": "甲木日主，甲己合化土，化土格成立，天干甲属木克化神土",
+  "input": {
+    "day_master": "甲",
+    "bazi": "戊戌 戊辰 甲戌 己未",
+    "month_branch": "辰",
+    "expected_pattern": "化土格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "化土格"
+  ],
+  "must_not_include": [],
+  "notes": "甲木日主，甲己合化土，化土格成立。天干甲属木克化神土（medium破格）",
+  "classical_support": [
+    "ZPZY_00008"
+  ]
+}

@@ -156,7 +156,7 @@ def _narrate_strength(day_master, dm_wx, month_zhi, strength):
     # 得势
     deshi_details = deshi.get("details", [])
     if deshi_score > 0:
-        helpers = "、".join(f"{d.get('gan', '')}{d.get('relation', '')}" for d in deshi_details if d.get("gan"))
+        helpers = "、".join(f"{d.get('gan', '')}{d.get('shishen', '')}" for d in deshi_details if d.get("gan"))
         if helpers:
             lines.append(f"【得势】天干有{helpers}帮扶，得势分 {deshi_score:.1f}。")
         else:
@@ -181,7 +181,12 @@ def _narrate_pattern(day_master, dm_wx, bazi_parts, pattern_info):
 
     lines = []
 
-    layer_names = {0: "化气格", 1: "专旺格", 2: "从格", 3: "正格（层1）", 4: "正格（层2）", 5: "正格（层3）"}
+    # 层级名称映射 — 与 patterns.py screen_pattern() 的层级对应
+    # L0: 专旺/化气/从格/两行成象（特殊格局）
+    # L1: 月令本气透干（正格或建禄月劫）
+    # L2: 月令中气透干（正格或建禄月劫）
+    # L3: 羊刃/比劫月令/暗格
+    layer_names = {0: "特殊格局", 1: "月令本气透干", 2: "月令中气透干", 3: "暗格/比劫月令"}
     layer_desc = layer_names.get(layer, f"第{layer}层")
 
     lines.append(f"经六层格局筛查，于{layer_desc}确认格局：{pattern}。")
@@ -308,17 +313,17 @@ def _narrate_relations(relations, bazi_parts, day_master):
     for rel in relations:
         rtype = rel.get("type", "")
         elements = rel.get("elements", [])
-        desc = rel.get("description", "")
+        desc = rel.get("result", "")
         elem_str = "、".join(elements) if elements else ""
 
         if "冲" in rtype:
-            lines.append(f"• {elem_str}相冲 — {desc or '动荡不安，主变动。'}")
+            lines.append(f"• {elem_str}相冲 — {desc or '主变动，具体吉凶需看所冲之神的喜忌。'}")
         elif "合" in rtype:
-            lines.append(f"• {elem_str}相合 — {desc or '合而有情，主和顺。'}")
+            lines.append(f"• {elem_str}相合 — {desc or '合而有情，具体吉凶需看所合之神的喜忌。'}")
         elif "刑" in rtype:
-            lines.append(f"• {elem_str}相刑 — {desc or '刑主灾厄，需防口舌是非。'}")
+            lines.append(f"• {elem_str}相刑 — {desc or '刑主纠纷，具体吉凶需看所刑之神的喜忌。'}")
         elif "害" in rtype:
-            lines.append(f"• {elem_str}相害 — {desc or '暗害伤情，主暗损。'}")
+            lines.append(f"• {elem_str}相害 — {desc or '害主暗损，具体吉凶需看所害之神的喜忌。'}")
         else:
             lines.append(f"• {elem_str}{rtype} — {desc}")
 
@@ -342,13 +347,31 @@ def _narrate_personality(dm_wx, day_master, strength, pattern_info):
     elif "弱" in verdict:
         lines.append(f"日主偏弱，{dm_wx}性内敛——心思细腻，善于观察，但决断力稍欠。")
 
-    if "官" in pattern:
+    # 格局性格描述 — 必须精确匹配，避免子串误匹配（如"伤官格"含"官"）
+    # 先匹配更具体的格局名，再匹配通用
+    # 注意排除"无...透出"的情况（如"建禄格，无财官煞食透出"）
+    has_tou = '，透' in pattern  # 有透干取用
+    if "伤官" in pattern:
+        lines.append("格取伤官，才华横溢，思维活跃，适合创意、技术或自由职业。")
+    elif "七杀" in pattern or "偏官" in pattern:
+        lines.append("格取七杀，性格刚毅，有魄力，适合竞争性强的领域。")
+    elif "正官" in pattern:
         lines.append("格取官星，为人重规矩、守纪律，适合体制内或管理岗位。")
-    elif "财" in pattern:
+    elif "官" in pattern and has_tou and "伤" not in pattern and "杀" not in pattern:
+        lines.append("格取官星，为人重规矩、守纪律，适合体制内或管理岗位。")
+    elif "偏财" in pattern:
+        lines.append("格取偏财，善于交际，灵活多变，适合商业投资。")
+    elif "正财" in pattern:
         lines.append("格取财星，务实重利，善于经营，对金钱敏感。")
-    elif "食" in pattern or "伤" in pattern:
-        lines.append("格取食伤，才华横溢，思维活跃，适合创意、技术或自由职业。")
-    elif "印" in pattern:
+    elif "财" in pattern and has_tou and "偏" not in pattern:
+        lines.append("格取财星，务实重利，善于经营，对金钱敏感。")
+    elif "食神" in pattern:
+        lines.append("格取食神，温和有礼，才华内敛，适合文艺、餐饮或教育。")
+    elif "偏印" in pattern or "枭神" in pattern:
+        lines.append("格取偏印，思维独特，善于钻研，适合研究或偏门领域。")
+    elif "正印" in pattern:
+        lines.append("格取印星，好学深思，重精神世界，适合学术、教育或文化领域。")
+    elif "印" in pattern and has_tou and "偏" not in pattern:
         lines.append("格取印星，好学深思，重精神世界，适合学术、教育或文化领域。")
 
     return "\n".join(lines)
@@ -377,11 +400,23 @@ def _narrate_career(dm_wx, yongshen_info, pattern_info, gender):
     if industry:
         lines.append(f"适合行业：{industry}。")
 
-    if "官" in pattern or "杀" in pattern:
+    # 格局事业描述 — 精确匹配，避免子串误匹配
+    has_tou = '，透' in pattern  # 有透干取用
+    if "伤官" in pattern:
+        lines.append("格局带伤官，适合技术、创作、教学类工作，靠才华立身。")
+    elif "食神" in pattern:
+        lines.append("格局带食神，适合文艺、餐饮、教育类工作，温和立身。")
+    elif "七杀" in pattern or "偏官" in pattern:
+        lines.append("格局带七杀，适合竞争性强的领域，有魄力。")
+    elif "正官" in pattern:
         lines.append("格局带官杀，适合管理、行政、公职类工作，有领导潜质。")
-    elif "食" in pattern or "伤" in pattern:
-        lines.append("格局带食伤，适合技术、创作、教学类工作，靠才华立身。")
-    elif "财" in pattern:
+    elif "官" in pattern and has_tou and "伤" not in pattern and "杀" not in pattern:
+        lines.append("格局带官杀，适合管理、行政、公职类工作，有领导潜质。")
+    elif "偏财" in pattern:
+        lines.append("格局带偏财，适合投资、贸易类工作，善于交际。")
+    elif "正财" in pattern:
+        lines.append("格局带财星，适合商业、金融、经营类工作，善于积累财富。")
+    elif "财" in pattern and has_tou and "偏" not in pattern:
         lines.append("格局带财星，适合商业、金融、经营类工作，善于积累财富。")
 
     return "\n".join(lines)

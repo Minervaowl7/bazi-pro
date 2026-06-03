@@ -1,0 +1,24 @@
+{
+  "id": "poge_mingfeng_genqi",
+  "description": "破格-命逢根气 — 从格+命逢根气破格",
+  "scenario": "乙木日主极弱，乙庚合化金，但辰中有乙中气根，命逢根气破格",
+  "input": {
+    "day_master": "乙",
+    "bazi": "辛酉 庚申 乙酉 庚辰",
+    "month_branch": "申",
+    "expected_pattern": "化金格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "化金格"
+  ],
+  "must_not_include": [],
+  "notes": "乙木日主，乙庚合化金，化金格成立。辰中有乙中气根→命逢根气破格。同时庚×2争合乙（high破格）",
+  "classical_support": [
+    "ZPZY_00008"
+  ]
+}

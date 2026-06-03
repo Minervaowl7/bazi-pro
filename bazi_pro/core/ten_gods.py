@@ -50,7 +50,10 @@ def _count_shishen_categories(day_master, gans, bazi_parts, include_canggan=Fals
 def _get_yongshen_direction(shishen: str) -> str:
     direction_map = {
         '正官': '财印', '七杀': '食印', '正财': '食官', '偏财': '食官',
-        '正印': '官比', '偏印': '财官', '食神': '比财', '伤官': '印财',
+        # 《子平真诠》"印绶喜其生身，正偏同为美格" — 偏印与正印用神方向一致
+        # 财星是印格忌神（"印轻逢财，印格败也"），不应列为偏印用神方向
+        '正印': '官比', '偏印': '官比',
+        '食神': '比财', '伤官': '印财',
         '比肩': '官食', '劫财': '官杀',
     }
     return direction_map.get(shishen, '待定')

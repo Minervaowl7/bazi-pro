@@ -1,0 +1,24 @@
+{
+  "id": "congguansha_ge_true",
+  "description": "从官杀格（真从）— 甲日主无根，官杀成势",
+  "scenario": "甲木日主，地支无本气/中气根，官杀成势，克泄耗≥85%触发两行成象格",
+  "input": {
+    "day_master": "甲",
+    "bazi": "辛酉 庚申 甲午 辛未",
+    "month_branch": "申",
+    "expected_pattern": "火土成象格",
+    "expected_wangshuai": "极弱",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": -3,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "火土成象格"
+  ],
+  "must_not_include": [],
+  "notes": "甲木日主，地支酉申午未，甲无本气/中气根，庚辛金官杀旺，克泄耗≥85%触发两行成象格优先于从官杀格",
+  "classical_support": [
+    "DTM_00030"
+  ]
+}

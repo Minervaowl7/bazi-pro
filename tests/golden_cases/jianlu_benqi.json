@@ -6,16 +6,14 @@
     "day_master": "甲",
     "bazi": "甲子 丙寅 甲辰 庚午",
     "month_branch": "寅",
-    "expected_pattern": "建禄格，透食神",
+    "expected_pattern": "建禄格，透七杀",
     "expected_wangshuai": "中和偏旺",
-    "expected_yongshen_wx": "火",
+    "expected_yongshen_wx": "金",
     "expected_deling_score": 3,
     "expected_dedi_level": "偏得地",
     "expected_deshi_level": "偏得势"
   },
-  "must_include": [
-    "建禄格，透食神"
-  ],
+  "must_include": [],
   "must_not_include": [
     "从格",
     "暗比肩格",

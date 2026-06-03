@@ -1,0 +1,24 @@
+{
+  "id": "poge_caixing_poyin",
+  "description": "破格-财星破印 — 正印格+财星破印",
+  "scenario": "甲木日主，月令子月癸水本气透干正印格，戊土偏财破印",
+  "input": {
+    "day_master": "甲",
+    "bazi": "癸酉 甲子 甲寅 戊午",
+    "month_branch": "子",
+    "expected_pattern": "正印格",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "金",
+    "expected_deling_score": 0,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "正印格"
+  ],
+  "must_not_include": [],
+  "notes": "甲木日主，月令子月癸水本气透干成正印格，戊土偏财破印(high)",
+  "classical_support": [
+    "ZPZY_00008"
+  ]
+}

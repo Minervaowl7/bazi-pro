@@ -7,14 +7,15 @@
     "bazi": "壬子 庚戌 丙午 壬子",
     "month_branch": "戌",
     "expected_pattern": "食神格",
-    "expected_wangshuai": "极弱",
+    "expected_wangshuai": "身弱",
     "expected_yongshen_wx": "火",
-    "expected_deling_score": -2,
+    "expected_deling_score": -1,
     "expected_dedi_level": "不得地",
     "expected_deshi_level": "不得势"
   },
   "must_include": [
-    "食神"
+    "食神",
+    "食神格"
   ],
   "must_not_include": [
     "从杀格",

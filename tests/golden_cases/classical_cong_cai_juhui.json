@@ -7,7 +7,11 @@
     "bazi": "庚申 乙酉 丙申 乙未",
     "month_branch": "酉",
     "expected_pattern": "正财格",
-    "expected_wangshuai": "中和"
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": -2,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "得势"
   },
   "must_include": [
     "正财格"

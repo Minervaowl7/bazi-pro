@@ -7,9 +7,9 @@
     "bazi": "甲寅 丙寅 癸卯 庚申",
     "month_branch": "寅",
     "expected_pattern": "伤官格",
-    "expected_wangshuai": "中和",
+    "expected_wangshuai": "中和偏弱",
     "expected_yongshen_wx": "金",
-    "expected_deling_score": 1,
+    "expected_deling_score": 0,
     "expected_dedi_level": "不得地",
     "expected_deshi_level": "偏得势"
   },

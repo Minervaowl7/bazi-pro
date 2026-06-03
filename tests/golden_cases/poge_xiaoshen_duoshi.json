@@ -1,0 +1,24 @@
+{
+  "id": "poge_xiaoshen_duoshi",
+  "description": "破格-枭神夺食 — 食神格+枭神透出夺食",
+  "scenario": "甲木日主，月令巳火食神格，壬水枭神透出夺食",
+  "input": {
+    "day_master": "甲",
+    "bazi": "壬申 癸巳 甲午 壬申",
+    "month_branch": "巳",
+    "expected_pattern": "食神格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "木",
+    "expected_deling_score": -1,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "食神格"
+  ],
+  "must_not_include": [],
+  "notes": "甲木日主，月令巳火丙食神格，壬水枭神透干夺食，食神格破格",
+  "classical_support": [
+    "ZPZY_00008"
+  ]
+}

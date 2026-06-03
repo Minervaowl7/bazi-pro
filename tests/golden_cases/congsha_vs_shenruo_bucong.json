@@ -7,9 +7,9 @@
     "bazi": "壬子 癸丑 戊午 壬子",
     "month_branch": "丑",
     "expected_pattern": "正财格",
-    "expected_wangshuai": "中和",
+    "expected_wangshuai": "中和偏旺",
     "expected_yongshen_wx": "金",
-    "expected_deling_score": 0,
+    "expected_deling_score": 1,
     "expected_dedi_level": "偏得地",
     "expected_deshi_level": "偏得势"
   },

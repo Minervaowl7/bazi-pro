@@ -1,25 +1,25 @@
 {
   "id": "yanshang_ge",
-  "description": "炎上格 — 丙火日主，火行专旺",
-  "scenario": "丙火日主，全局火行成势，炎上格",
+  "description": "炎上格 — 丙火日主，火行专旺（羊刃格优先拦截）",
+  "scenario": "丙火日主，全局火行成势，巳午未三会火方，但羊刃格优先于专旺格触发",
   "input": {
     "day_master": "丙",
     "bazi": "丙午 甲午 丙午 丁巳",
     "month_branch": "午",
-    "expected_pattern": "炎上格",
+    "expected_pattern": "羊刃格，无财官煞食透出",
     "expected_wangshuai": "极旺",
-    "expected_yongshen_wx": "木",
+    "expected_yongshen_wx": "水",
     "expected_deling_score": 3,
     "expected_dedi_level": "得地",
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "炎上格"
+    "羊刃格，无财官煞食透出"
   ],
   "must_not_include": [
     "从格",
     "暗比肩格",
     "暗劫财格"
   ],
-  "notes": "日主火行占比极高，炎上格"
+  "notes": "丙火日主午月羊刃，火行占比极高，巳午未三会火方。羊刃格优先于炎上格触发"
 }

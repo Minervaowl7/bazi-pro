@@ -1,5 +1,6 @@
 from bazi_pro.core import (
     CANGGAN_WEIGHT,
+    DELING_SCORE,
     GAN_WUXING,
     KE_MAP,
     SHENG_MAP,
@@ -17,14 +18,19 @@ from bazi_pro.core import (
 from bazi_pro.core.schools import register_school
 from bazi_pro.core.schools.base import SchoolAnalyzer
 
-TI_STEMS = {'比肩', '劫财', '正印', '偏印'}
-YONG_STEMS = {'正财', '偏财', '正官', '七杀', '食神', '伤官'}
+# 盲派体用分类 — 依据段建业《盲派初级命理学》
+# "我们把日主、印星、禄神、比劫当体，财星、官杀星当用"
+# "食神与伤官既可以是体，也可以是用……食神更近于体，伤官则接近于用"
+TI_STEMS = {'比肩', '劫财', '正印', '偏印', '食神'}
+YONG_STEMS = {'正财', '偏财', '正官', '七杀', '伤官'}
 
 KE_PAIRS = {('木', '土'), ('土', '水'), ('水', '火'), ('火', '金'), ('金', '木')}
 SHENG_PAIRS = {('木', '火'), ('火', '土'), ('土', '金'), ('金', '水'), ('水', '木')}
 
+# 墓库收神表 — 依据段建业《盲派初级命理学》
+# 辰墓收水：亥、丑、未均可入辰墓（典籍"丑入辰墓，未也入辰墓"）
 MU_KU = {
-    '辰': {'wx': '水', 'collects': {'亥'}},
+    '辰': {'wx': '水', 'collects': {'亥', '丑', '未'}},
     '戌': {'wx': '火', 'collects': {'巳'}},
     '丑': {'wx': '金', 'collects': {'申'}},
     '未': {'wx': '木', 'collects': {'寅'}},
@@ -623,31 +629,16 @@ class MangpaiAnalyzer(SchoolAnalyzer):
     def _analyze_zeishen(self, tiyong: dict, day_master: str, result: dict) -> dict:
         yong_items = tiyong.get('yong', [])
         ti_items = tiyong.get('ti', [])
-        relations = result.get('relations', [])
 
         if not yong_items or not ti_items:
             return {'is_zeishen_pattern': False, 'bushen': [], 'zeishen': [], 'yingqi_note': ''}
 
-        controlled_count = 0
-        for item in yong_items:
-            yong_wx = item.get('wuxing', '')
-            yong_gan = item.get('gan', '')
-            is_controlled = False
-            for ti_item in ti_items:
-                ti_wx = ti_item.get('wuxing', '')
-                if (ti_wx, yong_wx) in KE_PAIRS:
-                    is_controlled = True
-                    break
-            for rel in relations:
-                if rel.get('type', '') == '天干合':
-                    elements = rel.get('elements', [])
-                    if yong_gan in elements:
-                        is_controlled = True
-                        break
-            if is_controlled:
-                controlled_count += 1
-
-        is_zeishen_pattern = controlled_count >= len(yong_items) and len(yong_items) > 0
+        # 《盲派初级命理学》："如果这个主或者体比较旺，宾或者用相对弱，
+        # 那么这时候，我们就把它们叫做贼神和捕神"
+        # 条件：体旺 + 用弱 → 贼神捕神格局
+        ti_strength = self._calc_strength(ti_items, result)
+        yong_strength = self._calc_strength(yong_items, result)
+        is_zeishen_pattern = ti_strength > yong_strength and len(yong_items) > 0
 
         bushen = []
         zeishen = []
@@ -797,8 +788,9 @@ class MangpaiAnalyzer(SchoolAnalyzer):
                 if p.get('position', '') in pos or pos in p.get('position', ''):
                     zhi = p.get('zhi', '')
                     changsheng = SHIER_CHANGSHENG.get(gan, {}).get(zhi, '')
-                    if changsheng in CANGGAN_WEIGHT:
-                        strength += CANGGAN_WEIGHT.get(changsheng, 0)
+                    # 十二长生状态用 DELING_SCORE 查权重，非 CANGGAN_WEIGHT（藏干气位）
+                    if changsheng in DELING_SCORE:
+                        strength += max(0, DELING_SCORE.get(changsheng, 0)) * 0.5
 
                     canggan = p.get('canggan', [])
                     for cg_item in canggan:

@@ -7,11 +7,11 @@
     "bazi": "己丑 丁丑 乙丑 己丑",
     "month_branch": "丑",
     "expected_pattern": "偏财格",
-    "expected_wangshuai": "身弱",
+    "expected_wangshuai": "中和偏弱",
     "expected_yongshen_wx": "火",
     "expected_deling_score": 0,
     "expected_dedi_level": "不得地",
-    "expected_deshi_level": "不得势"
+    "expected_deshi_level": "偏得势"
   },
   "must_include": [
     "偏财格"

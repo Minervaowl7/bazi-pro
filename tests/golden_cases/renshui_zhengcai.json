@@ -14,7 +14,8 @@
     "expected_deshi_level": "不得势"
   },
   "must_include": [
-    "成象格"
+    "成象格",
+    "木火成象格"
   ],
   "must_not_include": [
     "从格"

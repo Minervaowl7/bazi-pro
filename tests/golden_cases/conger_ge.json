@@ -1,15 +1,15 @@
 {
   "id": "conger_ge",
   "description": "从儿格 — 甲木日主极弱，食伤成势",
-  "scenario": "甲木日主，全局食伤成势，日主无根无从",
+  "scenario": "甲木日主，月令未月丁火伤官透干，食伤成势但日主有根不从",
   "input": {
     "day_master": "甲",
     "bazi": "丙午 丁未 甲申 丙寅",
     "month_branch": "未",
     "expected_pattern": "伤官格",
-    "expected_wangshuai": "极弱",
+    "expected_wangshuai": "身弱",
     "expected_yongshen_wx": "水",
-    "expected_deling_score": -2,
+    "expected_deling_score": -1,
     "expected_dedi_level": "不得地",
     "expected_deshi_level": "不得势"
   },
@@ -19,5 +19,5 @@
   "must_not_include": [
     "从格"
   ],
-  "notes": "日主极弱，食伤成势，从儿格"
+  "notes": "甲木日主身弱，月令未中丁火伤官透干，伤官格。寅中有甲本气根故不从儿"
 }

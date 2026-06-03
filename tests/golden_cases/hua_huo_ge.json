@@ -1,0 +1,24 @@
+{
+  "id": "hua_huo_ge",
+  "description": "化火格 — 戊癸合化火，月令巳月火当令（建禄格优先拦截）",
+  "scenario": "戊土日主，戊癸合化火，月令巳月火当令，但建禄格优先于化气格触发",
+  "input": {
+    "day_master": "戊",
+    "bazi": "丁巳 丁巳 戊午 癸丑",
+    "month_branch": "巳",
+    "expected_pattern": "建禄格，透正财",
+    "expected_wangshuai": "极旺",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": 3,
+    "expected_dedi_level": "偏得地",
+    "expected_deshi_level": "得势"
+  },
+  "must_include": [
+    "建禄格，透正财"
+  ],
+  "must_not_include": [],
+  "notes": "戊癸合化火，月令巳月火当令，但戊日主巳月为建禄，建禄格优先于化气格触发。《子平真诠》建禄月劫格优先级高于化气格",
+  "classical_support": [
+    "ZPZY_00012"
+  ]
+}

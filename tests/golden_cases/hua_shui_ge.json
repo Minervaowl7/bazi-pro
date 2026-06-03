@@ -1,0 +1,24 @@
+{
+  "id": "hua_shui_ge",
+  "description": "化水格 — 丙辛合化水，月令亥月水当令，真化",
+  "scenario": "丙火日主，丙辛合化水，月令亥月水当令，化神水修正后占比≥60%，真化",
+  "input": {
+    "day_master": "丙",
+    "bazi": "癸亥 辛亥 丙子 壬辰",
+    "month_branch": "亥",
+    "expected_pattern": "化水格",
+    "expected_wangshuai": "身弱",
+    "expected_yongshen_wx": "水",
+    "expected_deling_score": -3,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "化水格"
+  ],
+  "must_not_include": [],
+  "notes": "丙辛合化水，月令亥月水当令，化水真格。丙日主参与合化，化神水修正后占比≥60%，无破格",
+  "classical_support": [
+    "ZPZY_00012"
+  ]
+}

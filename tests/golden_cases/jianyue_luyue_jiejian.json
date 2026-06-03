@@ -14,7 +14,8 @@
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "月劫格"
+    "月劫格",
+    "月劫格，透正官"
   ],
   "must_not_include": [
     "暗劫财格",

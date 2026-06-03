@@ -1,6 +1,9 @@
-"""格局之病检测 — 枭神夺食、伤官见官、官杀混杂、比劫争财、食神制杀逢枭"""
+"""格局之病检测 — 枭神夺食、伤官见官、官杀混杂、比劫争财、贪财坏印、七杀无制、用神被冲克
 
-from bazi_pro.core.branches import CANGGAN_WEIGHT
+依据《子平真诠》第九章"论用神成败救应"及《神峰通考》"病药说"
+"""
+
+from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_CHONG
 from bazi_pro.core.constants import GAN_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP
@@ -37,7 +40,7 @@ def _find_shishen_instances(
                 'position': f'{pos}干',
                 'is_transparent': True,
                 'qi_level': '透干',
-                'root_weight': 1.2,
+                'root_weight': 1.0,
             })
 
         # 藏干
@@ -104,6 +107,10 @@ def detect_disease(
     items.extend(_detect_shangguan_jianguan(day_master, dm_wx, bazi_parts))
     items.extend(_detect_bijie_zhengcai(day_master, dm_wx, bazi_parts, element_forces))
     items.extend(_detect_guansha_hunza(day_master, dm_wx, bazi_parts))
+    # 新增：《子平真诠》明确定义的格局之病
+    items.extend(_detect_tancai_huaiyin(day_master, dm_wx, bazi_parts))
+    items.extend(_detect_qisha_wuzhi(day_master, dm_wx, bazi_parts))
+    items.extend(_detect_yongshen_chong(day_master, dm_wx, bazi_parts))
 
     medicine_parts = []
     for item in items:
@@ -189,8 +196,12 @@ def _detect_shangguan_jianguan(
     dm_wx: str,
     bazi_parts: list[str],
 ) -> list[dict]:
-    """伤官见官"""
+    """伤官见官 — 《子平真诠》"伤官见官，为祸百端，而金水见之，反为秀气" """
     results = []
+
+    # 金水伤官除外：《子平真诠》第四十一章"金水伤官喜见官"
+    if day_master in ('庚', '辛'):
+        return results
 
     sg_instances = _find_shishen_instances(day_master, '伤官', bazi_parts)
     zg_instances = _find_shishen_instances(day_master, '正官', bazi_parts)
@@ -371,4 +382,189 @@ def _detect_guansha_hunza(
             f'无食伤制化，官杀混杂'
         ),
     })
+    return results
+
+
+def _detect_tancai_huaiyin(
+    day_master: str,
+    dm_wx: str,
+    bazi_parts: list[str],
+) -> list[dict]:
+    """贪财坏印（财星破印）— 《子平真诠》"印轻逢财，印格败也"；《神峰通考》"用印以财为病"
+
+    关键条件：印星必须"轻"（无本气根或仅余气根），财星才能破印。
+    若印星强旺（有本气根+透干），财星破不了印。
+    """
+    results = []
+
+    yin_instances = (
+        _find_shishen_instances(day_master, '正印', bazi_parts)
+        + _find_shishen_instances(day_master, '偏印', bazi_parts)
+    )
+    cai_instances = (
+        _find_shishen_instances(day_master, '正财', bazi_parts)
+        + _find_shishen_instances(day_master, '偏财', bazi_parts)
+    )
+
+    if not yin_instances or not cai_instances:
+        return results
+
+    yin_rooted = [x for x in yin_instances if x['root_weight'] > 0 or x['is_transparent']]
+    cai_rooted = [x for x in cai_instances if x['root_weight'] > 0 or x['is_transparent']]
+
+    if not yin_rooted or not cai_rooted:
+        return results
+
+    # 《子平真诠》"印轻逢财" — 印星必须"轻"才能被财破
+    # 印星"轻"：无本气根（仅有中气/余气根），或虽有本气根但被冲克
+    # 印星"重"：有本气根+透干 → 财星破不了印
+    yin_benqi = [x for x in yin_rooted if x['qi_level'] == '本气']
+    yin_transparent = [x for x in yin_rooted if x['is_transparent']]
+    yin_is_heavy = len(yin_benqi) >= 1 and len(yin_transparent) >= 1
+    if yin_is_heavy:
+        return results  # 印星强旺，财星破不了印
+
+    # 检查是否有官杀通关（财生官→官生印，财不破印）
+    guan_sha_instances = (
+        _find_shishen_instances(day_master, '正官', bazi_parts)
+        + _find_shishen_instances(day_master, '七杀', bazi_parts)
+    )
+    guan_sha_rooted = [x for x in guan_sha_instances if x['root_weight'] > 0 or x['is_transparent']]
+    if guan_sha_rooted:
+        return results  # 官杀通关，财→官→印，财不破印
+
+    best_yin = _best_instance(yin_rooted)
+    best_cai = _best_instance(cai_rooted)
+    yin_wx = GAN_WUXING.get(best_yin['gan'], '')
+    cai_wx = GAN_WUXING.get(best_cai['gan'], '')
+    medicine_wx = KE_MAP.get(dm_wx, '')  # 官杀五行 = 克日主
+
+    sev = _severity(cai_rooted)
+
+    results.append({
+        'name': '贪财坏印',
+        'severity': sev,
+        'disease_god': '财星',
+        'disease_element': cai_wx,
+        'disease_gan': best_cai['gan'],
+        'disease_position': best_cai['position'],
+        'affected_god': '印星',
+        'affected_element': yin_wx,
+        'affected_gan': best_yin['gan'],
+        'affected_position': best_yin['position'],
+        'medicine': f'官杀({medicine_wx})泄财生印',
+        'medicine_element': medicine_wx,
+        'reason': (
+            f'印星{best_yin["gan"]}{yin_wx}在{best_yin["position"]}轻（无本气根或仅余气），'
+            f'财星{best_cai["gan"]}{cai_wx}在{best_cai["position"]}有根，'
+            f'财星克破印星'
+        ),
+    })
+    return results
+
+
+def _detect_qisha_wuzhi(
+    day_master: str,
+    dm_wx: str,
+    bazi_parts: list[str],
+) -> list[dict]:
+    """七杀无制 — 《子平真诠》"七煞逢财无制，煞格败也"；《神峰通考》"偏官无制曰七杀，故宜制伏" """
+    results = []
+
+    sha_instances = _find_shishen_instances(day_master, '七杀', bazi_parts)
+    if not sha_instances:
+        return results
+
+    sha_rooted = [x for x in sha_instances if x['root_weight'] > 0 or x['is_transparent']]
+    if not sha_rooted:
+        return results
+
+    # 检查是否有食神制杀或印星化杀
+    shishen_instances = _find_shishen_instances(day_master, '食神', bazi_parts)
+    yin_instances = (
+        _find_shishen_instances(day_master, '正印', bazi_parts)
+        + _find_shishen_instances(day_master, '偏印', bazi_parts)
+    )
+    shishen_rooted = [x for x in shishen_instances if x['root_weight'] > 0 or x['is_transparent']]
+    yin_rooted = [x for x in yin_instances if x['root_weight'] > 0 or x['is_transparent']]
+
+    if shishen_rooted or yin_rooted:
+        return results  # 有制化，不成病
+
+    # 检查是否财党杀（财星生杀无制）
+    cai_instances = (
+        _find_shishen_instances(day_master, '正财', bazi_parts)
+        + _find_shishen_instances(day_master, '偏财', bazi_parts)
+    )
+    cai_rooted = [x for x in cai_instances if x['root_weight'] > 0 or x['is_transparent']]
+    has_cai_dang_sha = len(cai_rooted) > 0
+
+    best_sha = _best_instance(sha_rooted)
+    sha_wx = GAN_WUXING.get(best_sha['gan'], '')
+    medicine_wx = WO_KE_MAP.get(dm_wx, '')  # 食伤五行 = 日主所生
+
+    name = '财党杀无制' if has_cai_dang_sha else '七杀无制'
+    sev = _severity(sha_rooted)
+
+    results.append({
+        'name': name,
+        'severity': sev,
+        'disease_god': '七杀',
+        'disease_element': sha_wx,
+        'disease_gan': best_sha['gan'],
+        'disease_position': best_sha['position'],
+        'affected_god': '日主',
+        'affected_element': dm_wx,
+        'affected_gan': day_master,
+        'affected_position': '日干',
+        'medicine': f'食伤({medicine_wx})制杀',
+        'medicine_element': medicine_wx,
+        'reason': (
+            f'七杀{best_sha["gan"]}{sha_wx}在{best_sha["position"]}有根，'
+            f'无食神制杀或印星化杀'
+            + ('，财星党杀为祸' if has_cai_dang_sha else '')
+        ),
+    })
+    return results
+
+
+def _detect_yongshen_chong(
+    day_master: str,
+    dm_wx: str,
+    bazi_parts: list[str],
+) -> list[dict]:
+    """用神被冲克 — 《子平真诠》"官逢刑冲破害，官格败也"
+
+    检查月支（用神根基）是否被其他地支冲克
+    """
+    results = []
+
+    zhis = [p[1] for p in bazi_parts if len(p) >= 2]
+    if len(zhis) < 2:
+        return results
+
+    month_zhi = zhis[1]  # 月支是用神的根基
+
+    for i, zhi in enumerate(zhis):
+        if i == 1:
+            continue
+        pair = frozenset({month_zhi, zhi})
+        if pair in ZHI_CHONG:
+            results.append({
+                'name': '用神被冲',
+                'severity': 'active',
+                'disease_god': '冲',
+                'disease_element': '',
+                'disease_gan': '',
+                'disease_position': f'{zhi}冲{month_zhi}',
+                'affected_god': '月令',
+                'affected_element': '',
+                'affected_gan': '',
+                'affected_position': f'月支{month_zhi}',
+                'medicine': '合解冲或制冲',
+                'medicine_element': '',
+                'reason': f'月支{month_zhi}被{zhi}冲，用神根基动摇',
+            })
+            break  # 只报告一次
+
     return results

@@ -1,7 +1,7 @@
 {
   "id": "zhonghe_pianruo",
-  "description": "身旺 — 庚金日主，不得令但得地得势",
-  "scenario": "庚金日主，戌月衰地，但地支有根有助",
+  "description": "极旺 — 庚金日主，不得令但得地得势",
+  "scenario": "庚金日主，戌月衰地，但地支有根有助，印比成势",
   "input": {
     "day_master": "庚",
     "bazi": "庚申 戊戌 庚辰 庚申",

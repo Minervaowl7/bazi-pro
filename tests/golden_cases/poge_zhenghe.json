@@ -1,0 +1,24 @@
+{
+  "id": "poge_zhenghe",
+  "description": "破格-争合 — 化气格+争合破格",
+  "scenario": "甲木日主，甲己合化土，但三己争合一甲，争合破格",
+  "input": {
+    "day_master": "甲",
+    "bazi": "己巳 己未 甲戌 己巳",
+    "month_branch": "未",
+    "expected_pattern": "化土格",
+    "expected_wangshuai": "极弱",
+    "expected_yongshen_wx": "土",
+    "expected_deling_score": -1,
+    "expected_dedi_level": "不得地",
+    "expected_deshi_level": "不得势"
+  },
+  "must_include": [
+    "化土格"
+  ],
+  "must_not_include": [],
+  "notes": "甲木日主，甲己合化土，化土格成立。三己争合一甲（high破格）+甲属木克化神土（medium破格）",
+  "classical_support": [
+    "ZPZY_00008"
+  ]
+}

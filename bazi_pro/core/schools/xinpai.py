@@ -49,11 +49,11 @@ def _get_kongwang(day_ganzhi: str) -> list:
 
 KE_PAIRS_SET = {('木', '土'), ('土', '水'), ('水', '火'), ('火', '金'), ('金', '木')}
 
+# 同宗对 — 依据李涵辰《八字预测真踪》
+# 典籍只明确丙戊同宗、丁己同宗，庚壬/辛癸无典籍依据，已删除
 TONGZONG_PAIRS = {
     '丙': '戊', '戊': '丙',
     '丁': '己', '己': '丁',
-    '庚': '壬', '壬': '庚',
-    '辛': '癸', '癸': '辛',
 }
 
 
@@ -312,7 +312,7 @@ class XinpaiAnalyzer(SchoolAnalyzer):
                     'position': pillar.get('position', ''),
                     'zhi': zhi,
                     'original_power': '1.0',
-                    'reduced_power': '0',
+                    'reduced_power': '0.5',
                 })
 
         chukong = []
@@ -342,7 +342,7 @@ class XinpaiAnalyzer(SchoolAnalyzer):
         return {
             'kongwang_zhi': kongwang_zhi,
             'affected': affected,
-            'power_reduction': 0,
+            'power_reduction': 50 if len(affected) > 0 else 0,
             'canggan_excluded': len(affected) > 0,
             'chukong': chukong,
         }
@@ -557,9 +557,9 @@ class XinpaiAnalyzer(SchoolAnalyzer):
             chukong = kongwang.get('chukong', [])
             if chukong:
                 chukong_str = '、'.join([c.get('reason', '') for c in chukong])
-                advice += '空亡{}，力量归零（不发挥作用）。出空条件：{}。'.format(kong_str, chukong_str)
+                advice += '空亡{}，力量减半。出空条件：{}。'.format(kong_str, chukong_str)
             else:
-                advice += '空亡{}，力量归零（不发挥作用）。'.format(kong_str)
+                advice += '空亡{}，力量减半。'.format(kong_str)
         if fanduan_count > 0:
             advice += '存在{}项反断条件，需综合判断。'.format(fanduan_count)
 
