@@ -289,11 +289,13 @@ export function subscribeSSE(
   es.addEventListener("progress", handleEvent("progress"));
   es.addEventListener("done", (e) => {
     done = true;
+    clearTimeout(timeoutId);
     handleEvent("done")(e);
   });
 
   es.addEventListener("analysis-error", (e: MessageEvent) => {
     done = true;
+    clearTimeout(timeoutId);
     try {
       const data = JSON.parse(e.data);
       onEvent({ event: "error", data });

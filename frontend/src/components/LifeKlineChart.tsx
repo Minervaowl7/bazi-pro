@@ -1,373 +1,274 @@
+// @ts-nocheck
 "use client";
 
-import { useMemo } from "react";
-import ReactECharts from "echarts-for-react";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { getDayunLiunian } from "@/lib/api";
+
+const EChartsReact = dynamic(() => import("echarts-for-react"), { ssr: false });
 
 interface LiunianScore {
-  age: number;
   year: number;
+  age: number;
   gan_zhi: string;
   score: number;
-  dayun?: string;
+  level?: string;
   reason?: string;
 }
 
-interface DayunScore {
-  step: number;
-  gan_zhi: string;
-  score: number;
-  age_range: string;
+interface Props {
+  analysisId: string;
 }
 
-interface LifeKlineChartProps {
-  liunianScores: LiunianScore[];
-  dayunScores?: DayunScore[];
-  qiyunAge?: number;
-  birthYear?: number;
-}
+export default function LifeKlineChart({ analysisId }: Props) {
+  const [scores, setScores] = useState<LiunianScore[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [birthYear, setBirthYear] = useState<number>(0);
+  const currentYear = new Date().getFullYear();
 
-function calcMA(data: number[], period: number): (number | null)[] {
-  const result: (number | null)[] = [];
-  for (let i = 0; i < data.length; i++) {
-    if (i < period - 1) {
-      result.push(null);
-    } else {
-      let sum = 0;
-      for (let j = 0; j < period; j++) {
-        sum += data[i - j];
-      }
-      result.push(+(sum / period).toFixed(2));
-    }
-  }
-  return result;
-}
-
-export default function LifeKlineChart({
-  liunianScores,
-  dayunScores,
-  birthYear,
-}: LifeKlineChartProps) {
-  const option = useMemo(() => {
-    if (!liunianScores || liunianScores.length === 0) return null;
-
-    const sorted = [...liunianScores].sort((a, b) => a.age - b.age);
-
-    const ages = sorted.map((d) => d.age);
-    const years = sorted.map((d) => d.year);
-    const ganZhis = sorted.map((d) => d.gan_zhi);
-    const scores = sorted.map((d) => d.score);
-    const dayuns = sorted.map((d) => d.dayun || "");
-    const reasons = sorted.map((d) => d.reason || "");
-
-    const candleData: number[][] = [];
-    const closeList: number[] = [];
-
-    for (let i = 0; i < sorted.length; i++) {
-      const prev = i === 0 ? 50 : closeList[i - 1];
-      const curr = scores[i];
-      closeList.push(curr);
-
-      const open = prev;
-      const close = curr;
-      const low = Math.min(open, close) - Math.abs(open - close) * 0.3 - 1;
-      const high = Math.max(open, close) + Math.abs(open - close) * 0.3 + 1;
-
-      candleData.push([
-        +open.toFixed(2),
-        +close.toFixed(2),
-        +Math.max(low, 0).toFixed(2),
-        +Math.min(high, 100).toFixed(2),
-      ]);
-    }
-
-    const ma5 = calcMA(closeList, 5);
-    const ma10 = calcMA(closeList, 10);
-
-    const dayunMarkLines: Array<{ xAxis: number; name: string }> = [];
-    if (dayunScores && dayunScores.length > 0) {
-      for (const ds of dayunScores) {
-        const rangeMatch = ds.age_range.match(/(\d+)/);
-        if (rangeMatch) {
-          const startAge = parseInt(rangeMatch[1], 10);
-          const idx = ages.indexOf(startAge);
-          if (idx >= 0) {
-            dayunMarkLines.push({
-              xAxis: idx,
-              name: ds.gan_zhi,
-            });
-          }
+  useEffect(() => {
+    if (!analysisId) return;
+    getDayunLiunian(analysisId)
+      .then((data) => {
+        const list = data.liunian_scores || [];
+        setScores(list);
+        if (list.length > 0) {
+          const first = list[0];
+          const by = (first.year || 0) - ((first.age || 1) - 1);
+          setBirthYear(by > 1900 && by < 2100 ? by : (first.year || 0));
         }
-      }
-    }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [analysisId]);
 
-    const xLabels = ages.map((a) => {
-      const yr = birthYear ? birthYear + a - 1 : "";
-      return yr ? `${a}岁` : `${a}岁`;
+  if (loading) return null;
+  if (scores.length === 0) return null;
+
+  const years = scores.map((s) => s.year);
+  const scoreValues = scores.map((s) => s.score);
+  const yearRange = years[years.length - 1] - years[0] || 1;
+
+  // 计算均线
+  const movingAvg = (data: number[], n: number): (number | null)[] =>
+    data.map((_, i) => {
+      if (i < n - 1) return null;
+      const slice = data.slice(i - n + 1, i + 1);
+      return Math.round(slice.reduce((a, b) => a + b, 0) / n);
     });
+  const ma5 = movingAvg(scoreValues, 5);
+  const ma10 = movingAvg(scoreValues, 10);
 
-    return {
-      backgroundColor: "transparent",
-      animation: true,
-      animationDuration: 800,
-      tooltip: {
-        trigger: "axis",
-        axisPointer: { type: "cross" },
-        backgroundColor: "rgba(24,24,42,0.95)",
-        borderColor: "var(--border)",
-        textStyle: { color: "#edece8", fontSize: 13 },
-        formatter: (params: Array<{ seriesName: string; dataIndex: number; value: number | number[] }>) => {
-          const idx = params[0]?.dataIndex ?? 0;
-          const age = ages[idx];
-          const year = years[idx];
-          const gz = ganZhis[idx];
-          const score = scores[idx];
-          const dayun = dayuns[idx];
-          const reason = reasons[idx];
+  const dataMin = Math.min(...scoreValues);
+  const dataMax = Math.max(...scoreValues);
+  const padding = Math.max((dataMax - dataMin) * 0.15, 10);
+  const yMin = Math.max(0, Math.floor(dataMin - padding));
+  const yMax = Math.min(100, Math.ceil(dataMax + padding));
 
-          let html = `<div style="font-weight:600;margin-bottom:6px">${age}岁 · ${year}年 · ${gz}</div>`;
-          html += `<div>运势评分: <span style="color:#60a5fa;font-weight:600">${score}</span></div>`;
-          if (dayun) html += `<div>大运: ${dayun}</div>`;
-          if (reason) html += `<div style="color:#a8a4a0;font-size:12px;margin-top:4px">${reason}</div>`;
-          return html;
+  const option = {
+    backgroundColor: "transparent",
+    title: {
+      text: "百年运势走势",
+      left: 0,
+      top: 0,
+      textStyle: {
+        fontSize: 17,
+        fontWeight: 700,
+        color: "#1c1917",
+        fontFamily: '"Noto Serif SC", "Source Han Serif SC", serif',
+      },
+    },
+    tooltip: {
+      trigger: "axis" as const,
+      axisPointer: { type: "line" as const },
+      formatter: (params: Array<{ data?: number; axisValue?: number | string; seriesName?: string; color?: string }>) => {
+        const axisYear = typeof params[0]?.axisValue === "number" ? params[0].axisValue : parseInt(String(params[0]?.axisValue), 10);
+        const idx = years.findIndex((y) => y === axisYear);
+        const item = idx >= 0 ? scores[idx] : null;
+        const ganZhi = item?.gan_zhi || "";
+        const displayAge = item?.age ?? (birthYear > 0 ? Math.max(1, axisYear - birthYear + 1) : 0);
+        const reason = item?.reason || "";
+
+        let html = `<div style="font-family:'SF Pro Text','PingFang SC',sans-serif;line-height:1.7">`;
+        html += `<strong style="font-size:14px">${axisYear}年 · ${ganZhi}（${displayAge}岁）</strong><br/>`;
+
+        params.forEach((p) => {
+          if (p.data == null) return;
+          const color = p.color || "#888";
+          html += `<span style="color:${color};font-size:13px">● ${p.seriesName}: <strong>${p.data}</strong></span><br/>`;
+        });
+
+        if (reason) {
+          html += `<span style="color:#888;font-size:11px;margin-top:4px;display:block">${reason}</span>`;
+        }
+        html += `</div>`;
+        return html;
+      },
+    },
+    legend: {
+      data: ["运势分数", "MA5", "MA10"],
+      top: 4,
+      right: 0,
+      textStyle: { fontSize: 11, color: "#a8a29e" },
+    },
+    grid: {
+      top: 50,
+      right: 24,
+      bottom: 36,
+      left: 52,
+    },
+    xAxis: {
+      type: "category" as const,
+      data: years,
+      axisLabel: {
+        fontSize: 11,
+        color: "#a8a29e",
+        interval: Math.ceil(years.length / 14),
+      },
+      axisLine: { lineStyle: { color: "rgba(28,25,23,0.08)" } },
+      splitLine: { show: false },
+      axisTick: { show: false },
+    },
+    yAxis: {
+      type: "value" as const,
+      min: yMin,
+      max: yMax,
+      splitNumber: 5,
+      axisLabel: {
+        fontSize: 11,
+        color: "#a8a29e",
+        formatter: "{value}",
+      },
+      axisLine: { lineStyle: { color: "rgba(28,25,23,0.08)" } },
+      splitLine: {
+        lineStyle: {
+          color: "rgba(28,25,23,0.05)",
+          type: "solid",
         },
       },
-      axisPointer: {
-        link: [{ xAxisIndex: "all" }],
-        label: { backgroundColor: "#60a5fa" },
+    },
+    dataZoom: [
+      {
+        type: "inside" as const,
+        start: Math.max(0, ((currentYear - 20) - years[0]) / yearRange * 100),
+        end: Math.min(100, ((currentYear + 20) - years[0]) / yearRange * 100),
+        zoomOnMouseWheel: true,
       },
-      grid: [
-        {
-          left: 60,
-          right: 30,
-          top: 30,
-          height: "55%",
+      {
+        type: "slider" as const,
+        height: 20,
+        bottom: 4,
+        borderColor: "rgba(28,25,23,0.08)",
+        backgroundColor: "rgba(28,25,23,0.02)",
+        fillerColor: "rgba(45,62,95,0.06)",
+        handleStyle: { color: "#2d3e5f" },
+        textStyle: { fontSize: 9, color: "#a8a29e" },
+      },
+    ],
+    series: [
+      {
+        name: "运势分数",
+        type: "line" as const,
+        data: scoreValues,
+        smooth: true,
+        symbol: "circle",
+        symbolSize: 4,
+        lineStyle: {
+          color: "#2d5f8f",
+          width: 2,
         },
-        {
-          left: 60,
-          right: 30,
-          top: "72%",
-          height: "14%",
+        itemStyle: {
+          color: "#2d5f8f",
         },
-      ],
-      xAxis: [
-        {
-          type: "category",
-          data: xLabels,
-          gridIndex: 0,
-          axisLine: { lineStyle: { color: "#24243a" } },
-          axisLabel: {
-            color: "#5a5a6e",
-            fontSize: 11,
-            interval: 9,
-            formatter: (val: string) => val,
-          },
-          axisTick: { show: false },
-          splitLine: { show: false },
-        },
-        {
-          type: "category",
-          data: years.map(String),
-          gridIndex: 1,
-          axisLine: { lineStyle: { color: "#24243a" } },
-          axisLabel: {
-            color: "#5a5a6e",
-            fontSize: 10,
-            interval: 9,
-          },
-          axisTick: { show: false },
-          splitLine: { show: false },
-        },
-      ],
-      yAxis: [
-        {
-          type: "value",
-          gridIndex: 0,
-          min: 0,
-          max: 100,
-          splitLine: { lineStyle: { color: "#1c1c30", type: "dashed" } },
-          axisLine: { show: false },
-          axisLabel: { color: "#5a5a6e", fontSize: 11 },
-          axisTick: { show: false },
-        },
-        {
-          type: "value",
-          gridIndex: 1,
-          min: 0,
-          max: 100,
-          splitLine: { show: false },
-          axisLine: { show: false },
-          axisLabel: { show: false },
-          axisTick: { show: false },
-        },
-      ],
-      dataZoom: [
-        {
-          type: "inside",
-          xAxisIndex: [0, 1],
-          start: 0,
-          end: 100,
-        },
-        {
-          type: "slider",
-          xAxisIndex: [0, 1],
-          bottom: 10,
-          height: 24,
-          borderColor: "#24243a",
-          backgroundColor: "rgba(18,18,30,0.6)",
-          fillerColor: "rgba(96,165,250,0.08)",
-          handleStyle: { color: "#60a5fa", borderColor: "#60a5fa" },
-          textStyle: { color: "#5a5a6e" },
-          dataBackground: {
-            lineStyle: { color: "#24243a" },
-            areaStyle: { color: "rgba(96,165,250,0.04)" },
-          },
-          selectedDataBackground: {
-            lineStyle: { color: "#60a5fa" },
-            areaStyle: { color: "rgba(96,165,250,0.12)" },
+        areaStyle: {
+          color: {
+            type: "linear" as const,
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: "rgba(45,95,143,0.15)" },
+              { offset: 1, color: "rgba(45,95,143,0.01)" },
+            ],
           },
         },
-      ],
-      series: [
-        {
-          name: "运势K线",
-          type: "candlestick",
-          xAxisIndex: 0,
-          yAxisIndex: 0,
-          data: candleData,
-          itemStyle: {
-            color: "#22c55e",
-            color0: "#ef4444",
-            borderColor: "#22c55e",
-            borderColor0: "#ef4444",
-          },
-          markLine: {
-            silent: true,
-            symbol: "none",
-            lineStyle: {
-              color: "rgba(255,255,255,0.25)",
-              type: "dashed",
-              width: 1,
+        markLine: {
+          silent: true,
+          symbol: "none",
+          data: [
+            {
+              xAxis: String(currentYear),
+              lineStyle: { color: "#b84a3c", width: 1.5, type: "dashed" },
+              label: { formatter: "今年", position: "end", fontSize: 11, color: "#b84a3c", fontWeight: 700 },
             },
-            label: {
-              color: "#a8a4a0",
-              fontSize: 11,
-              position: "insideEndTop",
-              formatter: (params: { name?: string }) => params.name || "",
-            },
-            data: dayunMarkLines.map((ml) => ({
-              xAxis: ml.xAxis,
-              name: ml.name,
-            })),
-          },
+          ],
         },
-        {
-          name: "MA5",
-          type: "line",
-          xAxisIndex: 0,
-          yAxisIndex: 0,
-          data: ma5,
-          smooth: true,
-          showSymbol: false,
-          lineStyle: { color: "#eab308", width: 1.5 },
-          itemStyle: { color: "#eab308" },
+      },
+      {
+        name: "MA5",
+        type: "line" as const,
+        data: ma5,
+        smooth: true,
+        symbol: "none",
+        lineStyle: {
+          color: "#c49a42",
+          width: 1.5,
+          type: "dashed" as const,
         },
-        {
-          name: "MA10",
-          type: "line",
-          xAxisIndex: 0,
-          yAxisIndex: 0,
-          data: ma10,
-          smooth: true,
-          showSymbol: false,
-          lineStyle: { color: "#3b82f6", width: 1.5 },
-          itemStyle: { color: "#3b82f6" },
+      },
+      {
+        name: "MA10",
+        type: "line" as const,
+        data: ma10,
+        smooth: true,
+        symbol: "none",
+        lineStyle: {
+          color: "#8b5a3c",
+          width: 1.5,
+          type: "dashed" as const,
         },
-        {
-          name: "评分",
-          type: "bar",
-          xAxisIndex: 1,
-          yAxisIndex: 1,
-          data: scores,
-          itemStyle: {
-            color: (params: { dataIndex: number }) => {
-              const idx = params.dataIndex;
-              if (idx === 0) return scores[0] >= 50 ? "#22c55e" : "#ef4444";
-              return scores[idx] >= scores[idx - 1] ? "#22c55e" : "#ef4444";
-            },
-          },
-        },
-      ],
-    };
-  }, [liunianScores, dayunScores, birthYear]);
-
-  if (!option) {
-    return (
-      <div
-        className="rounded-2xl p-6"
-        style={{
-          background: "var(--bg-card)",
-          border: "1px solid var(--border)",
-        }}
-      >
-        <h3 className="text-base font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
-          人生K线
-        </h3>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          暂无流年数据
-        </p>
-      </div>
-    );
-  }
+      },
+    ],
+  };
 
   return (
-    <div
-      className="rounded-2xl p-6 animate-fade-in"
+    <section
       style={{
-        background: "var(--bg-card)",
-        border: "1px solid var(--border)",
+        background: "var(--surface)",
+        border: "1px solid var(--color-border)",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
-          人生K线
+      <div
+        style={{
+          borderBottom: "2px solid var(--color-border-strong)",
+          padding: "16px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <h3
+          className="font-bold"
+          style={{
+            fontSize: 16,
+            color: "var(--color-text-primary)",
+            fontFamily: "var(--font-serif)",
+          }}
+        >
+          百年运势走势
         </h3>
-        <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-muted)" }}>
-          <span className="flex items-center gap-1.5">
-            <span
-              className="inline-block w-3 h-3 rounded-sm"
-              style={{ background: "#22c55e" }}
-            />
-            吉运
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span
-              className="inline-block w-3 h-3 rounded-sm"
-              style={{ background: "#ef4444" }}
-            />
-            凶运
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span
-              className="inline-block w-4 h-0.5"
-              style={{ background: "#eab308" }}
-            />
-            MA5
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span
-              className="inline-block w-4 h-0.5"
-              style={{ background: "#3b82f6" }}
-            />
-            MA10
-          </span>
-        </div>
+        <span style={{ fontSize: 11, color: "var(--color-text-faint)" }}>
+          基于用神喜忌计算 · 可滚轮缩放
+        </span>
       </div>
-      <ReactECharts
-        option={option}
-        style={{ height: 420, width: "100%" }}
-        notMerge
-        lazyUpdate
-      />
-    </div>
+
+      <div style={{ padding: "4px 8px 12px 8px" }}>
+        <EChartsReact
+          option={option}
+          style={{ height: 420 }}
+          notMerge={true}
+          lazyUpdate={true}
+        />
+      </div>
+    </section>
   );
 }

@@ -562,7 +562,9 @@ async def api_result(run_id: str, _auth=Depends(_verify_api_key)):
 async def ws_connect(ws: WebSocket, run_id: str):
     if _API_KEY:
         api_key = ws.headers.get('x-api-key', '') or ''
-        if not hmac.compare_digest(api_key, _API_KEY):
+        # WebSocket 不支持自定义 headers，支持通过查询参数传递 token
+        token = ws.query_params.get("token", "") if hasattr(ws, "query_params") else ""
+        if not (api_key and hmac.compare_digest(api_key, _API_KEY)) and not (token and hmac.compare_digest(token, _API_KEY)):
             await ws.close(code=4001, reason='Invalid API key')
             return
     if not _task_store.get(run_id):
@@ -590,9 +592,10 @@ async def _background_analyze(run_id: str, mcp_json: dict, detail_level: str):
         cache = get_cache()
         cache.set(f'result:{run_id}', result, ttl=_TASK_TTL_SECONDS)
     except Exception as e:
-        _task_store.update(run_id, {'status': 'failed'})
-        debug = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
-        _task_store.update(run_id, {'error': str(e) if debug else "Internal server error"})
+        _task_store.update(run_id, {
+            'status': 'failed',
+            'error': str(e) if os.environ.get("DEBUG", "").lower() in ("1", "true", "yes") else "Internal server error",
+        })
         logger.error("Analysis failed for run_id=%s: %s", run_id, e)
 
 
@@ -932,7 +935,7 @@ async def api_v2_stream(analysis_id: str, _auth=Depends(_verify_api_key)):
             _sse_subscribers[analysis_id] = []
         _sse_subscribers[analysis_id].append(queue)
 
-    already_done = any('"done"' in m or '"error"' in m for m in buffered)
+    already_done = any(m.startswith("event: done") or m.startswith("event: analysis-error") for m in buffered)
 
     async def event_generator():
         try:
@@ -940,7 +943,7 @@ async def api_v2_stream(analysis_id: str, _auth=Depends(_verify_api_key)):
                 try:
                     msg = await asyncio.wait_for(queue.get(), timeout=30.0)
                     yield msg
-                    if '"done"' in msg or '"error"' in msg:
+                    if msg.startswith("event: done") or msg.startswith("event: analysis-error"):
                         break
                 except asyncio.TimeoutError:
                     if already_done:

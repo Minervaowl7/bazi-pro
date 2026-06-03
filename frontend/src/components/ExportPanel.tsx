@@ -119,7 +119,7 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
 
     try {
       const innerEl = document.querySelector("main > div") as HTMLElement;
-      if (!innerEl) return;
+      if (!innerEl) { setExporting(false); return; }
 
       const chatEl = innerEl.querySelector("[class*='ChatPanel'], [class*='chat-panel']") as HTMLElement;
       if (chatEl) chatEl.classList.add("no-print");
@@ -179,22 +179,11 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
       <button
         onClick={() => setShowMenu(!showMenu)}
         disabled={exporting}
-        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-sm disabled:opacity-50"
-        style={{
-          border: "1px solid var(--border)",
-          color: "var(--text-secondary)",
-          background: "transparent",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "var(--accent-dim)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "transparent";
-        }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--color-border)] bg-[var(--surface)] text-[var(--color-text-secondary)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-50"
       >
         {exporting ? (
           <>
-            <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+            <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.25" />
               <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
             </svg>
@@ -202,69 +191,46 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
           </>
         ) : (
           <>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            <span>{copied ? "已复制" : "导出报告"}</span>
+            <span>{copied ? "已复制" : "导出"}</span>
           </>
         )}
       </button>
 
       {showMenu && (
-        <div
-          className="absolute right-0 mt-2 w-44 rounded-xl shadow-lg overflow-hidden z-50 animate-fade-in"
-          style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
-          }}
-        >
+        <div className="absolute right-0 mt-1.5 w-40 rounded-xl shadow-lg overflow-hidden z-50 animate-fade-in bg-[var(--surface)] border border-[var(--color-border)]">
           <button
             onClick={handleExportPDF}
             disabled={exporting}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-colors"
-            style={{ color: "var(--text-secondary)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--bg-hover)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs transition-colors text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
               <polyline points="14 2 14 8 20 8" />
               <line x1="16" y1="13" x2="8" y2="13" />
               <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
-            导出为 PDF
+            导出 PDF
           </button>
           <button
             onClick={handleCopyText}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-colors"
-            style={{ color: "var(--text-secondary)", borderTop: "1px solid var(--border)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--bg-hover)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs transition-colors text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border-t border-[var(--border-subtle)]"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
             </svg>
-            复制报告文本
+            复制文本
           </button>
         </div>
       )}
 
       {showMenu && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowMenu(false)}
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-"""神煞查表 — 覆盖 20+ 种常见神煞，含含义说明和流年刑冲合害"""
+"""神煞查表 — 覆盖 40+ 种常见神煞，含含义说明和流年刑冲合害"""
 
 TIANGAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
 DIZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
@@ -165,11 +165,9 @@ WANGCHEN: dict[str, str] = {
     "亥": "丑", "子": "丑", "丑": "丑",
 }
 
-TIANCHUSHA: dict[str, str] = {
-    "寅": "卯", "午": "卯", "戌": "卯",
-    "申": "酉", "子": "酉", "辰": "酉",
-    "巳": "午", "酉": "午", "丑": "午",
-    "亥": "子", "卯": "子", "未": "子",
+TIANCHU_GUIREN: dict[str, str] = {
+    "甲": "巳", "乙": "午", "丙": "未", "丁": "申", "戊": "未",
+    "己": "申", "庚": "酉", "辛": "戌", "壬": "亥", "癸": "子",
 }
 
 TIANXI: dict[str, str] = {
@@ -207,11 +205,87 @@ GUOYIN: dict[str, str] = {
     "壬": "辰", "癸": "辰",
 }
 
+# ===== 新增神煞查表 =====
+
+JIESHA: dict[str, str] = {
+    "申": "巳", "子": "巳", "辰": "巳",
+    "寅": "亥", "午": "亥", "戌": "亥",
+    "巳": "寅", "酉": "寅", "丑": "寅",
+    "亥": "申", "卯": "申", "未": "申",
+}
+
+ZAISHA: dict[str, str] = {
+    "申": "亥", "子": "亥", "辰": "亥",
+    "寅": "申", "午": "申", "戌": "申",
+    "巳": "辰", "酉": "辰", "丑": "辰",
+    "亥": "巳", "卯": "巳", "未": "巳",
+}
+
+YUANCHEN: dict[str, str] = {
+    "子": "辰", "丑": "戌", "寅": "丑", "卯": "辰",
+    "辰": "丑", "巳": "辰", "午": "戌", "未": "丑",
+    "申": "辰", "酉": "戌", "戌": "丑", "亥": "辰",
+}
+
+XIANCHI: dict[str, str] = {
+    "寅": "卯", "午": "卯", "戌": "卯",
+    "申": "酉", "子": "酉", "辰": "酉",
+    "巳": "午", "酉": "午", "丑": "午",
+    "亥": "子", "卯": "子", "未": "子",
+}
+
+JIAOSHA: dict[str, str] = {
+    "申": "寅", "子": "寅", "辰": "寅",
+    "寅": "申", "午": "申", "戌": "申",
+    "巳": "亥", "酉": "亥", "丑": "亥",
+    "亥": "巳", "卯": "巳", "未": "巳",
+}
+
+TIANYI_YI: dict[str, str] = {
+    "丑": "寅", "卯": "卯", "辰": "巳",
+    "午": "未", "未": "申", "酉": "酉",
+    "戌": "戌", "亥": "亥", "子": "丑",
+    "寅": "丑", "巳": "午", "申": "未",
+}
+
+SANQI_TIAN: list[str] = ["甲", "戊", "庚"]
+SANQI_REN: list[str] = ["乙", "丙", "丁"]
+SANQI_DI: list[str] = ["壬", "癸", "辛"]
+
+DE_XIU_TIANDE_HE: dict[str, str] = {
+    "丁": "壬", "壬": "丁",
+}
+DE_XIU_YUEDE_HE: dict[str, str] = {
+    "丙": "辛", "辛": "丙", "丁": "壬", "壬": "丁",
+    "甲": "己", "己": "甲", "乙": "庚", "庚": "乙",
+    "戊": "癸", "癸": "戊",
+}
+
+ANLU: dict[str, str] = {
+    "甲": "亥", "乙": "戌", "丙": "申", "丁": "未",
+    "戊": "申", "己": "未", "庚": "巳", "辛": "辰",
+    "壬": "寅", "癸": "丑",
+}
+
+XUEREN: dict[str, str] = {
+    "甲": "卯", "乙": "辰", "丙": "午", "丁": "未",
+    "戊": "午", "己": "未", "庚": "酉", "辛": "戌",
+    "壬": "子", "癸": "丑",
+}
+
+JIELU_KONGWANG: dict[str, list[str]] = {
+    "甲": ["申"], "乙": ["酉"],
+    "丙": ["辰"], "丁": ["巳"],
+    "戊": ["辰"], "己": ["巳"],
+    "庚": ["寅"], "辛": ["卯"],
+    "壬": ["子", "戌"], "癸": ["丑", "亥"],
+}
+
 SHENSHA_DESC_EXTRA: dict[str, str] = {
     "太极贵人": "主聪慧好学，近道近佛，利玄学研究",
     "魁罡": "主性格刚毅，聪明果断，有领导才能",
-    "天罗": "主做事多阻碍，宜谨慎行事",
-    "地网": "主做事多牵绊，宜稳中求进",
+    "天罗": "辰巳见辰巳，主做事多阻碍，宜谨慎行事",
+    "地网": "戌亥见戌亥，主做事多牵绊，宜稳中求进",
     "亡神": "主机谋深远，善于策划，亦主暗损",
     "天厨": "主食禄丰厚，利餐饮、厨艺",
     "天喜": "主喜庆之事，利婚嫁、添丁",
@@ -220,6 +294,24 @@ SHENSHA_DESC_EXTRA: dict[str, str] = {
     "学堂": "主聪明好学，利学业、考试",
     "词馆": "主文才出众，利文学、写作",
     "国印": "主掌权印信，利公职、管理",
+    "劫煞": "三合局之煞位，主破财、官非、意外灾祸，宜守不宜攻",
+    "灾煞": "劫煞之对冲，主疾病、灾厄、口舌是非",
+    "元辰": "又名大耗，主耗散、破财、小人暗害",
+    "咸池": "桃花之别名，又名正桃花，主情欲、风流、人缘",
+    "绞煞": "与劫煞同宫不同位，主纠缠、纠纷、牢狱之灾",
+    "天医": "主医药、健康、疗愈，利从医、养生",
+    "德秀": "天德月德之合化，主福禄双全、品德高尚、逢凶化吉",
+    "三奇": "天上/人中/地下三奇，主聪颖异常、才华横溢、贵人多助",
+    "暗禄": "羊刃之对宫，暗中得财，不显于外",
+    "血刃": "羊刃之变体，更凶猛，主血光、手术、刑伤",
+    "截路空亡": "十干截路之空亡，主事多阻滞、半途而废",
+    "月德合": "月德贵人之合化，主仁慈宽厚，逢凶化吉",
+    "飞刃": "日主羊刃之对冲，主血光、手术、意外伤害",
+    "福星贵人": "主福泽深厚，遇事有助，一生少灾",
+    "十恶大败": "主祖业难守，败散家财，宜白手起家",
+    "披麻": "丧吊煞之一，主孝服、丧事、不利亲友",
+    "童子煞": "主性情灵巧，亦主多病多灾，不利婚姻",
+    "天厨贵人": "主食禄丰厚，利餐饮、厨艺、享受",
 }
 
 SHENSHA_DESC.update(SHENSHA_DESC_EXTRA)
@@ -240,98 +332,78 @@ def calc_shensha(bazi_parts: list[str]) -> list[dict]:
 
     results: list[dict] = []
 
-    guiren_zhis = TIANYI_GUIREN.get(day_gan, [])
-    for idx, zhi in enumerate(all_zhis):
-        if zhi in guiren_zhis:
-            results.append({"name": "天乙贵人", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("天乙贵人", "")})
+    _ZHI_SINGLE = [
+        ("文昌贵人", WENCHANG, "day_gan", "吉"),
+        ("驿马", YIMA, "day_zhi", "吉"),
+        ("桃花", TAOHUA, "day_zhi", "中"),
+        ("华盖", HUAGAI, "day_zhi", "吉"),
+        ("将星", JIANGXING, "day_zhi", "吉"),
+        ("禄神", LUSHEN, "day_gan", "吉"),
+        ("羊刃", YANGREN, "day_gan", "凶"),
+        ("金舆", JINYU, "day_gan", "吉"),
+        ("孤辰", GUCHEN, "year_zhi", "凶"),
+        ("寡宿", GUASU, "year_zhi", "凶"),
+        ("魁罡", KUIGUI, "day_gan", "吉"),
+        ("天喜", TIANXI, "day_gan", "吉"),
+        ("红艳", HONGYAN, "day_gan", "中"),
+        ("流霞", LIUXIA, "day_gan", "凶"),
+        ("学堂", XUETANG, "day_gan", "吉"),
+        ("词馆", CIGAN, "day_gan", "吉"),
+        ("国印", GUOYIN, "day_gan", "吉"),
+        ("天厨", TIANCHU_GUIREN, "day_gan", "吉"),
+        ("劫煞", JIESHA, "year_zhi", "凶"),
+        ("灾煞", ZAISHA, "year_zhi", "凶"),
+        ("元辰", YUANCHEN, "year_zhi", "凶"),
+        ("绞煞", JIAOSHA, "year_zhi", "凶"),
+        ("天医", TIANYI_YI, "month_zhi", "吉"),
+        ("暗禄", ANLU, "day_gan", "吉"),
+        ("血刃", XUEREN, "day_gan", "凶"),
+        ("天罗", TIANLUO, "month_zhi", "凶"),
+        ("地网", DIWANG, "month_zhi", "凶"),
+    ]
 
-    wc_zhi = WENCHANG.get(day_gan, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == wc_zhi:
-            results.append({"name": "文昌贵人", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("文昌贵人", "")})
+    _ZHI_MULTI = [
+        ("天乙贵人", TIANYI_GUIREN, "day_gan", "吉"),
+        ("太极贵人", TAIJI_GUIREN, "day_gan", "吉"),
+        ("截路空亡", JIELU_KONGWANG, "day_gan", "凶"),
+    ]
 
-    yima_zhi = YIMA.get(day_zhi, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == yima_zhi:
-            results.append({"name": "驿马", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("驿马", "")})
+    _GAN_SINGLE = [
+        ("天德贵人", TIANDE, "month_zhi", "吉"),
+        ("月德贵人", YUEDE, "month_zhi", "吉"),
+    ]
 
-    th_zhi = TAOHUA.get(day_zhi, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == th_zhi:
-            results.append({"name": "桃花", "position": positions[idx],
-                            "type": "中", "desc": SHENSHA_DESC.get("桃花", "")})
+    key_map = {"day_gan": day_gan, "day_zhi": day_zhi, "year_zhi": year_zhi, "month_zhi": month_zhi}
 
-    hg_zhi = HUAGAI.get(day_zhi, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == hg_zhi:
-            results.append({"name": "华盖", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("华盖", "")})
-
-    jx_zhi = JIANGXING.get(day_zhi, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == jx_zhi:
-            results.append({"name": "将星", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("将星", "")})
-
-    lu_zhi = LUSHEN.get(day_gan, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == lu_zhi:
-            results.append({"name": "禄神", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("禄神", "")})
-
-    yr_zhi = YANGREN.get(day_gan, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == yr_zhi:
-            results.append({"name": "羊刃", "position": positions[idx],
-                            "type": "凶", "desc": SHENSHA_DESC.get("羊刃", "")})
-
-    jy_zhi = JINYU.get(day_gan, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == jy_zhi:
-            results.append({"name": "金舆", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("金舆", "")})
-
-    td_gan = TIANDE.get(month_zhi, "")
-    if td_gan:
-        for idx, gan in enumerate(all_gans):
-            if gan == td_gan:
-                results.append({"name": "天德贵人", "position": positions[idx],
-                                "type": "吉", "desc": SHENSHA_DESC.get("天德贵人", "")})
-
-    yd_gan = YUEDE.get(month_zhi, "")
-    if yd_gan:
-        for idx, gan in enumerate(all_gans):
-            if gan == yd_gan:
-                results.append({"name": "月德贵人", "position": positions[idx],
-                                "type": "吉", "desc": SHENSHA_DESC.get("月德贵人", "")})
-
-    gc_zhi = GUCHEN.get(year_zhi, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == gc_zhi:
-            results.append({"name": "孤辰", "position": positions[idx],
-                            "type": "凶", "desc": SHENSHA_DESC.get("孤辰", "")})
-
-    gs_zhi = GUASU.get(year_zhi, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == gs_zhi:
-            results.append({"name": "寡宿", "position": positions[idx],
-                            "type": "凶", "desc": SHENSHA_DESC.get("寡宿", "")})
-
-    taiji_zhis = TAIJI_GUIREN.get(day_gan, [])
-    for idx, zhi in enumerate(all_zhis):
-        if zhi in taiji_zhis:
-            results.append({"name": "太极贵人", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("太极贵人", "")})
-
-    kuigui_zhi = KUIGUI.get(day_gan, "")
-    if kuigui_zhi:
+    for name, table, key, stype in _ZHI_SINGLE:
+        lookup_key = key_map[key]
+        target = table.get(lookup_key, "")
+        if not target:
+            continue
         for idx, zhi in enumerate(all_zhis):
-            if zhi == kuigui_zhi:
-                results.append({"name": "魁罡", "position": positions[idx],
-                                "type": "吉", "desc": SHENSHA_DESC.get("魁罡", "")})
+            if zhi == target:
+                if name == "亡神" and idx == 2:
+                    continue
+                results.append({"name": name, "position": positions[idx],
+                                "type": stype, "desc": SHENSHA_DESC.get(name, "")})
+
+    for name, table, key, stype in _ZHI_MULTI:
+        lookup_key = key_map[key]
+        targets = table.get(lookup_key, [])
+        for idx, zhi in enumerate(all_zhis):
+            if zhi in targets:
+                results.append({"name": name, "position": positions[idx],
+                                "type": stype, "desc": SHENSHA_DESC.get(name, "")})
+
+    for name, table, key, stype in _GAN_SINGLE:
+        lookup_key = key_map[key]
+        target = table.get(lookup_key, "")
+        if not target:
+            continue
+        for idx, gan in enumerate(all_gans):
+            if gan == target:
+                results.append({"name": name, "position": positions[idx],
+                                "type": stype, "desc": SHENSHA_DESC.get(name, "")})
 
     wangchen_zhi = WANGCHEN.get(day_zhi, "")
     for idx, zhi in enumerate(all_zhis):
@@ -339,47 +411,84 @@ def calc_shensha(bazi_parts: list[str]) -> list[dict]:
             results.append({"name": "亡神", "position": positions[idx],
                             "type": "凶", "desc": SHENSHA_DESC.get("亡神", "")})
 
-    tianxi_zhi = TIANXI.get(day_gan, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == tianxi_zhi:
-            results.append({"name": "天喜", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("天喜", "")})
+    SHIE_DA_BAI_DAYS = {"甲辰", "乙巳", "丙申", "丁亥", "庚辰", "戊戌", "癸亥", "辛巳", "己丑"}
+    day_pillar = bazi_parts[2] if len(bazi_parts) >= 3 and len(bazi_parts[2]) >= 2 else ""
+    if day_pillar in SHIE_DA_BAI_DAYS:
+        results.append({"name": "十恶大败", "position": "日",
+                        "type": "凶", "desc": SHENSHA_DESC.get("十恶大败", "")})
 
-    hongyan_zhi = HONGYAN.get(day_gan, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == hongyan_zhi:
-            results.append({"name": "红艳", "position": positions[idx],
-                            "type": "中", "desc": SHENSHA_DESC.get("红艳", "")})
+    FEIREN: dict[str, str] = {
+        "甲": "酉", "乙": "申", "丙": "子", "丁": "亥",
+        "戊": "子", "己": "亥", "庚": "卯", "辛": "寅",
+        "壬": "午", "癸": "巳",
+    }
+    feiren_zhi = FEIREN.get(day_gan, "")
+    if feiren_zhi:
+        for idx, zhi in enumerate(all_zhis):
+            if zhi == feiren_zhi:
+                results.append({"name": "飞刃", "position": positions[idx],
+                                "type": "凶", "desc": SHENSHA_DESC.get("飞刃", "")})
 
-    liuxia_zhi = LIUXIA.get(day_gan, "")
+    FUXING_GUIREN: dict[str, list[str]] = {
+        "甲": ["丑", "未"], "乙": ["子", "申"], "丙": ["子", "申"],
+        "丁": ["丑", "未"], "戊": ["丑", "未"], "己": ["子", "申"],
+        "庚": ["午", "寅"], "辛": ["巳", "卯"], "壬": ["午", "寅"], "癸": ["巳", "卯"],
+    }
+    fuxing_targets = FUXING_GUIREN.get(day_gan, [])
     for idx, zhi in enumerate(all_zhis):
-        if zhi == liuxia_zhi:
-            results.append({"name": "流霞", "position": positions[idx],
-                            "type": "凶", "desc": SHENSHA_DESC.get("流霞", "")})
+        if zhi in fuxing_targets:
+            results.append({"name": "福星贵人", "position": positions[idx],
+                            "type": "吉", "desc": SHENSHA_DESC.get("福星贵人", "")})
 
-    xuetang_zhi = XUETANG.get(day_gan, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == xuetang_zhi:
-            results.append({"name": "学堂", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("学堂", "")})
+    YUEDE_HE: dict[str, str] = {
+        "丙": "辛", "壬": "丁", "庚": "乙", "甲": "己",
+    }
+    yd_he_target = YUEDE_HE.get(YUEDE.get(month_zhi, ""), "")
+    if yd_he_target:
+        for idx, gan in enumerate(all_gans):
+            if gan == yd_he_target:
+                results.append({"name": "月德合", "position": positions[idx],
+                                "type": "吉", "desc": SHENSHA_DESC.get("月德合", "")})
 
-    cigan_zhi = CIGAN.get(day_gan, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == cigan_zhi:
-            results.append({"name": "词馆", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("词馆", "")})
+    PIMA: dict[str, str] = {
+        "子": "寅", "丑": "卯", "寅": "辰", "卯": "巳",
+        "辰": "午", "巳": "未", "午": "申", "未": "酉",
+        "申": "戌", "酉": "亥", "戌": "子", "亥": "丑",
+    }
+    pima_zhi = PIMA.get(year_zhi, "")
+    if pima_zhi:
+        for idx, zhi in enumerate(all_zhis):
+            if zhi == pima_zhi:
+                results.append({"name": "披麻", "position": positions[idx],
+                                "type": "凶", "desc": SHENSHA_DESC.get("披麻", "")})
 
-    guoyin_zhi = GUOYIN.get(day_gan, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == guoyin_zhi:
-            results.append({"name": "国印", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("国印", "")})
+    TONGZI_SPRING = {"寅": "丑", "卯": "寅", "辰": "卯", "巳": "辰"}
+    TONGZI_AUTUMN = {"申": "未", "酉": "申", "戌": "酉", "亥": "戌"}
+    tongzi_zhi = TONGZI_SPRING.get(month_zhi, "") or TONGZI_AUTUMN.get(month_zhi, "")
+    if tongzi_zhi and day_zhi == tongzi_zhi:
+        results.append({"name": "童子煞", "position": "日",
+                        "type": "凶", "desc": SHENSHA_DESC.get("童子煞", "")})
 
-    tianchusha_zhi = TIANCHUSHA.get(day_zhi, "")
-    for idx, zhi in enumerate(all_zhis):
-        if zhi == tianchusha_zhi:
-            results.append({"name": "天厨", "position": positions[idx],
-                            "type": "吉", "desc": SHENSHA_DESC.get("天厨", "")})
+    # 三奇：需四柱天干中同时出现同组三干（天上三奇甲戊庚/人中三奇乙丙丁/地下三奇壬癸辛）
+    gan_set = set(all_gans)
+    sanqi_type = None
+    if all(g in gan_set for g in SANQI_TIAN):
+        sanqi_type = "天上三奇"
+    elif all(g in gan_set for g in SANQI_REN):
+        sanqi_type = "人中三奇"
+    elif all(g in gan_set for g in SANQI_DI):
+        sanqi_type = "地下三奇"
+    if sanqi_type:
+        results.append({"name": f"三奇（{sanqi_type}）", "position": "日",
+                        "type": "吉", "desc": SHENSHA_DESC.get("三奇", "")})
+
+    td_he = DE_XIU_TIANDE_HE.get(day_gan, "")
+    yd_he = DE_XIU_YUEDE_HE.get(day_gan, "")
+    for gan in all_gans:
+        if gan == td_he or gan == yd_he:
+            results.append({"name": "德秀", "position": "日",
+                            "type": "吉", "desc": SHENSHA_DESC.get("德秀", "")})
+            break
 
     return results
 
@@ -419,3 +528,202 @@ def calc_liunian_relations(liunian_gan: str, liunian_zhi: str,
                             "desc": f"流年{liunian_gan}冲{positions[idx]}干{ngan}"})
 
     return results
+
+
+import json
+import re
+import subprocess
+import os
+import tempfile
+
+_BAZI_MCP_PATH: str | None = None
+
+def _find_bazi_mcp_path() -> str | None:
+    global _BAZI_MCP_PATH
+    if _BAZI_MCP_PATH is not None:
+        return _BAZI_MCP_PATH if _BAZI_MCP_PATH else None
+    server_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(server_dir, "tools", "node_modules", "bazi-mcp"),
+        os.path.join(os.path.dirname(server_dir), "node_modules", "bazi-mcp"),
+        os.path.join(os.environ.get("USERPROFILE", ""), "AppData", "Local", "npm-cache", "_npx"),
+        os.path.join(os.environ.get("USERPROFILE", ""), ".npm", "_npx"),
+    ]
+    for mcp_dir in candidates:
+        if not os.path.isdir(mcp_dir):
+            if "_npx" in mcp_dir and os.path.isdir(mcp_dir):
+                for entry in os.listdir(mcp_dir):
+                    candidate = os.path.join(mcp_dir, entry, "node_modules", "bazi-mcp")
+                    if os.path.isfile(os.path.join(candidate, "dist", "index.js")):
+                        _BAZI_MCP_PATH = candidate
+                        return _BAZI_MCP_PATH
+            continue
+        if os.path.isfile(os.path.join(mcp_dir, "dist", "index.js")):
+            _BAZI_MCP_PATH = mcp_dir
+            return _BAZI_MCP_PATH
+    _BAZI_MCP_PATH = ""
+    return None
+
+SHENSHA_TYPE_MAP: dict[str, str] = {
+    "天乙贵人": "吉", "文昌贵人": "吉", "文昌": "吉",
+    "驿马": "吉", "桃花": "中", "咸池": "中",
+    "华盖": "吉", "将星": "吉", "禄神": "吉",
+    "羊刃": "凶", "金舆": "吉",
+    "天德贵人": "吉", "天德": "吉",
+    "月德贵人": "吉", "月德合": "吉", "月德": "吉",
+    "孤辰": "凶", "寡宿": "凶",
+    "太极贵人": "吉", "太极": "吉",
+    "魁罡": "吉",
+    "天罗": "凶", "地网": "凶",
+    "亡神": "凶",
+    "天厨": "吉", "天厨贵人": "吉",
+    "天喜": "吉",
+    "红艳": "中",
+    "流霞": "凶",
+    "学堂": "吉", "词馆": "吉",
+    "国印": "吉",
+    "劫煞": "凶", "灾煞": "凶",
+    "元辰": "凶", "大耗": "凶",
+    "绞煞": "凶",
+    "天医": "吉",
+    "三奇": "吉",
+    "德秀": "吉", "德秀贵人": "吉",
+    "暗禄": "吉",
+    "血刃": "凶",
+    "截路空亡": "凶", "空亡": "凶",
+    "飞刃": "凶",
+    "福星贵人": "吉", "福星": "吉",
+    "十恶大败": "凶",
+    "披麻": "凶",
+    "童子煞": "凶",
+}
+
+def _normalize_shensha_name(name: str) -> str:
+    mapping = {
+        "天厨贵人": "天厨", "太极贵人": "太极", "文昌贵人": "文昌",
+        "天德贵人": "天德", "月德贵人": "月德", "福星贵人": "福星",
+        "德秀贵人": "德秀",
+    }
+    return mapping.get(name, name)
+
+def _to_iso_datetime(solar: str | None) -> str:
+    if not solar:
+        raise ValueError("empty solar_datetime")
+    s = solar.strip()
+    if 'T' in s:
+        if not re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$', s):
+            raise ValueError(f"Invalid datetime format: {s}")
+        return s
+    parts = s.split()
+    if len(parts) >= 1:
+        date_part = parts[0]
+        time_part = parts[1] if len(parts) > 1 else "00:00"
+        time_fields = time_part.split(":")
+        hh = time_fields[0] if len(time_fields) >= 1 else "00"
+        mm = time_fields[1] if len(time_fields) >= 2 else "00"
+        ss = time_fields[2] if len(time_fields) >= 3 else "00"
+        result = f"{date_part}T{hh}:{mm}:{ss}+08:00"
+        if not re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$', result):
+            raise ValueError(f"Invalid datetime format: {result}")
+        return result
+    return s
+
+async def calc_shensha_from_mcp(solar_datetime: str, gender: int) -> list[dict]:
+    import logging
+    import asyncio
+    logger = logging.getLogger(__name__)
+    mcp_path = _find_bazi_mcp_path()
+    if not mcp_path:
+        logger.warning("[shensha] bazi-mcp not found")
+        return []
+    gender_val = 1 if gender == 1 else 0
+    try:
+        iso_dt = _to_iso_datetime(solar_datetime)
+    except (ValueError, AttributeError):
+        logger.warning("[shensha] invalid solar_datetime format: %s", solar_datetime)
+        return []
+    iso_dt_safe = json.dumps(iso_dt)
+    mcp_index = os.path.abspath(os.path.join(mcp_path, "dist", "index.js")).replace("\\", "/")
+    mcp_url = "file:///" + mcp_index
+    js_code = (
+        'import("' + mcp_url + '").then(m => {\n'
+        '  m.getBaziDetail({\n'
+        f'    solarDatetime: {iso_dt_safe},\n'
+        f'    gender: {gender_val},\n'
+        '    eightCharProviderSect: 2\n'
+        '  }).then(r => console.log(JSON.stringify(r.神煞)));\n'
+        '});\n'
+    )
+    script_file = None
+    try:
+        # 使用唯一文件名避免并发请求互相覆盖
+        fd, script_file = tempfile.mkstemp(suffix=".mjs", prefix="_bazi_shensha_")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(js_code)
+        proc = await asyncio.create_subprocess_exec(
+            "node", script_file,
+            cwd=mcp_path,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env={**os.environ, "NODE_ENV": "production"},
+        )
+        try:
+            stdout_b, stderr_b = await asyncio.wait_for(proc.communicate(), timeout=15)
+        except asyncio.TimeoutError:
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
+            logger.warning("[shensha] node timeout")
+            return []
+        if proc.returncode != 0:
+            stderr_preview = (stderr_b.decode("utf-8", errors="replace") if stderr_b else "")[:200]
+            logger.warning(f"[shensha] node exit {proc.returncode}, stderr={stderr_preview}")
+            return []
+        stdout = (stdout_b.decode("utf-8", errors="replace") if stdout_b else "").strip()
+        if not stdout:
+            logger.warning("[shensha] node stdout empty")
+            return []
+        data = json.loads(stdout)
+    except json.JSONDecodeError as e:
+        logger.warning(f"[shensha] JSON decode error: {e}")
+        return []
+    except (FileNotFoundError, OSError) as e:
+        logger.warning(f"[shensha] node exec error: {e}")
+        return []
+    finally:
+        if script_file:
+            try:
+                os.unlink(script_file)
+            except OSError:
+                pass
+
+    positions = ["年", "月", "日", "时"]
+    pillar_keys = ["年柱", "月柱", "日柱", "时柱"]
+    results: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    for pidx, pkey in enumerate(pillar_keys):
+        names = data.get(pkey, [])
+        for name in names:
+            norm_name = _normalize_shensha_name(name)
+            key = (norm_name, positions[pidx])
+            if key in seen:
+                continue
+            seen.add(key)
+            desc_key = name if name in SHENSHA_DESC else norm_name
+            results.append({
+                "name": name,
+                "position": positions[pidx],
+                "type": SHENSHA_TYPE_MAP.get(name, SHENSHA_TYPE_MAP.get(norm_name, "中")),
+                "desc": SHENSHA_DESC.get(desc_key, SHENSHA_DESC.get(norm_name, "")),
+            })
+    logger.info(f"[shensha] MCP returned {len(results)} items from {len(data)} pillars")
+    return results
+
+async def calc_shensha_enhanced(bazi_parts: list[str], solar_datetime: str = "", gender: int = 1) -> list[dict]:
+    mcp_results: list[dict] = []
+    if solar_datetime:
+        mcp_results = await calc_shensha_from_mcp(solar_datetime, gender)
+    if mcp_results:
+        return mcp_results
+    return calc_shensha(bazi_parts)
