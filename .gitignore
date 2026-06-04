@@ -51,7 +51,8 @@ frontend/.env.local
 # Screenshots & temp
 screenshots/
 dogfood-output/
-frontend/*.png
+test-screenshots/
+*.png
 frontend/package-lock.json
 test_bazi.py
 
@@ -60,6 +61,7 @@ tests/_diag_*.py
 tests/update_golden*.py
 test_webapp.py
 test_chat_context.py
+test_e2e*.py
 
 # Codegraph index (local only)
 .codegraph/
