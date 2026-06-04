@@ -1323,6 +1323,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                 'layer': 0, 'type': '两行成象格', 'pattern': f'{two_wx[0]}{two_wx[1]}成象格',
                 'confidence': 0.75, 'reason': '克泄耗两行合计≥85%',
                 'yongshen_direction': '顺两行气势',
+                '_element_forces': element_forces,
             }
 
     # ── 5. 从格检测（从财/从官杀/从儿/从势） ──

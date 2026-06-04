@@ -461,7 +461,8 @@ def calc_shensha(bazi_parts: list[str], gender: int = 1) -> list[dict]:
                 results.append({"name": name, "position": positions[idx],
                                 "type": stype, "desc": SHENSHA_DESC.get(name, "")})
 
-    wangchen_zhi = WANGCHEN.get(day_zhi, "")
+    # 亡神 — 《三命通会》口诀"寅午戌亡神在巳"：以年支查（与劫煞/绞煞一致）
+    wangchen_zhi = WANGCHEN.get(year_zhi, "")
     for idx, zhi in enumerate(all_zhis):
         if zhi == wangchen_zhi and idx != 2:
             results.append({"name": "亡神", "position": positions[idx],
