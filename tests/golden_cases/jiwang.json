@@ -6,16 +6,18 @@
     "day_master": "壬",
     "bazi": "壬子 壬子 壬申 庚子",
     "month_branch": "子",
-    "expected_pattern": "润下格",
+    "expected_pattern": "羊刃格，无财官煞食透出",
     "expected_wangshuai": "极旺",
-    "expected_yongshen_wx": "金",
+    "expected_yongshen_wx": "土",
     "expected_deling_score": 3,
     "expected_dedi_level": "得地",
     "expected_deshi_level": "得势"
   },
-  "must_include": [],
+  "must_include": [
+    "羊刃格，无财官煞食透出"
+  ],
   "must_not_include": [
     "比肩格"
   ],
-  "notes": "壬水日主子月帝旺，水行专旺为润下格"
+  "notes": "壬水日主子月羊刃，无财官煞食透出，羊刃格"
 }

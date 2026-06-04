@@ -1,21 +1,21 @@
 {
   "id": "runxia_ge",
-  "description": "润下格 — 壬水日主，水行专旺",
-  "scenario": "壬水日主，全局水行成势，润下格",
+  "description": "建禄格 — 壬水亥月建禄，无财官煞食透出",
+  "scenario": "壬水日主，亥月建禄，无财官煞食透出",
   "input": {
     "day_master": "壬",
     "bazi": "壬子 癸亥 壬子 壬子",
     "month_branch": "亥",
-    "expected_pattern": "润下格",
+    "expected_pattern": "建禄格，无财官煞食透出",
     "expected_wangshuai": "极旺",
-    "expected_yongshen_wx": "金",
+    "expected_yongshen_wx": "木",
     "expected_deling_score": 3,
     "expected_dedi_level": "得地",
     "expected_deshi_level": "得势"
   },
-  "must_include": [],
-  "must_not_include": [
-    "建禄格"
+  "must_include": [
+    "建禄格，无财官煞食透出"
   ],
-  "notes": "日主水行占比93.4%，4个水地支≥3，润下格（专旺格）"
+  "must_not_include": [],
+  "notes": "壬水日主亥月建禄，无财官煞食透出，建禄格"
 }

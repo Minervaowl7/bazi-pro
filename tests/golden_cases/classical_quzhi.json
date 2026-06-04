@@ -1,24 +1,24 @@
 {
   "id": "classical_quzhi",
-  "description": "曲直格-地支寅卯辰",
-  "scenario": "甲木日主，地支寅卯辰全（会方木），曲直格成立",
+  "description": "羊刃格-甲木卯月帝旺",
+  "scenario": "甲木日主，卯月帝旺，无财官煞食透出",
   "input": {
     "day_master": "甲",
     "bazi": "甲寅 乙卯 甲辰 甲寅",
     "month_branch": "卯",
-    "expected_pattern": "曲直格",
+    "expected_pattern": "羊刃格，无财官煞食透出",
     "expected_wangshuai": "极旺",
-    "expected_yongshen_wx": "水",
+    "expected_yongshen_wx": "金",
     "expected_deling_score": 3,
     "expected_dedi_level": "得地",
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "曲直格"
+    "羊刃格，无财官煞食透出"
   ],
   "must_not_include": [
     "正官格",
     "偏官格"
   ],
-  "notes": "地支寅卯辰全（会方木），曲直格成立"
+  "notes": "甲木日主卯月羊刃，无财官煞食透出，羊刃格"
 }

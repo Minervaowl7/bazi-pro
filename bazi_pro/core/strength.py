@@ -21,7 +21,7 @@
 from bazi_pro.core.branches import CANGGAN_WEIGHT, DELING_SCORE, SHIER_CHANGSHENG
 from bazi_pro.core.constants import GAN_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
-from bazi_pro.core.stems import SHENG_MAP
+from bazi_pro.core.stems import KE_MAP, SHENG_MAP
 
 
 def calc_deling(day_master: str, month_zhi: str) -> tuple[str, int]:
@@ -271,17 +271,20 @@ def judge_wangshuai(deling_score: int, dedi_score: float, deshi_score: float,
         verdict = '中和'
 
     # ── 五行力量补充修正 ──
-    # 当印星+比劫占比≥75%时，无论三要素如何，直接判定极旺
-    # 这是基于五行力量百分比的硬性阈值，覆盖三要素可能遗漏的极端情况
+    # 当印星+比劫占比≥75%时，若官杀力量也强（≥15%），则不强制极旺
+    # 《滴天髓》"旺极者，宜泄不宜克" — 但官杀有力则身不能极旺
+    # 《渊海子平》官印双全格，印比虽高但官杀制身，应为中和或偏旺
     if element_forces and day_master:
         dm_wx = GAN_WUXING.get(day_master, '')
         if dm_wx:
             yin_wx = SHENG_MAP.get(dm_wx, '')  # 印星五行
+            ke_wx = KE_MAP.get(dm_wx, '')       # 官杀五行（克我者）
             percent = element_forces.get('percent', {})
             bi_pct = percent.get(dm_wx, 0)      # 比劫占比
             yin_pct = percent.get(yin_wx, 0) if yin_wx else 0  # 印星占比
             yin_bi_ratio = bi_pct + yin_pct      # 印比总占比
-            if yin_bi_ratio >= 75:
+            guansha_pct = percent.get(ke_wx, 0) if ke_wx else 0  # 官杀占比
+            if yin_bi_ratio >= 75 and guansha_pct < 15:
                 verdict = '极旺'
 
     return {

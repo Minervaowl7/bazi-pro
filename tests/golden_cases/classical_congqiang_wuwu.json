@@ -1,27 +1,25 @@
 {
   "id": "classical_congqiang_wuwu",
-  "description": "古籍案例·从强格—戊午 戊午 戊午 甲寅",
+  "description": "古籍案例·羊刃格—戊午 戊午 戊午 甲寅",
   "source": "YHZ_00115",
   "scenario": "戊土日主午月，三戊午一甲寅",
   "input": {
     "day_master": "戊",
     "bazi": "戊午 戊午 戊午 甲寅",
     "month_branch": "午",
-    "expected_pattern": "从强格",
-    "expected_wangshuai": "极旺",
-    "expected_yongshen_wx": "火",
+    "expected_pattern": "羊刃格，透七杀",
+    "expected_wangshuai": "偏旺",
+    "expected_yongshen_wx": "木",
     "expected_deling_score": 3,
     "expected_dedi_level": "偏得地",
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "从强格"
+    "羊刃格，透七杀"
   ],
-  "must_not_include": [
-    "羊刃格"
-  ],
+  "must_not_include": [],
   "classical_support": [
     "YHZ_00115"
   ],
-  "notes": "《渊海子平》：戊日午月勿作刃看，岁时火多却为印绶，印比81.7%≥75%故极旺"
+  "notes": "《渊海子平》：戊日午月羊刃，甲木七杀透干，羊刃格透七杀"
 }

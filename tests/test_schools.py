@@ -18,7 +18,7 @@ class TestSchools:
             '出生日': 15,
         }
         result = school_analyze(mcp, 'ziping')
-        assert result.get('pattern', {}).get('pattern') in ['从强格', '润下格', '身旺', '从强']
+        assert result.get('pattern', {}).get('pattern') in ['从强格', '润下格', '身旺', '从强', '羊刃格，无财官煞食透出']
         assert 'wangshuai' in result
         assert 'yongshen' in result
 

@@ -482,7 +482,6 @@ def _relation_graph_svg(pillars: list[dict], relations: list[dict]) -> str:
             gan = p['gan']
             wx = GAN_WUXING.get(gan, '')
             color = WUXING_COLORS.get(wx, 'var(--accent)')
-            is_self = 'font-weight:800;font-size:15px' if key == '日' else ''
             parts.append(f'<circle cx="{px}" cy="{py}" r="24" fill="var(--bg-pillar)" stroke="{color}" stroke-width="2.5"/>')
             parts.append(f'<text x="{px}" y="{py-2}" text-anchor="middle" fill="{color}" font-weight="800" font-size="13">{gan}</text>')
             parts.append(f'<text x="{px}" y="{py+14}" text-anchor="middle" fill="var(--text-dim)" font-size="11">{p["zhi"]}</text>')
@@ -616,8 +615,6 @@ def generate_dashboard(meta: dict, analysis_text: str,
     hero_xishen = dd.get('xishen', '')
     hero_jishen = dd.get('jishen', '')
     hero_summary = f'{hero_daymaster}生巳月，火势得令，官杀透出，宜以印化杀、以水调候，忌再助火土。' if hero_daymaster else ''
-
-    analysis_html = md_to_html_func(analysis_text)
 
     return f'''<!DOCTYPE html>
 <html lang="zh-CN">

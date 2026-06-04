@@ -151,7 +151,6 @@ def simple_md_to_html(text: str) -> str:
     in_ul = False
     in_ol = False
     in_blockquote = False
-    pending_blank = False
     code_lang = ''
 
     def flush_inlines(s: str) -> str:
@@ -331,7 +330,6 @@ def simple_md_to_html(text: str) -> str:
         # Blank line
         if not line.strip():
             close_lists()
-            pending_blank = True
             i += 1
             continue
 

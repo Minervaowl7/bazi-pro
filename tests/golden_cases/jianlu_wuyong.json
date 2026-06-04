@@ -6,20 +6,19 @@
     "day_master": "甲",
     "bazi": "甲子 壬寅 甲子 癸亥",
     "month_branch": "寅",
-    "expected_pattern": "从强格",
+    "expected_pattern": "建禄格，无财官煞食透出",
     "expected_wangshuai": "极旺",
-    "expected_yongshen_wx": "水",
+    "expected_yongshen_wx": "火",
     "expected_deling_score": 3,
     "expected_dedi_level": "偏得地",
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "从强格"
+    "建禄格，无财官煞食透出"
   ],
   "must_not_include": [
-    "建禄格",
     "暗比肩格",
     "暗劫财格"
   ],
-  "notes": "月支寅本气甲木比肩，印比91%≥80%且极旺，从强格优先。用神=水（印星）"
+  "notes": "月支寅本气甲木比肩，建禄格，无财官煞食透出。用神=火（食伤）"
 }

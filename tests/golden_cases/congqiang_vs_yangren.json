@@ -1,25 +1,23 @@
 {
   "id": "congqiang_vs_yangren",
-  "description": "从强 vs 羊刃格 — 壬水全盘比劫无克泄耗",
-  "scenario": "壬水日主全盘比劫，无克泄耗，从强格而非羊刃格",
+  "description": "羊刃格 — 壬水子月帝旺，无财官煞食透出",
+  "scenario": "壬水日主子月羊刃，无财官煞食透出",
   "input": {
     "day_master": "壬",
     "bazi": "壬子 壬子 壬子 壬子",
     "month_branch": "子",
-    "expected_pattern": "润下格",
+    "expected_pattern": "羊刃格，无财官煞食透出",
     "expected_wangshuai": "极旺",
-    "expected_yongshen_wx": "金",
+    "expected_yongshen_wx": "土",
     "expected_deling_score": 3,
     "expected_dedi_level": "得地",
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "润下格"
+    "羊刃格，无财官煞食透出"
   ],
-  "must_not_include": [
-    "羊刃格"
-  ],
-  "rationale": "壬日主全盘比劫，无克泄耗，从强格而非羊刃格",
+  "must_not_include": [],
+  "rationale": "壬日主子月羊刃，无财官煞食透出，羊刃格",
   "classical_support": "DTM_00007",
   "expected_relations": [
     {

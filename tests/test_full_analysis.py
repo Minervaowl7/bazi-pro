@@ -156,7 +156,7 @@ class TestFullAnalysisBoundary:
         assert result["status"] == "completed"
         assert result["wangshuai"]["is_extreme_strong"] is True
         pat = result["pattern"]["pattern"]
-        assert '从强' in pat or '专旺' in pat or '润下' in pat or '身旺' in pat
+        assert '从强' in pat or '专旺' in pat or '润下' in pat or '身旺' in pat or '羊刃' in pat
 
     def test_congcai_or_congsha_pattern(self):
         result = full_analysis({"八字": "庚午 丙戌 甲申 壬申", "日主": "甲"})

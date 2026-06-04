@@ -1174,6 +1174,8 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
 
     # ── 2. 专旺格检测 ──
     # 专旺格传统名称：木=曲直格，火=炎上格，土=稼穑格，金=从革格，水=润下格
+    # 《子平真诠》建禄/羊刃月令优先走建禄/羊刃格路径，不入专旺格
+    # 例外：非建禄/羊刃月令时，有方局/三合+月令当令 → 专旺格
     zhuanwang_names = {'木': '曲直格', '火': '炎上格', '土': '稼穑格', '金': '从革格', '水': '润下格'}
     zhuanwang_trigger = False
     zhuanwang_reason_base = ''
@@ -1181,12 +1183,14 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
     # 专旺触发条件（满足任一）：
     # 条件A：日主五行占比≥80%（绝对优势）
     # 条件B：日主五行占比≥50% 且 印比合计≥75%（相对优势+印比合力）
-    if dm_pct >= 80:
-        zhuanwang_trigger = True
-        zhuanwang_reason_base = f'日主{dm_wx}行占{dm_pct}%≥80%'
-    elif dm_pct >= 50 and yin_bi_pct >= 75:
-        zhuanwang_trigger = True
-        zhuanwang_reason_base = f'日主{dm_wx}行占{dm_pct}%≥50%，印比合计{yin_bi_pct}%≥75%'
+    # 但建禄/羊刃月令不入专旺格（月令定格优先于方局）
+    if not is_jianlu_yangren_month:
+        if dm_pct >= 80:
+            zhuanwang_trigger = True
+            zhuanwang_reason_base = f'日主{dm_wx}行占{dm_pct}%≥80%'
+        elif dm_pct >= 50 and yin_bi_pct >= 75:
+            zhuanwang_trigger = True
+            zhuanwang_reason_base = f'日主{dm_wx}行占{dm_pct}%≥50%，印比合计{yin_bi_pct}%≥75%'
 
     if zhuanwang_trigger:
         formation = _check_formation(bazi_parts, dm_wx)
@@ -1249,7 +1253,8 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
     # ── 3. 从强格/假从强格检测（非专旺触发条件） ──
     # 印比合计≥80%且无本气/中气根 → 从强格
     # 阈值80%：印比力量需占绝对主导才能"从强"
-    if yin_bi_pct >= 80 and not has_strong_root:
+    # 但建禄/羊刃月令不从强（走建禄/羊刃格路径）
+    if yin_bi_pct >= 80 and not has_strong_root and not is_jianlu_yangren_month:
         return {
             'layer': 0, 'type': '从强格', 'pattern': '从强格',
             'confidence': 0.85,
@@ -1456,30 +1461,16 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                     result['break_conditions'] = break_conds
                 return result
 
-    # ── 6. 建禄/羊刃月令的从强优先判定 ──
-    # 建禄月令：若印比极旺(≥80%)且极旺，从强格优先于建禄格
-    # 《滴天髓》"日主孤立无气"之反面：建禄月印比极旺，无财官煞食透出，
-    # 日主从其旺势，应判从强格而非建禄格
+    # ── 6. 建禄/羊刃月令的格局路径 ──
+    # 《子平真诠》"用神专寻月令" — 月令为建禄/羊刃时走建禄/羊刃格路径
+    # 但若已有方局/三合成局且月令当令，专旺格已在步骤2中优先判定
+    # 此处仅处理无方局/三合的建禄/羊刃月令情况
     if month_zhi == JIANLU_MAP.get(day_master, ''):
-        if yin_bi_pct >= 80 and wangshuai.get('is_extreme_strong', False):
-            return {
-                'layer': 0, 'type': '从强格', 'pattern': '从强格',
-                'confidence': 0.85, 'reason': f'月支建禄但印比{yin_bi_pct}%≥80%且极旺，从强格优先',
-                'yongshen_direction': '印星比劫',
-            }
-        # 不满足从强条件，返回 None 让 L1/L3 处理建禄格
+        # 返回 None 让 L1/L3 处理建禄格
         return None
 
-    # 羊刃月令：印比≥75% → 从强格优先
-    # 阈值75%：羊刃本身已是极旺之地，印比75%即可从强
     if month_zhi == YANGREN_MAP.get(day_master, ''):
-        if yin_bi_pct >= 75:
-            return {
-                'layer': 0, 'type': '从强格', 'pattern': '从强格',
-                'confidence': 0.85, 'reason': f'月支羊刃但印比{yin_bi_pct}%≥75%，从强格优先',
-                'yongshen_direction': '印星比劫',
-            }
-        # 不满足从强条件，返回 None 让 L3 处理羊刃格
+        # 返回 None 让 L3 处理羊刃格
         return None
 
     return None

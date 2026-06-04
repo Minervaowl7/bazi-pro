@@ -1,23 +1,23 @@
 {
   "id": "yangren_benqi",
-  "description": "羊刃格 — 丙火午月帝旺，劫财透干",
-  "scenario": "丙火日主，午月羊刃，丁火劫财透干",
+  "description": "羊刃格 — 丙火午月帝旺，偏财透干",
+  "scenario": "丙火日主，午月羊刃，庚金偏财透干",
   "input": {
     "day_master": "丙",
     "bazi": "丁卯 甲午 丙寅 庚寅",
     "month_branch": "午",
-    "expected_pattern": "从强格",
+    "expected_pattern": "羊刃格，透偏财",
     "expected_wangshuai": "极旺",
-    "expected_yongshen_wx": "木",
+    "expected_yongshen_wx": "金",
     "expected_deling_score": 3,
     "expected_dedi_level": "偏得地",
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "从强格"
+    "羊刃格，透偏财"
   ],
   "must_not_include": [
     "比肩格"
   ],
-  "notes": "月支午本气丁火劫财透干"
+  "notes": "丙火日主午月羊刃，庚金偏财透干，羊刃格透偏财"
 }

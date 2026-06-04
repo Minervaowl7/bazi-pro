@@ -7,7 +7,7 @@
     "day_master": "戊",
     "bazi": "戊午 戊午 戊午 戊午",
     "month_branch": "午",
-    "expected_pattern": "身旺",
+    "expected_pattern": "羊刃格，无财官煞食透出",
     "expected_wangshuai": "极旺",
     "expected_yongshen_wx": "木",
     "expected_deling_score": 3,
@@ -15,13 +15,14 @@
     "expected_deshi_level": "得势"
   },
   "must_include": [
-    "身旺"
+    "羊刃格"
   ],
   "must_not_include": [
-    "比肩格"
+    "比肩格",
+    "从格"
   ],
   "classical_support": [
     "ZPZ_00161"
   ],
-  "notes": "戊土日主午月羊刃，印比极旺，无辰戌丑未方局降级为从强格"
+  "notes": "戊土日主午月羊刃，印比极旺，羊刃格优先于从强格/专旺格"
 }
