@@ -229,9 +229,10 @@ def analyze_ziwei_palace(
                 break
 
         opposite_palace = None
-        if palace_index is not None:
+        palaces_list = chart.get("palaces", [])
+        if palace_index is not None and len(palaces_list) == 12:
             opposite_index = (palace_index + 6) % 12
-            opposite_palace = chart["palaces"][opposite_index]
+            opposite_palace = palaces_list[opposite_index]
 
         result = {
             "palace": target_palace,

@@ -179,31 +179,34 @@ class CompareEngine:
         }
 
     def compare_yongshen(self) -> dict:
-        a_yongshen = self.chart_a.get('喜用神', '') or self.chart_a.get('用神', '')
-        b_yongshen = self.chart_b.get('喜用神', '') or self.chart_b.get('用神', '')
+        # full_analysis() 返回 result['yongshen'] = {yongshen: '水', xishen: ['木'], jishen: ['火','土'], ...}
+        a_ys_dict = self.chart_a.get('yongshen', {})
+        b_ys_dict = self.chart_b.get('yongshen', {})
 
-        if not a_yongshen:
-            a_yongshen = self._infer_yongshen_hint(self.chart_a)
-        if not b_yongshen:
-            b_yongshen = self._infer_yongshen_hint(self.chart_b)
+        # 提取用神+喜神五行列表
+        a_yong_wx = a_ys_dict.get('yongshen', '')
+        a_xi_wx = a_ys_dict.get('xishen', [])
+        a_all_wx = [a_yong_wx] + a_xi_wx if a_yong_wx else list(a_xi_wx)
+
+        b_yong_wx = b_ys_dict.get('yongshen', '')
+        b_xi_wx = b_ys_dict.get('xishen', [])
+        b_all_wx = [b_yong_wx] + b_xi_wx if b_yong_wx else list(b_xi_wx)
 
         conflict = False
         conflict_desc = ''
-        if a_yongshen and b_yongshen:
-            a_wx_list = [GAN_WUXING.get(g, g) for g in a_yongshen if g in GAN_WUXING]
-            b_wx_list = [GAN_WUXING.get(g, g) for g in b_yongshen if g in GAN_WUXING]
-            for aw in a_wx_list:
-                for bw in b_wx_list:
+        if a_all_wx and b_all_wx:
+            for aw in a_all_wx:
+                for bw in b_all_wx:
                     if WUXING_KE.get((aw, bw)):
                         conflict = True
                         conflict_desc = f'A喜{aw} vs B喜{bw}：{aw}克{bw}'
 
         return {
-            'chart_a_yongshen': a_yongshen or 'insufficient_data',
-            'chart_b_yongshen': b_yongshen or 'insufficient_data',
+            'chart_a_yongshen': a_all_wx or 'insufficient_data',
+            'chart_b_yongshen': b_all_wx or 'insufficient_data',
             'conflict': conflict,
             'conflict_desc': conflict_desc,
-            'note': '喜用神数据缺失，请先通过 AnalysisEngine 获取完整分析结果',
+            'note': '用神冲突检测基于 full_analysis() 返回的 yongshen 字段' if a_all_wx and b_all_wx else '喜用神数据缺失，请先通过 AnalysisEngine 获取完整分析结果',
         }
 
     def compare_relations(self) -> list[dict]:
@@ -358,7 +361,3 @@ class CompareEngine:
     def _daymaster_wuxing(chart: dict) -> str:
         dm = chart.get('日主', '')
         return GAN_WUXING.get(dm, '')
-
-    @staticmethod
-    def _infer_yongshen_hint(chart: dict) -> str:
-        return ''
