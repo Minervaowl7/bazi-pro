@@ -58,7 +58,9 @@ def cross_validate_schools(school_results: dict) -> dict:
         })
 
     z_yongshen = ziping.get("yongshen", {}).get("yongshen", "")
-    x_yongshen_list = xinpai.get("yong_ji", {}).get("yongshen_name", [])
+    # 新派用神：yongshen 字段为五行列表（如 ['水', '木']），yongshen_name 为十神名列表
+    # 交叉验证应比较五行维度，故取 yongshen（五行）而非 yongshen_name（十神名）
+    x_yongshen_list = xinpai.get("yong_ji", {}).get("yongshen", [])
     x_yongshen = x_yongshen_list[0] if x_yongshen_list else ""
 
     if z_yongshen and x_yongshen and z_yongshen == x_yongshen:
