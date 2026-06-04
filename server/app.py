@@ -830,10 +830,13 @@ async def api_v2_daily_fortune(analysis_id: str):
             result = json.loads(result)
         except (json.JSONDecodeError, TypeError):
             result = {}
-    validation = result.get("validation", {}) if isinstance(result, dict) else {}
-    yongshen_data = result.get("yongshen", {}) if isinstance(result, dict) else {}
+    if not isinstance(result, dict):
+        result = {}
 
-    day_master = validation.get("day_master", "")
+    # day_master 在 full_analysis() 返回的顶层，不在 validation 中
+    day_master = result.get("day_master", "")
+    yongshen_data = result.get("yongshen", {})
+
     yongshen_wx = yongshen_data.get("yongshen", "")
     jishen_wx = yongshen_data.get("jishen", [])
     # 确保 jishen_wx 是列表（防止旧数据中存储为字符串）
@@ -869,10 +872,13 @@ async def api_v2_monthly_fortune(analysis_id: str, year: int = Query(default=0),
             result = json.loads(result)
         except (json.JSONDecodeError, TypeError):
             result = {}
-    validation = result.get("validation", {}) if isinstance(result, dict) else {}
-    yongshen_data = result.get("yongshen", {}) if isinstance(result, dict) else {}
+    if not isinstance(result, dict):
+        result = {}
 
-    day_master = validation.get("day_master", "")
+    # day_master 在 full_analysis() 返回的顶层，不在 validation 中
+    day_master = result.get("day_master", "")
+    yongshen_data = result.get("yongshen", {})
+
     yongshen_wx = yongshen_data.get("yongshen", "")
     jishen_wx = yongshen_data.get("jishen", [])
     if isinstance(jishen_wx, str):
@@ -1114,10 +1120,9 @@ async def api_v2_get_analysis(analysis_id: str):
     if isinstance(result, dict) and result.get("status") == "completed" and "tiaohou" not in result:
         try:
             from bazi_pro.core.tiaohou import lookup_tiaohou
-            validation = result.get("validation", {})
-            day_master = validation.get("day_master", "")
-            bazi = validation.get("bazi", "")
-            bazi_parts = bazi.split() if bazi else []
+            # day_master 在 full_analysis() 返回的顶层
+            day_master = result.get("day_master", "")
+            bazi_parts = [p.get("gan", "") + p.get("zhi", "") for p in result.get("pillars", [])]
             month_zhi = bazi_parts[1][1] if len(bazi_parts) >= 2 and len(bazi_parts[1]) >= 2 else ""
             if day_master and month_zhi:
                 result["tiaohou"] = lookup_tiaohou(day_master, month_zhi)
@@ -1194,7 +1199,8 @@ async def api_v2_dayun_liunian(analysis_id: str):
         jishen_wx = []
         xishen_wx = []
 
-    day_master = result.get("validation", {}).get("day_master", "")
+    # day_master 在 full_analysis() 返回的顶层，不在 validation 中
+    day_master = result.get("day_master", "")
     if not day_master:
         day_master = record.get("day_master", "")
 
@@ -1415,10 +1421,12 @@ async def api_v2_get_report(analysis_id: str):
 def _extract_analysis_context(result: dict) -> dict:
     """从分析结果中提取 RAG 检索所需的上下文信息。"""
     context: dict = {}
-    validation = result.get("validation", {}) if isinstance(result, dict) else {}
-    if isinstance(validation, dict):
-        context["day_master"] = validation.get("day_master", "")
-        context["bazi"] = validation.get("bazi", "")
+    if isinstance(result, dict):
+        # day_master 在 full_analysis() 返回的顶层，不在 validation 中
+        context["day_master"] = result.get("day_master", "")
+        # 从 pillars 重构八字字符串
+        pillars = result.get("pillars", [])
+        context["bazi"] = " ".join(p.get("gan", "") + p.get("zhi", "") for p in pillars if p.get("gan") and p.get("zhi"))
 
     pattern = result.get("pattern", {}) if isinstance(result, dict) else {}
     if isinstance(pattern, dict):

@@ -102,13 +102,26 @@ class CompareEngine:
         result.compatibility_ci = f'{result.compatibility_score}±15'
         return result
 
+    def _extract_bazi(self, chart: dict) -> str:
+        """从 full_analysis() 返回结果中提取八字字符串"""
+        # full_analysis() 返回 result['pillars'] = [{position, gan, zhi, ...}, ...]
+        pillars = chart.get('pillars', [])
+        if pillars:
+            return ' '.join(p.get('gan', '') + p.get('zhi', '') for p in pillars if p.get('gan') and p.get('zhi'))
+        # 兜底：尝试从 '八字' 键获取（兼容旧格式）
+        return chart.get('八字', '')
+
+    def _extract_daymaster(self, chart: dict) -> str:
+        """从 full_analysis() 返回结果中提取日主"""
+        return chart.get('day_master', '') or chart.get('日主', '')
+
     def compare_pillars(self) -> list[dict]:
-        a_bz = self.chart_a.get('八字', '')
-        b_bz = self.chart_b.get('八字', '')
+        a_bz = self._extract_bazi(self.chart_a)
+        b_bz = self._extract_bazi(self.chart_b)
         a_parts = a_bz.split()
         b_parts = b_bz.split()
-        a_dm = self.chart_a.get('日主', '')
-        b_dm = self.chart_b.get('日主', '')
+        a_dm = self._extract_daymaster(self.chart_a)
+        b_dm = self._extract_daymaster(self.chart_b)
 
         diffs = []
         labels = ['年柱', '月柱', '日柱', '时柱']
@@ -153,10 +166,10 @@ class CompareEngine:
         return diffs
 
     def compare_wuxing(self) -> dict:
-        a_bz = self.chart_a.get('八字', '')
-        b_bz = self.chart_b.get('八字', '')
-        a_dm = self.chart_a.get('日主', '')
-        b_dm = self.chart_b.get('日主', '')
+        a_bz = self._extract_bazi(self.chart_a)
+        b_bz = self._extract_bazi(self.chart_b)
+        a_dm = self._extract_daymaster(self.chart_a)
+        b_dm = self._extract_daymaster(self.chart_b)
 
         a_counts = count_wuxing_from_bazi(a_bz)
         b_counts = count_wuxing_from_bazi(b_bz)
@@ -212,8 +225,8 @@ class CompareEngine:
     def compare_relations(self) -> list[dict]:
         a_dm_wx = self._daymaster_wuxing(self.chart_a)
         b_dm_wx = self._daymaster_wuxing(self.chart_b)
-        a_bz = self.chart_a.get('八字', '')
-        b_bz = self.chart_b.get('八字', '')
+        a_bz = self._extract_bazi(self.chart_a)
+        b_bz = self._extract_bazi(self.chart_b)
 
         relations = []
 
@@ -359,5 +372,5 @@ class CompareEngine:
 
     @staticmethod
     def _daymaster_wuxing(chart: dict) -> str:
-        dm = chart.get('日主', '')
+        dm = chart.get('day_master', '') or chart.get('日主', '')
         return GAN_WUXING.get(dm, '')
