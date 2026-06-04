@@ -410,18 +410,17 @@ class ZipingAnalyzer(SchoolAnalyzer):
                             break
 
             # ── 天干合用神检测 — 《子平真诠》"透官而又逢合" ──
-            # 大运天干与用神天干相合，用神被合去则凶
-            if gan_wx in favorable_wx and gan != day_master:
-                # 检查大运天干是否与命局中用神天干相合
-                he_partner = _GAN_HE_PARTNER.get(gan, '')
-                if he_partner:
-                    # 用神五行对应的天干列表
-                    yong_gans = [g for g, w in GAN_WUXING.items() if w == yong_wx]
-                    for yg in yong_gans:
-                        if yg == he_partner:
-                            gan_score -= 1
-                            details.append('天干{}合去用神{}，用神失力'.format(gan, he_partner))
-                            break
+            # 大运天干与命局中用神天干相合，用神被合去则凶
+            # 注意：不限制大运天干本身必须是喜用五行，因为忌神天干合去用神天干也是凶
+            he_partner = _GAN_HE_PARTNER.get(gan, '')
+            if he_partner and gan != day_master:
+                # 用神五行对应的天干列表
+                yong_gans = [g for g, w in GAN_WUXING.items() if w == yong_wx]
+                for yg in yong_gans:
+                    if yg == he_partner:
+                        gan_score -= 1
+                        details.append('天干{}合去用神{}，用神失力'.format(gan, he_partner))
+                        break
 
             # ── 地支评分（逻辑与天干对称） ──
             if zhi_wx:

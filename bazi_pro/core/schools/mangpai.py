@@ -481,7 +481,7 @@ class MangpaiAnalyzer(SchoolAnalyzer):
 
                 # 化用：藏干为体，天干为用，藏干生天干（体泄秀为用）
                 if gan_shishen in YONG_STEMS and cg_shishen in TI_STEMS:
-                    if (gan_wx, cg_wx) in SHENG_PAIRS:
+                    if (cg_wx, gan_wx) in SHENG_PAIRS:
                         gong_types['huayong'].append({
                             'type': '化用',
                             'tool': {'position': p.get('position', '') + '藏',
