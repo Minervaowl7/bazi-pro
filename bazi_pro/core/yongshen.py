@@ -25,7 +25,7 @@
 
 from bazi_pro.core.constants import GAN_WUXING, WUXING_TO_GAN
 from bazi_pro.core.patterns import PATTERN_YONGSHEN
-from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP, WO_SHENG_MAP
+from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP, WO_SHENG_MAP, WUXING_KE
 from bazi_pro.core.ten_gods import SHISHEN_WUXING_REL
 
 
@@ -228,6 +228,15 @@ def _derive_jishen(pattern_name: str, dm_wx: str, yongshen_wx: str,
         # 忌神：克我(官杀)+我克(财星)+生我(印星)，皆为逆最强之势
         # 但用神五行本身不应为忌，需排除
         return [w for w in [ke_wo, wo_ke, sheng_wo] if w and w != yongshen_wx]
+    if '成象格' in pattern_name:
+        # 两行成象格：《滴天髓》"两气合而成象" — 忌逆两行之势
+        # 忌神：克用神之五行 + 用神所克之五行
+        if yongshen_wx:
+            ke_yong = WUXING_KE.get(yongshen_wx, '')
+            yong_ke = [k for k, v in WUXING_KE.items() if v == yongshen_wx]
+            result = [ke_yong] + yong_ke if ke_yong else yong_ke
+            return [w for w in result if w and w != yongshen_wx and w != dm_wx]
+        return [dm_wx]
 
     # ── 扶抑格 ──
     if is_weak:
@@ -364,6 +373,22 @@ def _pattern_yongshen_wx(pattern_name: str, dm_wx: str,
             return WO_SHENG_MAP.get(dm_wx, '')  # fallback: 食伤
         strongest = max(pct, key=pct.get)
         return strongest
+
+    # ── 两行成象格：《滴天髓》"两气合而成象" — 用神取两行中较强之势 ──
+    # 格局名格式为"火土成象格"、"金水成象格"等
+    if '成象格' in pattern_name:
+        pct = {}
+        if pattern_result and pattern_result.get('_element_forces'):
+            pct = pattern_result['_element_forces'].get('percent', {})
+        if pct:
+            # 取两行中力量最强者（非日主五行、非印星五行）
+            candidates = {wx: p for wx, p in pct.items()
+                          if wx != dm_wx and wx != SHENG_MAP.get(dm_wx, '')}
+            if candidates:
+                strongest = max(candidates, key=candidates.get)
+                return strongest
+        # fallback: 取我克（财星方向）
+        return WO_KE_MAP.get(dm_wx, '')
 
     # 十神关系→五行转换函数（用于查表后的五行映射）
     _REL_TO_WX = {
