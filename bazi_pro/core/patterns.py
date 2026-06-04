@@ -490,6 +490,24 @@ def _check_jianlu_yangren_break(day_master, dm_wx, bazi_parts, gans, pattern_nam
                                 'detail': f'羊刃格透七杀{sha_g}，天干{other_g}与七杀相合，杀被合去',
                             })
 
+    # 羊刃无官煞 — 《子平真诠》第九章"阳刃无官煞，刃格败也"
+    # 羊刃格天干无官杀制刃，刃旺无制为祸
+    if '羊刃格' in pattern_name:
+        has_guan_sha = False
+        for g in gans:
+            if g == day_master:
+                continue
+            ss = derive_shishen(day_master, g)
+            if ss in ('正官', '七杀'):
+                has_guan_sha = True
+                break
+        if not has_guan_sha:
+            breaks.append({
+                'type': '羊刃无官煞',
+                'severity': 'high',
+                'detail': '羊刃格天干无官杀制刃，刃旺无制为祸',
+            })
+
     # 会杀为凶：建禄格地支会官杀之方/局
     if '建禄格' in pattern_name:
         sha_wx = KE_MAP.get(dm_wx, '')
@@ -733,6 +751,7 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
 
     # ── 食神格破格 ──
     # 《子平真诠》"食格败：食神逢枭，或生财露煞"
+    # 《子平真诠》第九章带忌："食神带煞印而又逢财"
     if '食神格' in pattern_name:
         # (1) 枭神夺食 — 偏印克食神
         # 《子平真诠》"食神逢枭"：偏印克食神，食神被夺
@@ -758,9 +777,21 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                     'severity': 'high',
                     'detail': f'食神格生财又透七杀{"".join(sha_gans)}，食神生财、财生杀，杀得财助为祸',
                 })
+        # (3) 带忌：食神带煞印而又逢财 — 《子平真诠》第九章带忌
+        # "食神带煞印而又逢财"：食神格带煞印（杀印相生），但财星破印，
+        # 印星被破则杀失去印的调和，杀直接攻身
+        if '七杀' in shishen_map and ('正印' in shishen_map or '偏印' in shishen_map):
+            if '正财' in shishen_map or '偏财' in shishen_map:
+                cai_gans = shishen_map.get('正财', []) + shishen_map.get('偏财', [])
+                breaks.append({
+                    'type': '煞印逢财',
+                    'severity': 'medium',
+                    'detail': f'食神格带煞印又逢财{"".join(cai_gans)}，财破印则杀失印调，杀攻身为祸',
+                })
 
     # ── 七杀格破格 ──
     # 《子平真诠》"煞格败：七煞逢财无制"
+    # 《子平真诠》第九章带忌："七煞逢食制而又逢印"
     if '七杀格' in pattern_name:
         if '正财' in shishen_map or '偏财' in shishen_map:
             has_shishen_zhi_sha = '食神' in shishen_map or '正印' in shishen_map or '偏印' in shishen_map
@@ -771,6 +802,16 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                     'severity': 'high',
                     'detail': f'七杀格天干透财星{"".join(cai_gans)}，无食神/印星制杀，财党杀为祸',
                 })
+        # 带忌：七煞逢食制而又逢印 — 食神制杀但印星泄食护杀
+        # 《子平真诠》第九章"七煞逢食制而又逢印"
+        # 食神制杀为成格，但印星克食护杀，制杀之力被削弱
+        if '食神' in shishen_map and ('正印' in shishen_map or '偏印' in shishen_map):
+            yin_gans = shishen_map.get('正印', []) + shishen_map.get('偏印', [])
+            breaks.append({
+                'type': '食制逢印',
+                'severity': 'medium',
+                'detail': f'七杀格食神制杀，但又透印星{"".join(yin_gans)}，印泄食护杀，制杀不力',
+            })
 
     # ── 伤官格破格 ──
     # 《子平真诠》"伤官格败：伤官非金水而见官，或生财生带煞，或佩印而伤轻身旺"
@@ -824,6 +865,54 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
                     'severity': 'medium',
                     'detail': f'伤官格佩印{"".join(yin_gans)}但印星无本气根，佩印无力',
                 })
+        # (4) 伤轻身旺佩印 — 《子平真诠》第九章带忌"佩印而伤轻身旺"
+        # 伤官格佩印，但伤官轻（无本气根）且身旺，印重无制反为破格
+        # 身旺：天干有比劫或印星（与disease.py一致）
+        if ('正印' in shishen_map or '偏印' in shishen_map) and not is_jin_dm:
+            sg_gans = shishen_map.get('伤官', [])
+            # 伤官"轻"：无本气根
+            sg_wx_set = set()
+            for sg_g in sg_gans:
+                wx = GAN_WUXING.get(sg_g, '')
+                if wx:
+                    sg_wx_set.add(wx)
+            sg_has_benqi = False
+            for part in bazi_parts:
+                if len(part) < 2:
+                    continue
+                for cg, ql in get_canggan(part[1]):
+                    if GAN_WUXING.get(cg, '') in sg_wx_set and ql == '本气':
+                        sg_has_benqi = True
+                        break
+                if sg_has_benqi:
+                    break
+            has_bijie = '比肩' in shishen_map or '劫财' in shishen_map
+            has_yin = '正印' in shishen_map or '偏印' in shishen_map
+            is_shenqiang = has_bijie or has_yin
+            if not sg_has_benqi and is_shenqiang:
+                yin_gans = shishen_map.get('正印', []) + shishen_map.get('偏印', [])
+                breaks.append({
+                    'type': '伤轻身旺佩印',
+                    'severity': 'medium',
+                    'detail': f'伤官格佩印{"".join(yin_gans)}但伤官轻无本气根且身旺，印重无制反为破格',
+                })
+        # (5) 伤官生财而财逢合 — 《子平真诠》第九章带忌
+        # "伤官生财而财又逢合"：伤官生财但财星被合去，财星无用
+        if ('正财' in shishen_map or '偏财' in shishen_map):
+            cai_gans = shishen_map.get('正财', []) + shishen_map.get('偏财', [])
+            for cg in cai_gans:
+                he_partner = GAN_HE.get(cg, '')
+                if he_partner:
+                    for g in gans:
+                        if g == day_master or g == cg:
+                            continue
+                        if g == he_partner:
+                            breaks.append({
+                                'type': '伤官生财财逢合',
+                                'severity': 'medium',
+                                'detail': f'伤官格生财{cg}，但{cg}与{he_partner}相合，财星被合去',
+                            })
+                            break
 
     return breaks
 
