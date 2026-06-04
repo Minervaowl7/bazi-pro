@@ -60,6 +60,14 @@ from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.stems import GAN_HE, KE_MAP, SHENG_MAP, WO_KE_MAP
 from bazi_pro.core.ten_gods import _count_shishen_categories, _get_yongshen_direction
 
+# 天干→合化伙伴映射（从 GAN_HE frozenset 键展开为单天干查找表）
+# 《子平真诠》"甲己合土、乙庚合金、丙辛合水、丁壬合木、戊癸合火"
+_GAN_HE_PARTNER: dict[str, str] = {}
+for _pair, _wx in GAN_HE.items():
+    _gans = sorted(_pair)
+    _GAN_HE_PARTNER[_gans[0]] = _gans[1]
+    _GAN_HE_PARTNER[_gans[1]] = _gans[0]
+
 
 def _check_dm_root_in_branches(day_master: str, dm_wx: str, bazi_parts: list) -> dict:
     """检查日主在地支是否有根气
@@ -609,7 +617,7 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
         # 检查正官天干是否与其他天干构成天干五合
         guan_gans = shishen_map.get('正官', [])
         for gg in guan_gans:
-            he_partner = GAN_HE.get(gg, '')
+            he_partner = _GAN_HE_PARTNER.get(gg, '')
             if he_partner:
                 # 检查合化对象是否在天干中（排除日主自身与正官的合）
                 for g in gans:
@@ -901,7 +909,7 @@ def _check_zhengge_break(day_master, dm_wx, bazi_parts, gans, pattern_name):
         if ('正财' in shishen_map or '偏财' in shishen_map):
             cai_gans = shishen_map.get('正财', []) + shishen_map.get('偏财', [])
             for cg in cai_gans:
-                he_partner = GAN_HE.get(cg, '')
+                he_partner = _GAN_HE_PARTNER.get(cg, '')
                 if he_partner:
                     for g in gans:
                         if g == day_master or g == cg:
