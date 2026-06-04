@@ -286,7 +286,7 @@ def _narrate_pattern(day_master, dm_wx, bazi_parts, pattern_info):
     layer_names = {0: "特殊格局", 1: "月令本气透干", 2: "月令中气透干", 3: "暗格/比劫月令"}
     layer_desc = layer_names.get(layer, f"第{layer}层")
 
-    lines.append(f"经六层格局筛查，于{layer_desc}确认格局：{pattern}。")
+    lines.append(f"经四层格局筛查，于{layer_desc}确认格局：{pattern}。")
 
     # 置信度分级叙述
     if confidence >= 0.85:
@@ -579,6 +579,12 @@ def _narrate_personality(dm_wx, day_master, strength, pattern_info):
     elif "印" in pattern and has_tou and "偏" not in pattern:
         # 兜底：含"印"但有透干且非偏印
         lines.append("格取印星，好学深思，重精神世界，适合学术、教育或文化领域。")
+    elif "建禄" in pattern or "月劫" in pattern:
+        # 建禄月劫格：《子平真诠》"建禄月劫，无官煞则用食伤"
+        lines.append("格取建禄月劫，身旺有力，须看透干取用，宜开拓进取。")
+    elif "羊刃" in pattern:
+        # 羊刃格：《子平真诠》"阳刃喜官杀制伏"
+        lines.append("格取羊刃，刚毅果决，需官杀制伏，宜武职或竞争性领域。")
 
     return "\n".join(lines)
 
@@ -642,6 +648,10 @@ def _narrate_career(dm_wx, yongshen_info, pattern_info, gender):
         lines.append("格局带财星，适合商业、金融、经营类工作，善于积累财富。")
     elif "财" in pattern and has_tou and "偏" not in pattern:
         lines.append("格局带财星，适合商业、金融、经营类工作，善于积累财富。")
+    elif "建禄" in pattern or "月劫" in pattern:
+        lines.append("格局带建禄月劫，身旺有力，适合自主创业或技术专长类工作。")
+    elif "羊刃" in pattern:
+        lines.append("格局带羊刃，刚毅果决，适合军警、法律或竞争性强的领域。")
 
     return "\n".join(lines)
 
