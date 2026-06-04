@@ -506,9 +506,15 @@ def calc_shensha(bazi_parts: list[str]) -> list[dict]:
                 results.append({"name": "披麻", "position": positions[idx],
                                 "type": "凶", "desc": SHENSHA_DESC.get("披麻", "")})
 
-    TONGZI_SPRING = {"寅": "丑", "卯": "寅", "辰": "卯", "巳": "辰"}
-    TONGZI_AUTUMN = {"申": "未", "酉": "申", "戌": "酉", "亥": "戌"}
-    tongzi_zhi = TONGZI_SPRING.get(month_zhi, "") or TONGZI_AUTUMN.get(month_zhi, "")
+    # 童子煞查法口诀："春逢丑寅童子命，夏逢辰巳童子命，秋逢未申童子命，冬逢戌亥童子命"
+    TONGZI_SPRING = {"寅": "丑", "卯": "寅", "辰": "卯"}
+    TONGZI_SUMMER = {"巳": "辰", "午": "巳", "未": "午"}
+    TONGZI_AUTUMN = {"申": "未", "酉": "申", "戌": "酉"}
+    TONGZI_WINTER = {"亥": "戌", "子": "亥", "丑": "子"}
+    tongzi_zhi = (TONGZI_SPRING.get(month_zhi, "")
+                  or TONGZI_SUMMER.get(month_zhi, "")
+                  or TONGZI_AUTUMN.get(month_zhi, "")
+                  or TONGZI_WINTER.get(month_zhi, ""))
     if tongzi_zhi and day_zhi == tongzi_zhi:
         results.append({"name": "童子煞", "position": "日",
                         "type": "凶", "desc": SHENSHA_DESC.get("童子煞", "")})
