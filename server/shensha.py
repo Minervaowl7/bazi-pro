@@ -157,10 +157,12 @@ KUIGUI: dict[str, str] = {
 }
 
 TIANLUO: dict[str, str] = {
+    # 天罗查法 — 《三命通会》"辰见巳为天罗"，以年支或日支查
     "辰": "巳", "巳": "辰",
 }
 
 DIWANG: dict[str, str] = {
+    # 地网查法 — 《三命通会》"戌见亥为地网"，以年支或日支查
     "戌": "亥", "亥": "戌",
 }
 
@@ -412,8 +414,8 @@ def calc_shensha(bazi_parts: list[str], gender: int = 1) -> list[dict]:
         ("天医", TIANYI_YI, "month_zhi", "吉"),
         ("暗禄", ANLU, "day_gan", "吉"),
         ("血刃", XUEREN, "day_gan", "凶"),
-        ("天罗", TIANLUO, "month_zhi", "凶"),
-        ("地网", DIWANG, "month_zhi", "凶"),
+        ("天罗", TIANLUO, "year_zhi", "凶"),
+        ("地网", DIWANG, "year_zhi", "凶"),
     ]
 
     _ZHI_MULTI = [

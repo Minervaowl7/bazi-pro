@@ -1,4 +1,5 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck -- echarts-for-react types incompatible with React 19
 "use client";
 
 import { useEffect, useState } from "react";
