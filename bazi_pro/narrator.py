@@ -107,17 +107,31 @@ def narrate_analysis(result: dict) -> dict:
     """
     # ── 提取各维度数据，键名必须与 core 计算模块输出一致 ──
     validation = result.get("validation", {})
+    # strength: run_analysis() 返回 result['strength']['wangshuai']，full_analysis() 返回 result['wangshuai']
     strength = result.get("strength", {})
+    if not strength and "wangshuai" in result:
+        strength = {
+            "wangshuai": result["wangshuai"],
+            "deling": result.get("deling", {}),
+            "dedi": result.get("dedi", {}),
+            "deshi": result.get("deshi", {}),
+        }
+    # elements: run_analysis() 返回 result['elements']，full_analysis() 返回 result['element_forces']
+    elements = result.get("elements", {}) or result.get("element_forces", {})
     pattern_info = result.get("pattern", {})
     yongshen_info = result.get("yongshen", {})
-    elements = result.get("elements", {})
     relations = result.get("relations", [])
     retrieval = result.get("retrieval", {})
 
-    # 基础信息提取
-    day_master = validation.get("day_master", "")       # 日主天干，如"甲"
-    bazi = validation.get("bazi", "")                    # 四柱字符串，如"甲子 丙寅 戊辰 庚午"
-    gender = validation.get("gender", "")                # 性别
+    # 基础信息提取 — 兼容 run_analysis()（有 validation 键）和 full_analysis()（无 validation 键）
+    day_master = validation.get("day_master", "") or result.get("day_master", "")
+    bazi = validation.get("bazi", "")
+    if not bazi:
+        # full_analysis() 返回 pillars 列表，需重构八字字符串
+        pillars = result.get("pillars", [])
+        if pillars:
+            bazi = " ".join(p.get("gan", "") + p.get("zhi", "") for p in pillars if p.get("gan") and p.get("zhi"))
+    gender = validation.get("gender", "") or result.get("gender", "") or (result.get("birth_json", {}) or {}).get("性别", "")
     bazi_parts = bazi.split() if bazi else []            # 拆分为四柱列表
     month_zhi = bazi_parts[1][1] if len(bazi_parts) >= 2 and len(bazi_parts[1]) >= 2 else ""  # 月支
     dm_wx = GAN_WUXING.get(day_master, "")              # 日主五行，如"木"

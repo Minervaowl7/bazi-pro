@@ -133,7 +133,10 @@ export default function ComparePage() {
   useEffect(() => {
     fetch(`${API_BASE}/api/v2/history`)
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setHistory(data); })
+      .then(data => {
+        const list = Array.isArray(data) ? data : (data.analyses || []);
+        setHistory(list);
+      })
       .catch(() => {});
   }, []);
 

@@ -1006,7 +1006,8 @@ async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level:
             error_msg = result.get('error', '分析失败')
             await _sse_broadcast(analysis_id, "analysis-error", {"message": error_msg})
         elif actual_status == 'invalid_input':
-            error_msg = result.get('error', '输入数据无效')
+            errors = result.get('errors', [])
+            error_msg = '; '.join(errors) if isinstance(errors, list) and errors else result.get('error', '输入数据无效')
             await _sse_broadcast(analysis_id, "analysis-error", {"message": error_msg})
         else:
             await _sse_broadcast(analysis_id, "done", {"analysis_id": analysis_id})
