@@ -585,6 +585,22 @@ def _narrate_personality(dm_wx, day_master, strength, pattern_info):
     elif "羊刃" in pattern:
         # 羊刃格：《子平真诠》"阳刃喜官杀制伏"
         lines.append("格取羊刃，刚毅果决，需官杀制伏，宜武职或竞争性领域。")
+    elif "从财" in pattern:
+        lines.append("格取从财，顺势而为，善于把握机遇，适合商业投资。")
+    elif "从官" in pattern or "从杀" in pattern:
+        lines.append("格取从官杀，顺从权威，适合体制内或大平台发展。")
+    elif "从儿" in pattern:
+        lines.append("格取从儿，才华外露，适合创作、技术或自由职业。")
+    elif "从势" in pattern:
+        lines.append("格取从势，随势而动，适合顺势行业，不宜逆势。")
+    elif "从强" in pattern:
+        lines.append("格取从强，印比成势，适合自主创业或深耕专业。")
+    elif "专旺" in pattern or "润下" in pattern or "炎上" in pattern or "稼穑" in pattern or "从革" in pattern or "曲直" in pattern:
+        lines.append("格取专旺，一行独秀，气势磅礴，适合深耕本行或自主创业。")
+    elif "化气" in pattern or "化木" in pattern or "化火" in pattern or "化土" in pattern or "化金" in pattern or "化水" in pattern:
+        lines.append("格取化气，变化之象，适合创新领域或跨界发展。")
+    elif "成象" in pattern:
+        lines.append("格取两行成象，双行并立，适合复合型领域。")
 
     return "\n".join(lines)
 
@@ -652,6 +668,22 @@ def _narrate_career(dm_wx, yongshen_info, pattern_info, gender):
         lines.append("格局带建禄月劫，身旺有力，适合自主创业或技术专长类工作。")
     elif "羊刃" in pattern:
         lines.append("格局带羊刃，刚毅果决，适合军警、法律或竞争性强的领域。")
+    elif "从财" in pattern:
+        lines.append("格局从财，适合商业投资、金融贸易类工作。")
+    elif "从官" in pattern or "从杀" in pattern:
+        lines.append("格局从官杀，适合体制内、大平台或管理类工作。")
+    elif "从儿" in pattern:
+        lines.append("格局从儿，适合创作、技术或自由职业类工作。")
+    elif "从势" in pattern:
+        lines.append("格局从势，适合顺势行业，不宜逆势创业。")
+    elif "从强" in pattern:
+        lines.append("格局从强，适合自主创业或深耕专业领域。")
+    elif "专旺" in pattern or "润下" in pattern or "炎上" in pattern or "稼穑" in pattern or "从革" in pattern or "曲直" in pattern:
+        lines.append("格局专旺，适合深耕本行或自主创业。")
+    elif "化气" in pattern or "化木" in pattern or "化火" in pattern or "化土" in pattern or "化金" in pattern or "化水" in pattern:
+        lines.append("格局化气，适合创新领域或跨界发展。")
+    elif "成象" in pattern:
+        lines.append("格局两行成象，适合复合型领域。")
 
     return "\n".join(lines)
 
