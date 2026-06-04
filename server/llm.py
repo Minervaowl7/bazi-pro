@@ -187,18 +187,27 @@ def _format_analysis_context(analysis_result: dict, narration: dict, school: str
 
     validation = analysis_result.get("validation", {}) if isinstance(analysis_result.get("validation"), dict) else {}
     strength = analysis_result.get("strength", {}) if isinstance(analysis_result.get("strength"), dict) else {}
+    if not strength and "wangshuai" in analysis_result:
+        strength = {"wangshuai": analysis_result["wangshuai"]}
     pattern_info = analysis_result.get("pattern", {}) if isinstance(analysis_result.get("pattern"), dict) else {}
     yongshen_info = analysis_result.get("yongshen", {}) if isinstance(analysis_result.get("yongshen"), dict) else {}
     elements = analysis_result.get("elements", {}) if isinstance(analysis_result.get("elements"), dict) else {}
+    if not elements:
+        elements = analysis_result.get("element_forces", {}) if isinstance(analysis_result.get("element_forces"), dict) else {}
     relations = analysis_result.get("relations", []) if isinstance(analysis_result.get("relations"), list) else []
     tiaohou = analysis_result.get("tiaohou", {}) if isinstance(analysis_result.get("tiaohou"), dict) else {}
     shishen = analysis_result.get("shishen", {}) if isinstance(analysis_result.get("shishen"), dict) else {}
     shensha = analysis_result.get("shensha", {}) if isinstance(analysis_result.get("shensha"), dict) else {}
     gongwei = analysis_result.get("gongwei", {}) if isinstance(analysis_result.get("gongwei"), dict) else {}
 
-    day_master = validation.get("day_master", "") if isinstance(validation, dict) else ""
-    bazi = validation.get("bazi", "") if isinstance(validation, dict) else ""
-    gender = validation.get("gender", "") if isinstance(validation, dict) else ""
+    day_master = validation.get("day_master", "") or analysis_result.get("day_master", "")
+    bazi = validation.get("bazi", "")
+    if not bazi:
+        # full_analysis() 返回 pillars 列表，需重构八字字符串
+        pillars_raw = analysis_result.get("pillars", []) or (shishen.get("pillars", []) if isinstance(shishen, dict) else [])
+        if pillars_raw:
+            bazi = " ".join(p.get("gan", "") + p.get("zhi", "") for p in pillars_raw if isinstance(p, dict) and p.get("gan") and p.get("zhi"))
+    gender = validation.get("gender", "") or analysis_result.get("gender", "")
 
     ws = strength.get("wangshuai", {}) if isinstance(strength, dict) else {}
     pattern = pattern_info.get("pattern", "") if isinstance(pattern_info, dict) else ""
@@ -768,6 +777,8 @@ def build_chat_system_prompt(analysis_result: dict, narration: dict, school: str
         validation = analysis_result.get("validation", {})
         if isinstance(validation, dict):
             day_master = validation.get("day_master", "") or ""
+        if not day_master:
+            day_master = analysis_result.get("day_master", "")
 
     # 获取格局类型用于开场模板
     pattern_type = "正格"
