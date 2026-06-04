@@ -16,6 +16,7 @@ import SchoolComparePanel from "@/components/SchoolComparePanel";
 import DayunTimeline from "@/components/DayunTimeline";
 import GongweiPanel from "@/components/GongweiPanel";
 import ShenShaPanel from "@/components/ShenShaPanel";
+import ZiweiPanel from "@/components/ZiweiPanel";
 import ChatPanel from "@/components/ChatPanel";
 import ExportPanel from "@/components/ExportPanel";
 import { SCHOOL_OPTIONS_WITH_ALL, WUXING_COLORS, GAN_WUXING, ZHI_WUXING } from "@/lib/constants";
@@ -58,6 +59,7 @@ const TABS = [
   { id: "bazi", label: "四柱命盘", icon: "☰" },
   { id: "dayun", label: "大运流年", icon: "⏱" },
   { id: "detail", label: "宫位神煞", icon: "◈" },
+  { id: "ziwei", label: "紫微斗数", icon: "★" },
   { id: "analysis", label: "流派解读", icon: "✦" },
   { id: "chat", label: "命理问答", icon: "☯" },
 ] as const;
@@ -430,7 +432,25 @@ export default function AnalyzePage() {
                 </div>
               )}
 
-              {/* Tab 4: 流派解读 */}
+              {/* Tab 4: 紫微斗数 */}
+              {activeTab==="ziwei"&&(
+                <div className="stagger-in">
+                  {analysisResult?.ziwei ? (
+                    <section className="p-6 border" style={{background:"var(--surface)",borderColor:"var(--color-border)"}}>
+                      <div style={{borderBottom:"2px solid var(--color-border-strong)",paddingBottom:12,marginBottom:16}}>
+                        <h3 className="font-bold" style={{fontSize:16,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)"}}>紫微斗数命盘</h3>
+                      </div>
+                      <ZiweiPanel data={analysisResult.ziwei as Record<string, unknown>} />
+                    </section>
+                  ) : (
+                    <section className="p-6 border" style={{background:"var(--surface)",borderColor:"var(--color-border)"}}>
+                      <p style={{fontSize:15,color:"var(--color-text-muted)"}}>紫微斗数数据不可用（需安装 iztro-py 依赖）</p>
+                    </section>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 5: 流派解读 */}
               {activeTab==="analysis"&&(
                 <div className="space-y-10 stagger-in" style={{maxWidth:860,marginLeft:"auto",marginRight:"auto"}}>
                   {isCompareMode&&schoolAnalyses?<SchoolComparePanel schoolAnalyses={schoolAnalyses}/>:<SchoolPanel result={analysisResult} narration={narration}/>}

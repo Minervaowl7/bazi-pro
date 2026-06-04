@@ -324,3 +324,40 @@ export function subscribeSSE(
 
   return es;
 }
+
+// ── 紫微斗数 API ──────────────────────────────────────────────
+
+export interface ZiweiChartParams {
+  solar_date: string;
+  hour: number;
+  gender: number;
+}
+
+export interface ZiweiHoroscopeParams extends ZiweiChartParams {
+  query_date?: string;
+}
+
+export interface ZiweiPalaceParams extends ZiweiChartParams {
+  palace_name?: string;
+}
+
+export async function getZiweiChart(params: ZiweiChartParams): Promise<Record<string, unknown>> {
+  return fetchApi("/api/v2/ziwei/chart", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export async function getZiweiHoroscope(params: ZiweiHoroscopeParams): Promise<Record<string, unknown>> {
+  return fetchApi("/api/v2/ziwei/horoscope", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export async function getZiweiPalace(params: ZiweiPalaceParams): Promise<Record<string, unknown>> {
+  return fetchApi("/api/v2/ziwei/palace", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}

@@ -900,6 +900,81 @@ async def api_v2_reverse_lookup(payload: ReverseLookupRequest):
     return JSONResponse({"dates": results, "day_pillar": payload.day_pillar})
 
 
+# ── 紫微斗数端点 ──────────────────────────────────────────────
+
+class ZiweiChartRequest(BaseModel):
+    """紫微斗数排盘请求"""
+    solar_date: str = Field(..., description="阳历出生日期，格式 YYYY-MM-DD")
+    hour: int = Field(..., ge=0, le=23, description="出生小时(0-23)")
+    gender: int = Field(default=1, description="性别：1=男，0=女")
+
+
+class ZiweiHoroscopeRequest(BaseModel):
+    """紫微斗数运势查询请求"""
+    solar_date: str = Field(..., description="阳历出生日期，格式 YYYY-MM-DD")
+    hour: int = Field(..., ge=0, le=23, description="出生小时(0-23)")
+    gender: int = Field(default=1, description="性别：1=男，0=女")
+    query_date: Optional[str] = Field(default=None, description="查询日期，格式 YYYY-MM-DD，默认今天")
+
+
+class ZiweiPalaceRequest(BaseModel):
+    """紫微斗数宫位分析请求"""
+    solar_date: str = Field(..., description="阳历出生日期，格式 YYYY-MM-DD")
+    hour: int = Field(..., ge=0, le=23, description="出生小时(0-23)")
+    gender: int = Field(default=1, description="性别：1=男，0=女")
+    palace_name: str = Field(default="命宫", description="宫位名称")
+
+
+@app.post("/api/v2/ziwei/chart")
+async def api_v2_ziwei_chart(payload: ZiweiChartRequest):
+    """紫微斗数排盘 — 生成完整十二宫命盘"""
+    from server.ziwei import get_ziwei_chart
+
+    result = await asyncio.to_thread(
+        get_ziwei_chart,
+        solar_date=payload.solar_date,
+        hour=payload.hour,
+        gender=payload.gender,
+    )
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
+
+
+@app.post("/api/v2/ziwei/horoscope")
+async def api_v2_ziwei_horoscope(payload: ZiweiHoroscopeRequest):
+    """紫微斗数运势 — 查询大限/流年/流月/流日/流时"""
+    from server.ziwei import get_ziwei_horoscope
+
+    result = await asyncio.to_thread(
+        get_ziwei_horoscope,
+        solar_date=payload.solar_date,
+        hour=payload.hour,
+        gender=payload.gender,
+        query_date=payload.query_date,
+    )
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
+
+
+@app.post("/api/v2/ziwei/palace")
+async def api_v2_ziwei_palace(payload: ZiweiPalaceRequest):
+    """紫微斗数宫位分析 — 分析特定宫位详细信息"""
+    from server.ziwei import analyze_ziwei_palace
+
+    result = await asyncio.to_thread(
+        analyze_ziwei_palace,
+        solar_date=payload.solar_date,
+        hour=payload.hour,
+        gender=payload.gender,
+        palace_name=payload.palace_name,
+    )
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
+
+
 async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level: str, school: str = 'ziping'):
     """P0 后台分析 — 发送 SSE 事件 + 存储结果"""
     for key in list(mcp_json.keys()):

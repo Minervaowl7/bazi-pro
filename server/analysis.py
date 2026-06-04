@@ -223,6 +223,23 @@ async def run_analysis(mcp_json: dict, run_id: str,
                 result['school_warning'] = f'流派分析失败: {str(e)}'
                 await manager.send_progress(run_id, 'school', 'done', '流派分析跳过')
 
+        # 紫微斗数排盘（可选，依赖 iztro-py）
+        if solar and gender:
+            try:
+                from server.ziwei import get_ziwei_chart
+                _hour = int(mcp_json.get('时辰', 12)) if mcp_json.get('时辰', '') else 12
+                _gender_num = 1 if gender == "男" else 0
+                ziwei = await asyncio.to_thread(
+                    get_ziwei_chart,
+                    solar_date=solar.split()[0] if ' ' in solar else solar,
+                    hour=_hour,
+                    gender=_gender_num,
+                )
+                if "error" not in ziwei:
+                    result['ziwei'] = ziwei
+            except Exception:
+                pass  # 紫微斗数为可选功能，失败不影响主流程
+
         result['completed_at'] = datetime.now(timezone.utc).isoformat()
         cache.set(cache_key, result, ttl=3600)
 
