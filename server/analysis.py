@@ -227,7 +227,15 @@ async def run_analysis(mcp_json: dict, run_id: str,
         if solar and gender:
             try:
                 from server.ziwei import get_ziwei_chart
-                _hour = int(mcp_json.get('时辰', 12)) if mcp_json.get('时辰', '') else 12
+                # 从阳历字段提取出生小时（格式 "2002-05-19 06:14"）
+                # mcp_json 无"时辰"字段，需从阳历时间部分解析
+                _hour = 12  # 默认午时
+                if solar and ' ' in solar:
+                    try:
+                        _time_part = solar.split()[1]
+                        _hour = int(_time_part.split(':')[0])
+                    except (ValueError, IndexError):
+                        pass
                 _gender_num = 1 if gender == "男" else 0
                 ziwei = await asyncio.to_thread(
                     get_ziwei_chart,

@@ -148,7 +148,7 @@ async def update_analysis_result(analysis_id: str, result: dict):
 
     pattern_info = result.get("pattern", {})
     yongshen_info = result.get("yongshen", {})
-    day_master = result.get("validation", {}).get("day_master", "")
+    day_master = result.get("validation", {}).get("day_master", "") or result.get("day_master", "")
 
     pattern_str = pattern_info.get("pattern", "") if isinstance(pattern_info, dict) else ""
     yongshen_str = yongshen_info.get("yongshen", "") if isinstance(yongshen_info, dict) else ""

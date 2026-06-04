@@ -103,17 +103,24 @@ class CompareEngine:
         return result
 
     def _extract_bazi(self, chart: dict) -> str:
-        """从 full_analysis() 返回结果中提取八字字符串"""
+        """从分析结果中提取八字字符串，兼容 full_analysis() 和 run_analysis() 返回结构"""
         # full_analysis() 返回 result['pillars'] = [{position, gan, zhi, ...}, ...]
         pillars = chart.get('pillars', [])
+        if not pillars:
+            # run_analysis() 返回 result['shishen']['pillars']
+            shishen = chart.get('shishen', {})
+            if isinstance(shishen, dict):
+                pillars = shishen.get('pillars', [])
         if pillars:
             return ' '.join(p.get('gan', '') + p.get('zhi', '') for p in pillars if p.get('gan') and p.get('zhi'))
         # 兜底：尝试从 '八字' 键获取（兼容旧格式）
         return chart.get('八字', '')
 
     def _extract_daymaster(self, chart: dict) -> str:
-        """从 full_analysis() 返回结果中提取日主"""
-        return chart.get('day_master', '') or chart.get('日主', '')
+        """从分析结果中提取日主，兼容 full_analysis() 和 run_analysis() 返回结构"""
+        return (chart.get('day_master', '')
+                or chart.get('日主', '')
+                or chart.get('validation', {}).get('day_master', ''))
 
     def compare_pillars(self) -> list[dict]:
         a_bz = self._extract_bazi(self.chart_a)

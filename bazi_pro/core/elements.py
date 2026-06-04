@@ -237,8 +237,8 @@ def calc_element_forces(bazi_parts: list[str], month_zhi: str) -> dict:
                 continue
             weight = CANGGAN_WEIGHT.get(ql, 0)
             # 月支本气乘以1.5倍 — 月令为提纲，力量最重
-            # i==1 表示月柱（第二柱），ql=='本气' 表示本气藏干
-            if i == 1 and ql == '本气':
+            # 用 month_zhi 参数判断（比 i==1 更健壮），确保即使 bazi_parts 顺序异常也不误判
+            if zhi == month_zhi and ql == '本气':
                 weight *= 1.5
             forces[cg_wx] += weight
 
