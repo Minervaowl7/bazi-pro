@@ -38,8 +38,8 @@ def calc_deling(day_master: str, month_zhi: str) -> tuple[str, int]:
         (status, score) 元组：
         - status: 十二长生状态名（如"长生"、"帝旺"、"绝"等）
         - score: 得令评分，正值=得令，负值=失令
-          （长生+3, 帝旺+3, 临官+3, 冠带+2, 建禄+2,
-            衰-1, 病-1, 死-2, 绝-2, 墓-1, 养+1, 沐浴+1）
+          （帝旺+3, 临官+3, 长生+2, 冠带+1, 养+1,
+            沐浴0, 衰0, 胎0, 病-1, 墓-1, 死-2, 绝-3）
     """
     changsheng_table = SHIER_CHANGSHENG.get(day_master, {})
     status = changsheng_table.get(month_zhi, '')
