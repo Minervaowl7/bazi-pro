@@ -45,10 +45,6 @@ server/tools/node_modules/
 server/tools/package-lock.json/
 frontend/.env.local
 
-# Environment files with secrets
-server/.env
-.env
-
 # Trae IDE
 .trae/
 
@@ -58,3 +54,18 @@ dogfood-output/
 frontend/*.png
 frontend/package-lock.json
 test_bazi.py
+
+# Diagnostic / temp scripts
+tests/_diag_*.py
+tests/update_golden*.py
+test_webapp.py
+test_chat_context.py
+
+# Codegraph index (local only)
+.codegraph/
+
+# Security — never commit real env files
+server/.env
+.env
+*.pem
+*.key
