@@ -228,10 +228,10 @@ def judge_wangshuai(deling_score: int, dedi_score: float, deshi_score: float,
     if deling_score >= 3 and dedi_score >= 3 and deshi_score >= 6:
         verdict = '极旺'
     # ── 极弱：日主孤立无气 ──
-    # 《滴天髓》"日主孤立无气" — 极弱条件：
-    # 1. 得令极差（绝/死）+ 不得地 + 不得势
-    # 2. 得令差（病）+ 不得地 + 极不得势（完全无助）
-    elif deling_score <= -2 and dedi_score < 1.5 and deshi_score <= 1:
+    # 《滴天髓》"日主孤立无气" — 极弱的核心是"孤立无气"
+    # 条件1：得令极差（绝/死）+ 不得地 + 不得势（帮身极弱）
+    # 条件2：得令差（病）+ 极不得地 + 极不得势（完全无助）
+    elif deling_score <= -2 and dedi_score < 1.5 and deshi_score < 2:
         verdict = '极弱'
     elif deling_score <= -1 and dedi_score < 1.0 and deshi_score <= 0.5:
         verdict = '极弱'
@@ -249,7 +249,7 @@ def judge_wangshuai(deling_score: int, dedi_score: float, deshi_score: float,
     # ── 身弱：不得令+不得地+不得势 ──
     elif deling_score <= 0 and dedi_score < 1.5 and deshi_score < 2:
         verdict = '身弱'
-    elif deling_score <= -1 and dedi_score < 1.5:
+    elif deling_score <= -1 and dedi_score < 1.5 and deshi_score < 4:
         # 补充覆盖：得令极差（绝/死/病）且不得地，即使得势略高也偏弱
         verdict = '身弱'
     # ── 中和偏旺/偏弱过渡区 ──

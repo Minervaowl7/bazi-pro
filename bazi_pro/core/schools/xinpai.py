@@ -384,9 +384,10 @@ class XinpaiAnalyzer(SchoolAnalyzer):
         if month_help and help_count > drain_count:
             # 月令帮扶 + 帮扶>泄耗
             if not has_root and not has_yin_root:
-                # 无根无印，但帮扶>泄耗 → 视泄耗情况定从强或身旺
-                if drain_count == 0:
-                    return '从强'   # 完全无泄耗 → 从强
+                # 无根无印，但帮扶>泄耗 → 视帮扶/泄耗比例定从强或身旺
+                # 《八字预测真踪》从强条件：帮扶≥2倍泄耗
+                if help_count >= drain_count * 2:
+                    return '从强'
                 return '身旺'
             if help_count >= drain_count * 2 and drain_count <= 1:
                 return '从强'       # 帮扶≥2倍泄耗且泄耗极少 → 从强

@@ -7,8 +7,8 @@
     "bazi": "辛亥 壬寅 壬午 甲辰",
     "month_branch": "寅",
     "expected_pattern": "食神格",
-    "expected_wangshuai": "身弱",
-    "expected_yongshen_wx": "水",
+    "expected_wangshuai": "中和",
+    "expected_yongshen_wx": "火",
     "expected_deling_score": -1,
     "expected_dedi_level": "不得地",
     "expected_deshi_level": "得势"
