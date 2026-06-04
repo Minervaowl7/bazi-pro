@@ -24,6 +24,14 @@ Rules that any AI agent (or human contributor) must follow when modifying this p
 
 10. **CI must run the full verification chain.** The CI workflow must include: `pip install -e ".[all]"`, `python -m compileall`, `python -m pytest -q tests`, `python scripts/doctor.py`, `python tests/run_golden.py`, and `python -m bazi_pro.doctor`.
 
+11. **建禄/羊刃月令优先于专旺格/从强格.** When the month branch is 建禄 or 羊刃 of the day master, `_screen_layer0` must skip 专旺格 and 从强格 detection (`not is_jianlu_yangren_month`), letting the 建禄/羊刃格 path take precedence. This aligns with 《子平真诠》"用神专寻月令".
+
+12. **旺衰极旺判定须考虑官杀力量.** In `judge_wangshuai()`, when 印比≥75%, if 官杀力量≥15%, do not force "极旺" verdict (官印双全 pattern). This aligns with 《渊海子平》.
+
+13. **神煞查表统一使用年支.** 驿马/桃花/华盖/将星/劫煞/绞煞/亡神/红鸾/天喜 must all use `year_zhi` (年支), aligned with 《三命通会》.
+
+14. **双源兼容取值.** When reading `day_master`/`pillars` from analysis results, always use dual-source fallback: `result.get("day_master", "") or result.get("validation", {}).get("day_master", "")`. `full_analysis()` puts these at top level; `run_analysis()` puts them under `validation`/`shishen`.
+
 ## Verification Commands
 
 After any change, run:

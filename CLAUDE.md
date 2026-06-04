@@ -144,9 +144,9 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 | 模块 | 职责 |
 |------|------|
 | `bazi_pro/core/constants.py` | 天干地支映射、十神推导 |
-| `bazi_pro/core/patterns.py` | 六层格局筛查 + 破格检测（专旺/化气/从格/建禄/羊刃/正格） |
+| `bazi_pro/core/patterns.py` | 六层格局筛查 + 破格检测（专旺/化气/从格/建禄/羊刃/正格 + 建禄羊刃月令优先拦截） |
 | `bazi_pro/core/yongshen.py` | 用神/喜神/忌神推导 |
-| `bazi_pro/core/strength.py` | 旺衰判定（得令/得地/得势） |
+| `bazi_pro/core/strength.py` | 旺衰判定（得令/得地/得势 + 官杀修正极旺判定） |
 | `bazi_pro/core/relations.py` | 刑冲合害检测 + 天干合化 |
 | `bazi_pro/core/disease.py` | 格局之病检测（5 类） |
 | `bazi_pro/core/tiaohou.py` | 调候用神查表（穷通宝鉴 120 条） |
@@ -194,6 +194,7 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 ### 专旺格
 - 必须有地支方局/三合局（`_check_formation()`），无则降级为从强格
 - 必须月令当令（`_check_month_season()`）
+- **建禄/羊刃月令不入专旺格** — 月令为建禄/羊刃时，专旺格检测被跳过，走建禄/羊刃格路径（`not is_jianlu_yangren_month`）
 - 破格：官杀逆势（high）、引至死绝（medium）
 
 ### 化气格
@@ -206,6 +207,7 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 - 有局=真从（0.85），无局=假从（0.65）
 - 破格：命逢根气（high）
 - 从儿格须财星≥1（滴天髓"只要吾儿又得儿"）
+- **建禄/羊刃月令不从强** — 月令为建禄/羊刃时，从强格检测被跳过（`not is_jianlu_yangren_month`）
 
 ### 建禄/羊刃/正格
 - 建禄格破格：孤官无辅（medium）、会杀为凶（high）
@@ -244,6 +246,17 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 - **register_school 位置** — 在各流派模块底部调用 `register_school()`，import 在顶部（ziping.py 需 `# noqa: E402`）。
 - **破格检测函数签名** — `_screen_layer1/2/3` 和 `_build_jianlu_yuejie` 需要传入 `bazi_parts` 参数。
 - **金水伤官除外** — 伤官格破格检测中，庚/辛日主（金日主）的伤官见官不标记破格。
+- **建禄/羊刃月令优先于专旺格/从强格** — 月令为建禄/羊刃时，建禄格/羊刃格优先于专旺格（曲直/炎上/从革/润下/稼穑）和从强格。`_screen_layer0` 中专旺格和从强格检测排除 `is_jianlu_yangren_month`，对齐《子平真诠》"用神专寻月令"原则。
+- **旺衰极旺判定官杀修正** — `judge_wangshuai()` 中印比≥75%时，若官杀力量≥15%则不强制判极旺（"官印双全"格），对齐《渊海子平》。
+- **双源兼容取值** — `full_analysis()` 返回 `result['day_master']`/`result['pillars']`（顶层），`run_analysis()` 返回 `result['validation']['day_master']`/`result['shishen']['pillars']`。取值时需双源回退：`result.get("day_master", "") or result.get("validation", {}).get("day_master", "")`。
+- **紫微斗数时辰** — `analysis.py` 从阳历字段提取出生小时（`solar.split()[1].split(':')[0]`），默认午时(12)。不使用 `mcp_json.get('时辰')`，因为 `BirthAnalyzeRequest` 无此字段。
+- **天干合用神检测** — `ziping.py` 大运吉凶中，天干合用神不限制大运天干本身必须是喜用五行，忌神天干合去用神天干同样应标记。
+- **盲派化用五行方向** — `mangpai.py` 化用检测中 `(cg_wx, gan_wx) in SHENG_PAIRS` 表示藏干生天干（体泄秀为用），非 `(gan_wx, cg_wx)`。
+- **神煞查表统一用年支** — 驿马/桃花/华盖/将星/劫煞/绞煞/亡神/红鸾/天喜均使用 `year_zhi`（年支），对齐《三命通会》。
+- **elements.py 月支加成** — 月支本气1.5倍加成使用 `zhi == month_zhi` 参数判断，非硬编码索引 `i==1`。
+- **SHISHEN_WUXING_REL 无 '印比'** — 印星和比劫需单独映射，从强格/专旺格用神拆分为 `['印星', '比劫']`。
+- **_GAN_HE_PARTNER 映射** — 天干合查表使用显式映射表（非 frozenset），避免查找失败。
+- **_ZHI_CHONG_MAP 映射** — 地支冲查表使用显式映射表（非 frozenset set），ziping.py 大运吉凶用此表。
 
 ## Plugin system
 

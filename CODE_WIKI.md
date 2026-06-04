@@ -362,6 +362,7 @@ def full_analysis(mcp_json: dict) -> dict
 - **身弱**：得令≤0 且 得地<1.5 且 得势<2
 - **中和**：其他组合
 - **关键约束**：极旺/极弱必须在身旺/身弱之前检查，防止遮蔽
+- **官杀修正**：印比≥75%时，若官杀力量≥15%则不强制判极旺（官印双全格），对齐《渊海子平》
 
 ### 4.3 五行力量计算 (`elements.py`)
 
@@ -401,8 +402,8 @@ def full_analysis(mcp_json: dict) -> dict
 
 **L0 特殊格局判定逻辑**:
 - 化气格：日主参与天干合化，化神修正后占比≥60%
-- 专旺格：日主五行占比≥80%（曲直/炎上/稼穑/从革/润下）
-- 从强格：印比≥80%，日主极旺且地支无本气根
+- 专旺格：日主五行占比≥80%（曲直/炎上/稼穑/从革/润下）— **建禄/羊刃月令时跳过**（`not is_jianlu_yangren_month`）
+- 从强格：印比≥80%，日主极旺且地支无本气根 — **建禄/羊刃月令时跳过**（`not is_jianlu_yangren_month`）
 - 从财/从官杀/从儿/从势：日主极弱，克泄耗成势，无比劫印星
 
 **建禄月劫格特殊处理**:
@@ -1186,13 +1187,17 @@ python scripts/check_version_consistency.py
 1. **`bazi_pro/core/` 模块只从 `bazi_pro.core.*` 导入**，禁止从 `bazi_pro` 直接导入（防循环依赖）
 2. **每个新规则至少一个测试**：新增 `bazi_pro/core/` 函数必须加测试
 3. **公共 API 变更需兼容性测试**：修改 `AnalysisEngine.analyze()` 或 `full_analysis()` 返回键需更新 `EXPECTED_TOP_LEVEL_KEYS`
-4. **Golden Cases 数量不可减少**：当前 98 例，只能增加或修正
+4. **Golden Cases 数量不可减少**：当前 120 例，只能增加或修正
 5. **脚本必须传播退出码**：`scripts/*.py` 使用 `sys.exit(main())`
 6. **Doctor 遇 FAIL 必须退出码 1**
 7. **禁止 LLM 占位符**：模式名、旺衰裁决、用神值不得含"待LLM分析"
 8. **极旺/极弱优先检查**：`judge_wangshuai()` 中"极旺"/"极弱"在"身旺"/"身弱"之前
 9. **检索错误必须可见**：`AnalysisEngine.retrieve()` 错误出现在 `result["retrieval"]["warnings"]`
 10. **CI 必须运行完整验证链**
+11. **建禄/羊刃月令优先于专旺格/从强格**：月令为建禄/羊刃时，专旺格和从强格检测被跳过，对齐《子平真诠》"用神专寻月令"
+12. **旺衰极旺判定官杀修正**：印比≥75%时，官杀≥15%不强制极旺（官印双全格），对齐《渊海子平》
+13. **神煞查表统一年支**：对齐《三命通会》
+14. **双源兼容取值**：`full_analysis()` 和 `run_analysis()` 返回结构不同，取值需双源回退
 
 ### 15.2 关键 Gotchas
 
@@ -1201,6 +1206,12 @@ python scripts/check_version_consistency.py
 - **`percent` vs `percent_adjusted`**：格局筛查用 `percent`（原始），化气格用 `percent_adjusted`（合化修正）
 - **从格用神方向**：从强/专旺→印星，从财→财星，从官杀→官杀，从儿→食伤
 - **建禄月劫格用神**：由格局名中"透X"决定，不是盲取 `PATTERN_YONGSHEN` 表
+- **建禄/羊刃月令优先拦截**：`_screen_layer0` 中专旺格/从强格检测排除 `is_jianlu_yangren_month`
+- **旺衰极旺官杀修正**：`judge_wangshuai()` 中印比≥75%时官杀≥15%不强制极旺
+- **双源兼容取值**：`day_master`/`pillars` 需双源回退（顶层 + validation/shishen）
+- **神煞查表统一年支**：驿马/桃花/华盖/将星/劫煞/绞煞/亡神/红鸾/天喜均用 `year_zhi`
+- **天干合/地支冲映射**：`_GAN_HE_PARTNER`/`_ZHI_CHONG_MAP` 使用显式字典（非 frozenset）
+- **SHISHEN_WUXING_REL 无 '印比'**：从强格/专旺格用神拆分为 `['印星', '比劫']`
 - **Windows 兼容**：子进程测试使用 `sys.executable`，文件读写指定 `encoding="utf-8"`
 - **Server 模块可选**：`server/` 依赖不装也不影响核心功能
 - **前端包管理**：使用 `pnpm`（非 npm/yarn）
