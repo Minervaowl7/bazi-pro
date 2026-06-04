@@ -23,10 +23,19 @@
 import copy
 
 from bazi_pro.core import full_analysis
+from bazi_pro.core.branches import ZHI_CHONG
 from bazi_pro.core.constants import GAN_WUXING, WUXING_TO_GAN, ZHI_WUXING, derive_shishen
+from bazi_pro.core.patterns import _GAN_HE_PARTNER
 from bazi_pro.core.schools import register_school  # noqa: E402
 from bazi_pro.core.schools.base import SchoolAnalyzer
 from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP, WO_SHENG_MAP
+
+# 地支冲查表映射（从 ZHI_CHONG frozenset 集合展开为单地支查找表）
+_ZHI_CHONG_MAP: dict[str, str] = {}
+for _pair in ZHI_CHONG:
+    _zhis = sorted(_pair)
+    _ZHI_CHONG_MAP[_zhis[0]] = _zhis[1]
+    _ZHI_CHONG_MAP[_zhis[1]] = _zhis[0]
 
 # ──────────────────────────────────────────────────────────────────────
 # 破格用神调整表 — 依据《子平真诠》第九章"论用神成败救应"
@@ -400,6 +409,20 @@ class ZipingAnalyzer(SchoolAnalyzer):
                             details.append('天干{}({})生忌神{}'.format(gan, gan_wx, ji_wx))
                             break
 
+            # ── 天干合用神检测 — 《子平真诠》"透官而又逢合" ──
+            # 大运天干与用神天干相合，用神被合去则凶
+            if gan_wx in favorable_wx and gan != day_master:
+                # 检查大运天干是否与命局中用神天干相合
+                he_partner = _GAN_HE_PARTNER.get(gan, '')
+                if he_partner:
+                    # 用神五行对应的天干列表
+                    yong_gans = [g for g, w in GAN_WUXING.items() if w == yong_wx]
+                    for yg in yong_gans:
+                        if yg == he_partner:
+                            gan_score -= 1
+                            details.append('天干{}合去用神{}，用神失力'.format(gan, he_partner))
+                            break
+
             # ── 地支评分（逻辑与天干对称） ──
             if zhi_wx:
                 if zhi_wx in favorable_wx:
@@ -423,6 +446,20 @@ class ZipingAnalyzer(SchoolAnalyzer):
                                 zhi_score -= 1
                                 details.append('地支{}({})生忌神{}'.format(zhi, zhi_wx, ji_wx))
                                 break
+
+                # ── 地支冲用神/冲忌神检测 ──
+                # 《子平真诠》"用神逢冲则凶，忌神逢冲则吉"
+                if zhi:
+                    chong_partner = _ZHI_CHONG_MAP.get(zhi, '')
+                    if chong_partner:
+                        # 检查冲去的是否为用神根基
+                        chong_wx = ZHI_WUXING.get(chong_partner, '')
+                        if chong_wx in favorable_wx:
+                            zhi_score -= 1
+                            details.append('地支{}冲{}，用神根基动摇'.format(zhi, chong_partner))
+                        elif chong_wx in unfavorable_wx:
+                            zhi_score += 1
+                            details.append('地支{}冲{}，忌神被冲去'.format(zhi, chong_partner))
 
             # 综合天干地支评分判定吉凶
             total = gan_score + zhi_score
