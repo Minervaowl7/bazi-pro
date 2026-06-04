@@ -390,10 +390,10 @@ def calc_shensha(bazi_parts: list[str], gender: int = 1) -> list[dict]:
 
     _ZHI_SINGLE = [
         ("文昌贵人", WENCHANG, "day_gan", "吉"),
-        ("驿马", YIMA, "day_zhi", "吉"),
-        ("桃花", TAOHUA, "day_zhi", "中"),
-        ("华盖", HUAGAI, "day_zhi", "吉"),
-        ("将星", JIANGXING, "day_zhi", "吉"),
+        ("驿马", YIMA, "year_zhi", "吉"),
+        ("桃花", TAOHUA, "year_zhi", "中"),
+        ("华盖", HUAGAI, "year_zhi", "吉"),
+        ("将星", JIANGXING, "year_zhi", "吉"),
         ("禄神", LUSHEN, "day_gan", "吉"),
         ("羊刃", YANGREN, "day_gan", "凶"),
         ("金舆", JINYU, "day_gan", "吉"),

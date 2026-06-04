@@ -1213,7 +1213,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                 return {
                     'layer': 0, 'type': '专旺格', 'pattern': zhuanwang_names.get(dm_wx, '专旺格'),
                     'confidence': confidence, 'reason': reason,
-                    'yongshen_direction': '印比',
+                    'yongshen_direction': '印星比劫',
                     'formation': formation,
                     'break_conditions': break_conditions,
                 }
@@ -1225,7 +1225,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                     'layer': 0, 'type': '从强格', 'pattern': '从强格',
                     'confidence': 0.80,
                     'reason': zhuanwang_reason_base + f'，仅有{formation["type"]}{"".join(formation["branches"])}，非完整方局/三合，降级为从强格',
-                    'yongshen_direction': '印比',
+                    'yongshen_direction': '印星比劫',
                 }
         else:
             # 无方局/三合：根据印比力量和根气决定降级方向
@@ -1235,7 +1235,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                     'layer': 0, 'type': '从强格', 'pattern': '从强格',
                     'confidence': 0.85,
                     'reason': zhuanwang_reason_base + '但无方局/三合局，降级为从强格',
-                    'yongshen_direction': '印比',
+                    'yongshen_direction': '印星比劫',
                 }
             else:
                 # 有根或印比不够 → 身旺（普通旺衰）
@@ -1254,7 +1254,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
             'layer': 0, 'type': '从强格', 'pattern': '从强格',
             'confidence': 0.85,
             'reason': f'印比合计{yin_bi_pct}%≥80%，地支无本气根（真从强）',
-            'yongshen_direction': '印比',
+            'yongshen_direction': '印星比劫',
         }
 
     # 建禄/羊刃月令不从强（走建禄/羊刃格路径）
@@ -1266,7 +1266,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                     'layer': 0, 'type': '从强格', 'pattern': '从强格',
                     'confidence': 0.85,
                     'reason': f'印比合计{yin_bi_pct}%≥80%，日主极旺且地支无根（真从强）',
-                    'yongshen_direction': '印比',
+                    'yongshen_direction': '印星比劫',
                 }
             else:
                 # 有根不能从强，判身旺
@@ -1276,7 +1276,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                     'pattern': '身旺',
                     'confidence': 0.75,
                     'reason': f'印比合计{yin_bi_pct}%≥80%但地支有根（{root_info}），非从强格',
-                    'yongshen_direction': '印比',
+                    'yongshen_direction': '印星比劫',
                 }
 
     # 阴干/阳干从强区分
@@ -1292,14 +1292,14 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                     'layer': 0, 'type': '假从强格', 'pattern': '假从强格',
                     'confidence': 0.65,
                     'reason': f'阳干{day_master}天性刚强，虽地支无根但旺衰未至极，假从强格',
-                    'yongshen_direction': '印比',
+                    'yongshen_direction': '印星比劫',
                 }
             # 阴干+身旺+无根 → 真从强格
             return {
                 'layer': 0, 'type': '从强格', 'pattern': '从强格',
                 'confidence': 0.85,
                 'reason': f'印比合计{yin_bi_pct}%≥80%，地支无根（阴干{day_master}更易真从）',
-                'yongshen_direction': '印比',
+                'yongshen_direction': '印星比劫',
             }
         elif yin_bi_pct >= 70 and wangshuai.get('is_strong', False) and is_yin_gan:
             # 阴干+印比≥70%+身旺+无根 → 假从强格
@@ -1308,7 +1308,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                 'layer': 0, 'type': '假从强格', 'pattern': '假从强格',
                 'confidence': 0.60,
                 'reason': f'阴干{day_master}柔顺，印比{yin_bi_pct}%≥70%，地支无根，假从强格',
-                'yongshen_direction': '印比',
+                'yongshen_direction': '印星比劫',
             }
 
     # ── 4. 两行成象格检测 ──
@@ -1465,7 +1465,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
             return {
                 'layer': 0, 'type': '从强格', 'pattern': '从强格',
                 'confidence': 0.85, 'reason': f'月支建禄但印比{yin_bi_pct}%≥80%且极旺，从强格优先',
-                'yongshen_direction': '印比',
+                'yongshen_direction': '印星比劫',
             }
         # 不满足从强条件，返回 None 让 L1/L3 处理建禄格
         return None
@@ -1477,7 +1477,7 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
             return {
                 'layer': 0, 'type': '从强格', 'pattern': '从强格',
                 'confidence': 0.85, 'reason': f'月支羊刃但印比{yin_bi_pct}%≥75%，从强格优先',
-                'yongshen_direction': '印比',
+                'yongshen_direction': '印星比劫',
             }
         # 不满足从强条件，返回 None 让 L3 处理羊刃格
         return None

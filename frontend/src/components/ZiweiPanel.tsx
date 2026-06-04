@@ -127,7 +127,7 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
                 </td>
                 <td className="px-2 py-1.5">
                   <div className="flex flex-wrap gap-1">
-                    {p.majorStars.map((s) => (
+                    {(p.majorStars ?? []).map((s) => (
                       <span
                         key={s.name}
                         className="inline-flex items-center rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
@@ -142,7 +142,7 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
                 </td>
                 <td className="px-2 py-1.5">
                   <div className="flex flex-wrap gap-1">
-                    {p.minorStars.map((s) => (
+                    {(p.minorStars ?? []).map((s) => (
                       <span
                         key={s.name}
                         className="inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
@@ -150,7 +150,7 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
                         {s.name}
                       </span>
                     ))}
-                    {p.adjectiveStars.slice(0, 3).map((s) => (
+                    {(p.adjectiveStars ?? []).slice(0, 3).map((s) => (
                       <span
                         key={s.name}
                         className="inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400"
@@ -158,7 +158,7 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
                         {s.name}
                       </span>
                     ))}
-                    {p.adjectiveStars.length > 3 && (
+                    {(p.adjectiveStars ?? []).length > 3 && (
                       <span className="text-xs text-gray-400">+{p.adjectiveStars.length - 3}</span>
                     )}
                   </div>

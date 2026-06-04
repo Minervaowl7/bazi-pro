@@ -8,6 +8,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import re
 import traceback
 from datetime import datetime, timezone
 
@@ -191,7 +192,6 @@ async def run_analysis(mcp_json: dict, run_id: str,
 
         if solar:
             try:
-                import re
                 m = re.match(r'(\d{4})', solar)
                 if m:
                     result['birth_year'] = int(m.group(1))
