@@ -258,9 +258,18 @@ ZAISHA: dict[str, str] = {
 }
 
 YUANCHEN: dict[str, str] = {
-    "子": "辰", "丑": "戌", "寅": "丑", "卯": "辰",
-    "辰": "丑", "巳": "辰", "午": "戌", "未": "丑",
-    "申": "辰", "酉": "戌", "戌": "丑", "亥": "辰",
+    # 元辰（大耗）查法 — 《三命通会》："阳男阴女冲前位，阴男阳女冲后寻"
+    # 阳男阴女：年支冲位前一位
+    "子": "未", "丑": "申", "寅": "酉", "卯": "戌",
+    "辰": "亥", "巳": "子", "午": "丑", "未": "寅",
+    "申": "卯", "酉": "辰", "戌": "巳", "亥": "午",
+}
+
+YUANCHEN_REV: dict[str, str] = {
+    # 阴男阳女：年支冲位后一位
+    "子": "巳", "丑": "午", "寅": "未", "卯": "申",
+    "辰": "酉", "巳": "戌", "午": "亥", "未": "子",
+    "申": "丑", "酉": "寅", "戌": "卯", "亥": "辰",
 }
 
 # 咸池即桃花别名，查法完全相同，不重复建表
@@ -357,8 +366,13 @@ SHENSHA_DESC_EXTRA: dict[str, str] = {
 SHENSHA_DESC.update(SHENSHA_DESC_EXTRA)
 
 
-def calc_shensha(bazi_parts: list[str]) -> list[dict]:
-    """计算命盘中的神煞"""
+def calc_shensha(bazi_parts: list[str], gender: int = 1) -> list[dict]:
+    """计算命盘中的神煞
+
+    Args:
+        bazi_parts: 四柱列表，如 ["甲子", "丙寅", "戊辰", "庚午"]
+        gender: 性别，1=男，0=女（用于元辰分男女查法）
+    """
     if len(bazi_parts) < 4:
         return []
 
@@ -394,7 +408,6 @@ def calc_shensha(bazi_parts: list[str]) -> list[dict]:
         ("天厨", TIANCHU_GUIREN, "day_gan", "吉"),
         ("劫煞", JIESHA, "year_zhi", "凶"),
         ("灾煞", ZAISHA, "year_zhi", "凶"),
-        ("元辰", YUANCHEN, "year_zhi", "凶"),
         ("绞煞", JIAOSHA, "year_zhi", "凶"),
         ("天医", TIANYI_YI, "month_zhi", "吉"),
         ("暗禄", ANLU, "day_gan", "吉"),
@@ -451,6 +464,18 @@ def calc_shensha(bazi_parts: list[str]) -> list[dict]:
         if zhi == wangchen_zhi and idx != 2:
             results.append({"name": "亡神", "position": positions[idx],
                             "type": "凶", "desc": SHENSHA_DESC.get("亡神", "")})
+
+    # 元辰（大耗）— 《三命通会》"阳男阴女冲前位，阴男阳女冲后寻"
+    year_gan = bazi_parts[0][0] if len(bazi_parts[0]) >= 2 else ""
+    is_yang_year = year_gan in "甲丙戊庚壬"
+    is_male = gender == 1
+    yuanchen_table = YUANCHEN if (is_yang_year and is_male) or (not is_yang_year and not is_male) else YUANCHEN_REV
+    yuanchen_zhi = yuanchen_table.get(year_zhi, "")
+    if yuanchen_zhi:
+        for idx, zhi in enumerate(all_zhis):
+            if zhi == yuanchen_zhi:
+                results.append({"name": "元辰", "position": positions[idx],
+                                "type": "凶", "desc": SHENSHA_DESC.get("元辰", "")})
 
     SHIE_DA_BAI_DAYS = {"甲辰", "乙巳", "丙申", "丁亥", "庚辰", "戊戌", "癸亥", "辛巳", "己丑"}
     day_pillar = bazi_parts[2] if len(bazi_parts) >= 3 and len(bazi_parts[2]) >= 2 else ""
@@ -771,4 +796,4 @@ async def calc_shensha_enhanced(bazi_parts: list[str], solar_datetime: str = "",
         mcp_results = await calc_shensha_from_mcp(solar_datetime, gender)
     if mcp_results:
         return mcp_results
-    return calc_shensha(bazi_parts)
+    return calc_shensha(bazi_parts, gender)
