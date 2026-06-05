@@ -234,6 +234,134 @@ export default function BaziChartCard({ result }: Props) {
           </div>
         </section>
       )}
+      {/* 神煞 */}
+      <ShenShaInline result={result} />
+
     </div>
   );
 }
+
+
+function ShenShaInline({ result }: { result: Record<string, unknown> }) {
+  const shensha = result.shensha as Array<{ name: string; position: string; type: string; desc?: string }> | undefined;
+  const [expandedName, setExpandedName] = useState<string | null>(null);
+
+  if (!shensha || shensha.length === 0) return null;
+
+  const POSITION_ORDER = ["年", "月", "日", "时"];
+  const grouped: Record<string, typeof shensha> = {};
+  for (const pos of POSITION_ORDER) {
+    const items = shensha.filter(s => s.position === pos);
+    if (items.length > 0) grouped[pos] = items;
+  }
+  const ungrouped = shensha.filter(s => !POSITION_ORDER.includes(s.position));
+  if (ungrouped.length > 0) grouped["其他"] = ungrouped;
+
+  return (
+    <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ borderBottom: "1px solid var(--color-border-subtle)", padding: "16px 24px" }} className="flex items-center justify-between">
+        <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>神煞</h3>
+        <span style={{ fontSize: 13, color: "var(--color-text-faint)" }}>{shensha.length}个</span>
+      </div>
+      <div className="p-6 space-y-5">
+        {Object.entries(grouped).map(([pos, items]) => (
+          <div key={pos}>
+            <div className="mb-2.5 font-semibold" style={{ fontSize: 12, color: "var(--color-text-faint)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              {POSITION_ORDER.includes(pos) ? `${pos}柱` : pos}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {items.map((item, i) => {
+                const isExpanded = expandedName === item.name;
+                const isJi = item.type === "吉";
+                const isXiong = item.type === "凶";
+                const bgColor = isJi ? "rgba(45,125,91,0.06)" : isXiong ? "rgba(196,60,44,0.06)" : "rgba(184,146,63,0.05)";
+                const textColor = isJi ? "var(--color-jade)" : isXiong ? "var(--color-cinnabar)" : "var(--color-gold)";
+                const borderColor = isJi ? "rgba(45,125,91,0.14)" : isXiong ? "rgba(196,60,44,0.14)" : "rgba(184,146,63,0.12)";
+
+                return (
+                  <div key={i} style={{ position: "relative" }}>
+                    <button
+                      onClick={() => setExpandedName(isExpanded ? null : item.name)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 transition-all duration-200"
+                      style={{
+                        fontSize: 13, fontWeight: 600,
+                        background: isExpanded ? bgColor.replace("0.06", "0.12") : bgColor,
+                        color: textColor,
+                        border: `1px solid ${isExpanded ? textColor : borderColor}`,
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        fontFamily: "var(--font-serif)",
+                      }}
+                    >
+                      <span style={{ fontSize: 11, opacity: 0.6 }}>{isJi ? "吉" : isXiong ? "凶" : "中"}</span>
+                      {item.name}
+                    </button>
+                    {isExpanded && (
+                      <div
+                        style={{
+                          position: "absolute", top: "100%", left: 0, marginTop: 6, zIndex: 20,
+                          width: 320, padding: "16px 18px",
+                          background: "var(--surface)", border: "1px solid var(--color-border-strong)",
+                          borderRadius: 10, boxShadow: "var(--shadow-lg)",
+                          animation: "fadeIn 0.2s ease",
+                        }}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-bold" style={{ fontSize: 15, color: textColor, fontFamily: "var(--font-serif)" }}>{item.name}</span>
+                          <span className="px-1.5 py-0.5 text-xs font-medium" style={{
+                            background: bgColor, color: textColor, border: `1px solid ${borderColor}`, borderRadius: 4,
+                          }}>
+                            {item.type === "吉" ? "吉神" : item.type === "凶" ? "凶煞" : "中性"}
+                          </span>
+                          <span className="text-xs" style={{ color: "var(--color-text-faint)" }}>· {item.position}柱</span>
+                        </div>
+                        <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--color-text-secondary)" }}>
+                          {item.desc || SHENSHA_FALLBACK_DESC[item.name] || "暂无详细说明"}
+                        </p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setExpandedName(null); }}
+                          className="absolute top-3 right-3"
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-faint)", fontSize: 16, padding: 2 }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const SHENSHA_FALLBACK_DESC: Record<string, string> = {
+  "天乙贵人": "《三命通会》：天乙者，乃天上之神，其神最尊贵。所至之处，一切凶煞隐然而避。逢凶化吉，遇难呈祥，主贵人相助。",
+  "文昌贵人": "《三命通会》：文昌入命，主聪明过人，气质雅秀。主聪明好学，利考试、文艺、学术。",
+  "驿马": "《三命通会》：驿马者，主奔波流动。马头带剑，威震边疆。利出行、迁移、变动。",
+  "桃花":"《渊海子平》：墙内桃花主夫妻恩爱，墙外桃花主人缘广博。主人缘、异性缘，亦主才艺风流。",
+  "华盖": "《三命通会》：华盖者，喻如宝盖。此星主孤高，多主聪明好学，近佛近道。利宗教、艺术、学术。",
+  "将星": "《三命通会》：将星文武两相宜，禄重权高足可知。主权威领导，利掌权、管理。",
+  "禄神": "《渊海子平》：禄，爵禄也。主衣食丰足，自力更生之福。",
+  "羊刃": "《渊海子平》：禄前一位为羊刃。主刚强果断，过旺则主灾伤刑克。身旺逢刃则凶，身弱逢刃则吉。",
+  "金舆": "《三命通会》：金舆者，金车之象。主出行安逸，利车马交通。",
+  "天德贵人": "《三命通会》：天德者，福德之神。主逢凶化吉，一生少灾。",
+  "月德贵人": "《三命通会》：月德者，月之德神。主仁慈宽厚，遇事有贵人扶持。",
+  "孤辰": "《渊海子平》：孤辰入命，主孤独。男命尤忌，主离祖别亲。",
+  "寡宿": "《渊海子平》：寡宿入命，主孤寡。女命尤忌，主婚姻不顺。",
+  "太极贵人": "《三命通会》：太极者，太初也。主聪慧好学，近道近佛，利玄学研究。",
+  "魁罡": "《渊海子平》：魁罡者，刚烈之神。主性格刚毅，聪明果断，有领导才能。",
+  "劫煞": "《三命通会》：劫煞者，三合局之煞位。主破财、官非、意外灾祸，宜守不宜攻。",
+  "灾煞": "《三命通会》：灾煞者，劫煞之对冲。主疾病、灾厄、口舌是非。",
+  "亡神": "《三命通会》：亡神者，机谋深远之神。主机谋深远，善于策划，亦主暗损。",
+  "天罗地网": "《渊海子平》：天罗地网，主做事多阻碍牵绊。宜谨慎行事，稳中求进。",
+  "红鸾": "《三命通会》：红鸾者，主婚恋之喜。利婚嫁、感情。",
+  "天喜": "《三命通会》：天喜者，主喜庆之事。利婚嫁、添丁。",
+  "咸池": "《三命通会》：咸池者，日出之地。主情欲、风流、人缘。",
+  "童子煞": "《渊海子平》：童子入命，主性情灵巧，亦主多病多灾，不利婚姻。",
+  "十恶大败": "《三命通会》：十恶大败日，主祖业难守，败散家财，宜白手起家。",
+  "披麻": "《渊海子平》：披麻者，丧吊煞之一。主孝服、丧事、不利亲友。",
+};

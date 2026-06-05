@@ -462,10 +462,7 @@ export default function AnalyzePage() {
               {/* Tab 3: 宫位神煞 */}
               {activeTab==="detail"&&(
                 <div className="space-y-10 stagger-in">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <GongweiPanel result={analysisResult} />
-                    <ShenShaPanel result={analysisResult} />
-                  </div>
+                  <GongweiPanel result={analysisResult} />
                 </div>
               )}
 
