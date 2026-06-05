@@ -135,8 +135,11 @@ if not _cors_origins:
 _allowed_hosts_str = os.environ.get('BAZI_ALLOWED_HOSTS', '')
 if _allowed_hosts_str:
     _allowed_hosts = [h.strip() for h in _allowed_hosts_str.split(',') if h.strip()]
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts)
-    logger.info("TrustedHostMiddleware enabled: %s", _allowed_hosts)
+else:
+    # Default: localhost only for dev. Set BAZI_ALLOWED_HOSTS in production.
+    _allowed_hosts = ['localhost', '127.0.0.1', 'testserver']
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts)
+logger.info("TrustedHostMiddleware enabled: %s", _allowed_hosts)
 
 
 class _SecurityHeadersMiddleware:
