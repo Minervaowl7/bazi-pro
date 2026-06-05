@@ -218,12 +218,17 @@ body::before {
   color: var(--text-primary);
 }
 
-textarea:focus,
-input:focus,
-select:focus {
+textarea:focus-visible,
+input:focus-visible,
+select:focus-visible {
   outline: none;
   border-color: var(--color-scholar-blue) !important;
   box-shadow: 0 0 0 3px rgba(45,62,95,0.06);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-scholar-blue);
+  outline-offset: 2px;
 }
 
 a { color: var(--color-scholar-blue); text-decoration: none; }
@@ -262,6 +267,16 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
 
 /* ===== 页面过渡 ===== */
 @view-transition { navigation: auto; }
+
+/* ===== 减弱动画 ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}
 
 @media print {
   * { transition: none !important; background: white !important; color: #1c1917 !important; border-color: #d6d3d1 !important; box-shadow: none !important; text-shadow: none !important; }

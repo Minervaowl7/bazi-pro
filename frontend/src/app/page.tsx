@@ -53,7 +53,7 @@ export default function Home() {
         ].map(({ wx, angle, color }) => {
           const rad = (angle * Math.PI) / 180;
           return (
-            <span key={wx} className="hidden sm:block" style={{
+            <span key={wx} className="hidden sm:block" aria-hidden="true" style={{
               position: "absolute",
               top: `calc(50% + ${Math.sin(rad) * 260}px)`,
               left: `calc(50% + ${Math.cos(rad) * 260}px)`,

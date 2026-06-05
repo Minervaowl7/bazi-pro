@@ -139,6 +139,7 @@ export default function BirthForm() {
               type="date"
               value={form.solarDate}
               placeholder="YYYY-MM-DD"
+              autoComplete="bday"
               onChange={(e) => {
                 handleChange("solarDate", e.target.value);
                 setShowPaipan(false);
@@ -220,7 +221,7 @@ export default function BirthForm() {
             letterSpacing: "0.04em",
           }}
         >
-          {paipanLoading ? "排盘中..." : "排盘"}
+          {paipanLoading ? "排盘中…" : "排盘"}
         </button>
       </form>
 
@@ -361,7 +362,7 @@ export default function BirthForm() {
               boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
             }}
           >
-            {status === "submitting" ? "提交中..." : "深度解读"}{" "}
+            {status === "submitting" ? "提交中…" : "深度解读"}{" "}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </button>
 
