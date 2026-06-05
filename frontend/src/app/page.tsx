@@ -233,7 +233,7 @@ export default function Home() {
           letterSpacing: "0.06em",
           color: "var(--color-text-faint)",
         }}>
-          bazi-pro · v5.3
+          bazi-pro
         </p>
       </footer>
     </div>
