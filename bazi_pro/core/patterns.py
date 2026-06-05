@@ -1021,7 +1021,6 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
     # 化气格单独通过 element_forces.hehua 检测，使用 percent_adjusted。
     # 但假从强格需要使用修正后百分比，因为六合（如巳申合水）会显著改变五行分布。
     pct = element_forces.get('percent', {})
-    pct_adj = element_forces.get('percent_adjusted', pct)
     candidates = []
     gans = [p[0] for p in bazi_parts if len(p) >= 1]
     trace = {'layers_checked': [], 'layers_missed': [], 'layer_details': {}}

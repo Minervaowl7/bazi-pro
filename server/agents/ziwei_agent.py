@@ -49,7 +49,7 @@ def _extract_summary(chart: dict) -> str:
 
 async def _llm_interpret(chart: dict) -> str | None:
     try:
-        from server.llm import is_llm_configured, chat_completion
+        from server.llm import chat_completion, is_llm_configured
         if not is_llm_configured():
             return None
 

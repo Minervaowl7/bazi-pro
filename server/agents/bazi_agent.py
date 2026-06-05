@@ -51,7 +51,7 @@ def _extract_summary(result: dict) -> str:
 
 async def _llm_interpret(result: dict, narration: dict) -> str | None:
     try:
-        from server.llm import is_llm_configured, chat_completion, build_analysis_system_prompt
+        from server.llm import build_analysis_system_prompt, chat_completion, is_llm_configured
         if not is_llm_configured():
             return None
 

@@ -20,18 +20,18 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
 
-from fastapi import Depends, FastAPI, Query, Request, Security, WebSocket, WebSocketDisconnect
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
-from fastapi.security import APIKeyHeader
-from pydantic import BaseModel, Field
+from fastapi import Depends, FastAPI, Query, Request, Security, WebSocket, WebSocketDisconnect  # noqa: E402
+from fastapi.exceptions import RequestValidationError  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.middleware.trustedhost import TrustedHostMiddleware  # noqa: E402
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse  # noqa: E402
+from fastapi.security import APIKeyHeader  # noqa: E402
+from pydantic import BaseModel, Field  # noqa: E402
 
-from server.analysis import run_analysis
-from server.cache import get_cache
-from server.dayun_score import score_dayun, score_liunian
-from server.db import (
+from server.analysis import run_analysis  # noqa: E402
+from server.cache import get_cache  # noqa: E402
+from server.dayun_score import score_dayun, score_liunian  # noqa: E402
+from server.db import (  # noqa: E402
     close_db,
     generate_analysis_id,
     get_analysis,
@@ -45,7 +45,7 @@ from server.db import (
     update_analysis_result,
     update_analysis_status,
 )
-from server.llm import (
+from server.llm import (  # noqa: E402
     build_chat_system_prompt,
     build_report_system_prompt,
     chat_completion,
@@ -53,11 +53,11 @@ from server.llm import (
     is_llm_configured,
     update_llm_config,
 )
-from server.rag_engine import retrieve_for_chat, retrieve_for_report
-from server.ratelimiter import MemoryRateLimiter, RateLimiter, RedisRateLimiter, create_rate_limiter
-from server.schemas import BaziAnalysisRequest
-from server.taskstore import MemoryTaskStore, RedisTaskStore, create_task_store
-from server.ws import manager
+from server.rag_engine import retrieve_for_chat, retrieve_for_report  # noqa: E402
+from server.ratelimiter import MemoryRateLimiter, RateLimiter, RedisRateLimiter, create_rate_limiter  # noqa: E402
+from server.schemas import BaziAnalysisRequest  # noqa: E402
+from server.taskstore import MemoryTaskStore, RedisTaskStore, create_task_store  # noqa: E402
+from server.ws import manager  # noqa: E402
 
 logger = logging.getLogger("bazi-pro")
 
@@ -1555,7 +1555,7 @@ async def api_v2_update_llm_settings(req: LLMSettingsRequest, _auth=Depends(_ver
 
 @app.post("/api/v2/settings/llm/test")
 async def api_v2_test_llm_settings(_auth=Depends(_verify_api_key)):
-    from server.llm import is_llm_configured, chat_completion
+    from server.llm import chat_completion, is_llm_configured
     if not is_llm_configured():
         return error_response(400, "NOT_CONFIGURED", "API Key 未配置")
     try:

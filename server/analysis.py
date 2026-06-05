@@ -241,7 +241,7 @@ async def run_analysis(mcp_json: dict, run_id: str,
 
         # ── LLM 命盘总览（自动触发，可选） ──
         try:
-            from server.llm import is_llm_configured, chat_completion
+            from server.llm import chat_completion, is_llm_configured
             if is_llm_configured():
                 await manager.send_progress(run_id, 'llm', 'running', 'AI 命盘总览生成中...')
                 overview_prompt = _build_overview_prompt(result, mcp_json, result.get('dayun', []))
@@ -286,7 +286,6 @@ async def run_analysis(mcp_json: dict, run_id: str,
         # ── 多智能体协作分析（可选） ──
         try:
             from server.agents import AgentOrchestrator
-            from server.knowledge_graph import PersonMemory
             orchestrator = AgentOrchestrator()
             await manager.send_progress(run_id, 'agents', 'running', '多智能体协作分析中...')
             agent_result = await orchestrator.analyze(mcp_json)

@@ -333,7 +333,6 @@ def _age_overlaps_mid_life(age_range: str) -> bool:
 
 def _describe_pattern(pattern: dict, break_conds: list) -> str:
     pat = pattern.get('pattern', '')
-    reason = pattern.get('reason', '')
 
     if break_conds:
         high_breaks = [b for b in break_conds if b.get('severity') == 'high']

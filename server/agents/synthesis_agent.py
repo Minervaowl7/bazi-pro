@@ -172,7 +172,7 @@ class SynthesisAgent:
                 }
         """
         try:
-            from server.llm import is_llm_configured, chat_completion
+            from server.llm import is_llm_configured
 
             if is_llm_configured():
                 return await self._llm_synthesis(
