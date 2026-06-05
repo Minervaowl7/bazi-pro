@@ -11,66 +11,98 @@ const FEATURES = [
 
 export default function Home() {
   return (
-    <div style={{minHeight:"calc(100vh - 3.5rem)",background:"var(--background)"}}>
-      <div style={{width:"100%",display:"flex",justifyContent:"center"}}>
-        <div style={{width:"100%",maxWidth:900,paddingLeft:32,paddingRight:32}}>
+    <div style={{ minHeight: "calc(100vh - 3.5rem)", position: "relative", zIndex: 1 }}>
+      <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+        <div style={{ width: "100%", maxWidth: 960, paddingLeft: 32, paddingRight: 32 }}>
 
           {/* ===== Hero ===== */}
-          <section style={{paddingTop:56,paddingBottom:48,textAlign:"center"}}>
+          <section style={{ paddingTop: 80, paddingBottom: 60, textAlign: "center" }}>
 
-            <span
-              style={{
-                display:"inline-flex",
-                alignItems:"center",
-                gap:8,
-                paddingLeft:16,
-                paddingRight:16,
-                paddingTop:6,
-                paddingBottom:6,
-                marginBottom:32,
-                fontSize:12,
-                fontWeight:600,
-                background:"rgba(61,107,89,0.06)",
-                color:"var(--color-jade)",
-                border:"1px solid rgba(61,107,89,0.15)",
-                letterSpacing:"0.04em",
-              }}
-            >
-              <span style={{width:6,height:6,borderRadius:"50%",background:"var(--success)",animation:"pulse 2s infinite"}} />
-              v5.2 · 典籍对齐版
-            </span>
+            {/* 版本标签 */}
+            <div style={{ marginBottom: 40 }}>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  paddingLeft: 14,
+                  paddingRight: 14,
+                  paddingTop: 5,
+                  paddingBottom: 5,
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: "var(--color-jade)",
+                  background: "rgba(61,107,89,0.04)",
+                  border: "1px solid rgba(61,107,89,0.12)",
+                  borderRadius: 20,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--color-jade)", opacity: 0.6, animation: "breathe 3s ease-in-out infinite" }} />
+                v5.3 · 多智能体版
+              </span>
+            </div>
 
-            <h1 style={{fontSize:44,fontWeight:700,lineHeight:1.15,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)",marginBottom:20}}>
+            {/* 主标题 */}
+            <h1 style={{
+              fontSize: 52,
+              fontWeight: 700,
+              lineHeight: 1.1,
+              color: "var(--color-text-primary)",
+              fontFamily: "var(--font-serif)",
+              marginBottom: 24,
+              letterSpacing: "-0.02em",
+            }}>
               确定性八字
               <br />
-              <span style={{color:"var(--color-scholar-blue)"}}>命理引擎</span>
+              <span style={{
+                background: "linear-gradient(135deg, var(--color-scholar-blue), var(--color-jade))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}>命理引擎</span>
             </h1>
 
             <p style={{
-              fontSize:17,lineHeight:1.85,color:"var(--color-text-secondary)",
-              maxWidth:520,margin:"0 auto 36px auto",
+              fontSize: 16,
+              lineHeight: 1.9,
+              color: "var(--color-text-muted)",
+              maxWidth: 480,
+              margin: "0 auto 48px auto",
             }}>
               算析分离架构，核心计算零 LLM 依赖。
-              十神推导、格局筛查、喜用神判定，
+              <br />
               每一步均可追溯到确定性规则与古籍原文。
             </p>
 
             {/* 统计数字 */}
-            <div style={{display:"flex",justifyContent:"center",gap:40,marginBottom:40}}>
+            <div style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 56,
+              marginBottom: 56,
+            }}>
               {[
-                {value:"507",label:"Golden Cases"},
-                {value:"13",label:"核心模块"},
-                {value:"6",label:"经典古籍"},
-                {value:"3",label:"分析流派"},
-              ].map(s=>(
-                <div key={s.label} style={{textAlign:"center"}}>
+                { value: "507", label: "Golden Cases" },
+                { value: "13", label: "核心模块" },
+                { value: "6", label: "经典古籍" },
+                { value: "3", label: "分析流派" },
+              ].map(s => (
+                <div key={s.label} style={{ textAlign: "center" }}>
                   <div style={{
-                    fontSize:28,fontWeight:700,color:"var(--color-scholar-blue)",
-                    fontFamily:"var(--font-serif)",letterSpacing:"-0.02em",
+                    fontSize: 32,
+                    fontWeight: 700,
+                    color: "var(--color-scholar-blue)",
+                    fontFamily: "var(--font-serif)",
+                    letterSpacing: "-0.03em",
+                    lineHeight: 1,
                   }}>{s.value}</div>
                   <div style={{
-                    marginTop:4,fontSize:10,textTransform:"uppercase",
-                    letterSpacing:"0.12em",color:"var(--color-text-faint)",fontWeight:500,
+                    marginTop: 6,
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.14em",
+                    color: "var(--color-text-faint)",
+                    fontWeight: 500,
                   }}>{s.label}</div>
                 </div>
               ))}
@@ -78,55 +110,121 @@ export default function Home() {
 
             {/* ===== 表单卡片 ===== */}
             <div style={{
-              display:"inline-block",
-              textAlign:"left",
-              background:"var(--surface)",
-              boxShadow:"var(--shadow-lg)",
-              border:"1px solid var(--color-border)",
-              padding:"36px 40px",
-              maxWidth:420,width:"100%",
+              display: "inline-block",
+              textAlign: "left",
+              background: "var(--surface)",
+              boxShadow: "var(--shadow-xl)",
+              border: "1px solid var(--color-border)",
+              borderRadius: 16,
+              padding: "44px 48px",
+              maxWidth: 440,
+              width: "100%",
+              position: "relative",
+              overflow: "hidden",
             }}>
+              {/* 顶部装饰线 */}
+              <div style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 3,
+                background: "linear-gradient(90deg, var(--color-cinnabar), var(--color-gold), var(--color-jade))",
+                opacity: 0.6,
+              }} />
               <BirthForm />
             </div>
           </section>
 
           {/* 分隔线 */}
           <div style={{
-            width:"100%",maxWidth:240,margin:"0 auto 48px auto",
-            height:1,background:"linear-gradient(90deg,transparent,var(--color-border-strong),transparent)",
+            width: "100%",
+            maxWidth: 200,
+            margin: "0 auto 64px auto",
+            height: 1,
+            background: "linear-gradient(90deg, transparent, var(--color-border-strong), transparent)",
           }} />
 
           {/* ===== Features ===== */}
-          <section style={{paddingBottom:56}}>
-            <div style={{textAlign:"center",marginBottom:40}}>
-              <h2 style={{fontSize:26,fontWeight:700,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)",marginBottom:10}}>核心能力</h2>
-              <p style={{fontSize:15,color:"var(--color-text-muted)"}}>每一项计算结果都可追溯，每一条引证都有出处</p>
+          <section style={{ paddingBottom: 80 }}>
+            <div style={{ textAlign: "center", marginBottom: 48 }}>
+              <h2 style={{
+                fontSize: 24,
+                fontWeight: 700,
+                color: "var(--color-text-primary)",
+                fontFamily: "var(--font-serif)",
+                marginBottom: 12,
+                letterSpacing: "-0.01em",
+              }}>核心能力</h2>
+              <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
+                每一项计算结果都可追溯，每一条引证都有出处
+              </p>
             </div>
 
             <div style={{
-              display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:20,maxWidth:800,margin:"0 auto",
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 16,
+              maxWidth: 820,
+              margin: "0 auto",
             }}>
-              {FEATURES.map(f=>(
+              {FEATURES.map((f, i) => (
                 <div key={f.title} style={{
-                  padding:28,background:"var(--surface)",border:"1px solid var(--color-border)",
-                  transition:"background-color 0.2s",
+                  padding: "32px 28px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 12,
+                  transition: "all 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
+                  cursor: "default",
                 }}
-                onMouseEnter={(e)=>{e.currentTarget.style.background="var(--bg-hover)";}}
-                onMouseLeave={(e)=>{e.currentTarget.style.background="var(--surface)";}}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = "var(--shadow-lg)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.borderColor = "var(--color-border-strong)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.borderColor = "var(--color-border)";
+                }}
                 >
                   <div style={{
-                    width:48,height:48,display:"flex",alignItems:"center",justifyContent:"center",
-                    marginBottom:16,background:"var(--accent-dim)",
+                    width: 44,
+                    height: 44,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: 18,
+                    borderRadius: 10,
+                    background: i === 0 ? "rgba(61,107,89,0.06)" :
+                                i === 1 ? "rgba(161,127,64,0.06)" :
+                                i === 2 ? "rgba(45,62,95,0.05)" :
+                                          "rgba(184,74,60,0.05)",
                   }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
-                      style={{color:"var(--color-scholar-blue)"}}
+                      style={{
+                        color: i === 0 ? "var(--color-jade)" :
+                               i === 1 ? "var(--color-gold)" :
+                               i === 2 ? "var(--color-scholar-blue)" :
+                                         "var(--color-cinnabar)",
+                      }}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d={f.icon}/>
+                      <path strokeLinecap="round" strokeLinejoin="round" d={f.icon} />
                     </svg>
                   </div>
-                  <h3 style={{fontSize:17,fontWeight:700,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)",marginBottom:8}}>{f.title}</h3>
-                  <p style={{fontSize:14,lineHeight:1.75,color:"var(--color-text-muted)"}}>{f.desc}</p>
+                  <h3 style={{
+                    fontSize: 16,
+                    fontWeight: 600,
+                    color: "var(--color-text-primary)",
+                    fontFamily: "var(--font-serif)",
+                    marginBottom: 8,
+                  }}>{f.title}</h3>
+                  <p style={{
+                    fontSize: 13,
+                    lineHeight: 1.75,
+                    color: "var(--color-text-muted)",
+                  }}>{f.desc}</p>
                 </div>
               ))}
             </div>
@@ -135,13 +233,22 @@ export default function Home() {
         </div>
       </div>
 
+      {/* 页脚 */}
       <footer style={{
-        borderTop:"1px solid var(--color-border)",
-        paddingTop:32,paddingBottom:32,textAlign:"center",
+        borderTop: "1px solid var(--color-border)",
+        paddingTop: 36,
+        paddingBottom: 36,
+        textAlign: "center",
+        position: "relative",
+        zIndex: 1,
       }}>
         <p style={{
-          fontSize:11,letterSpacing:"0.05em",color:"var(--color-text-faint)",
-        }}>bazi-pro · 确定性命理引擎 · 算析分离 · 古籍引证 · 零幻觉</p>
+          fontSize: 11,
+          letterSpacing: "0.06em",
+          color: "var(--color-text-faint)",
+        }}>
+          bazi-pro · 确定性命理引擎 · 算析分离 · 古籍引证 · 零幻觉
+        </p>
       </footer>
     </div>
   );
