@@ -8,6 +8,9 @@
     python -m benchmarks score                 # 评分
     python -m benchmarks stats                 # 统计报告
     python -m benchmarks list                  # 列出已有结果
+    python -m benchmarks calibrate baseline    # 基线跑分报告
+    python -m benchmarks calibrate analyze     # 错题分析
+    python -m benchmarks calibrate convert     # 错题转 golden case
 """
 import argparse
 import json
@@ -110,6 +113,51 @@ def cmd_list(args):
         print(f"  {f.name:<43} {size:>7}B")
 
 
+def cmd_calibrate(args):
+    action = args.cal_action
+    if action == "baseline":
+        from benchmarks.calibrator.baseline import compute_baseline, generate_markdown_report, save_report
+        from benchmarks.calibrator.baseline import load_dataset, load_latest_result
+        result = load_latest_result()
+        if not result:
+            print("未找到评测结果，请先运行: python -m benchmarks run baziqa")
+            sys.exit(1)
+        dataset = load_dataset()
+        baseline = compute_baseline(result, dataset)
+        report = generate_markdown_report(baseline)
+        save_report(baseline, report)
+        print(report)
+    elif action == "analyze":
+        from benchmarks.calibrator.baseline import compute_baseline, load_dataset, load_latest_result
+        from benchmarks.calibrator.analyzer import analyze_errors, print_error_report
+        result = load_latest_result()
+        if not result:
+            print("未找到评测结果，请先运行: python -m benchmarks run baziqa")
+            sys.exit(1)
+        dataset = load_dataset()
+        baseline = compute_baseline(result, dataset)
+        clusters = analyze_errors(baseline)
+        print_error_report(clusters)
+    elif action == "convert":
+        from benchmarks.calibrator.baseline import compute_baseline, load_dataset, load_latest_result
+        from benchmarks.calibrator.case_converter import convert_errors_to_golden_cases
+        from benchmarks.config import RESULTS_DIR
+        result = load_latest_result()
+        if not result:
+            print("未找到评测结果，请先运行: python -m benchmarks run baziqa")
+            sys.exit(1)
+        dataset = load_dataset()
+        baseline = compute_baseline(result, dataset)
+        output_dir = RESULTS_DIR / "golden_cases"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        count = convert_errors_to_golden_cases(baseline, dataset, output_dir)
+        print(f"已生成 {count} 个 golden case 到 {output_dir}")
+    else:
+        print(f"未知校准操作: {action}")
+        print("可用操作: baseline, analyze, convert")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(prog="benchmarks", description="bazi-pro 命理评测系统")
     sub = parser.add_subparsers(dest="command")
@@ -126,6 +174,9 @@ def main():
     sub.add_parser("stats", help="统计报告")
     sub.add_parser("list", help="列出已有结果")
 
+    p_cal = sub.add_parser("calibrate", help="校准工具")
+    p_cal.add_argument("cal_action", choices=["baseline", "analyze", "convert"], help="校准操作")
+
     args = parser.parse_args()
     if not args.command:
         parser.print_help()
@@ -137,6 +188,7 @@ def main():
         "score": cmd_score,
         "stats": cmd_stats,
         "list": cmd_list,
+        "calibrate": cmd_calibrate,
     }
     cmds[args.command](args)
 
