@@ -143,11 +143,12 @@ export default function BirthForm() {
                 handleChange("solarDate", e.target.value);
                 setShowPaipan(false);
               }}
-              className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--water)]/30 transition-all duration-200"
+              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all duration-200"
               style={{
                 background: "var(--bg-secondary)",
-                border: "1px solid var(--border)",
+                border: "1.5px solid var(--border)",
                 color: "var(--text-primary)",
+                borderRadius: 10,
               }}
             />
           </div>
@@ -166,11 +167,12 @@ export default function BirthForm() {
                 handleChange("solarTime", e.target.value);
                 setShowPaipan(false);
               }}
-              className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--water)]/30 transition-all duration-200"
+              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all duration-200"
               style={{
                 background: "var(--bg-secondary)",
-                border: "1px solid var(--border)",
+                border: "1.5px solid var(--border)",
                 color: "var(--text-primary)",
+                borderRadius: 10,
               }}
             />
           </div>
@@ -186,11 +188,12 @@ export default function BirthForm() {
           <select
             value={form.city}
             onChange={(e) => handleChange("city", e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--water)]/30 transition-all duration-200"
+            className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all duration-200"
             style={{
               background: "var(--bg-secondary)",
-              border: "1px solid var(--border)",
+              border: "1.5px solid var(--border)",
               color: form.city ? "var(--text-primary)" : "var(--text-muted)",
+              borderRadius: 10,
             }}
           >
             <option value="">不校正（默认北京时间）</option>
@@ -209,11 +212,12 @@ export default function BirthForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+          className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
           style={{
-            background: "var(--color-scholar-blue)",
+            background: "linear-gradient(135deg, var(--color-scholar-blue), #1a2d47)",
             color: "#ffffff",
-            boxShadow: "0 2px 8px rgba(44,62,107,0.3)",
+            boxShadow: "0 4px 16px rgba(44,62,107,0.25)",
+            letterSpacing: "0.04em",
           }}
         >
           {paipanLoading ? "排盘中..." : "排盘"}

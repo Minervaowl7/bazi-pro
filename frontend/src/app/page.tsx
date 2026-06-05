@@ -23,8 +23,8 @@ export default function Home() {
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: 600,
-          height: 600,
+          width: "min(600px, 85vw)",
+          height: "min(600px, 85vw)",
           borderRadius: "50%",
           border: "1px solid var(--color-border-subtle)",
           opacity: 0.4,
@@ -35,8 +35,8 @@ export default function Home() {
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: 420,
-          height: 420,
+          width: "min(420px, 60vw)",
+          height: "min(420px, 60vw)",
           borderRadius: "50%",
           border: "1px solid var(--color-border-subtle)",
           opacity: 0.3,
@@ -52,12 +52,11 @@ export default function Home() {
           { wx: "水", angle: 198, color: "var(--el-water)" },
         ].map(({ wx, angle, color }) => {
           const rad = (angle * Math.PI) / 180;
-          const r = 260;
           return (
-            <span key={wx} style={{
+            <span key={wx} className="hidden sm:block" style={{
               position: "absolute",
-              top: `calc(50% + ${Math.sin(rad) * r}px)`,
-              left: `calc(50% + ${Math.cos(rad) * r}px)`,
+              top: `calc(50% + ${Math.sin(rad) * 260}px)`,
+              left: `calc(50% + ${Math.cos(rad) * 260}px)`,
               transform: "translate(-50%, -50%)",
               fontSize: 28,
               fontFamily: "var(--font-serif)",
@@ -126,7 +125,7 @@ export default function Home() {
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             fontSize: 44,
-          }}>确定性命理引擎</span>
+          }}>古法定盘 · 智能解读</span>
         </h1>
 
         <p style={{
@@ -139,7 +138,7 @@ export default function Home() {
           position: "relative",
           zIndex: 1,
         }}>
-          算析分离，零幻觉。每一步可追溯至古籍原文。
+          每一步可追溯至古籍原文，零幻觉。
         </p>
 
         {/* 表单卡片 */}
@@ -224,8 +223,7 @@ export default function Home() {
 
       {/* 页脚 */}
       <footer style={{
-        borderTop: "1px solid var(--color-border)",
-        padding: "24px 32px",
+        padding: "32px 32px 40px",
         textAlign: "center",
         position: "relative",
         zIndex: 1,
@@ -235,7 +233,7 @@ export default function Home() {
           letterSpacing: "0.06em",
           color: "var(--color-text-faint)",
         }}>
-          bazi-pro · 确定性命理引擎 · 算析分离 · 古籍引证 · 零幻觉
+          bazi-pro · v5.3
         </p>
       </footer>
     </div>
