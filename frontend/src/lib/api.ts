@@ -238,6 +238,15 @@ export async function updateLLMSettings(settings: LLMSettings): Promise<LLMSetti
   });
 }
 
+export interface LLMTestResponse {
+  ok: boolean;
+  reply?: string;
+}
+
+export async function testLLMConnection(): Promise<LLMTestResponse> {
+  return fetchApi("/api/v2/settings/llm/test", { method: "POST" });
+}
+
 export interface DailyFortune {
   date: string;
   gan_zhi: string;

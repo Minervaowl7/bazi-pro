@@ -47,7 +47,7 @@ Start-Sleep -Seconds 1
 
 Write-Host "  [2/4] Starting backend (http://127.0.0.1:${BackendPort}) ..." -ForegroundColor Yellow
 $backendProc = Start-Process -FilePath $PythonExe `
-    -ArgumentList "-m", "uvicorn", "server.app:app", "--host", "127.0.0.1", "--port", $BackendPort, "--reload" `
+    -ArgumentList "-m", "uvicorn", "server.app:app", "--host", "127.0.0.1", "--port", $BackendPort `
     -WorkingDirectory $Root `
     -PassThru -WindowStyle Normal
 

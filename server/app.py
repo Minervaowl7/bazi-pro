@@ -17,6 +17,9 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
+
 from fastapi import Depends, FastAPI, Query, Request, Security, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -55,8 +58,6 @@ from server.ratelimiter import MemoryRateLimiter, RateLimiter, RedisRateLimiter,
 from server.schemas import BaziAnalysisRequest
 from server.taskstore import MemoryTaskStore, RedisTaskStore, create_task_store
 from server.ws import manager
-
-load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
 
 logger = logging.getLogger("bazi-pro")
 
@@ -1550,6 +1551,21 @@ async def api_v2_update_llm_settings(req: LLMSettingsRequest, _auth=Depends(_ver
         "api_key_set": cfg["api_key_set"],
         "model": cfg["model"],
     })
+
+
+@app.post("/api/v2/settings/llm/test")
+async def api_v2_test_llm_settings(_auth=Depends(_verify_api_key)):
+    from server.llm import is_llm_configured, chat_completion
+    if not is_llm_configured():
+        return error_response(400, "NOT_CONFIGURED", "API Key 未配置")
+    try:
+        reply = await chat_completion(
+            [{"role": "user", "content": "请回复\"连接成功\"两个字"}],
+            max_tokens=100,
+        )
+        return JSONResponse({"ok": True, "reply": reply[:100]})
+    except Exception as e:
+        return error_response(502, "CONNECTION_FAILED", f"连接测试失败: {str(e) or type(e).__name__}")
 
 
 def main():

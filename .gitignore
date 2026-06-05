@@ -71,3 +71,7 @@ server/.env
 .env
 *.pem
 *.key
+
+# Benchmark data and results (downloaded/generated)
+benchmarks/data/
+benchmarks/results/

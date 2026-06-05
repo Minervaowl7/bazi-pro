@@ -19,8 +19,25 @@ for %%c in (python py python3) do (
         goto :found_python
     )
 )
+if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" (
+    set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+    goto :found_python
+)
+if exist "%LOCALAPPDATA%\Programs\Python\Python311\python.exe" (
+    set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
+    goto :found_python
+)
+if exist "%LOCALAPPDATA%\Programs\Python\Python310\python.exe" (
+    set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python310\python.exe"
+    goto :found_python
+)
+if exist "C:\Python312\python.exe" (
+    set "PYTHON_EXE=C:\Python312\python.exe"
+    goto :found_python
+)
 echo  ERROR: Python not found in PATH!
 echo  Please install Python 3.10+ and add to PATH.
+echo  Searched: PATH, %LOCALAPPDATA%\Programs\Python\Python31x\, C:\Python31x\
 pause
 exit /b 1
 :found_python
@@ -33,8 +50,17 @@ for %%c in (pnpm npx) do (
         goto :found_pnpm
     )
 )
+if exist "%APPDATA%\npm\pnpm.cmd" (
+    set "PNPM_EXE=%APPDATA%\npm\pnpm.cmd"
+    goto :found_pnpm
+)
+if exist "%ProgramFiles%\nodejs\npm.cmd" (
+    set "PNPM_EXE=%ProgramFiles%\nodejs\npm.cmd"
+    goto :found_pnpm
+)
 echo  ERROR: pnpm/npx not found in PATH!
 echo  Please install Node.js and pnpm.
+echo  Searched: PATH, %APPDATA%\npm\, %ProgramFiles%\nodejs\
 pause
 exit /b 1
 :found_pnpm
@@ -51,7 +77,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%FRONTEND_PORT% " ^| findst
 timeout /t 1 /nobreak >nul
 
 echo  [2/3] Starting backend ^(http://127.0.0.1:%BACKEND_PORT%^) ...
-start "Bazi-Backend" cmd /c "cd /d "%ROOT%" && %PYTHON_EXE% -m uvicorn server.app:app --host 127.0.0.1 --port %BACKEND_PORT% --reload"
+start "Bazi-Backend" cmd /c "cd /d "%ROOT%" && %PYTHON_EXE% -m uvicorn server.app:app --host 127.0.0.1 --port %BACKEND_PORT%"
 
 echo  [3/3] Starting frontend ^(http://localhost:%FRONTEND_PORT%^) ...
 timeout /t 2 /nobreak >nul

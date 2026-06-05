@@ -21,6 +21,41 @@ import ChatPanel from "@/components/ChatPanel";
 import ExportPanel from "@/components/ExportPanel";
 import { SCHOOL_OPTIONS_WITH_ALL, WUXING_COLORS, GAN_WUXING, ZHI_WUXING } from "@/lib/constants";
 
+import ReactMarkdown from "react-markdown";
+import RemarkGfm from "remark-gfm";
+import ChartQuality, { type ChartQualityData } from "@/components/ChartQuality";
+
+function LlmOverview({ content }: { content: string }) {
+  return (
+    <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ borderBottom: "1px solid var(--color-border-subtle)", padding: "18px 28px" }} className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, var(--color-scholar-blue), #1a365d)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(45,62,95,0.2)" }}>
+            <span style={{ fontSize: 15, color: "#fff" }}>✦</span>
+          </div>
+          <div>
+            <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)", letterSpacing: "0.02em" }}>AI 命盘总览</h3>
+            <p style={{ fontSize: 12, color: "var(--color-text-faint)", marginTop: 2 }}>基于确定性计算数据 · LLM 深度解读</p>
+          </div>
+        </div>
+      </div>
+      <div className="llm-overview-body" style={{ padding: "28px", color: "var(--color-text-secondary)", lineHeight: 1.85, fontSize: 15 }}>
+        <ReactMarkdown remarkPlugins={[RemarkGfm]}>{content}</ReactMarkdown>
+      </div>
+      <style jsx>{`
+        .llm-overview-body :global(h2) { color: var(--color-scholar-blue); font-size: 1.2rem; font-weight: 700; font-family: var(--font-serif); margin-top: 1.8rem; margin-bottom: 0.8rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-border-subtle); }
+        .llm-overview-body :global(h2:first-child) { margin-top: 0; }
+        .llm-overview-body :global(h3) { color: var(--color-text-primary); font-size: 1.05rem; font-weight: 600; margin-top: 1.2rem; margin-bottom: 0.5rem; }
+        .llm-overview-body :global(p) { margin-bottom: 0.7rem; }
+        .llm-overview-body :global(strong) { color: var(--color-text-primary); font-weight: 700; }
+        .llm-overview-body :global(ul), .llm-overview-body :global(ol) { padding-left: 1.3rem; margin: 0.5rem 0; }
+        .llm-overview-body :global(li) { margin: 0.3rem 0; line-height: 1.7; }
+        .llm-overview-body :global(blockquote) { border-left: 3px solid var(--color-scholar-blue); padding-left: 1rem; opacity: 0.85; margin: 0.7rem 0; }
+      `}</style>
+    </section>
+  );
+}
+
 const SCHOOL_OPTIONS = SCHOOL_OPTIONS_WITH_ALL;
 
 interface FallbackProps { children: ReactNode; fallback?: ReactNode; }
@@ -359,6 +394,8 @@ export default function AnalyzePage() {
                 <div className="space-y-10 stagger-in">
                   <BaziChartCard result={analysisResult} />
 
+                  {analysisResult?.chart_quality && <ChartQuality data={analysisResult.chart_quality as unknown as ChartQualityData} />}
+
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <StrengthSlider
                       verdict={wangshuai?.verdict}
@@ -453,6 +490,7 @@ export default function AnalyzePage() {
               {/* Tab 5: 流派解读 */}
               {activeTab==="analysis"&&(
                 <div className="space-y-10 stagger-in" style={{maxWidth:860,marginLeft:"auto",marginRight:"auto"}}>
+                  {analysisResult?.llm_overview && <LlmOverview content={analysisResult.llm_overview as string} />}
                   {isCompareMode&&schoolAnalyses?<SchoolComparePanel schoolAnalyses={schoolAnalyses}/>:<SchoolPanel result={analysisResult} narration={narration}/>}
                 </div>
               )}

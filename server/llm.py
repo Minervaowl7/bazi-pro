@@ -115,15 +115,17 @@ async def chat_completion(messages: list[dict], temperature: float = 0.7, max_to
         "Authorization": f"Bearer {_LLM_API_KEY}",
         "Content-Type": "application/json",
     }
-    payload = {
-        "model": _LLM_MODEL,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
 
+    effective_max = max_tokens
+    bumped = False
     max_retries = 2
     for attempt in range(max_retries + 1):
+        payload = {
+            "model": _LLM_MODEL,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": effective_max,
+        }
         async with httpx.AsyncClient(timeout=_LLM_TIMEOUT) as client:
             resp = await client.post(url, headers=headers, json=payload)
             if resp.status_code >= 500 and attempt < max_retries:
@@ -135,9 +137,16 @@ async def chat_completion(messages: list[dict], temperature: float = 0.7, max_to
             choices = data.get("choices", [])
             if not choices:
                 raise RuntimeError("LLM 返回空 choices")
-            content = choices[0].get("message", {}).get("content")
+            message = choices[0].get("message", {})
+            content = message.get("content")
+            reasoning = message.get("reasoning_content", "")
             if not content:
-                raise RuntimeError("LLM 返回空 content")
+                if reasoning and not bumped and effective_max < 16384:
+                    effective_max = min(effective_max * 4, 16384)
+                    bumped = True
+                    logger.warning("[llm] content empty (reasoning model), retry with max_tokens=%d", effective_max)
+                    continue
+                raise RuntimeError("LLM 返回空 content。推理模型 token 不足，请增大 max_tokens。")
             return content
     raise RuntimeError("unreachable")
 
@@ -159,6 +168,7 @@ async def chat_completion_stream(messages: list[dict], temperature: float = 0.7,
         "stream": True,
     }
 
+    has_content = False
     async with httpx.AsyncClient(timeout=_LLM_TIMEOUT) as client:
         async with client.stream("POST", url, headers=headers, json=payload) as resp:
             resp.raise_for_status()
@@ -173,9 +183,12 @@ async def chat_completion_stream(messages: list[dict], temperature: float = 0.7,
                     delta = chunk.get("choices", [{}])[0].get("delta") or {}
                     content = delta.get("content", "")
                     if content:
+                        has_content = True
                         yield content
                 except (json.JSONDecodeError, IndexError, KeyError):
                     continue
+    if not has_content:
+        raise RuntimeError("LLM 流式返回无 content。推理模型 token 不足，请增大 max_tokens。")
 
 
 def _format_analysis_context(analysis_result: dict, narration: dict, school: str = "ziping") -> str:

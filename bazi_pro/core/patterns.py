@@ -1019,7 +1019,9 @@ def screen_pattern(day_master: str, bazi_parts: list[str],
     # 格局阈值使用修正前百分比(percent)，非修正后(percent_adjusted)。
     # 原因：合化修正改变了五行分布，但格局框架应在"原局基础力量"上判定；
     # 化气格单独通过 element_forces.hehua 检测，使用 percent_adjusted。
+    # 但假从强格需要使用修正后百分比，因为六合（如巳申合水）会显著改变五行分布。
     pct = element_forces.get('percent', {})
+    pct_adj = element_forces.get('percent_adjusted', pct)
     candidates = []
     gans = [p[0] for p in bazi_parts if len(p) >= 1]
     trace = {'layers_checked': [], 'layers_missed': [], 'layer_details': {}}
@@ -1284,8 +1286,16 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
                     'yongshen_direction': '印星比劫',
                 }
 
-    # 阴干/阳干从强区分
-    # 阴干（乙丁己辛癸）柔顺易从，阳干刚强难从
+    # 阴干/阳干从强区分（假从强格）
+    # 注："假从强格"为现代命理概念，古籍无此名目。
+    # 古籍中"假从"均指日主弱→假从财/假从官杀：
+    #   《滴天髓·假从》："日主弱矣，财官强矣，不能不从；中有比劫暗生，从之不真"
+    #   《穷通宝鉴·五六月甲木》："或是己土，不见戊土，乃为假从"
+    #   《穷通宝鉴·六月壬水》："或一派己土，此假从杀格"
+    # 古籍"从"为日主弱→顺从财官，非日主强→顺从印比。
+    # 《三命通会》"独弱从强，弃命就财"亦为日主弱→从财之义。
+    # 此处"假从强格"指日主有根但印比极旺、异党极弱的边界情况，
+    # 属于现代命理对古籍"从"概念的扩展延伸，非古籍原义。
     YIN_STEMS = {'乙', '丁', '己', '辛', '癸'}
     is_yin_gan = day_master in YIN_STEMS
     if not is_jianlu_yangren_month and not has_strong_root:

@@ -32,6 +32,8 @@ from server.nayin import lookup_nayin
 from server.shensha import calc_shensha_enhanced
 from server.ws import manager
 
+logger = logging.getLogger(__name__)
+
 try:
     from bazi_pro.core.schools import school_analyze
 except ImportError:
@@ -105,15 +107,16 @@ async def run_analysis(mcp_json: dict, run_id: str,
         retrieval.setdefault('analysis_context', {})
         result['retrieval'] = retrieval
 
+        element_forces = _estimate_elements(mcp_json, bazi_parts, month_zhi)
+
         await manager.send_progress(run_id, '2', 'running', '日主旺衰判断中...')
         await asyncio.sleep(0)
-        strength = _estimate_strength(mcp_json, bazi_parts, month_zhi)
+        strength = _estimate_strength(mcp_json, bazi_parts, month_zhi,
+                                      element_forces=element_forces)
         await manager.send_progress(run_id, '2', 'done',
                                      f'旺衰: {strength.get("wangshuai", {}).get("verdict", "未知")}',
                                      strength)
         result['strength'] = strength
-
-        element_forces = _estimate_elements(mcp_json, bazi_parts, month_zhi)
 
         await manager.send_progress(run_id, '3', 'running', '格局判定中...')
         await asyncio.sleep(0)
@@ -224,6 +227,38 @@ async def run_analysis(mcp_json: dict, run_id: str,
                 await manager.send_progress(run_id, 'school', 'done', '流派分析跳过')
 
         # 紫微斗数排盘（可选，依赖 iztro-py）
+
+        # ── 命局层次评分（确定性，无 LLM） ──
+        try:
+            from server.chart_quality import calculate_chart_quality
+            chart_quality = calculate_chart_quality(result, result.get('dayun', []))
+            result['chart_quality'] = chart_quality
+            await manager.send_progress(run_id, 'quality', 'done',
+                                        f'命局评分: {chart_quality["total"]}/{chart_quality["total_max"]}',
+                                        chart_quality)
+        except Exception as e:
+            logger.warning("chart_quality failed (non-fatal): %s", e)
+
+        # ── LLM 命盘总览（自动触发，可选） ──
+        try:
+            from server.llm import is_llm_configured, chat_completion
+            if is_llm_configured():
+                await manager.send_progress(run_id, 'llm', 'running', 'AI 命盘总览生成中...')
+                overview_prompt = _build_overview_prompt(result, mcp_json, result.get('dayun', []))
+                overview_messages = [
+                    {"role": "system", "content": OVERVIEW_SYSTEM_PROMPT},
+                    {"role": "user", "content": overview_prompt},
+                ]
+                overview_text = await chat_completion(overview_messages, temperature=0.6, max_tokens=4096)
+                if overview_text:
+                    result['llm_overview'] = overview_text
+                    await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览完成')
+                else:
+                    await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览（无输出）')
+        except Exception as e:
+            logger.debug("LLM overview generation failed (non-fatal): %s", e)
+            await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览跳过')
+
         if solar and gender:
             try:
                 from server.ziwei import get_ziwei_chart
@@ -248,15 +283,34 @@ async def run_analysis(mcp_json: dict, run_id: str,
             except Exception:
                 pass  # 紫微斗数为可选功能，失败不影响主流程
 
+        # ── 多智能体协作分析（可选） ──
+        try:
+            from server.agents import AgentOrchestrator
+            from server.knowledge_graph import PersonMemory
+            orchestrator = AgentOrchestrator()
+            await manager.send_progress(run_id, 'agents', 'running', '多智能体协作分析中...')
+            agent_result = await orchestrator.analyze(mcp_json)
+            if agent_result and agent_result.get('status') != 'failed':
+                result['agent_analysis'] = agent_result
+                await manager.send_progress(run_id, 'agents', 'done',
+                                            f'多智能体分析完成: {agent_result.get("status", "")}',
+                                            agent_result)
+            else:
+                await manager.send_progress(run_id, 'agents', 'done', '多智能体分析跳过')
+        except Exception as e:
+            logger.warning("Agent orchestration failed (non-fatal): %s", e)
+            await manager.send_progress(run_id, 'agents', 'done', '多智能体分析跳过')
+
         result['completed_at'] = datetime.now(timezone.utc).isoformat()
         cache.set(cache_key, result, ttl=3600)
 
     except Exception as e:
-        logger = logging.getLogger(__name__)
         logger.error("run_analysis failed: %s\n%s", e, traceback.format_exc())
         result['status'] = 'failed'
-        result['error'] = str(e) or type(e).__name__
-        await manager.send_progress(run_id, 'error', 'failed', str(e))
+        err_msg = str(e) or type(e).__name__
+        result['error'] = err_msg
+        result['error_type'] = type(e).__name__
+        await manager.send_progress(run_id, 'error', 'failed', err_msg)
 
     return result
 
@@ -285,7 +339,8 @@ def _validate_input(mcp_json: dict) -> dict:
 
 
 def _estimate_strength(mcp_json: dict, bazi_parts: list[str],
-                       month_zhi: str) -> dict:
+                       month_zhi: str,
+                       element_forces: dict | None = None) -> dict:
     day_master = mcp_json.get('日主', '')
 
     if not day_master or not month_zhi or len(bazi_parts) < 2:
@@ -303,7 +358,9 @@ def _estimate_strength(mcp_json: dict, bazi_parts: list[str],
     deling_status, deling_score = calc_deling(day_master, month_zhi)
     dedi = calc_dedi(day_master, bazi_parts)
     deshi = calc_deshi(day_master, bazi_parts)
-    wangshuai = judge_wangshuai(deling_score, dedi['score'], deshi['score'])
+    wangshuai = judge_wangshuai(deling_score, dedi['score'], deshi['score'],
+                                 day_master=day_master,
+                                 element_forces=element_forces)
 
     return {
         'day_master': day_master,
@@ -402,3 +459,103 @@ def _make_cache_key(mcp_json: dict, detail_level: str, school: str = 'ziping') -
     }
     raw = json.dumps(key_data, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return "bazi:v5:%s" % hashlib.sha256(raw.encode()).hexdigest()[:24]
+
+
+OVERVIEW_SYSTEM_PROMPT = """你是一位精通中国传统命理学的资深命理师，从业四十余年，精通子平法、盲派、新派。
+现在命主已经完成了八字排盘和确定性计算，你需要基于这些确定性数据，为命主生成一份专业、深入、有温度的命盘总览报告。
+
+要求：
+1. 严格基于提供的确定性数据（四柱、旺衰、格局、用神、五行力量、大运等）进行解读，不要编造数据
+2. 用古典命理术语行文，但要让普通人能读懂
+3. 分析要有深度，不能泛泛而谈，要结合具体干支、十神、五行力量数据
+4. 大运分析要结合命局喜忌，判断每步大运的吉凶趋势
+5. 语气沉稳、有分寸，不夸大吉凶
+6. 如果格局有破，要如实指出，并说明大运如何补救
+7. 输出使用 Markdown 格式"""
+
+
+def _build_overview_prompt(result: dict, mcp_json: dict, dayun_list: list | None) -> str:
+    """构建命盘总览的 LLM prompt"""
+    bazi = mcp_json.get('八字', '')
+    gender = mcp_json.get('性别', '男')
+    day_master = mcp_json.get('日主', '')
+
+    ws = result.get('strength', {}).get('wangshuai', {})
+    pat = result.get('pattern', {})
+    ys = result.get('yongshen', {})
+    ef = result.get('elements', {})
+    pct = ef.get('percent', {})
+    th = result.get('tiaohou', {})
+    rels = result.get('relations', [])
+
+    dayun_str = ""
+    if dayun_list:
+        for dy in dayun_list:
+            if isinstance(dy, dict):
+                dayun_str += f"  {dy.get('age_range', '')}: {dy.get('gan', '')}{dy.get('zhi', '')}（{dy.get('wuxing_gan', '')}{dy.get('wuxing_zhi', '')}）\n"
+
+    rels_str = ""
+    if rels:
+        for r in rels[:10]:
+            if isinstance(r, dict):
+                rels_str += f"  {r.get('description', r.get('type', ''))}\n"
+
+    prompt = f"""请为以下命主生成命盘总览报告：
+
+【基本信息】
+八字：{bazi}
+性别：{gender}
+日主：{day_master}
+
+【旺衰判定】
+得令：{ws.get('deling_score', 0)}分
+得地：{ws.get('dedi_score', 0):.1f}分
+得势：{ws.get('deshi_score', 0):.1f}分
+综合判定：{ws.get('verdict', '未知')}
+
+【格局判定】
+格局：{pat.get('pattern', '未知')}
+置信度：{pat.get('confidence', 0):.0%}
+格局说明：{pat.get('reason', '')}
+
+【用神推导】
+用神五行：{ys.get('yongshen', '待定')}
+喜神：{', '.join(ys.get('xishen', []))}
+忌神：{', '.join(ys.get('jishen', []))}
+
+【五行力量分布】
+木：{pct.get('木', 0):.1f}%  火：{pct.get('火', 0):.1f}%  土：{pct.get('土', 0):.1f}%  金：{pct.get('金', 0):.1f}%  水：{pct.get('水', 0):.1f}%
+
+【调候用神】
+调候：{th.get('description', '无特殊调候需求')}
+
+【刑冲合害】
+{rels_str if rels_str else '  无特殊刑冲合害关系'}
+
+【大运】
+{dayun_str if dayun_str else '  大运数据不可用'}
+
+请按以下结构生成报告（使用 Markdown 格式）：
+
+## 命盘总览
+（综合八字格局、旺衰、用神的整体定位，2-3段）
+
+## 性格特征
+（基于日主五行、十神配置、格局特征分析性格，3-4个要点）
+
+## 事业方向
+（基于用神和格局分析适合的事业方向和发展模式）
+
+## 财运分析
+（基于财星状态和格局分析财运特征）
+
+## 感情婚姻
+（基于日支、妻星/夫星、刑冲合害分析感情特征）
+
+## 大运走势
+（结合大运和命局喜忌，分析每步大运的吉凶趋势和注意事项）
+
+## 健康提示
+（基于五行偏枯分析健康隐患和养生建议）
+"""
+    return prompt

@@ -125,5 +125,7 @@ export interface AnalysisResultData {
   school_analysis?: unknown;
   school_analyses?: Record<string, unknown>;
   school_warning?: string;
+  chart_quality?: Record<string, unknown>;
+  llm_overview?: string;
   error?: string;
 }

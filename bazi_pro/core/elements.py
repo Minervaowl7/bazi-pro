@@ -21,7 +21,7 @@
   化气格用 percent_adjusted）。
 """
 
-from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_BANHE, ZHI_HUIFANG, ZHI_SANHE
+from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_BANHE, ZHI_HE, ZHI_HUIFANG, ZHI_SANHE
 from bazi_pro.core.constants import GAN_WUXING
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.stems import GAN_HE
@@ -75,7 +75,7 @@ def _gan_he_hua_wuxing(gan1: str, gan2: str, month_zhi: str,
 
 
 def _detect_hehua(bazi_parts: list[str], month_zhi: str) -> dict:
-    """检测命盘中的合化情况（天干合化 + 地支三合/半合/会方）。
+    """检测命盘中的合化情况（天干合化 + 地支三合/半合/会方/六合）。
 
     参数:
         bazi_parts: 四柱列表，如 ['甲子', '丙寅', '己卯', '癸酉']
@@ -96,12 +96,28 @@ def _detect_hehua(bazi_parts: list[str], month_zhi: str) -> dict:
           ],
           'zhi_huifang': [    # 地支会方列表
             {'zhis': ['寅','卯','辰'], 'hui_wx': '木', 'type': '会方'}
+          ],
+          'zhi_liuhe': [      # 地支六合列表
+            {'zhis': ['巳','申'], 'hua_wx': '水', 'type': '六合'}
           ]
         }
     """
-    result = {'gan_he': [], 'zhi_sanhe': [], 'zhi_banhe': [], 'zhi_huifang': []}
+    result = {'gan_he': [], 'zhi_sanhe': [], 'zhi_banhe': [], 'zhi_huifang': [], 'zhi_liuhe': []}
     gans = [p[0] for p in bazi_parts if len(p) >= 1]
     zhis = [p[1] for p in bazi_parts if len(p) >= 2]
+
+    # ── 地支六合检测 ──
+    # 《三命通会》"六合者，子合丑、寅合亥" — 六合两支合化一气
+    for i in range(len(zhis)):
+        for j in range(i + 1, len(zhis)):
+            pair = frozenset({zhis[i], zhis[j]})
+            if pair in ZHI_HE:
+                hua_wx = ZHI_HE[pair]
+                result['zhi_liuhe'].append({
+                    'zhis': [zhis[i], zhis[j]],
+                    'hua_wx': hua_wx,
+                    'type': '六合',
+                })
 
     # ── 天干合化检测 ──
     # 含位置紧贴检查和争合检测
@@ -315,6 +331,26 @@ def calc_element_forces(bazi_parts: list[str], month_zhi: str) -> dict:
                     transfer = weight * 0.3
                     forces_adjusted[cg_wx] -= transfer
                     forces_adjusted[hui_wx] += transfer
+
+    # 六合修正
+    # 六合化气出处：
+    # 《神峰通考·安星辰法》"寅亥二宫属木，卯戌二宫属火，辰酉二宫属金，
+    #   申巳二宫属水，子丑二宫属土"
+    # 《欽定協紀辨方書》"所以又以其左右合宫而得：寅亥木、卯戌火、辰酉金、巳申水"
+    # 《三命通会·论支元六合》述数理："巳为六阳，申为三阴，六三得九数"、
+    #   "已合申福慢，申合巳官气盛"
+    # 六合修正仅影响 forces_adjusted（化气格/修正后百分比），不影响原始 forces（正格判定）。
+    # 权重0.25：六合力量与半合局相当，两支合力弱于三合（0.5）。
+    for item in hehua.get('zhi_liuhe', []):
+        hua_wx = item['hua_wx']
+        for zhi in item['zhis']:
+            for cg, ql in get_canggan(zhi):
+                cg_wx = GAN_WUXING.get(cg, '')
+                if cg_wx and cg_wx != hua_wx:
+                    weight = CANGGAN_WEIGHT.get(ql, 0)
+                    transfer = weight * 0.25
+                    forces_adjusted[cg_wx] -= transfer
+                    forces_adjusted[hua_wx] += transfer
 
     # ── 计算原始百分比 ──
     total_raw = max(0.01, sum(forces.values()))  # 下限保护，避免除零
