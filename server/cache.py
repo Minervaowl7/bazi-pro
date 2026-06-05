@@ -85,7 +85,13 @@ class CacheStore:
     def _init_redis(self, redis_url: str) -> None:
         try:
             import redis
-            self._redis = redis.from_url(redis_url, decode_responses=True)
+            self._redis = redis.from_url(
+                redis_url,
+                decode_responses=True,
+                socket_connect_timeout=3,
+                socket_timeout=3,
+                retry_on_timeout=False,
+            )
             self._redis.ping()
         except ImportError:
             self._degraded_reason = 'redis package not installed'

@@ -105,7 +105,13 @@ class RedisTaskStore(TaskStore):
         self._degraded = False
         try:
             import redis as _redis
-            self._redis = _redis.from_url(redis_url, decode_responses=True)
+            self._redis = _redis.from_url(
+                redis_url,
+                decode_responses=True,
+                socket_connect_timeout=3,
+                socket_timeout=3,
+                retry_on_timeout=False,
+            )
             self._redis.ping()
         except Exception as e:
             logger.warning("RedisTaskStore init failed: %s, falling back to memory", e)
@@ -211,9 +217,16 @@ class RedisTaskStore(TaskStore):
         if status == "running":
             self._reconcile_index(self._RUNNING_KEY)
             return self._redis.scard(self._RUNNING_KEY)
+        if status in _ACTIVE_STATUSES:
+            self._reconcile_index(self._INDEX_KEY)
+            active = self._redis.scard(self._INDEX_KEY)
+            if status == "queued":
+                running = self._redis.scard(self._RUNNING_KEY)
+                return max(0, active - running)
+            return active
         count = 0
-        for key in self._redis.scan_iter(f"{self._prefix}*"):
-            val = self._redis.get(key)
+        for task_id in self._redis.smembers(self._INDEX_KEY):
+            val = self._redis.get(self._key(task_id))
             if val:
                 data = json.loads(val)
                 if data.get("status") == status:

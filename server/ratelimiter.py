@@ -66,7 +66,13 @@ class RedisRateLimiter(RateLimiter):
         self._degraded = False
         try:
             import redis
-            self._redis = redis.from_url(redis_url, decode_responses=True)
+            self._redis = redis.from_url(
+                redis_url,
+                decode_responses=True,
+                socket_connect_timeout=3,
+                socket_timeout=3,
+                retry_on_timeout=False,
+            )
             self._redis.ping()
         except Exception as e:
             logger.warning("RedisRateLimiter init failed: %s, falling back to memory", e)
