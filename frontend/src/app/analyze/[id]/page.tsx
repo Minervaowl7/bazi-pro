@@ -398,11 +398,8 @@ export default function AnalyzePage() {
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <StrengthSlider
-                      verdict={wangshuai?.verdict}
+                      strength={analysisResult?.strength}
                       dayMaster={analysisResult?.validation?.day_master}
-                      deling={analysisResult?.strength?.deling}
-                      dedi={analysisResult?.strength?.dedi}
-                      deshi={analysisResult?.strength?.deshi}
                     />
                     <ShishenEnergyChart result={analysisResult} />
                   </div>

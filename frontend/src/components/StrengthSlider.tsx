@@ -14,15 +14,23 @@ function verdictToPosition(verdict?: string): number {
   return 2;
 }
 
-interface Props {
-  verdict?: string;
-  dayMaster?: string;
+interface StrengthData {
+  wangshuai?: { verdict?: string };
   deling?: { status?: string; score?: number };
   dedi?: { score?: number; level?: string };
   deshi?: { score?: number; level?: string };
 }
 
-export default function StrengthSlider({ verdict, dayMaster, deling, dedi, deshi }: Props) {
+interface Props {
+  strength?: StrengthData;
+  dayMaster?: string;
+}
+
+export default function StrengthSlider({ strength, dayMaster }: Props) {
+  const verdict = strength?.wangshuai?.verdict;
+  const deling = strength?.deling;
+  const dedi = strength?.dedi;
+  const deshi = strength?.deshi;
   const position = verdictToPosition(verdict);
   const pct = (position / (LEVELS.length - 1)) * 100;
   const isWeak = position <= 1;
