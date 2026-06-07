@@ -118,7 +118,7 @@ async def chat_completion(messages: list[dict], temperature: float = 0.7, max_to
 
     effective_max = max_tokens
     bumped = False
-    max_retries = 2
+    max_retries = 3
     for attempt in range(max_retries + 1):
         payload = {
             "model": _LLM_MODEL,
@@ -128,6 +128,11 @@ async def chat_completion(messages: list[dict], temperature: float = 0.7, max_to
         }
         async with httpx.AsyncClient(timeout=_LLM_TIMEOUT) as client:
             resp = await client.post(url, headers=headers, json=payload)
+            if resp.status_code == 429:
+                wait = min(5 * (attempt + 1), 30)
+                logger.warning("[llm] rate limited (429), retry %d/%d after %ds", attempt + 1, max_retries, wait)
+                await asyncio.sleep(wait)
+                continue
             if resp.status_code >= 500 and attempt < max_retries:
                 logger.warning("[llm] server error %d, retry %d/%d", resp.status_code, attempt + 1, max_retries)
                 await asyncio.sleep(1 * (attempt + 1))

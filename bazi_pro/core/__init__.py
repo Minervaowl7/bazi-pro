@@ -53,6 +53,10 @@ from bazi_pro.core.ten_gods import (
 )
 from bazi_pro.core.tiaohou import lookup_tiaohou
 from bazi_pro.core.yongshen import _pattern_yongshen_wx, derive_yongshen
+from bazi_pro.core.marriage import analyze_marriage  # noqa: F401
+from bazi_pro.core.health import analyze_health  # noqa: F401
+from bazi_pro.core.wealth import analyze_wealth  # noqa: F401
+from bazi_pro.core.family import analyze_family  # noqa: F401
 
 
 def full_analysis(mcp_json: dict) -> dict:
@@ -158,4 +162,5 @@ __all__ = [
     '_finalize_pattern',
     'derive_yongshen', '_pattern_yongshen_wx',
     'SchoolAnalyzer', 'school_analyze', 'SCHOOL_REGISTRY',
+    'analyze_marriage', 'analyze_health', 'analyze_wealth', 'analyze_family',
 ]

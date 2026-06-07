@@ -149,6 +149,10 @@ def narrate_analysis(result: dict) -> dict:
     sections["relations"] = _narrate_relations(relations, bazi_parts, day_master)
     sections["personality"] = _narrate_personality(dm_wx, day_master, strength, pattern_info)
     sections["career"] = _narrate_career(dm_wx, yongshen_info, pattern_info, gender)
+    sections["marriage"] = _narrate_marriage(result, gender)
+    sections["health"] = _narrate_health(result)
+    sections["wealth"] = _narrate_wealth(result)
+    sections["family"] = _narrate_family(result, gender)
     sections["citations"] = _extract_citations(retrieval)
 
     return sections
@@ -728,3 +732,178 @@ def _extract_citations(retrieval):
                 "relevance": f"{score * 100:.0f}%" if score else "",
             })
     return citations
+
+
+def _narrate_marriage(result, gender):
+    """生成感情婚姻分析段落，基于 marriage_analysis 模块输出。"""
+    ma = result.get("marriage_analysis")
+    if not ma:
+        return "感情婚姻分析数据暂未生成。"
+
+    lines = []
+    spouse_star = ma.get("spouse_star", {})
+    if spouse_star.get("name"):
+        ctx = spouse_star.get("gender_context", "配偶星")
+        lines.append(f"男命以正财为妻星、偏财为次缘。" if gender == "男" else "女命以正官为夫星、七杀为次缘。")
+        lines.append(f"命局中{ctx}为{spouse_star['name']}。")
+
+    palace = ma.get("spouse_palace", {})
+    if palace.get("branch"):
+        lines.append(f"配偶宫（日支）为{palace['branch']}，五行属{palace.get('wuxing', '')}。")
+        impacts = palace.get("impacts", [])
+        if impacts:
+            for imp in impacts[:3]:
+                lines.append(f"  {imp}")
+
+    strength_info = ma.get("spouse_star_strength", {})
+    if strength_info.get("level"):
+        lines.append(f"配偶星力量：{strength_info['level']}（{strength_info.get('score', 0)}分）。")
+
+    risks = ma.get("marriage_risks", [])
+    if risks:
+        lines.append("婚姻风险提示：")
+        for r in risks[:3]:
+            lines.append(f"  • {r.get('type', '')}（{r.get('severity', '')}）：{r.get('detail', '')}")
+
+    tendency = ma.get("romance_tendency", {})
+    if tendency:
+        parts = []
+        if tendency.get("early_romance"):
+            parts.append("早恋倾向")
+        if tendency.get("complex_romance"):
+            parts.append("感情复杂")
+        if tendency.get("stable"):
+            parts.append("感情稳定")
+        if parts:
+            lines.append(f"感情倾向：{'、'.join(parts)}。")
+
+    if ma.get("summary"):
+        lines.append(ma["summary"])
+
+    return "\n".join(lines) if lines else "感情婚姻分析数据暂未生成。"
+
+
+def _narrate_health(result):
+    """生成健康分析段落，基于 health_analysis 模块输出。"""
+    ha = result.get("health_analysis")
+    if not ha:
+        return "健康分析数据暂未生成。"
+
+    lines = []
+
+    organs = ha.get("organ_risks", [])
+    if organs:
+        lines.append("脏腑风险评估：")
+        for o in organs[:4]:
+            lines.append(f"  • {o.get('organ', '')}（{o.get('element', '')}）：{o.get('status', '')}，{o.get('detail', '')}")
+
+    constitution = ha.get("constitution", {})
+    if constitution.get("type"):
+        lines.append(f"体质类型：{constitution['type']}。{constitution.get('detail', '')}")
+
+    crises = ha.get("crisis_indicators", [])
+    if crises:
+        lines.append("健康危机指标：")
+        for c in crises[:3]:
+            lines.append(f"  • {c.get('type', '')}：{c.get('detail', '')}")
+
+    score = ha.get("health_score")
+    if score is not None:
+        lines.append(f"健康评分：{score}/100。")
+
+    if ha.get("summary"):
+        lines.append(ha["summary"])
+
+    return "\n".join(lines) if lines else "健康分析数据暂未生成。"
+
+
+def _narrate_wealth(result):
+    """生成财运分析段落，基于 wealth_analysis 模块输出。"""
+    wa = result.get("wealth_analysis")
+    if not wa:
+        return "财运分析数据暂未生成。"
+
+    lines = []
+
+    stars = wa.get("wealth_stars", {})
+    zc = stars.get("zhengcai", {})
+    pc = stars.get("piancai", {})
+    if zc.get("instances") or pc.get("instances"):
+        lines.append("财星状态：")
+        if zc.get("instances"):
+            lines.append(f"  正财（稳定收入）：{'透干' if zc.get('transparent') else '未透'}，{'有根' if zc.get('rooted') else '无根'}。")
+        if pc.get("instances"):
+            lines.append(f"  偏财（投资/偏门）：{'透干' if pc.get('transparent') else '未透'}，{'有根' if pc.get('rooted') else '无根'}。")
+
+    patterns = wa.get("wealth_patterns", [])
+    if patterns:
+        lines.append("财运格局：")
+        for p in patterns[:3]:
+            lines.append(f"  • {p.get('pattern', '')}：{p.get('description', '')}")
+
+    carry = wa.get("day_master_carry_wealth", {})
+    if carry:
+        lines.append(f"身财关系：{'身旺能担财' if carry.get('can_carry') else '身弱难担财'}。{carry.get('detail', '')}")
+
+    risks = wa.get("wealth_risks", [])
+    if risks:
+        lines.append("财运风险：")
+        for r in risks[:3]:
+            lines.append(f"  • {r.get('type', '')}（{r.get('severity', '')}）：{r.get('detail', '')}")
+
+    tendency = wa.get("income_tendency", {})
+    if tendency:
+        parts = []
+        if tendency.get("stable"):
+            parts.append("正财稳定")
+        if tendency.get("windfall"):
+            parts.append("偏财旺盛")
+        if parts:
+            lines.append(f"收入倾向：{'、'.join(parts)}。{tendency.get('detail', '')}")
+
+    score = wa.get("wealth_score")
+    if score is not None:
+        lines.append(f"财运评分：{score}/100。")
+
+    if wa.get("summary"):
+        lines.append(wa["summary"])
+
+    return "\n".join(lines) if lines else "财运分析数据暂未生成。"
+
+
+def _narrate_family(result, gender):
+    """生成六亲分析段落，基于 family_analysis 模块输出。"""
+    fa = result.get("family_analysis")
+    if not fa:
+        return "六亲分析数据暂未生成。"
+
+    lines = []
+
+    for role, label in [("father", "父亲"), ("mother", "母亲")]:
+        info = fa.get(role, {})
+        if info.get("star"):
+            lines.append(f"{label}：{info['star']}为{label}星，"
+                         f"力量{info.get('strength', 0)}分，缘分{info.get('affinity', '中')}。")
+            for ind in info.get("indicators", [])[:2]:
+                lines.append(f"  • {ind}")
+
+    siblings = fa.get("siblings", {})
+    if siblings.get("star"):
+        lines.append(f"兄弟：{siblings['star']}为兄弟星，缘分{siblings.get('affinity', '中')}。")
+
+    children = fa.get("children", {})
+    if children.get("star"):
+        lines.append(f"子女：{children['star']}为子女星，力量{children.get('strength', 0)}分，缘分{children.get('affinity', '中')}。")
+        for ind in children.get("indicators", [])[:2]:
+            lines.append(f"  • {ind}")
+
+    risks = fa.get("family_risks", [])
+    if risks:
+        lines.append("六亲风险提示：")
+        for r in risks[:3]:
+            lines.append(f"  • {r.get('type', '')}（影响：{r.get('affects', '')}）：{r.get('detail', '')}")
+
+    if fa.get("summary"):
+        lines.append(fa["summary"])
+
+    return "\n".join(lines) if lines else "六亲分析数据暂未生成。"

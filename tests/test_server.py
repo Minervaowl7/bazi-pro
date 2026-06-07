@@ -256,9 +256,11 @@ class TestAppEndpoints:
         import os
 
         import server.app as app_module
+        import server.deps as deps_module
         original = os.environ.get('BAZI_API_KEY', '')
         os.environ['BAZI_API_KEY'] = 'test-secret-key'
         try:
+            importlib.reload(deps_module)
             importlib.reload(app_module)
             from fastapi.testclient import TestClient
             fresh_client = TestClient(app_module.app)
@@ -276,6 +278,7 @@ class TestAppEndpoints:
             assert resp.status_code == 200
         finally:
             os.environ['BAZI_API_KEY'] = original
+            importlib.reload(deps_module)
             importlib.reload(app_module)
 
     def test_request_too_large(self, client):
@@ -287,33 +290,35 @@ class TestAppEndpoints:
         assert resp.status_code == 413
 
     def test_max_concurrent_tasks(self, client):
-        import server.app as app_module
-        original_max = app_module._MAX_CONCURRENT_TASKS
-        app_module._MAX_CONCURRENT_TASKS = 2
-        app_module._task_store.clear()
+        import server.deps as deps_module
+        original_max = deps_module.MAX_CONCURRENT_TASKS
+        deps_module.MAX_CONCURRENT_TASKS = 2
+        deps_module.task_store.clear()
         try:
             for i in range(2):
-                app_module._task_store.create(f'filler-{i}', {
+                deps_module.task_store.create(f'filler-{i}', {
                     'status': 'running', '_created_ts': time.time()
                 })
-            count_before = len(app_module._task_store)
+            count_before = len(deps_module.task_store)
             resp = client.post('/api/analyze', json={
                 '性别': '女', '八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁',
             })
             assert resp.status_code == 503
-            assert len(app_module._task_store) == count_before
+            assert len(deps_module.task_store) == count_before
         finally:
-            app_module._MAX_CONCURRENT_TASKS = original_max
-            app_module._task_store.clear()
+            deps_module.MAX_CONCURRENT_TASKS = original_max
+            deps_module.task_store.clear()
 
     def test_ws_api_key_rejected(self, client):
         import importlib
         import os
 
         import server.app as app_module
+        import server.deps as deps_module
         original = os.environ.get('BAZI_API_KEY', '')
         os.environ['BAZI_API_KEY'] = 'ws-test-key'
         try:
+            importlib.reload(deps_module)
             importlib.reload(app_module)
             from fastapi.testclient import TestClient
             from starlette.websockets import WebSocketDisconnect
@@ -323,6 +328,7 @@ class TestAppEndpoints:
                     ws.receive()
         finally:
             os.environ['BAZI_API_KEY'] = original
+            importlib.reload(deps_module)
             importlib.reload(app_module)
 
     def test_cors_disabled_by_default(self, client):
@@ -333,22 +339,30 @@ class TestAppEndpoints:
         assert 'access-control-allow-origin' not in resp.headers
 
     def test_status_strips_internal_fields(self, client):
-        import server.app as app_module
+        import importlib
+
+        import server.deps as deps_module
+        import server.routes.v1_legacy as legacy_module
+        importlib.reload(deps_module)
+        importlib.reload(legacy_module)
         run_id = 'test-internal-strip'
-        app_module._task_store.create(run_id, {
+        deps_module.task_store.create(run_id, {
             'status': 'running',
             '_created_ts': time.time(),
             '_secret': 'hidden',
             'visible_field': 'ok',
         })
         try:
-            resp = client.get(f'/api/status/{run_id}')
+            from fastapi.testclient import TestClient
+            from server.app import app
+            fresh_client = TestClient(app)
+            resp = fresh_client.get(f'/api/status/{run_id}')
             data = resp.json()
             assert 'visible_field' in data
             assert '_created_ts' not in data
             assert '_secret' not in data
         finally:
-            app_module._task_store.delete(run_id)
+            deps_module.task_store.delete(run_id)
 
 
 class TestErrorResponseFormat:
@@ -365,9 +379,11 @@ class TestErrorResponseFormat:
         import os
 
         import server.app as app_module
+        import server.deps as deps_module
         original = os.environ.get('BAZI_API_KEY', '')
         os.environ['BAZI_API_KEY'] = 'test-key-err'
         try:
+            importlib.reload(deps_module)
             importlib.reload(app_module)
             from fastapi.testclient import TestClient
             fresh_client = TestClient(app_module.app)
@@ -380,6 +396,7 @@ class TestErrorResponseFormat:
             assert data['error']['code'] == 'UNAUTHORIZED'
         finally:
             os.environ['BAZI_API_KEY'] = original
+            importlib.reload(deps_module)
             importlib.reload(app_module)
 
     def test_not_found_error_format(self, client):
@@ -401,10 +418,10 @@ class TestErrorResponseFormat:
         assert data['error']['code'] == 'PAYLOAD_TOO_LARGE'
 
     def test_rate_limit_error_format(self, client):
-        import server.app as app_module
+        import server.deps as deps_module
         from server.ratelimiter import MemoryRateLimiter
-        original_limiter = app_module._rate_limiter
-        app_module._rate_limiter = MemoryRateLimiter(max_requests=2, window_seconds=60)
+        original_limiter = deps_module.rate_limiter
+        deps_module.rate_limiter = MemoryRateLimiter(max_requests=2, window_seconds=60)
         try:
             for _ in range(5):
                 client.post('/api/analyze', json={
@@ -418,16 +435,16 @@ class TestErrorResponseFormat:
                 assert 'error' in data
                 assert data['error']['code'] == 'RATE_LIMITED'
         finally:
-            app_module._rate_limiter = original_limiter
+            deps_module.rate_limiter = original_limiter
 
     def test_server_busy_error_format(self, client):
-        import server.app as app_module
-        original_max = app_module._MAX_CONCURRENT_TASKS
-        app_module._MAX_CONCURRENT_TASKS = 2
-        app_module._task_store.clear()
+        import server.deps as deps_module
+        original_max = deps_module.MAX_CONCURRENT_TASKS
+        deps_module.MAX_CONCURRENT_TASKS = 2
+        deps_module.task_store.clear()
         try:
             for i in range(2):
-                app_module._task_store.create(f'filler-{i}', {
+                deps_module.task_store.create(f'filler-{i}', {
                     'status': 'running', '_created_ts': time.time()
                 })
             resp = client.post('/api/analyze', json={
@@ -438,8 +455,8 @@ class TestErrorResponseFormat:
             assert 'error' in data
             assert data['error']['code'] == 'SERVER_BUSY'
         finally:
-            app_module._MAX_CONCURRENT_TASKS = original_max
-            app_module._task_store.clear()
+            deps_module.MAX_CONCURRENT_TASKS = original_max
+            deps_module.task_store.clear()
 
     def test_internal_error_no_traceback(self, client):
         data = resp = client.get('/api/status/nonexistent')
@@ -454,38 +471,38 @@ class TestEnvironmentConfig:
     def test_env_int_override(self, monkeypatch):
         import importlib
 
-        import server.app as app_module
+        import server.deps as deps_module
 
         monkeypatch.setenv("BAZI_MAX_CONCURRENT_TASKS", "5")
-        reloaded = importlib.reload(app_module)
+        reloaded = importlib.reload(deps_module)
         try:
-            assert reloaded._MAX_CONCURRENT_TASKS == 5
+            assert reloaded.MAX_CONCURRENT_TASKS == 5
         finally:
             monkeypatch.delenv("BAZI_MAX_CONCURRENT_TASKS", raising=False)
-            importlib.reload(app_module)
+            importlib.reload(deps_module)
 
     def test_env_invalid_value_fallback(self, monkeypatch):
         import importlib
 
-        import server.app as app_module
+        import server.deps as deps_module
 
         monkeypatch.setenv("BAZI_MAX_CONCURRENT_TASKS", "invalid")
-        reloaded = importlib.reload(app_module)
+        reloaded = importlib.reload(deps_module)
         try:
-            assert reloaded._MAX_CONCURRENT_TASKS == 1000
+            assert reloaded.MAX_CONCURRENT_TASKS == 1000
         finally:
             monkeypatch.delenv("BAZI_MAX_CONCURRENT_TASKS", raising=False)
-            importlib.reload(app_module)
+            importlib.reload(deps_module)
 
     def test_env_too_small_value_fallback(self, monkeypatch):
         import importlib
 
-        import server.app as app_module
+        import server.deps as deps_module
 
         monkeypatch.setenv("BAZI_MAX_PAYLOAD_BYTES", "0")
-        reloaded = importlib.reload(app_module)
+        reloaded = importlib.reload(deps_module)
         try:
-            assert reloaded._MAX_PAYLOAD_BYTES == 10240
+            assert reloaded.MAX_PAYLOAD_BYTES == 10240
         finally:
             monkeypatch.delenv("BAZI_MAX_PAYLOAD_BYTES", raising=False)
-            importlib.reload(app_module)
+            importlib.reload(deps_module)

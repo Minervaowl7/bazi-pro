@@ -16,10 +16,12 @@ import SchoolComparePanel from "@/components/SchoolComparePanel";
 import DayunTimeline from "@/components/DayunTimeline";
 import GongweiPanel from "@/components/GongweiPanel";
 import ShenShaPanel from "@/components/ShenShaPanel";
+import DimensionAnalysisPanel from "@/components/DimensionAnalysisPanel";
 import ZiweiPanel from "@/components/ZiweiPanel";
 import ChatPanel from "@/components/ChatPanel";
 import ExportPanel from "@/components/ExportPanel";
 import { SCHOOL_OPTIONS_WITH_ALL, WUXING_COLORS, GAN_WUXING, ZHI_WUXING } from "@/lib/constants";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 import ReactMarkdown from "react-markdown";
 import RemarkGfm from "remark-gfm";
@@ -95,6 +97,7 @@ const TABS = [
   { id: "dayun", label: "大运流年", icon: "⏱" },
   { id: "detail", label: "宫位神煞", icon: "◈" },
   { id: "ziwei", label: "紫微斗数", icon: "★" },
+  { id: "deep", label: "深度分析", icon: "◉" },
   { id: "analysis", label: "流派解读", icon: "✦" },
   { id: "chat", label: "命理问答", icon: "☯" },
 ] as const;
@@ -153,6 +156,9 @@ export default function AnalyzePage() {
   const [selectedSchool, setSelectedSchool] = useState("ziping");
   const [schoolDropdownOpen, setSchoolDropdownOpen] = useState(false);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tabContentRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   useEffect(() => {
     if (!analysisId) return;
@@ -210,13 +216,42 @@ export default function AnalyzePage() {
   const currentSchool = (analysisResult?.school as string)||"ziping";
   const isCompareMode = currentSchool==="all";
 
+  useGSAP(() => {
+    if (!analysisResult || prefersReducedMotion) return;
+    gsap.from("[data-pill]", {
+      y: -20,
+      autoAlpha: 0,
+      stagger: 0.08,
+      duration: 0.5,
+      ease: "back.out(1.2)",
+    });
+  }, { scope: containerRef, dependencies: [analysisResult] });
+
+  useGSAP(() => {
+    if (!analysisResult || prefersReducedMotion) return;
+    gsap.from("[data-action-bar]", {
+      x: -30,
+      autoAlpha: 0,
+      duration: 0.5,
+    });
+  }, { scope: containerRef, dependencies: [analysisResult] });
+
+  useGSAP(() => {
+    if (prefersReducedMotion) return;
+    gsap.from(tabContentRef.current, {
+      autoAlpha: 0,
+      y: 20,
+      duration: 0.4,
+    });
+  }, { scope: containerRef, dependencies: [activeTab], revertOnUpdate: true });
+
   return (
-    <div style={{minHeight:"100vh",background:"var(--background)"}}>
+    <div ref={containerRef} style={{minHeight:"100vh",background:"var(--background)"}}>
       <main style={{width:"100%",paddingTop:72,paddingBottom:40,paddingLeft:20,paddingRight:20}}>
 
         {/* ===== 操作栏 ===== */}
         {analysisResult && (
-          <div className="flex items-center gap-2.5 mb-7 flex-wrap">
+          <div data-action-bar className="flex items-center gap-2.5 mb-7 flex-wrap">
             <div className="relative">
               <button
                 onClick={(e)=>{e.stopPropagation();setSchoolDropdownOpen(!schoolDropdownOpen);}}
@@ -315,7 +350,7 @@ export default function AnalyzePage() {
                 {label:"喜神",value:(yongshen?.xishen||[]).join(" ")||"—",bg:"rgba(53,94,133,0.05)"},
                 {label:"忌神",value:(yongshen?.jishen||[]).join(" ")||"—",bg:"rgba(196,60,44,0.06)"},
               ].map((item:{label:string;value:string;bg?:string})=>(
-                <div key={item.label} className="text-center p-4 border" style={{
+                <div data-pill key={item.label} className="text-center p-4 border" style={{
                   background:item.bg||"var(--surface)",
                   borderColor:"var(--color-border)",
                 }}>
@@ -332,7 +367,7 @@ export default function AnalyzePage() {
                 </div>
               ))}
               {tiaohou?.has_tiaohou&&(
-                <div className="text-center p-4 border" style={{background:"rgba(184,146,63,0.04)",borderColor:"var(--color-border)"}}>
+                <div data-pill className="text-center p-4 border" style={{background:"rgba(184,146,63,0.04)",borderColor:"var(--color-border)"}}>
                   <div className="mb-1.5 font-semibold uppercase tracking-wider" style={{fontSize:11,color:"var(--warning)",letterSpacing:"0.08em"}}>调候</div>
                   <div className="font-bold" style={{fontSize:15}}>
                     {(tiaohou.tiaohou_gan||[]).map((ch,i)=>{
@@ -388,10 +423,10 @@ export default function AnalyzePage() {
             </div>
 
             {/* Tab 内容区 */}
-            <div className="space-y-10">
+            <div ref={tabContentRef} className="space-y-10">
               {/* Tab 1: 四柱命盘 */}
               {activeTab==="bazi"&&(
-                <div className="space-y-10 stagger-in">
+                <div className="space-y-10">
                   <BaziChartCard result={analysisResult} />
 
                   {analysisResult?.chart_quality && <ChartQuality data={analysisResult.chart_quality as unknown as ChartQualityData} />}
@@ -441,7 +476,7 @@ export default function AnalyzePage() {
 
               {/* Tab 2: 大运流年 */}
               {activeTab==="dayun"&&(
-                <div className="space-y-10 stagger-in">
+                <div className="space-y-10">
                   <DayunTimeline result={analysisResult} />
 
                   <Safe fallback={
@@ -458,14 +493,14 @@ export default function AnalyzePage() {
 
               {/* Tab 3: 宫位神煞 */}
               {activeTab==="detail"&&(
-                <div className="space-y-10 stagger-in">
+                <div className="space-y-10">
                   <GongweiPanel result={analysisResult} />
                 </div>
               )}
 
               {/* Tab 4: 紫微斗数 */}
               {activeTab==="ziwei"&&(
-                <div className="stagger-in">
+                <div>
                   {analysisResult?.ziwei ? (
                     <section className="p-6 border" style={{background:"var(--surface)",borderColor:"var(--color-border)"}}>
                       <div style={{borderBottom:"2px solid var(--color-border-strong)",paddingBottom:12,marginBottom:16}}>
@@ -481,17 +516,43 @@ export default function AnalyzePage() {
                 </div>
               )}
 
-              {/* Tab 5: 流派解读 */}
+              {/* Tab 5: 深度分析 */}
+              {activeTab==="deep"&&(
+                <div className="space-y-8">
+                  <DimensionAnalysisPanel
+                    dimension="marriage"
+                    data={(analysisResult?.marriage_analysis as Record<string,unknown>)||{}}
+                    narration={typeof narration?.marriage==="string"?narration.marriage:""}
+                  />
+                  <DimensionAnalysisPanel
+                    dimension="health"
+                    data={(analysisResult?.health_analysis as Record<string,unknown>)||{}}
+                    narration={typeof narration?.health==="string"?narration.health:""}
+                  />
+                  <DimensionAnalysisPanel
+                    dimension="wealth"
+                    data={(analysisResult?.wealth_analysis as Record<string,unknown>)||{}}
+                    narration={typeof narration?.wealth==="string"?narration.wealth:""}
+                  />
+                  <DimensionAnalysisPanel
+                    dimension="family"
+                    data={(analysisResult?.family_analysis as Record<string,unknown>)||{}}
+                    narration={typeof narration?.family==="string"?narration.family:""}
+                  />
+                </div>
+              )}
+
+              {/* Tab 6: 流派解读 */}
               {activeTab==="analysis"&&(
-                <div className="space-y-10 stagger-in" style={{maxWidth:860,marginLeft:"auto",marginRight:"auto"}}>
+                <div className="space-y-10" style={{maxWidth:860,marginLeft:"auto",marginRight:"auto"}}>
                   {analysisResult?.llm_overview && <LlmOverview content={analysisResult.llm_overview as string} />}
                   {isCompareMode&&schoolAnalyses?<SchoolComparePanel schoolAnalyses={schoolAnalyses}/>:<SchoolPanel result={analysisResult} narration={narration}/>}
                 </div>
               )}
 
-              {/* Tab 5: 命理问答 */}
+              {/* Tab 7: 命理问答 */}
               {activeTab==="chat"&&(
-                <div className="stagger-in">
+                <div>
                   <ChatPanel analysisId={analysisId} school={currentSchool === "all" ? "ziping" : currentSchool} />
                 </div>
               )}

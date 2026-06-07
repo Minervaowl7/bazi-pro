@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Badge } from "@/components/ui";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 import {
   WUXING_COLORS,
@@ -22,6 +23,10 @@ interface PillarDetail {
 interface Props { result: Record<string, unknown>; }
 
 export default function BaziChartCard({ result }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dayunRef = useRef<HTMLSpanElement>(null);
+  const pillarRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   const shishen = result.shishen as { pillars?: PillarDetail[] } | undefined;
   const pillars = shishen?.pillars || [];
 
@@ -49,12 +54,59 @@ export default function BaziChartCard({ result }: Props) {
   const formation = pattern?.formation;
   const breakConditions = pattern?.break_conditions;
 
+  useGSAP(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      gsap.set("[data-chart-header]", { autoAlpha: 1 });
+      pillarRefs.current.forEach((el) => { if (el) gsap.set(el, { autoAlpha: 1 }); });
+      gsap.set("[data-nayin]", { autoAlpha: 1 });
+      if (dayunRef.current) gsap.set(dayunRef.current, { autoAlpha: 1 });
+      return;
+    }
+
+    const tl = gsap.timeline({ delay: 0.15 });
+
+    tl.from("[data-chart-header]", {
+      y: -20,
+      autoAlpha: 0,
+      duration: 0.5,
+      ease: "power2.out",
+    });
+
+    tl.from(pillarRefs.current, {
+      y: 40,
+      autoAlpha: 0,
+      scale: 0.95,
+      stagger: 0.12,
+      duration: 0.7,
+      ease: "back.out(1.4)",
+    }, "-=0.2");
+
+    tl.from("[data-nayin]", {
+      autoAlpha: 0,
+      y: 10,
+      stagger: 0.08,
+      duration: 0.4,
+      ease: "power2.out",
+    }, "-=0.3");
+
+    if (dayunRef.current) {
+      tl.from(dayunRef.current, {
+        scale: 2.5,
+        autoAlpha: 0,
+        rotation: -15,
+        duration: 0.5,
+        ease: "back.out(2)",
+      }, "-=0.2");
+    }
+  }, { scope: containerRef });
+
   return (
-    <div className="space-y-8">
+    <div ref={containerRef} className="space-y-8">
       {/* ===== 四柱命盘 ===== */}
       <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
         {/* 头部 */}
-        <div style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "18px 24px" }} className="flex items-center justify-between">
+        <div data-chart-header style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "18px 24px" }} className="flex items-center justify-between">
           <h2 className="text-lg font-bold" style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>
             四柱命盘 · 命局排盘
           </h2>
@@ -67,6 +119,22 @@ export default function BaziChartCard({ result }: Props) {
             {dayMaster && (
               <span className="font-bold" style={{ fontSize: 16, color: dayMasterWx ? WUXING_COLORS[dayMasterWx] : "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>
                 日主：{dayMaster}
+              </span>
+            )}
+            {wangshuai?.verdict && (
+              <span
+                ref={dayunRef}
+                className="inline-flex items-center justify-center px-2.5 py-0.5 font-bold"
+                style={{
+                  fontSize: 11,
+                  background: "var(--color-cinnabar)",
+                  color: "#fff",
+                  borderRadius: 4,
+                  transformOrigin: "center center",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                {wangshuai.verdict}
               </span>
             )}
           </div>
@@ -83,10 +151,13 @@ export default function BaziChartCard({ result }: Props) {
 
             return (
               <div
-                key={i} className="flex flex-col items-center py-8 px-4"
+                key={i}
+                ref={(el) => { pillarRefs.current[i] = el; }}
+                className="flex flex-col items-center py-8 px-4"
                 style={{
                   background: isDayPillar ? "rgba(184,74,60,0.03)" : "transparent",
                   borderRight: i < 3 ? "1px solid var(--color-border-subtle)" : "none",
+                  visibility: "hidden",
                 }}
               >
                 <span className="mb-4 font-semibold tracking-widest" style={{ fontSize: 12, color: isDayPillar ? "var(--color-cinnabar)" : "var(--color-text-faint)", letterSpacing: "0.15em" }}>
@@ -133,7 +204,7 @@ export default function BaziChartCard({ result }: Props) {
                 </div>
 
                 {p.nayin && (
-                  <span style={{ fontSize: 12, color: "var(--color-text-faint)", fontStyle: "italic", fontFamily: "var(--font-serif)" }}>{p.nayin}</span>
+                  <span data-nayin style={{ fontSize: 12, color: "var(--color-text-faint)", fontStyle: "italic", fontFamily: "var(--font-serif)", visibility: "hidden" }}>{p.nayin}</span>
                 )}
               </div>
             );

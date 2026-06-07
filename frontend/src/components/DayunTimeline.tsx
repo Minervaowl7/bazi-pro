@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
+import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 import { WUXING_COLORS, WUXING_BG, GAN_WUXING, ZHI_WUXING, RELATION_COLORS } from "@/lib/constants";
 
 const TIANGAN = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
@@ -40,6 +41,83 @@ interface Props { result: Record<string,unknown>; }
 export default function DayunTimeline({ result }: Props) {
   const dayun = (result.dayun as DayunStep[]|undefined) || (result.paipan_dayun as DayunStep[]|undefined);
   const [expandedIdx,setExpandedIdx]=useState<number|null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const currentBadgeRef = useRef<HTMLSpanElement>(null);
+  const expandCtx = useRef<gsap.Context | null>(null);
+
+  const prefersReducedMotion =
+    typeof window !== "undefined"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false;
+
+  useGSAP(() => {
+    if (prefersReducedMotion) {
+      gsap.set(containerRef.current, { autoAlpha: 1 });
+      gsap.set(".dayun-row", { autoAlpha: 1 });
+      return;
+    }
+
+    gsap.from(containerRef.current, {
+      y: 30,
+      autoAlpha: 0,
+      duration: 0.7,
+      ease: "power3.out",
+    });
+
+    ScrollTrigger.batch(".dayun-row", {
+      onEnter: (elements) => {
+        gsap.from(elements, {
+          autoAlpha: 0,
+          x: -20,
+          stagger: 0.08,
+          duration: 0.5,
+        });
+      },
+      start: "top 90%",
+      once: true,
+    });
+
+    if (currentBadgeRef.current) {
+      gsap.to(currentBadgeRef.current, {
+        scale: 1.06,
+        duration: 1.2,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+    }
+  }, { scope: containerRef });
+
+  const contextSafe = useGSAP({ scope: containerRef }).contextSafe;
+
+  useLayoutEffect(() => {
+    if (expandCtx.current) {
+      expandCtx.current.revert();
+      expandCtx.current = null;
+    }
+
+    const grid = containerRef.current?.querySelector(".liunian-grid");
+    if (!grid) return;
+
+    if (prefersReducedMotion) {
+      gsap.set(grid, { autoAlpha: 1 });
+      return;
+    }
+
+    expandCtx.current = gsap.context(() => {
+      gsap.set(grid, { height: 0, autoAlpha: 0 });
+      gsap.to(grid, { height: "auto", autoAlpha: 1, duration: 0.4, ease: "power2.out" });
+    });
+
+    return () => {
+      if (expandCtx.current) {
+        expandCtx.current.revert();
+        expandCtx.current = null;
+      }
+    };
+  }, [expandedIdx, prefersReducedMotion]);
+
   if (!dayun||dayun.length===0) return null;
 
   const birthYear=Number(result.birth_year)||0;
@@ -50,8 +128,24 @@ export default function DayunTimeline({ result }: Props) {
   const natalGans=(shishen?.pillars||[]).map((p)=>p.gan||"").filter(Boolean);
   const natalZhis=(shishen?.pillars||[]).map((p)=>p.zhi||"").filter(Boolean);
 
+  const handleDayunClick = contextSafe((i: number) => {
+    if (expandedIdx === i) {
+      setExpandedIdx(null);
+    } else {
+      setExpandedIdx(i);
+    }
+  });
+
   return (
-    <section style={{background:"var(--surface)",border:"1px solid var(--color-border)",boxShadow:"var(--shadow-sm)"}}>
+    <section
+      ref={containerRef}
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--color-border)",
+        boxShadow: "var(--shadow-sm)",
+        opacity: prefersReducedMotion ? 1 : 0,
+      }}
+    >
       <div style={{borderBottom:"2px solid var(--color-border-strong)",padding:"16px 24px"}} className="flex items-center justify-between">
         <h3 className="font-bold" style={{fontSize:16,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)"}}>大运流年</h3>
         <span style={{fontSize:13,color:"var(--color-text-faint)"}}>共{dayun.length}步大运</span>
@@ -71,17 +165,18 @@ export default function DayunTimeline({ result }: Props) {
           const startYear=birthYear?birthYear+startAge:0;
 
           return (
-            <div key={i}>
+            <div key={i} style={{borderBottom:i<dayun.length-1?"1px solid var(--color-border-subtle)" : "none"}}>
               <button
+                data-dayun-row
                 aria-expanded={isExpanded}
-                className="w-full flex items-center gap-3 transition-colors duration-150"
-                style={{padding:"16px 24px",background:isCurrent?"rgba(184,74,60,0.03)":"transparent"}}
+                className="dayun-row w-full flex items-center gap-3 transition-colors duration-150"
+                style={{padding:"16px 24px",background:isCurrent?"rgba(184,74,60,0.03)":"transparent",opacity:prefersReducedMotion?1:0}}
                 onMouseEnter={(e)=>{if(!isCurrent)e.currentTarget.style.background="var(--bg-hover)";}}
                 onMouseLeave={(e)=>{if(!isCurrent)e.currentTarget.style.background="transparent";}}
-                onClick={()=>setExpandedIdx(isExpanded?null:i)}
+                onClick={()=>handleDayunClick(i)}
               >
                 {isCurrent && (
-                  <span className="font-bold shrink-0 px-2.5 py-1" style={{fontSize:12,background:ganColor,color:"var(--bg-primary)"}}>
+                  <span ref={currentBadgeRef} className="font-bold shrink-0 px-2.5 py-1" style={{fontSize:12,background:ganColor,color:"var(--bg-primary)",transformOrigin:"center center",display:"inline-block"}}>
                     当前
                   </span>
                 )}
@@ -99,7 +194,7 @@ export default function DayunTimeline({ result }: Props) {
               </button>
 
               {isExpanded && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-0.5 p-6 md:p-7" style={{background:"var(--bg-secondary)"}}>
+                <div className="liunian-grid grid grid-cols-1 sm:grid-cols-2 gap-0.5 p-6 md:p-7" style={{background:"var(--bg-secondary)",overflow:"hidden"}}>
                   {Array.from({length:10},(_,j)=>{
                     const year=startYear>0?startYear+j:0, age=startAge+j;
                     const {gan:lnGan,zhi:lnZhi,shengxiao}=year>0?getYearGanzhi(year):{gan:"—",zhi:"",shengxiao:""};

@@ -200,7 +200,7 @@ def _build_retrieval_query(question: str, category: str, analysis_context: dict)
 
     逻辑：
     1. 从 analysis_context 提取 day_master、pattern、wangshuai、yongshen
-    2. 选取对应类别的第一条模板进行格式化
+    2. 选取对应类别的前两条模板进行格式化，合并为更丰富的查询
     3. 若格式化失败，回退到 "{question} {category_label}"
     """
     category = category if category in RETRIEVAL_TEMPLATES else "general"
@@ -212,22 +212,26 @@ def _build_retrieval_query(question: str, category: str, analysis_context: dict)
     yongshen = _extract_context_value(analysis_context, "yongshen.yongshen", "")
     category_label = CATEGORY_LABELS.get(category, "综合运势")
 
-    # 优先使用第一条模板
-    template = templates[0] if templates else "{question} {category_label}"
+    fmt_kwargs = dict(
+        question=question,
+        category=category_label,
+        day_master=day_master,
+        pattern=pattern,
+        wangshuai=wangshuai,
+        yongshen=yongshen,
+    )
 
-    try:
-        query = template.format(
-            question=question,
-            category=category_label,
-            day_master=day_master,
-            pattern=pattern,
-            wangshuai=wangshuai,
-            yongshen=yongshen,
-        )
-    except (KeyError, ValueError):
-        query = f"{question} {category_label}"
+    parts = []
+    for tmpl in templates[:2]:
+        try:
+            parts.append(tmpl.format(**fmt_kwargs))
+        except (KeyError, ValueError):
+            continue
 
-    # 清理多余空格
+    if not parts:
+        parts.append(f"{question} {category_label}")
+
+    query = " ".join(parts)
     query = " ".join(query.split())
     return query
 

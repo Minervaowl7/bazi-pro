@@ -42,7 +42,8 @@ except ImportError:
 
 async def run_analysis(mcp_json: dict, run_id: str,
                        detail_level: str = 'standard',
-                       school: str = 'ziping') -> dict:
+                       school: str = 'ziping',
+                       *, skip_llm_overview: bool = False) -> dict:
     for key in list(mcp_json.keys()):
         if mcp_json[key] is None:
             mcp_json[key] = ''
@@ -239,25 +240,67 @@ async def run_analysis(mcp_json: dict, run_id: str,
         except Exception as e:
             logger.warning("chart_quality failed (non-fatal): %s", e)
 
+        # ── 四维度深度分析（确定性，无 LLM） ──
+        _dm = result.get('day_master', '') or result.get('validation', {}).get('day_master', '')
+        _gender = result.get('性别', '') or result.get('validation', {}).get('gender', '')
+        _bazi_parts = result.get('validation', {}).get('bazi', '').split() if result.get('validation', {}).get('bazi') else []
+        _shensha_data = result.get('shensha', {})
+        _relations_data = result.get('relations', [])
+        _element_forces = result.get('element_forces', result.get('elements', {}))
+
+        if _dm and _gender and _bazi_parts:
+            try:
+                from bazi_pro.core.marriage import analyze_marriage
+                marriage = analyze_marriage(_dm, _gender, _bazi_parts, _shensha_data, _relations_data)
+                result['marriage_analysis'] = marriage
+                await manager.send_progress(run_id, 'marriage', 'done', '感情分析完成')
+            except Exception as e:
+                logger.warning("marriage analysis failed (non-fatal): %s", e)
+
+            try:
+                from bazi_pro.core.health import analyze_health
+                health = analyze_health(_dm, _gender, _bazi_parts, _element_forces, _shensha_data, _relations_data)
+                result['health_analysis'] = health
+                await manager.send_progress(run_id, 'health', 'done', '健康分析完成')
+            except Exception as e:
+                logger.warning("health analysis failed (non-fatal): %s", e)
+
+            try:
+                from bazi_pro.core.wealth import analyze_wealth
+                wealth = analyze_wealth(_dm, _gender, _bazi_parts, _element_forces, _shensha_data, _relations_data)
+                result['wealth_analysis'] = wealth
+                await manager.send_progress(run_id, 'wealth', 'done', '财运分析完成')
+            except Exception as e:
+                logger.warning("wealth analysis failed (non-fatal): %s", e)
+
+            try:
+                from bazi_pro.core.family import analyze_family
+                family = analyze_family(_dm, _gender, _bazi_parts, _shensha_data, _relations_data)
+                result['family_analysis'] = family
+                await manager.send_progress(run_id, 'family', 'done', '六亲分析完成')
+            except Exception as e:
+                logger.warning("family analysis failed (non-fatal): %s", e)
+
         # ── LLM 命盘总览（自动触发，可选） ──
-        try:
-            from server.llm import chat_completion, is_llm_configured
-            if is_llm_configured():
-                await manager.send_progress(run_id, 'llm', 'running', 'AI 命盘总览生成中...')
-                overview_prompt = _build_overview_prompt(result, mcp_json, result.get('dayun', []))
-                overview_messages = [
-                    {"role": "system", "content": OVERVIEW_SYSTEM_PROMPT},
-                    {"role": "user", "content": overview_prompt},
-                ]
-                overview_text = await chat_completion(overview_messages, temperature=0.6, max_tokens=4096)
-                if overview_text:
-                    result['llm_overview'] = overview_text
-                    await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览完成')
-                else:
-                    await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览（无输出）')
-        except Exception as e:
-            logger.debug("LLM overview generation failed (non-fatal): %s", e)
-            await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览跳过')
+        if not skip_llm_overview:
+            try:
+                from server.llm import chat_completion, is_llm_configured
+                if is_llm_configured():
+                    await manager.send_progress(run_id, 'llm', 'running', 'AI 命盘总览生成中...')
+                    overview_prompt = _build_overview_prompt(result, mcp_json, result.get('dayun', []))
+                    overview_messages = [
+                        {"role": "system", "content": OVERVIEW_SYSTEM_PROMPT},
+                        {"role": "user", "content": overview_prompt},
+                    ]
+                    overview_text = await chat_completion(overview_messages, temperature=0.6, max_tokens=4096)
+                    if overview_text:
+                        result['llm_overview'] = overview_text
+                        await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览完成')
+                    else:
+                        await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览（无输出）')
+            except Exception as e:
+                logger.debug("LLM overview generation failed (non-fatal): %s", e)
+                await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览跳过')
 
         if solar and gender:
             try:

@@ -1,10 +1,80 @@
 "use client";
 
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 import BirthForm from "@/components/BirthForm";
 
 export default function Home() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const reduceMotion = "(prefers-reduced-motion: reduce)";
+
+    gsap.context(() => {
+      gsap.matchMedia().add(reduceMotion, (context) => {
+        if (context.conditions?.[reduceMotion]) {
+          gsap.set(
+            [".hero-seal", ".hero-title", ".hero-subtitle", ".hero-form", ".cap-bar"],
+            { autoAlpha: 1, y: 0, x: 0, scale: 1, rotation: 0 },
+          );
+          return;
+        }
+
+        const heroTL = gsap.timeline({ defaults: { ease: "power2.out" } });
+
+        heroTL
+          .from(".hero-seal", {
+            autoAlpha: 0,
+            scale: 0.4,
+            rotation: -15,
+            duration: 0.7,
+          })
+          .from(".hero-title", {
+            autoAlpha: 0,
+            y: 40,
+            scale: 0.96,
+            duration: 0.8,
+          }, "-=0.3")
+          .from(".hero-subtitle", {
+            autoAlpha: 0,
+            y: 20,
+            duration: 0.6,
+          }, "-=0.3")
+          .from(".hero-form", {
+            autoAlpha: 0,
+            x: 60,
+            duration: 0.8,
+            ease: "power3.out",
+          }, "-=0.3");
+
+        gsap.from(".cap-bar", {
+          scrollTrigger: {
+            trigger: ".cap-bar",
+            start: "top 90%",
+            once: true,
+          },
+          autoAlpha: 0,
+          y: 30,
+          duration: 0.7,
+        });
+
+        gsap.from(".cap-item", {
+          scrollTrigger: {
+            trigger: ".cap-bar",
+            start: "top 90%",
+            once: true,
+          },
+          autoAlpha: 0,
+          y: 20,
+          stagger: 0.12,
+          duration: 0.5,
+        });
+      });
+    }, containerRef);
+  }, { scope: containerRef });
+
   return (
-    <div style={{ minHeight: "calc(100vh - 3.5rem)", position: "relative", zIndex: 1 }}>
+    <div ref={containerRef} style={{ minHeight: "calc(100vh - 3.5rem)", position: "relative", zIndex: 1 }}>
 
       {/* ===== Hero: 全幅视觉锚点 ===== */}
       <section style={{
@@ -72,9 +142,9 @@ export default function Home() {
         })}
 
         {/* 品牌印章 */}
-        <div style={{
+        <div className="hero-seal" style={{
           marginBottom: 36,
-          animation: "sealStamp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+          visibility: "hidden",
         }}>
           <div style={{
             width: 64,
@@ -106,7 +176,7 @@ export default function Home() {
         </div>
 
         {/* 主标题 */}
-        <h1 style={{
+        <h1 className="hero-title" style={{
           fontSize: 56,
           fontWeight: 700,
           lineHeight: 1.08,
@@ -117,6 +187,7 @@ export default function Home() {
           textAlign: "center",
           position: "relative",
           zIndex: 1,
+          visibility: "hidden",
         }}>
           八字排盘
           <br />
@@ -128,7 +199,7 @@ export default function Home() {
           }}>古法定盘 · 智能解读</span>
         </h1>
 
-        <p style={{
+        <p className="hero-subtitle" style={{
           fontSize: 15,
           lineHeight: 1.9,
           color: "var(--color-text-muted)",
@@ -137,12 +208,13 @@ export default function Home() {
           marginBottom: 48,
           position: "relative",
           zIndex: 1,
+          visibility: "hidden",
         }}>
           每一步可追溯至古籍原文，零幻觉。
         </p>
 
         {/* 表单卡片 */}
-        <div style={{
+        <div className="hero-form" style={{
           textAlign: "left",
           background: "var(--surface)",
           boxShadow: "var(--shadow-xl)",
@@ -154,6 +226,7 @@ export default function Home() {
           position: "relative",
           zIndex: 1,
           overflow: "hidden",
+          visibility: "hidden",
         }}>
           <div style={{
             position: "absolute",
@@ -169,10 +242,11 @@ export default function Home() {
       </section>
 
       {/* ===== 底部能力条 ===== */}
-      <div style={{
+      <div className="cap-bar" style={{
         borderTop: "1px solid var(--color-border)",
         background: "var(--surface)",
         padding: "28px 32px",
+        visibility: "hidden",
       }}>
         <div style={{
           maxWidth: 900,
@@ -188,10 +262,11 @@ export default function Home() {
             { icon: "派", label: "三大流派", sub: "一键对比" },
             { icon: "格", label: "破格检测", sub: "六层筛查" },
           ].map((f, i) => (
-            <div key={i} style={{
+            <div key={i} className="cap-item" style={{
               display: "flex",
               alignItems: "center",
               gap: 12,
+              visibility: "hidden",
             }}>
               <span style={{
                 width: 36,

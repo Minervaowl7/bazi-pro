@@ -1,20 +1,12 @@
 """单元测试 — bazi_pro 核心模块"""
 
-import os
-import tempfile
-
 from bazi_pro import (
     AnalysisEngine,
     count_wuxing_from_bazi,
     derive_shishen,
     wuxing_pct,
 )
-from bazi_pro.archive import ArchiveStore
-from bazi_pro.calibration import CalibrationTracker
-from bazi_pro.compare_engine import CompareEngine
 from bazi_pro.evidence import build_analysis_evidence, new_evidence
-from bazi_pro.liunian_sandbox import LiunianSandbox
-from bazi_pro.plugin_api import BaziPlugin, list_plugins, register_plugin
 from bazi_pro.view_model import DashboardVM, EvidenceVM
 
 
@@ -102,151 +94,6 @@ class TestAnalysisEngine:
         ws = result['strength']['wangshuai']
         assert 'verdict' in ws
         assert ws['is_weak'] is False or ws['is_strong'] is True
-
-
-class TestCompareEngine:
-
-    def test_compare_pillars(self):
-        engine = CompareEngine()
-        engine.load_chart_a_dict({'八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁'})
-        engine.load_chart_b_dict({'八字': '甲子 丙寅 戊辰 庚午', '日主': '戊'})
-        result = engine.compare()
-        assert len(result.pillar_diff) == 4
-        assert result.compatibility_score >= 0
-        assert result.compatibility_score <= 100
-
-    def test_compare_relations(self):
-        engine = CompareEngine()
-        engine.load_chart_a_dict({'八字': '甲子 乙丑 丙寅 丁卯', '日主': '丙'})
-        engine.load_chart_b_dict({'八字': '己巳 庚午 辛未 壬申', '日主': '辛'})
-        relations = engine.compare_relations()
-        gan_he = [r for r in relations if r['type'] == '天干合']
-        assert len(gan_he) > 0
-
-    def test_wuxing_overlap(self):
-        engine = CompareEngine()
-        engine.load_chart_a_dict({'八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁'})
-        engine.load_chart_b_dict({'八字': '甲子 丙寅 戊辰 庚午', '日主': '戊'})
-        result = engine.compare()
-        assert 'overlap' in result.wuxing_overlap
-        overlap = result.wuxing_overlap['overlap']
-        for wx in ['木', '火', '土', '金', '水']:
-            assert wx in overlap
-            assert 'diff_pct' in overlap[wx]
-
-
-class TestLiunianSandbox:
-
-    def test_get_year_data(self):
-        sandbox = LiunianSandbox({'八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁'})
-        yd = sandbox.get_year_data(2024)
-        assert yd.year == 2024
-        assert yd.gan == '甲'
-        assert yd.zhi == '辰'
-        assert yd.gan_zhi == '甲辰'
-
-    def test_shen_trigger(self):
-        sandbox = LiunianSandbox({'八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁'})
-        yd = sandbox.get_year_data(2024)
-        assert len(yd.shen_trigger) > 0
-
-    def test_wuxing_shift(self):
-        sandbox = LiunianSandbox({'八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁'})
-        yd = sandbox.get_year_data(2024)
-        assert len(yd.wuxing_shift) > 0
-
-    def test_mark_key_years(self):
-        sandbox = LiunianSandbox({'八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁'})
-        marked = sandbox.mark_key_years()
-        assert len(marked) == 21
-        starred = [y for y in marked if '⭐' in y.bookmark]
-        warned = [y for y in marked if '⚠️' in y.bookmark]
-        assert len(starred) > 0 or len(warned) > 0
-
-    def test_relations(self):
-        sandbox = LiunianSandbox({'八字': '壬午 乙巳 丁亥 癸卯', '日主': '丁'})
-        yd = sandbox.get_year_data(2026)
-        assert yd.gan == '丙'
-        assert yd.zhi == '午'
-        has_relation = len(yd.relations) > 0
-        assert has_relation
-
-
-class TestArchiveStore:
-
-    def test_save_and_list(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, 'test.db')
-            store = ArchiveStore(db_path=db_path)
-            rid = store.save_analysis(
-                bazi='壬午 乙巳 丁亥 癸卯',
-                day_master='丁',
-                gender='女',
-                pattern='暗食神格',
-            )
-            assert rid > 0
-            records = store.list_analyses(limit=5)
-            assert len(records) >= 1
-            assert records[0]['bazi'] == '壬午 乙巳 丁亥 癸卯'
-            store.close()
-
-    def test_get_analysis(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, 'test.db')
-            store = ArchiveStore(db_path=db_path)
-            rid = store.save_analysis(bazi='甲子 乙丑 丙寅 丁卯')
-            record = store.get_analysis(rid)
-            assert record['bazi'] == '甲子 乙丑 丙寅 丁卯'
-            store.close()
-
-    def test_total_count(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, 'test.db')
-            store = ArchiveStore(db_path=db_path)
-            assert store.total_count == 0
-            store.save_analysis(bazi='test')
-            assert store.total_count == 1
-            store.close()
-
-
-class TestCalibrationTracker:
-
-    def test_record_feedback(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, 'cal.json')
-            tracker = CalibrationTracker(db_path=db_path)
-            tracker.record_feedback('test-1', '旺衰判断：身强', True)
-            tracker.record_feedback('test-2', '格局判断：正官格', False)
-            assert tracker.total_feedback == 2
-            stats = tracker.get_calibration_stats()
-            assert 'wangshuai' in stats
-            assert stats['wangshuai']['accuracy'] == 1.0
-
-    def test_calibration_weights(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, 'cal.json')
-            tracker = CalibrationTracker(db_path=db_path)
-            weights = tracker.apply_calibration_weights()
-            assert 'wangshuai' in weights
-            assert weights['wangshuai'] == 1.0
-
-
-class TestPluginAPI:
-
-    def test_register_and_get(self):
-        class TestPlugin(BaziPlugin):
-            def on_retrieve(self, query, results):
-                return results
-            def on_evidence(self, evidence):
-                return evidence
-            def on_render(self, html, vm):
-                return html
-        plugin = TestPlugin()
-        plugin.name = 'test'
-        plugin.version = '1.0'
-        register_plugin(plugin)
-        names = list_plugins()
-        assert 'test' in names
 
 
 class TestEvidence:

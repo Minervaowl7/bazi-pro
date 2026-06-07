@@ -27,7 +27,8 @@ def cmd_run(args):
     if benchmark == "baziqa":
         from benchmarks.runners.baziqa_runner import run_baziqa
         years = [int(y) for y in args.year.split(",")] if args.year else None
-        run_baziqa(years=years, max_persons=args.max, school=args.school)
+        run_baziqa(years=years, max_persons=args.max, school=args.school,
+                   n_samples=args.n_samples, concurrency=args.concurrency)
     elif benchmark == "ziwei":
         from benchmarks.runners.ziwei_runner import run_ziwei
         years = [int(y) for y in args.year.split(",")] if args.year else None
@@ -169,6 +170,8 @@ def main():
     p_run.add_argument("--year", help="年份过滤，逗号分隔")
     p_run.add_argument("--max", type=int, default=0, help="最大命主数")
     p_run.add_argument("--school", default="ziping", help="流派")
+    p_run.add_argument("--n-samples", type=int, default=1, help="Self-Consistency 采样次数 (默认 1，reasoning model SC 无效)")
+    p_run.add_argument("--concurrency", type=int, default=2, help="问题并行数 (默认 2)")
 
     sub.add_parser("score", help="评分")
     sub.add_parser("stats", help="统计报告")
