@@ -7,8 +7,6 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from server.deps import error_response
-
 router = APIRouter()
 
 

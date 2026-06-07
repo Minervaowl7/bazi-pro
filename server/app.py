@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
 
-from fastapi import FastAPI, Request  # noqa: E402
+from fastapi import FastAPI  # noqa: E402
 from fastapi.exceptions import RequestValidationError  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.middleware.trustedhost import TrustedHostMiddleware  # noqa: E402
@@ -22,10 +22,7 @@ from fastapi.responses import HTMLResponse, JSONResponse  # noqa: E402
 from server.cache import get_cache  # noqa: E402
 from server.db import close_db, get_db  # noqa: E402
 from server.deps import (  # noqa: E402
-    API_KEY,
     MAX_PAYLOAD_BYTES,
-    RATE_LIMIT_REQUESTS,
-    RATE_LIMIT_WINDOW_SECONDS,
     APIKeyError,
     backend_name,
     error_response,

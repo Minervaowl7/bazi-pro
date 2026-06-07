@@ -1,8 +1,10 @@
 """十神工具函数 — 四维度分析模块共享的十神查找和透干检测"""
 from __future__ import annotations
-from bazi_pro.core.constants import GAN_SHISHEN_MAP, derive_shishen
-from bazi_pro.core.hidden_stems import get_canggan
+
 from bazi_pro.core.branches import CANGGAN_WEIGHT
+from bazi_pro.core.constants import derive_shishen
+from bazi_pro.core.hidden_stems import get_canggan
+
 
 def get_transparent_gans(bazi_parts: list[str]) -> set[str]:
     """返回所有透干（天干）的干集合"""
@@ -18,13 +20,13 @@ def find_shishen_instances(
     """
     instances = []
     positions = ['年柱', '月柱', '日柱', '时柱']
-    
+
     for i, part in enumerate(bazi_parts):
         if len(part) < 2:
             continue
         gan, zhi = part[0], part[1]
         pos = positions[i] if i < len(positions) else f'第{i}柱'
-        
+
         # Check transparent gan
         ss = derive_shishen(day_master, gan)
         if ss == target_shishen:
@@ -36,7 +38,7 @@ def find_shishen_instances(
                 'root_weight': 1.0,
                 'pillar_idx': i,
             })
-        
+
         # Check hidden stems
         canggan = get_canggan(zhi)
         for cg_gan, qi_level in canggan:
@@ -51,7 +53,7 @@ def find_shishen_instances(
                     'root_weight': weight,
                     'pillar_idx': i,
                 })
-    
+
     # Dedup by gan + position
     seen = {}
     for inst in instances:

@@ -23,10 +23,10 @@
 
 from __future__ import annotations
 
-from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_CHONG
+from bazi_pro.core.branches import CANGGAN_WEIGHT
 from bazi_pro.core.constants import GAN_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
-from bazi_pro.core.stems import KE_MAP, SHENG_MAP, WO_KE_MAP
+from bazi_pro.core.stems import SHENG_MAP, WO_KE_MAP
 
 
 def _get_transparent_gans(bazi_parts: list[str]) -> set[str]:
@@ -119,7 +119,6 @@ def _detect_shishan_shengcai(
 ) -> dict | None:
     dm_wx = GAN_WUXING.get(day_master, '')
     caishen_wx = WO_KE_MAP.get(dm_wx, '') if dm_wx else ''
-    shishen_wx = WO_KE_MAP.get(dm_wx, '') if dm_wx else ''
     if not caishen_wx:
         return None
 

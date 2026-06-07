@@ -744,7 +744,7 @@ def _narrate_marriage(result, gender):
     spouse_star = ma.get("spouse_star", {})
     if spouse_star.get("name"):
         ctx = spouse_star.get("gender_context", "配偶星")
-        lines.append(f"男命以正财为妻星、偏财为次缘。" if gender == "男" else "女命以正官为夫星、七杀为次缘。")
+        lines.append("男命以正财为妻星、偏财为次缘。" if gender == "男" else "女命以正官为夫星、七杀为次缘。")
         lines.append(f"命局中{ctx}为{spouse_star['name']}。")
 
     palace = ma.get("spouse_palace", {})

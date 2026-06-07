@@ -21,10 +21,9 @@
 
 from __future__ import annotations
 
-from bazi_pro.core.branches import CANGGAN_WEIGHT, SHIER_CHANGSHENG, ZHI_CHONG
+from bazi_pro.core.branches import CANGGAN_WEIGHT, SHIER_CHANGSHENG
 from bazi_pro.core.constants import GAN_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
-
 
 _PILLAR_NAMES = ['年柱', '月柱', '日柱', '时柱']
 
@@ -185,8 +184,6 @@ def _check_risk_indicator(
     if relations:
         year_zhi = bazi_parts[0][1] if len(bazi_parts) >= 1 and len(bazi_parts[0]) >= 2 else ''
         month_zhi = bazi_parts[1][1] if len(bazi_parts) >= 2 and len(bazi_parts[1]) >= 2 else ''
-        year_gan = bazi_parts[0][0] if len(bazi_parts) >= 1 and len(bazi_parts[0]) >= 1 else ''
-        month_gan = bazi_parts[1][0] if len(bazi_parts) >= 2 and len(bazi_parts[1]) >= 1 else ''
 
         for rel in relations:
             if rel.get('type') == '地支冲':

@@ -3,11 +3,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
-from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -20,8 +18,6 @@ from server.db import (
 )
 from server.deps import (
     error_response,
-    task_store,
-    TASK_TTL_SECONDS,
     verify_api_key,
 )
 from server.sse import broadcast, buffers, lock, subscribers, v2_active_ids

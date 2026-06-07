@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
@@ -34,6 +33,7 @@ class ReverseLookupRequest(BaseModel):
 async def api_v2_hehun(payload: HehunRequest):
     try:
         from bazi_pro.compare_engine import CompareEngine
+
         from bazi_pro.core import full_analysis
     except ImportError:
         return error_response(503, "MODULE_NOT_AVAILABLE", "合婚模块不可用")

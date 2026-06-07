@@ -354,6 +354,7 @@ class TestAppEndpoints:
         })
         try:
             from fastapi.testclient import TestClient
+
             from server.app import app
             fresh_client = TestClient(app)
             resp = fresh_client.get(f'/api/status/{run_id}')

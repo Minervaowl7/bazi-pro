@@ -23,10 +23,9 @@
 
 from __future__ import annotations
 
-from bazi_pro.core.branches import CANGGAN_WEIGHT, SHIER_CHANGSHENG
-from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING
-from bazi_pro.core.hidden_stems import get_canggan
-from bazi_pro.core.stems import KE_MAP, SHENG_MAP
+from bazi_pro.core.branches import SHIER_CHANGSHENG
+from bazi_pro.core.constants import GAN_WUXING
+from bazi_pro.core.stems import KE_MAP
 
 WUXING_ORGAN = {
     '木': ('肝', '胆'),
@@ -216,7 +215,7 @@ def _assess_constitution(
     max_score = scores[max_type]
 
     if max_score < 20:
-        return {'type': '中性', 'detail': f'五行分布均衡，寒热燥湿得分均<20'}
+        return {'type': '中性', 'detail': '五行分布均衡，寒热燥湿得分均<20'}
 
     details = []
     for t, s in sorted(scores.items(), key=lambda x: -x[1]):

@@ -19,7 +19,10 @@ from bazi_pro.core.branches import (
 from bazi_pro.core.constants import GAN_WUXING, WUXING_TO_GAN, ZHI_WUXING, derive_shishen
 from bazi_pro.core.disease import detect_disease
 from bazi_pro.core.elements import calc_element_forces
+from bazi_pro.core.family import analyze_family  # noqa: F401
+from bazi_pro.core.health import analyze_health  # noqa: F401
 from bazi_pro.core.hidden_stems import get_canggan
+from bazi_pro.core.marriage import analyze_marriage  # noqa: F401
 from bazi_pro.core.patterns import (
     PATTERN_YONGSHEN,
     _finalize_pattern,
@@ -52,11 +55,8 @@ from bazi_pro.core.ten_gods import (
     _get_yongshen_direction,
 )
 from bazi_pro.core.tiaohou import lookup_tiaohou
-from bazi_pro.core.yongshen import _pattern_yongshen_wx, derive_yongshen
-from bazi_pro.core.marriage import analyze_marriage  # noqa: F401
-from bazi_pro.core.health import analyze_health  # noqa: F401
 from bazi_pro.core.wealth import analyze_wealth  # noqa: F401
-from bazi_pro.core.family import analyze_family  # noqa: F401
+from bazi_pro.core.yongshen import _pattern_yongshen_wx, derive_yongshen
 
 
 def full_analysis(mcp_json: dict) -> dict:

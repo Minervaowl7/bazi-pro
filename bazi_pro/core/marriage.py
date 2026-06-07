@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-from bazi_pro.core.branches import CANGGAN_WEIGHT, ZHI_CHONG, ZHI_HAI, ZHI_HE
+from bazi_pro.core.branches import CANGGAN_WEIGHT
 from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
 
@@ -224,13 +224,11 @@ def _detect_marriage_risks(
             'detail': detail,
         })
 
-    has_clash = False
     if relations:
         for rel in relations:
             if rel.get('type') == '地支冲':
                 elements = rel.get('elements', [])
                 if palace.get('branch') in elements:
-                    has_clash = True
                     risks.append({
                         'type': '日支逢冲',
                         'severity': 'high',
@@ -445,7 +443,6 @@ def analyze_marriage(
     tendency = _assess_romance_tendency(spouse_instances, palace, risks)
     summary = _generate_marriage_summary(gender, spouse_instances, strength, risks, tendency)
 
-    primary_instances = [x for x in spouse_instances if x['star_type'] == 'primary']
     star_name = spouse_info['primary']
     star_label = spouse_info['primary_label']
 
