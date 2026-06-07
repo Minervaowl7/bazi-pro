@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import importlib
-import os
 
 try:
     import pytest
