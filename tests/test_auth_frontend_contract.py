@@ -20,13 +20,14 @@ def client_no_key():
 @pytest.fixture
 def client_with_key():
     import server.app as app_module
-    original = os.environ.get('BAZI_API_KEY', '')
-    os.environ['BAZI_API_KEY'] = 'test-contract-key'
+    import server.deps as deps_module
+    original_key = deps_module.API_KEY
+    deps_module.API_KEY = 'test-contract-key'
     importlib.reload(app_module)
     try:
         yield TestClient(app_module.app)
     finally:
-        os.environ['BAZI_API_KEY'] = original
+        deps_module.API_KEY = original_key
         importlib.reload(app_module)
 
 
@@ -91,8 +92,8 @@ class TestAPIKeyEnforcement:
 
     def test_status_endpoint_requires_key(self, client_with_key):
         run_id = 'test-status-auth'
-        import server.app as app_module
-        app_module._task_store.create(run_id, {
+        from server import deps
+        deps.task_store.create(run_id, {
             'status': 'running', '_created_ts': 0, 'visible': True,
         })
         try:
@@ -103,12 +104,12 @@ class TestAPIKeyEnforcement:
             })
             assert resp.status_code == 200
         finally:
-            app_module._task_store.delete(run_id)
+            deps.task_store.delete(run_id)
 
     def test_result_endpoint_requires_key(self, client_with_key):
         run_id = 'test-result-auth'
-        import server.app as app_module
-        app_module._task_store.create(run_id, {
+        from server import deps
+        deps.task_store.create(run_id, {
             'status': 'completed', '_created_ts': 0,
         })
         try:
@@ -119,7 +120,7 @@ class TestAPIKeyEnforcement:
             })
             assert resp.status_code == 200
         finally:
-            app_module._task_store.delete(run_id)
+            deps.task_store.delete(run_id)
 
     def test_websocket_rejects_without_key(self, client_with_key):
         from starlette.websockets import WebSocketDisconnect
@@ -128,9 +129,9 @@ class TestAPIKeyEnforcement:
                 ws.receive()
 
     def test_websocket_accepts_with_header_key(self, client_with_key):
-        import server.app as app_module
+        from server import deps
         run_id = 'test-ws-header-key'
-        app_module._task_store.create(run_id, {
+        deps.task_store.create(run_id, {
             'status': 'running', '_created_ts': 0,
         })
         try:
@@ -143,7 +144,7 @@ class TestAPIKeyEnforcement:
             if 'close' in str(e).lower() or '4001' in str(e):
                 pytest.fail("WebSocket should not close with valid API key header")
         finally:
-            app_module._task_store.delete(run_id)
+            deps.task_store.delete(run_id)
 
 
 class TestErrorFormatContract:

@@ -345,16 +345,16 @@ class TestUnifiedErrorResponse:
         assert body["error"]["code"] == "VALIDATION_ERROR"
 
     def test_429_uses_unified_format(self, client):
-        from server.app import _rate_limiter
-        original = _rate_limiter.is_allowed
-        _rate_limiter.is_allowed = lambda key: False
+        from server.deps import rate_limiter
+        original = rate_limiter.is_allowed
+        rate_limiter.is_allowed = lambda key: False
         try:
             resp = client.get("/api/health")
             body = resp.json()
             assert "error" in body
             assert body["error"]["code"] == "RATE_LIMITED"
         finally:
-            _rate_limiter.is_allowed = original
+            rate_limiter.is_allowed = original
 
 
 class TestRateLimiterKeyIncludesApiKey:
