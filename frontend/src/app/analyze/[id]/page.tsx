@@ -409,9 +409,9 @@ export default function AnalyzePage() {
               else if(e.key==="End"){e.preventDefault();setActiveTab(TABS[TABS.length-1].id);}
             }} style={{
               display:"flex",
-              gap:4,
+              gap:2,
               marginBottom:32,
-              padding:4,
+              padding:3,
               background:"var(--surface-warm)",
               border:"1px solid var(--color-border)",
               borderRadius:"var(--radius-md)",
@@ -426,20 +426,21 @@ export default function AnalyzePage() {
                     onClick={()=>setActiveTab(tab.id)}
                     style={{
                       flex:1,
-                      padding:"12px 8px",
-                      fontSize:14,
-                      fontWeight:600,
+                      padding:"10px 6px",
+                      fontSize:13,
+                      fontWeight:isActive?600:500,
                       fontFamily:"var(--font-sans)",
-                      color:isActive?"var(--color-ink)":"var(--color-text-muted)",
+                      color:isActive?"var(--color-text-primary)":"var(--color-text-muted)",
                       background:isActive?"var(--surface)":"transparent",
                       border:"none",
-                      borderRadius:"var(--radius-sm)",
+                      borderRadius:"6px",
                       cursor:"pointer",
-                      boxShadow:isActive?"var(--shadow-sm)":"none",
-                      transition:"all 0.2s ease",
+                      boxShadow:isActive?"var(--shadow-xs)":"none",
+                      transition:"all 0.15s ease",
+                      position:"relative",
                     }}
                   >
-                    <span aria-hidden="true" style={{marginRight:6,fontSize:16}}>{tab.icon}</span>{tab.label}
+                    <span aria-hidden="true" style={{marginRight:5,fontSize:14}}>{tab.icon}</span>{tab.label}
                   </button>
                 );
               })}
