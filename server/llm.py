@@ -72,7 +72,7 @@ def _get_day_ganzhi(d) -> str:
 _LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://api.openai.com/v1")
 _LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
 _LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
-_LLM_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "300"))
+_LLM_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "30"))
 
 
 def get_llm_config() -> dict:
