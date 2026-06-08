@@ -29,30 +29,31 @@ import ChartQuality, { type ChartQualityData } from "@/components/ChartQuality";
 
 function LlmOverview({ content }: { content: string }) {
   return (
-    <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ borderBottom: "1px solid var(--color-border-subtle)", padding: "18px 28px" }} className="flex items-center justify-between">
+    <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-md)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
+      <div style={{ borderBottom: "1px solid var(--color-border-subtle)", padding: "20px 32px" }} className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, var(--color-scholar-blue), #1a365d)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(45,62,95,0.2)" }}>
-            <span style={{ fontSize: 15, color: "#fff" }}>✦</span>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, var(--color-cinnabar), #a04030)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(201,100,66,0.25)" }}>
+            <span style={{ fontSize: 16, color: "#fff", fontFamily: "var(--font-serif)" }}>命</span>
           </div>
           <div>
-            <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)", letterSpacing: "0.02em" }}>AI 命盘总览</h3>
-            <p style={{ fontSize: 12, color: "var(--color-text-faint)", marginTop: 2 }}>基于确定性计算数据 · LLM 深度解读</p>
+            <h3 className="font-bold" style={{ fontSize: 18, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)", letterSpacing: "-0.01em" }}>命书</h3>
+            <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 2 }}>基于确定性计算 · 深度解读</p>
           </div>
         </div>
       </div>
-      <div className="llm-overview-body" style={{ padding: "28px", color: "var(--color-text-secondary)", lineHeight: 1.85, fontSize: 15 }}>
+      <div className="llm-overview-body" style={{ padding: "32px", color: "var(--color-text-secondary)", lineHeight: 1.75, fontSize: 16, fontFamily: "var(--font-serif)" }}>
         <ReactMarkdown remarkPlugins={[RemarkGfm]}>{content}</ReactMarkdown>
       </div>
       <style jsx>{`
-        .llm-overview-body :global(h2) { color: var(--color-scholar-blue); font-size: 1.2rem; font-weight: 700; font-family: var(--font-serif); margin-top: 1.8rem; margin-bottom: 0.8rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-border-subtle); }
+        .llm-overview-body :global(h2) { color: var(--color-cinnabar); font-size: 1.25rem; font-weight: 700; font-family: var(--font-serif); margin-top: 2rem; margin-bottom: 0.8rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border-subtle); }
         .llm-overview-body :global(h2:first-child) { margin-top: 0; }
-        .llm-overview-body :global(h3) { color: var(--color-text-primary); font-size: 1.05rem; font-weight: 600; margin-top: 1.2rem; margin-bottom: 0.5rem; }
-        .llm-overview-body :global(p) { margin-bottom: 0.7rem; }
+        .llm-overview-body :global(h3) { color: var(--color-text-primary); font-size: 1.1rem; font-weight: 600; font-family: var(--font-serif); margin-top: 1.4rem; margin-bottom: 0.6rem; }
+        .llm-overview-body :global(p) { margin-bottom: 0.8rem; }
         .llm-overview-body :global(strong) { color: var(--color-text-primary); font-weight: 700; }
-        .llm-overview-body :global(ul), .llm-overview-body :global(ol) { padding-left: 1.3rem; margin: 0.5rem 0; }
-        .llm-overview-body :global(li) { margin: 0.3rem 0; line-height: 1.7; }
-        .llm-overview-body :global(blockquote) { border-left: 3px solid var(--color-scholar-blue); padding-left: 1rem; opacity: 0.85; margin: 0.7rem 0; }
+        .llm-overview-body :global(ul), .llm-overview-body :global(ol) { padding-left: 1.3rem; margin: 0.6rem 0; }
+        .llm-overview-body :global(li) { margin: 0.3rem 0; line-height: 1.75; }
+        .llm-overview-body :global(blockquote) { border-left: 3px solid var(--color-cinnabar); padding-left: 1rem; opacity: 0.9; margin: 0.8rem 0; font-style: italic; }
+        .llm-overview-body :global(code) { background: var(--surface-warm); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
       `}</style>
     </section>
   );
@@ -247,7 +248,7 @@ export default function AnalyzePage() {
 
   return (
     <div ref={containerRef} style={{minHeight:"100vh",background:"var(--background)"}}>
-      <main style={{width:"100%",paddingTop:72,paddingBottom:40,paddingLeft:20,paddingRight:20}}>
+      <main style={{width:"100%",maxWidth:960,margin:"0 auto",paddingTop:72,paddingBottom:40,paddingLeft:24,paddingRight:24}}>
 
         {/* ===== 操作栏 ===== */}
         {analysisResult && (
@@ -261,6 +262,7 @@ export default function AnalyzePage() {
                   color:"var(--color-text-secondary)",
                   background:"var(--surface)",
                   borderColor:"var(--color-border)",
+                  borderRadius:"var(--radius-sm)",
                 }}
               >
                 {SCHOOL_OPTIONS.find(s=>s.value===currentSchool)?.label||"传统子平"}
@@ -272,7 +274,7 @@ export default function AnalyzePage() {
               {schoolDropdownOpen && (
                 <div
                   className="absolute left-0 top-full mt-1.5 w-60 z-50 overflow-hidden"
-                  style={{background:"var(--surface)",border:"1px solid var(--color-border)",boxShadow:"var(--shadow-lg)"}}
+                  style={{background:"var(--surface)",border:"1px solid var(--color-border)",boxShadow:"var(--shadow-lg)",borderRadius:"var(--radius-md)"}}
                 >
                   {SCHOOL_OPTIONS.map(s=>(
                     <button key={s.value}
@@ -304,6 +306,7 @@ export default function AnalyzePage() {
                 color:"var(--color-text-secondary)",
                 background:"var(--surface)",
                 borderColor:"var(--color-border)",
+                borderRadius:"var(--radius-sm)",
               }}
             >
               <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -319,7 +322,7 @@ export default function AnalyzePage() {
         {isLoading && <AnalysisProgress />}
 
         {status==="failed" && (
-          <section className="p-6 mb-6 border" style={{background:"var(--surface)",borderColor:"var(--danger)"}}>
+          <section className="p-6 mb-6" style={{background:"var(--surface)",border:"1px solid var(--danger)",borderRadius:"var(--radius-md)",boxShadow:"var(--shadow-sm)"}}>
             <h3 className="font-bold mb-2" style={{fontSize:16,color:"var(--danger)"}}>分析失败</h3>
             <p style={{fontSize:15,color:"var(--color-text-secondary)"}}>{error||"未知错误"}</p>
           </section>
@@ -329,7 +332,7 @@ export default function AnalyzePage() {
         {(isLoading || (status !== "completed" && status !== "failed" && !analysisResult)) && (
           <>
             {!isLoading && (
-              <section className="p-5 mb-6 flex items-center gap-3 border" style={{background:"var(--surface)",borderColor:"var(--color-border)"}}>
+              <section className="p-5 mb-6 flex items-center gap-3" style={{background:"var(--surface)",border:"1px solid var(--color-border)",borderRadius:"var(--radius-md)",boxShadow:"var(--shadow-sm)"}}>
                 <span className="w-2 h-2 shrink-0 animate-pulse" style={{background:"var(--el-water)"}} />
                 <span style={{fontSize:15,color:"var(--color-text-muted)"}}>正在加载分析结果…</span>
               </section>
@@ -346,15 +349,17 @@ export default function AnalyzePage() {
               {[
                 {label:"旺衰",value:wangshuai?.verdict||"—"},
                 {label:"格局",value:pattern?.pattern||"—"},
-                {label:"用神",value:yongshen?.yongshen||"—",bg:"rgba(45,125,91,0.06)"},
-                {label:"喜神",value:(yongshen?.xishen||[]).join(" ")||"—",bg:"rgba(53,94,133,0.05)"},
-                {label:"忌神",value:(yongshen?.jishen||[]).join(" ")||"—",bg:"rgba(196,60,44,0.06)"},
+                {label:"用神",value:yongshen?.yongshen||"—",bg:"var(--el-wood-bg)"},
+                {label:"喜神",value:(yongshen?.xishen||[]).join(" ")||"—",bg:"var(--el-water-bg)"},
+                {label:"忌神",value:(yongshen?.jishen||[]).join(" ")||"—",bg:"var(--el-fire-bg)"},
               ].map((item:{label:string;value:string;bg?:string})=>(
-                <div data-pill key={item.label} className="text-center p-4 border" style={{
+                <div data-pill key={item.label} className="text-center p-4" style={{
                   background:item.bg||"var(--surface)",
-                  borderColor:"var(--color-border)",
+                  border:"1px solid var(--color-border)",
+                  borderRadius:"var(--radius-md)",
+                  boxShadow:"var(--shadow-sm)",
                 }}>
-                  <div className="mb-1.5 font-semibold uppercase tracking-wider" style={{fontSize:11,color:"var(--color-text-faint)",letterSpacing:"0.08em"}}>{item.label}</div>
+                  <div className="mb-1.5 font-semibold" style={{fontSize:12,color:"var(--color-text-muted)",fontFamily:"var(--font-serif)"}}>{item.label}</div>
                   <div className="font-bold" style={{fontSize:16}}>
                     {item.value.split("").map((ch,i)=>{
                       const wx = GAN_WUXING[ch] || ZHI_WUXING[ch] || (["金","木","水","火","土"].includes(ch) ? ch : "");
@@ -392,8 +397,9 @@ export default function AnalyzePage() {
               gap:4,
               marginBottom:32,
               padding:4,
-              background:"var(--bg-secondary)",
+              background:"var(--surface-warm)",
               border:"1px solid var(--color-border)",
+              borderRadius:"var(--radius-md)",
             }}>
               {TABS.map(tab=>{
                 const isActive=activeTab===tab.id;
@@ -412,8 +418,10 @@ export default function AnalyzePage() {
                       color:isActive?"var(--color-ink)":"var(--color-text-muted)",
                       background:isActive?"var(--surface)":"transparent",
                       border:"none",
+                      borderRadius:"var(--radius-sm)",
                       cursor:"pointer",
-                      boxShadow:isActive?"0 1px 3px rgba(28,25,23,0.08)":"none",
+                      boxShadow:isActive?"var(--shadow-sm)":"none",
+                      transition:"all 0.2s ease",
                     }}
                   >
                     <span aria-hidden="true" style={{marginRight:6,fontSize:16}}>{tab.icon}</span>{tab.label}

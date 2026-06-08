@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
+import { Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Navbar from "@/components/Navbar";
+
+const notoSerifSC = Noto_Serif_SC({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-serif-loaded",
+  display: "swap",
+  adjustFontFallback: false,
+});
 
 export const metadata: Metadata = {
   title: "八字排盘 · 确定性命理引擎",
@@ -13,7 +22,7 @@ export const metadata: Metadata = {
     description: "算析分离架构，核心计算零 LLM 依赖。三大流派对比分析。",
     type: "website",
   },
-  other: { "theme-color": "#faf8f3" },
+  other: { "theme-color": "#f5f4ed" },
 };
 
 export default function RootLayout({
@@ -22,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN" style={{colorScheme:"dark light"}} suppressHydrationWarning>
+    <html lang="zh-CN" className={notoSerifSC.variable} style={{colorScheme:"dark light"}} suppressHydrationWarning>
       <body className="antialiased">
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--surface)] focus:text-[var(--color-text-primary)] focus:border focus:border-[var(--color-border)]" style={{top:8,left:8}}>跳到主要内容</a>
         <ThemeProvider>

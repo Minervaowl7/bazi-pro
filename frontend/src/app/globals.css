@@ -1,54 +1,66 @@
 @import "tailwindcss";
 
 :root {
-  /* ===== 背景层：宣纸暖白 ===== */
-  --background: #f5f1ea;
-  --surface: #fdfcf9;
-  --surface-warm: #f9f6f0;
+  /* ===== 背景层：宣纸暖白（借鉴 Claude DESIGN.md 羊皮纸色） ===== */
+  --background: #f5f4ed;
+  --surface: #faf9f5;
+  --surface-warm: #f6f5f0;
 
-  /* ===== 文字：墨色层次 ===== */
-  --color-text-primary: #1a1714;
-  --color-text-secondary: #5c5750;
-  --color-text-muted: #8a857d;
-  --color-text-faint: #c2bdb4;
+  /* ===== 文字：墨色层次（暖色调灰，非冷灰） ===== */
+  --color-text-primary: rgba(0,0,0,0.92);
+  --color-text-secondary: #5e5d59;
+  --color-text-muted: #87867f;
+  --color-text-faint: #b0aea5;
 
-  /* ===== 主色调：墨蓝 + 朱砂 ===== */
+  /* ===== 主色调：墨蓝 + 朱砂（借鉴 Claude 赤陶色） ===== */
   --color-ink: #1e2a3a;
   --color-scholar-blue: #2d3e5f;
-  --color-cinnabar: #b84a3c;
+  --color-cinnabar: #c96442;
   --color-jade: #3d6b59;
   --color-gold: #a17f40;
 
-  /* ===== 边框与分割 ===== */
-  --color-border: rgba(28,25,23,0.08);
-  --color-border-strong: rgba(28,25,23,0.14);
-  --color-border-subtle: rgba(28,25,23,0.04);
+  /* ===== 边框与分割（Notion whisper border） ===== */
+  --color-border: rgba(0,0,0,0.08);
+  --color-border-strong: rgba(0,0,0,0.12);
+  --color-border-subtle: rgba(0,0,0,0.04);
   --color-bg-panel: #f0ece4;
   --color-bg-panel-hover: #eae5db;
   --color-accent: var(--color-ink);
 
-  /* ===== 五行：宝石色系 ===== */
+  /* ===== 五行：宝石色系（opacity 提升至 0.12） ===== */
   --el-wood: #2d7d5b;
-  --el-fire: #c43c2c;
+  --el-fire: #c96442;
   --el-earth: #946636;
   --el-metal: #b8923f;
   --el-water: #355e85;
-  --el-wood-bg: rgba(45,125,91,0.06);
-  --el-fire-bg: rgba(196,60,44,0.06);
-  --el-earth-bg: rgba(148,102,54,0.06);
-  --el-metal-bg: rgba(184,146,63,0.05);
-  --el-water-bg: rgba(53,94,133,0.06);
+  --el-wood-bg: rgba(45,125,91,0.12);
+  --el-fire-bg: rgba(201,100,66,0.12);
+  --el-earth-bg: rgba(148,102,54,0.12);
+  --el-metal-bg: rgba(184,146,63,0.10);
+  --el-water-bg: rgba(53,94,133,0.12);
+  --el-wood-grad: linear-gradient(135deg, #2d7d5b, #3d9b72);
+  --el-fire-grad: linear-gradient(135deg, #c96442, #e0795a);
+  --el-earth-grad: linear-gradient(135deg, #946636, #b88a4a);
+  --el-metal-grad: linear-gradient(135deg, #b8923f, #d4ad55);
+  --el-water-grad: linear-gradient(135deg, #355e85, #4a7aaa);
 
-  /* ===== 阴影系统 ===== */
-  --shadow-xs: 0 1px 2px rgba(28,25,23,0.03);
-  --shadow-sm: 0 1px 3px rgba(28,25,23,0.04), 0 1px 2px rgba(28,25,23,0.02);
-  --shadow-md: 0 4px 12px rgba(28,25,23,0.05), 0 1px 3px rgba(28,25,23,0.03);
-  --shadow-lg: 0 8px 24px rgba(28,25,23,0.06), 0 2px 6px rgba(28,25,23,0.03);
-  --shadow-xl: 0 16px 48px rgba(28,25,23,0.08), 0 4px 12px rgba(28,25,23,0.04);
+  /* ===== 阴影系统（Notion 多层阴影） ===== */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 18px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04), 0 0.8px 3px rgba(0,0,0,0.03);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.05);
 
-  /* ===== 字体系统 ===== */
-  --font-serif: "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
-  --font-display: "ZCOOL XiaoWei", "Noto Serif SC", serif;
+  /* ===== 圆角系统 ===== */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 9999px;
+
+  /* ===== 字体系统（next/font 加载 Noto Serif SC，通过 CSS 变量注入） ===== */
+  --font-serif: var(--font-serif-loaded), "Noto Serif SC", "Source Han Serif SC", "Georgia", serif;
+  --font-display: var(--font-serif-loaded), "Noto Serif SC", "Source Han Serif SC", serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
@@ -70,7 +82,7 @@
   --border-subtle: var(--color-border-subtle);
   --border-accent: rgba(30,42,58,0.10);
   --success: #2d7d5b;
-  --danger: #c43c2c;
+  --danger: #c96442;
   --warning: #b8923f;
   --wood: var(--el-wood);
   --fire: var(--el-fire);
@@ -82,14 +94,14 @@
   --earth-pill: var(--el-earth-bg);
   --metal-pill: var(--el-metal-bg);
   --water-pill: var(--el-water-bg);
-  --wood-pill-border: rgba(45,125,91,0.15);
-  --fire-pill-border: rgba(196,60,44,0.15);
-  --earth-pill-border: rgba(148,102,54,0.13);
-  --metal-pill-border: rgba(184,146,63,0.12);
-  --water-pill-border: rgba(53,94,133,0.15);
-  --day-master-bg: rgba(184,74,60,0.05);
+  --wood-pill-border: rgba(45,125,91,0.20);
+  --fire-pill-border: rgba(201,100,66,0.20);
+  --earth-pill-border: rgba(148,102,54,0.18);
+  --metal-pill-border: rgba(184,146,63,0.16);
+  --water-pill-border: rgba(53,94,133,0.20);
+  --day-master-bg: rgba(201,100,66,0.08);
   --day-master-text: var(--color-cinnabar);
-  --day-master-border: rgba(184,74,60,0.18);
+  --day-master-border: rgba(201,100,66,0.20);
   --shadow: var(--shadow-md);
   --shadow-sm: var(--shadow-xs);
   --shadow-lg: var(--shadow-lg);
@@ -97,33 +109,38 @@
 }
 
 .dark, [data-theme="dark"] {
-  --background: #0d0e10;
-  --surface: #151719;
-  --surface-warm: #191b1e;
+  --background: #0a0b0d;
+  --surface: #141618;
+  --surface-warm: #1a1c1f;
   --color-text-primary: #e6e2dd;
   --color-text-secondary: #9e9d98;
   --color-text-muted: #686662;
   --color-text-faint: #3a3835;
   --color-ink: #c5cdd8;
   --color-scholar-blue: #8da2c0;
-  --color-cinnabar: #de7868;
+  --color-cinnabar: #e0795a;
   --color-jade: #68ad88;
   --color-gold: #d2ae68;
-  --color-border: rgba(255,255,255,0.07);
-  --color-border-strong: rgba(255,255,255,0.11);
-  --color-border-subtle: rgba(255,255,255,0.025);
+  --color-border: rgba(255,255,255,0.08);
+  --color-border-strong: rgba(255,255,255,0.14);
+  --color-border-subtle: rgba(255,255,255,0.03);
   --color-bg-panel: #1a1c1f;
-  --color-bg-panel-hover: #20232a;
+  --color-bg-panel-hover: #22252a;
   --el-wood: #4eb884;
   --el-fire: #e55a4a;
   --el-earth: #c99a5e;
   --el-metal: #ddc06a;
   --el-water: #5a9bc9;
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.15);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.12);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.25), 0 1px 3px rgba(0,0,0,0.15);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.18);
-  --shadow-xl: 0 16px 48px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.2);
+  --el-wood-bg: rgba(78,184,132,0.12);
+  --el-fire-bg: rgba(229,90,74,0.12);
+  --el-earth-bg: rgba(201,154,94,0.12);
+  --el-metal-bg: rgba(221,192,106,0.10);
+  --el-water-bg: rgba(90,155,201,0.12);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 18px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.25);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -138,9 +155,8 @@ html, body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.75;
-  font-size: 15px;
-  letter-spacing: 0.01em;
+  line-height: 1.60;
+  font-size: 16px;
 }
 
 /* ===== 宣纸纹理背景 ===== */
