@@ -249,8 +249,20 @@ async def run_analysis(mcp_json: dict, run_id: str,
         if isinstance(_shensha_raw, list):
             _shensha_data = {}
             for item in _shensha_raw:
-                if isinstance(item, dict) and item.get('name'):
-                    _shensha_data[item['name']] = item
+                if not isinstance(item, dict) or not item.get('name'):
+                    continue
+                name = item['name']
+                pos = item.get('position', '')
+                if name in _shensha_data:
+                    # 同名神煞出现在多个柱位，合并 positions
+                    existing = _shensha_data[name]
+                    if isinstance(existing.get('positions'), list):
+                        if pos and pos not in existing['positions']:
+                            existing['positions'].append(pos)
+                    else:
+                        existing['positions'] = [pos]
+                else:
+                    _shensha_data[name] = {**item, 'positions': [pos] if pos else []}
         else:
             _shensha_data = _shensha_raw if isinstance(_shensha_raw, dict) else {}
         _relations_data = result.get('relations', [])
