@@ -39,7 +39,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   if (!mounted) {
-    return <div style={{ visibility: "hidden" }}>{children}</div>;
+    // SSR/首帧：不隐藏内容，避免 JS 加载失败时页面完全空白
+    return <>{children}</>;
   }
 
   return (
