@@ -72,7 +72,7 @@ def _get_day_ganzhi(d) -> str:
 _LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://api.openai.com/v1")
 _LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
 _LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
-_LLM_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "30"))
+_LLM_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "15"))
 
 
 def get_llm_config() -> dict:
@@ -126,8 +126,10 @@ async def chat_completion(messages: list[dict], temperature: float = 0.7, max_to
             "temperature": temperature,
             "max_tokens": effective_max,
         }
-        async with httpx.AsyncClient(timeout=_LLM_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(_LLM_TIMEOUT, connect=5.0)) as client:
             resp = await client.post(url, headers=headers, json=payload)
+            if resp.status_code in (401, 403):
+                raise RuntimeError(f"LLM API 认证失败 (HTTP {resp.status_code})，请检查 LLM_API_KEY")
             if resp.status_code == 429:
                 wait = min(5 * (attempt + 1), 30)
                 logger.warning("[llm] rate limited (429), retry %d/%d after %ds", attempt + 1, max_retries, wait)
