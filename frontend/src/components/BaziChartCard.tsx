@@ -257,8 +257,8 @@ export default function BaziChartCard({ result }: Props) {
                     <span className="shrink-0 px-2.5 py-0.5 font-semibold" style={{
                       fontSize: 12,
                       color: typeColor,
-                      background: `${typeColor}11`,
-                      border: `1px solid ${typeColor}22`,
+                      background: `color-mix(in srgb, ${typeColor} 7%, transparent)`,
+                      border: `1px solid color-mix(in srgb, ${typeColor} 13%, transparent)`,
                       borderRadius: 9999,
                     }}>
                       {r.type}

@@ -73,7 +73,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
     getChatHistory(analysisId, school).then((data) => {
       if (cancelled) return;
       if (data.messages && data.messages.length > 0) { setMessages(data.messages); setShowQuick(false); }
-    }).catch(() => {});
+    }).catch(() => { /* 历史加载失败静默处理，不影响新对话 */ });
     return () => { cancelled = true; mountedRef.current = false; };
   }, [analysisId, school]);
 
@@ -90,7 +90,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
     try {
       const data = await sendChatMessage(analysisId, message, school);
       if (!mountedRef.current) return;
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply, citations: data.citations }]);
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply || "抱歉，暂时无法回复。", citations: data.citations }]);
     } catch (err) {
       if (!mountedRef.current) return;
       const errMsg = err instanceof Error ? err.message : "发送失败";

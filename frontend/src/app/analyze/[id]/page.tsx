@@ -217,7 +217,7 @@ export default function AnalyzePage() {
 
   return (
     <div ref={containerRef} className="min-h-screen" style={{ background: "var(--bg)" }}>
-      <main className="w-full max-w-[960px] mx-auto pt-[72px] pb-10 px-6">
+      <main className="w-full max-w-[960px] mx-auto pt-14 pb-10 px-6">
 
         {/* ===== 操作栏 ===== */}
         {analysisResult && (

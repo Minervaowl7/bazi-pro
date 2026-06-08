@@ -77,9 +77,10 @@ export default function Section({
   }, { scope: ref });
 
   const style = levelStyles[level] || levelStyles.primary;
+  const Tag = title ? "section" : "div";
 
   return (
-    <section
+    <Tag
       ref={ref}
       className={`mb-6 ${className}`}
       style={style}
@@ -108,6 +109,6 @@ export default function Section({
         </div>
       )}
       {children}
-    </section>
+    </Tag>
   );
 }

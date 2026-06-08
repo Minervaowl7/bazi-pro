@@ -116,7 +116,7 @@ export default function DayunTimeline({ result }: Props) {
   const natalZhis=(shishen?.pillars||[]).map((p)=>p.zhi||"").filter(Boolean);
 
   const handleDayunClick = contextSafe((i: number) => {
-    setExpandedIdx(expandedIdx === i ? null : i);
+    setExpandedIdx(prev => prev === i ? null : i);
   });
 
   return (

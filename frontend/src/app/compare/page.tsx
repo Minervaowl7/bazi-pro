@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8711";
+import { API_BASE } from "@/lib/api";
 
 interface HistoryItem {
   id: string;
@@ -21,11 +20,12 @@ interface HehunResult {
   relation_analysis: Array<{ type?: string; description?: string }>;
 }
 
-function PersonForm({ label, form, setForm, history }: {
+function PersonForm({ label, form, setForm, history, idPrefix }: {
   label: string;
   form: { bazi: string; dayMaster: string; gender: string };
   setForm: (f: { bazi: string; dayMaster: string; gender: string }) => void;
   history: HistoryItem[];
+  idPrefix: string;
 }) {
   return (
     <div className="p-6 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow)" }}>
@@ -35,6 +35,7 @@ function PersonForm({ label, form, setForm, history }: {
           {["男", "女"].map((g) => (
             <button
               key={g} type="button"
+              aria-pressed={form.gender === g}
               onClick={() => setForm({ ...form, gender: g })}
               className="px-2.5 py-1 rounded-md text-xs font-medium transition-all"
               style={{
@@ -72,10 +73,11 @@ function PersonForm({ label, form, setForm, history }: {
 
       <div className="space-y-3">
         <div>
-          <label className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
+          <label htmlFor={`${idPrefix}-bazi`} className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
             八字（空格分隔四柱）
           </label>
           <input
+            id={`${idPrefix}-bazi`}
             value={form.bazi}
             onChange={(e) => setForm({ ...form, bazi: e.target.value })}
             placeholder="如：辛卯 庚子 壬申 辛亥"
@@ -84,10 +86,11 @@ function PersonForm({ label, form, setForm, history }: {
           />
         </div>
         <div>
-          <label className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
+          <label htmlFor={`${idPrefix}-dayMaster`} className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
             日主
           </label>
           <input
+            id={`${idPrefix}-dayMaster`}
             value={form.dayMaster}
             onChange={(e) => setForm({ ...form, dayMaster: e.target.value })}
             placeholder="如：壬"
@@ -142,6 +145,7 @@ export default function ComparePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     if (!formA.bazi || !formA.dayMaster || !formB.bazi || !formB.dayMaster) {
       setError("请填写双方的八字和日主");
       return;
@@ -158,6 +162,11 @@ export default function ComparePage() {
           "八字B": formB.bazi, "日主B": formB.dayMaster, "性别B": formB.gender,
         }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setError(err?.error?.message || err?.detail || `请求失败 (${res.status})`);
+        return;
+      }
       const data = await res.json();
       if (data.status === "completed") {
         setResult(data.result);
@@ -166,8 +175,9 @@ export default function ComparePage() {
       }
     } catch {
       setError("无法连接服务器");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
@@ -186,8 +196,8 @@ export default function ComparePage() {
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <PersonForm label="甲方" form={formA} setForm={setFormA} history={history} />
-            <PersonForm label="乙方" form={formB} setForm={setFormB} history={history} />
+            <PersonForm label="甲方" form={formA} setForm={setFormA} history={history} idPrefix="personA" />
+            <PersonForm label="乙方" form={formB} setForm={setFormB} history={history} idPrefix="personB" />
           </div>
 
           {error && (

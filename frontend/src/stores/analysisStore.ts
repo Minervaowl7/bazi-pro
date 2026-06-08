@@ -37,6 +37,8 @@ interface AnalysisState {
   closeSSE: () => void;
 }
 
+let _generation = 0; // 防止 SSE fallback 竞态
+
 export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   birthInput: null,
   analysisId: null,
@@ -63,6 +65,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
     const prevSse = get()._sseRef;
     if (prevSse) { prevSse.close(); }
 
+    const gen = ++_generation;
     set({ status: "submitting", error: null, progress: [], result: null, _sseRef: null });
     try {
       const resp = await submitAnalysis(input);
@@ -92,9 +95,11 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
           es.close();
           set({ _sseRef: null });
           const current = get();
-          if (current.status === "streaming") {
+          if (current.status === "streaming" && _generation === gen) {
             set({ status: "polling" });
-            setTimeout(() => get().fetchResult(resp.analysis_id), 1000);
+            setTimeout(() => {
+              if (_generation === gen) get().fetchResult(resp.analysis_id);
+            }, 1000);
           }
         },
       );
@@ -116,8 +121,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
       try {
         const data = await getAnalysis(analysisId);
         const hasResult = data.result && typeof data.result === "object" && Object.keys(data.result as Record<string, unknown>).length > 0;
-        if (data.status === "completed" && !hasResult && retries < 8) {
-          if (Date.now() - start > maxPollMs) {
+        if (data.status === "completed" && !hasResult) {
+          if (retries >= 8 || Date.now() - start > maxPollMs) {
             set({ status: "failed", error: "分析超时，请稍后重试" });
             return;
           }

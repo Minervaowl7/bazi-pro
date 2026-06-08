@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getDailyFortune, type DailyFortune } from "@/lib/api";
 
-const LEVEL_COLORS:{[k:string]:string}={"大吉":"var(--wx-wood)","吉":"var(--wx-wood)","中吉":"var(--scholar-blue)","平":"var(--text-3)","小凶":"var(--wx-fire)","凶":"var(--wx-fire)"};
+const LEVEL_COLORS:{[k:string]:string}={"大吉":"var(--wx-wood)","吉":"var(--wx-wood)","中吉":"var(--scholar-blue)","小吉":"var(--scholar-blue)","平":"var(--text-3)","中凶":"var(--wx-fire)","小凶":"var(--wx-fire)","凶":"var(--wx-fire)","大凶":"var(--wx-fire)"};
 interface Props { analysisId:string; }
 
 export default function DailyFortuneCard({ analysisId }:Props) {

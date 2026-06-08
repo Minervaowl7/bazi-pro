@@ -67,7 +67,9 @@ const PROVIDERS: Provider[] = [
 
 function detectProvider(apiBase: string): Provider | null {
   for (const p of PROVIDERS) {
-    if (apiBase.includes(new URL(p.base).hostname)) return p;
+    try {
+      if (apiBase.includes(new URL(p.base).hostname)) return p;
+    } catch { /* 忽略无效 URL */ }
   }
   return null;
 }
@@ -78,7 +80,6 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
   const [model, setModel] = useState("mimo-v2.5-pro");
   const [keySet, setKeySet] = useState(false);
   const [showKey, setShowKey] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -100,14 +101,13 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
         } else {
           setCustomModel(false);
         }
-        setLoaded(true);
       })
-      .catch(() => setLoaded(true));
+      .catch(() => { /* 设置加载失败静默处理 */ });
   }, []);
 
   useEffect(() => {
-    if (open && !loaded) loadFromServer();
-  }, [open, loaded, loadFromServer]);
+    if (open) loadFromServer();
+  }, [open, loadFromServer]);
 
   useEffect(() => {
     if (!open) return;

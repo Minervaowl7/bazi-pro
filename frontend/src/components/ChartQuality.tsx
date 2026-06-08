@@ -76,7 +76,7 @@ export default function ChartQuality({ data }: Props) {
               </div>
               <div style={{ width: "100%", height: 6, borderRadius: 3, background: "var(--surface-2)", overflow: "hidden" }}>
                 <div style={{
-                  width: `${(d.score / d.max) * 100}%`,
+                  width: `${d.max > 0 ? (d.score / d.max) * 100 : 0}%`,
                   height: "100%",
                   borderRadius: 3,
                   background: scoreColor(d.score, d.max),
@@ -98,6 +98,7 @@ export default function ChartQuality({ data }: Props) {
 
         {/* Toggle */}
         <button
+          aria-expanded={expanded}
           onClick={() => setExpanded(!expanded)}
           className="flex items-center gap-1 mt-4 transition-colors duration-150 hover:text-[var(--scholar-blue)]"
           style={{ fontSize: 13, color: "var(--text-4)", background: "none", border: "none", cursor: "pointer", padding: 0 }}

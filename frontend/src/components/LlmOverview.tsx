@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import RemarkGfm from "remark-gfm";
 
 export default function LlmOverview({ content }: { content: string }) {
+  if (!content) return null;
   return (
     <section className="card relative overflow-hidden">
       {/* 朱砂竖线 */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useRef, useEffect, useId, type ReactNode } from "react";
 
 function Tooltip({ children, content, className }: {
   children: ReactNode;
@@ -10,6 +10,7 @@ function Tooltip({ children, content, className }: {
 }) {
   const [show, setShow] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const tooltipId = useId();
 
   useEffect(() => {
     if (!show) return;
@@ -24,16 +25,22 @@ function Tooltip({ children, content, className }: {
       className="relative inline-flex"
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
+      onFocus={() => setShow(true)}
+      onBlur={() => setShow(false)}
     >
       {children}
       {show && (
-        <div className={cn(
-          "absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2",
-          "px-2.5 py-1.5 rounded-md text-[11px] leading-tight",
-          "bg-[var(--ink)] text-[var(--bg)]",
-          "shadow-lg whitespace-nowrap animate-fade-in",
-          className
-        )}>
+        <div
+          id={tooltipId}
+          role="tooltip"
+          className={cn(
+            "absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2",
+            "px-2.5 py-1.5 rounded-md text-[11px] leading-tight",
+            "bg-[var(--ink)] text-[var(--bg)]",
+            "shadow-lg whitespace-nowrap animate-fade-in",
+            className
+          )}
+        >
           {content}
           <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
             <div className="w-2 h-2 rotate-45 bg-[var(--ink)]" />

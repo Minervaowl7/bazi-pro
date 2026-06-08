@@ -54,7 +54,7 @@ export default function RelationGraph({ result }: Props): JSX.Element | null {
         y: 40,
         symbolSize: 40,
         itemStyle: { color: ganWx ? WUXING_COLORS[ganWx] : "#888" },
-        label: { show: true, color: "#1a1a2e", fontSize: 12 },
+        label: { show: true, color: "var(--ink)", fontSize: 12 },
       });
       nodes.push({
         name: `${positions[i]}支·${zhi}`,
@@ -62,7 +62,7 @@ export default function RelationGraph({ result }: Props): JSX.Element | null {
         y: 160,
         symbolSize: 40,
         itemStyle: { color: zhiWx ? WUXING_COLORS[zhiWx] : "#888" },
-        label: { show: true, color: "#1a1a2e", fontSize: 12 },
+        label: { show: true, color: "var(--ink)", fontSize: 12 },
       });
     });
 

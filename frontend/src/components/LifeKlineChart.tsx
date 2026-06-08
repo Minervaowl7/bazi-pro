@@ -39,7 +39,7 @@ export default function LifeKlineChart({ analysisId }: Props) {
           setBirthYear(by > 1900 && by < 2100 ? by : (first.year || 0));
         }
       })
-      .catch(() => {})
+      .catch(() => { /* 大运流年数据加载失败，静默处理 */ })
       .finally(() => setLoading(false));
   }, [analysisId]);
 
@@ -196,7 +196,7 @@ export default function LifeKlineChart({ analysisId }: Props) {
           symbol: "none",
           data: [
             {
-              xAxis: String(currentYear),
+              xAxis: currentYear,
               lineStyle: { color: "#b84a3c", width: 1.5, type: "dashed" },
               label: { formatter: "今年", position: "end", fontSize: 11, color: "#b84a3c", fontWeight: 700 },
             },
@@ -265,7 +265,7 @@ export default function LifeKlineChart({ analysisId }: Props) {
       <div style={{ padding: "4px 8px 12px 8px" }}>
         <EChartsReact
           option={option}
-          style={{ height: 420 }}
+          style={{ height: "min(420px, 60vw)" }}
           notMerge={true}
           lazyUpdate={true}
         />

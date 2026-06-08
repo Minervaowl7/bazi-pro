@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8711";
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8711";
 
 class ApiError extends Error {
   status: number;
@@ -55,7 +55,11 @@ async function fetchApi<T>(path: string, init?: RequestInit, timeoutMs = 30000):
       err?.error?.message || err?.detail || `请求失败 (${res.status})`;
     throw new ApiError(message, res.status, err?.error?.code);
   }
-  return res.json();
+  try {
+    return await res.json();
+  } catch {
+    throw new ApiError("响应解析失败", res.status, "PARSE_ERROR");
+  }
 }
 
 export interface BirthInput {

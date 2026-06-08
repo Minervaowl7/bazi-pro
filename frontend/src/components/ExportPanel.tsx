@@ -136,14 +136,20 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
       toggleBtns.forEach((btn) => { if (!btn.closest(".no-print")) btn.classList.add("no-print-temp"); });
 
       await new Promise((r) => setTimeout(r, 200));
-      window.print();
 
-      setTimeout(() => {
+      const cleanup = () => {
         header.remove();
         if (chatEl) chatEl.classList.remove("no-print");
         document.querySelectorAll(".no-print-temp").forEach((el) => el.classList.remove("no-print-temp"));
         setExporting(false);
-      }, 1000);
+      };
+
+      let cleaned = false;
+      const safeCleanup = () => { if (!cleaned) { cleaned = true; cleanup(); } };
+      window.addEventListener("afterprint", safeCleanup, { once: true });
+      window.print();
+      // 兜底：afterprint 事件不触发时（如某些浏览器），2 秒后清理
+      setTimeout(safeCleanup, 2000);
     } catch (err) {
       console.error("PDF export failed:", err);
       setExporting(false);

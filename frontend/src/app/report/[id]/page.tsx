@@ -196,6 +196,7 @@ export default function ReportPage() {
 
   useEffect(() => {
     if (report?.status === "generating") {
+      let failCount = 0;
       pollRef.current = setInterval(async () => {
         try {
           const updated = await getReport(analysisId);
@@ -203,7 +204,14 @@ export default function ReportPage() {
             setReport(updated);
             if (pollRef.current) clearInterval(pollRef.current);
           }
-        } catch {}
+          failCount = 0;
+        } catch {
+          failCount++;
+          if (failCount >= 10) {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setReport(prev => prev ? { ...prev, status: "failed" } : null);
+          }
+        }
       }, 3000);
       return () => {
         if (pollRef.current) clearInterval(pollRef.current);
@@ -279,7 +287,7 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg)" }}>
-      <div className="max-w-4xl mx-auto px-8 py-8">
+      <div className="max-w-4xl mx-auto px-8 py-8 pb-24">
         <div className="flex items-center justify-between mb-8">
           <Link
             href={`/analyze/${analysisId}`}
@@ -550,7 +558,7 @@ export default function ReportPage() {
 
         {report?.status === "completed" && (
           <div
-            className="fixed bottom-0 left-0 right-0 py-4 px-8 flex items-center justify-center gap-4 no-print"
+            className="fixed bottom-0 left-0 right-0 py-4 px-4 sm:px-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4 no-print"
             style={{
               background: "linear-gradient(to top, var(--bg) 60%, transparent)",
               zIndex: 50,

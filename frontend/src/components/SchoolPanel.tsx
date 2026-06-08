@@ -385,7 +385,7 @@ export default function SchoolPanel({ result, narration }: Props) {
   const schoolAnalysis = result.school_analysis as Record<string, unknown> | undefined;
   const schoolAnalyses = result.school_analyses as Record<string, unknown> | undefined;
 
-  const currentSchoolData = schoolAnalyses?.[school] as Record<string, unknown> | undefined || schoolAnalysis;
+  const currentSchoolData = (schoolAnalyses?.[school] as Record<string, unknown> | undefined) ?? schoolAnalysis;
 
   const hasSchoolData = currentSchoolData && currentSchoolData.status === "completed";
 

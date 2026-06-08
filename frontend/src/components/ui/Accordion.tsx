@@ -23,6 +23,7 @@ function AccordionItem({ title, badge, children, defaultOpen = false, className 
       className
     )}>
       <button
+        aria-expanded={open}
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[var(--surface-2)] transition-colors"
       >

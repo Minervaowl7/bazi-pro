@@ -31,7 +31,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--wx-water)] focus-visible:ring-offset-1",
         "disabled:pointer-events-none disabled:opacity-50",
-        "active:scale-[0.97]",
+        "active:scale-[0.97] motion-reduce:active:scale-100",
         variantStyles[variant],
         sizeStyles[size],
         className

@@ -11,6 +11,7 @@ export default function ShareCard({ result }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [generating, setGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [genError, setGenError] = useState("");
 
   const validation = result.validation as { day_master?: string; bazi?: string } | undefined;
   const dayMaster = validation?.day_master || "";
@@ -25,6 +26,7 @@ export default function ShareCard({ result }: Props) {
   async function handleGenerate() {
     if (!cardRef.current) return;
     setGenerating(true);
+    setGenError("");
     try {
       const { default: html2pdf } = await import("html2pdf.js");
       const el = cardRef.current;
@@ -38,7 +40,7 @@ export default function ShareCard({ result }: Props) {
       link.href = url;
       link.click();
     } catch {
-      alert("图片生成失败，请尝试截图保存");
+      setGenError("图片生成失败，请尝试截图保存");
     }
     setGenerating(false);
   }
@@ -56,7 +58,7 @@ export default function ShareCard({ result }: Props) {
       </button>
 
       {showPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label="分享卡片">
           <div className="w-full max-w-sm rounded-2xl overflow-hidden bg-[var(--surface)] border border-[var(--border)]">
             <div ref={cardRef} className="p-8" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #2c3e6b 100%)" }}>
               <div className="text-center mb-6">
@@ -93,6 +95,9 @@ export default function ShareCard({ result }: Props) {
               </div>
             </div>
 
+            {genError && (
+              <div className="px-4 pb-2 text-xs text-[var(--danger)]">{genError}</div>
+            )}
             <div className="p-4 flex gap-3">
               <button
                 onClick={() => setShowPreview(false)}
