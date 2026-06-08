@@ -244,7 +244,15 @@ async def run_analysis(mcp_json: dict, run_id: str,
         _dm = result.get('day_master', '') or result.get('validation', {}).get('day_master', '')
         _gender = result.get('性别', '') or result.get('validation', {}).get('gender', '')
         _bazi_parts = result.get('validation', {}).get('bazi', '').split() if result.get('validation', {}).get('bazi') else []
-        _shensha_data = result.get('shensha', {})
+        _shensha_raw = result.get('shensha', {})
+        # 神煞数据兼容：服务端可能是 list[{name,position,type,desc}] 或 dict{name:data}
+        if isinstance(_shensha_raw, list):
+            _shensha_data = {}
+            for item in _shensha_raw:
+                if isinstance(item, dict) and item.get('name'):
+                    _shensha_data[item['name']] = item
+        else:
+            _shensha_data = _shensha_raw if isinstance(_shensha_raw, dict) else {}
         _relations_data = result.get('relations', [])
         _element_forces = result.get('element_forces', result.get('elements', {}))
 
