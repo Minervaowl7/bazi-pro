@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project identity
 
-`bazi-pro` v5.2 — 确定性八字命理计算引擎 + 古籍对齐引擎 + 多流派分析路径（典籍对齐版） + LLM 解读框架 + Web 应用。
+`bazi-pro` v5.3 — 确定性八字命理计算引擎 + 古籍对齐引擎 + 多流派分析路径（典籍对齐版） + LLM 解读框架 + Web 应用。
 
 核心原则：**算析分离** — `bazi_pro/core/` 做所有确定性命理计算（十神、藏干、五行力量、旺衰、格局、喜用神、刑冲合害、破格检测），LLM 只负责解读，不参与计算。
 
-**v5.2 重大更新**：盲派和新派分析方法论全面对照典籍修正——盲派 7 项修正（体用定义/墓用复合做功/贼神捕神/功神废神/五党成势）、新派 6 项修正（反断论/百神论/身旺身弱判定/格局分类/出空机制/大运吉凶）。详见 README.md 版本历史。
+**v5.3 重大更新**：核心格局判定三项古籍对齐修正——会方检测收紧（对齐《滴天髓》"方是方兮局是局"）· 从强格官杀guard（对齐《渊海子平》"官印双全"）· 三刑优先于两刑（对齐《三命通会》）· 阴干墓库加深（对齐《滴天髓》"阴逢库为无用"）· 调候整合喜神（对齐《子平真诠》"论用神配气候得失"）。详见 README.md 版本历史。
 
 ## Build and test commands
 
@@ -139,41 +139,80 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 - 零 LLM 依赖，每句话锚定在确定性数据上
 - API 响应中作为 `narration` 字段返回
 
+## CLI 入口
+
+`pyproject.toml` 定义了以下 CLI 命令（`pip install -e .` 后可用）：
+
+| 命令 | 入口 | 说明 |
+|------|------|------|
+| `bazi-retrieve` | `bazi_pro.retrieve_classical:main` | 古籍检索（BM25 + jieba） |
+| `bazi-report` | `bazi_pro.generate_report:main` | 报告生成（HTML/MD/PDF/仪表盘） |
+| `bazi-doctor` | `bazi_pro.doctor:main` | 环境诊断（15 项检查） |
+| `bazi-evidence` | `bazi_pro.evidence:main` | 证据链 JSON 生成 |
+| `bazi-trace` | `bazi_pro.trace:main` | 分析 trace 生成 |
+| `bazi-server` | `server.app:main` | FastAPI 后端启动 |
+| `bazi-tui` | `bazi_pro.tui.app:main` | 终端 TUI 界面 |
+| `bazi-hybrid` | `bazi_pro.hybrid_search:main` | 混合检索（BM25 + 向量） |
+
 ## Key modules
+
+### 核心计算 (`bazi_pro/core/`)
 
 | 模块 | 职责 |
 |------|------|
-| `bazi_pro/core/constants.py` | 天干地支映射、十神推导 |
-| `bazi_pro/core/patterns.py` | 六层格局筛查 + 破格检测（专旺/化气/从格/建禄/羊刃/正格 + 建禄羊刃月令优先拦截） |
-| `bazi_pro/core/yongshen.py` | 用神/喜神/忌神推导 |
-| `bazi_pro/core/strength.py` | 旺衰判定（得令/得地/得势 + 官杀修正极旺判定） |
-| `bazi_pro/core/relations.py` | 刑冲合害检测 + 天干合化 |
-| `bazi_pro/core/disease.py` | 格局之病检测（5 类） |
-| `bazi_pro/core/tiaohou.py` | 调候用神查表（穷通宝鉴 120 条） |
-| `bazi_pro/core/schools/base.py` | SchoolAnalyzer 抽象基类 |
-| `bazi_pro/core/schools/__init__.py` | SCHOOL_REGISTRY + school_analyze() + register_school() |
-| `bazi_pro/core/schools/ziping.py` | 传统子平法（格局用神 + 破格感知用神调整 + 大运吉凶） |
-| `bazi_pro/core/schools/mangpai.py` | 盲派（宾主/6种做功/体用/功力/应期/贼神捕神/五党成势/墓用复合） |
-| `bazi_pro/core/schools/xinpai.py` | 新派（百神论/空亡论(含出空)/反断论(同宗对)/格局分类(扶抑从强从弱)） |
+| `constants.py` | 天干地支映射、十神推导 |
+| `patterns.py` | 六层格局筛查 + 破格检测（专旺/化气/从格/建禄/羊刃/正格 + 建禄羊刃月令优先拦截） |
+| `yongshen.py` | 用神/喜神/忌神推导 |
+| `strength.py` | 旺衰判定（得令/得地/得势 + 官杀修正极旺判定） |
+| `relations.py` | 刑冲合害检测 + 天干合化 |
+| `disease.py` | 格局之病检测（5 类） |
+| `tiaohou.py` | 调候用神查表（穷通宝鉴 120 条） |
+| `elements.py` | 五行力量计算（含月支本气 1.5 倍加成） |
+| `branches.py` | 地支藏干、六合/六冲/三合/三刑映射 |
+| `ten_gods.py` | 十神关系推导工具 |
+| `health.py` | 健康分析（五行-脏腑对应、体质寒热、健康危机指标） |
+| `wealth.py` | 财运分析（食伤生财/财官双美/比劫争财/财多身弱/枭神夺食） |
+| `marriage.py` | 感情婚姻分析（配偶星/配偶宫/婚姻风险指标） |
+| `family.py` | 六亲分析（父母/兄弟/子女宫位与星曜） |
+
+### 流派分析 (`bazi_pro/core/schools/`)
+
+| 模块 | 职责 |
+|------|------|
+| `base.py` | SchoolAnalyzer 抽象基类 |
+| `__init__.py` | SCHOOL_REGISTRY + school_analyze() + register_school() |
+| `ziping.py` | 传统子平法（格局用神 + 破格感知用神调整 + 大运吉凶） |
+| `mangpai.py` | 盲派（宾主/6种做功/体用/功力/应期/贼神捕神/五党成势/墓用复合） |
+| `xinpai.py` | 新派（百神论/空亡论(含出空)/反断论(同宗对)/格局分类(扶抑从强从弱)） |
+
+### 叙述与报告
+
+| 模块 | 职责 |
+|------|------|
 | `bazi_pro/narrator.py` | 确定性叙述器（9 维度中文文本生成） |
 | `bazi_pro/view_model.py` | DashboardVM 数据契约 |
 | `bazi_pro/ui/consumer_report.py` | 消费级报告（六维叙事 + 术语解释） |
 | `bazi_pro/generate_report.py` | 报告生成 CLI（3 种模式） |
-| `server/app.py` | FastAPI 应用（REST + SSE + WebSocket + 流派选择 + 对比端点） |
-| `server/db.py` | SQLite 存储层（aiosqlite） |
-| `server/analysis.py` | 异步分析编排（调用 core + schools + nayin + gongwei + shensha） |
-| `server/nayin.py` | 60甲子纳音常量表 |
-| `server/gongwei.py` | 宫位计算（胎元/命宫/身宫） |
-| `server/shensha.py` | 神煞查表（天乙贵人/文昌/驿马/桃花/华盖等 25+ 种） |
-| `server/llm.py` | LLM 服务封装（OpenAI 兼容 API） |
-| `server/true_solar_time.py` | 真太阳时修正（Jean Meeus 时差方程 + 38 城市经纬度） |
-| `server/daily_fortune.py` | 每日/每月运势（6 维度评分） |
-| `server/kline_ohlc.py` | 百年人生 K 线 OHLC 模型（4 维度） |
-| `server/personality.py` | 性格分析（10 题 + 分叉路径） |
-| `server/reverse_lookup.py` | 日柱反查 |
-| `server/cross_validate.py` | 三流派交叉验证 |
-| `server/interpretation_modes.py` | 解读模式（通俗/专业/技术） |
-| `server/dayun_score.py` | 大运流年评分 |
+
+### Web 服务 (`server/`)
+
+| 模块 | 职责 |
+|------|------|
+| `app.py` | FastAPI 应用（REST + SSE + WebSocket + 流派选择 + 对比端点） |
+| `db.py` | SQLite 存储层（aiosqlite） |
+| `analysis.py` | 异步分析编排（调用 core + schools + nayin + gongwei + shensha） |
+| `nayin.py` | 60甲子纳音常量表 |
+| `gongwei.py` | 宫位计算（胎元/命宫/身宫） |
+| `shensha.py` | 神煞查表（天乙贵人/文昌/驿马/桃花/华盖等 25+ 种） |
+| `llm.py` | LLM 服务封装（OpenAI 兼容 API） |
+| `true_solar_time.py` | 真太阳时修正（Jean Meeus 时差方程 + 38 城市经纬度） |
+| `daily_fortune.py` | 每日/每月运势（6 维度评分） |
+| `kline_ohlc.py` | 百年人生 K 线 OHLC 模型（4 维度） |
+| `personality.py` | 性格分析（10 题 + 分叉路径） |
+| `reverse_lookup.py` | 日柱反查 |
+| `cross_validate.py` | 三流派交叉验证 |
+| `interpretation_modes.py` | 解读模式（通俗/专业/技术） |
+| `dayun_score.py` | 大运流年评分 |
 
 ## Critical constraints
 
@@ -228,35 +267,55 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 
 ## Key gotchas
 
+### 导入与废弃
+
 - **`core_rules.py` 是废弃 shim** — 内部代码应从 `bazi_pro.core` 导入。
+- **双源兼容取值** — `full_analysis()` 返回 `result['day_master']`/`result['pillars']`（顶层），`run_analysis()` 返回 `result['validation']['day_master']`/`result['shishen']['pillars']`。取值时需双源回退：`result.get("day_master", "") or result.get("validation", {}).get("day_master", "")`。
+
+### 格局与用神
+
 - **建禄月劫格** — 层1/2/3 都走 `_build_jianlu_yuejie()`，输出 `建禄格，透X` 而非 `比肩格`。
-- **`percent` vs `percent_adjusted`** — `calc_element_forces()` 返回两者。格局筛查用 `percent`（原始），化气格用 `percent_adjusted`（合化修正）。
-- **从格用神方向** — 从强/专旺→印星，从财→财星，从官杀→官杀，从儿→食伤。忌神是逆势五行。
 - **建禄月劫格用神** — 由格局名中"透X"决定，不是盲取 PATTERN_YONGSHEN 表。
-- **Windows 兼容** — 子进程测试使用 `sys.executable`（非 `python3`），文件读写指定 `encoding="utf-8"`。
+- **建禄/羊刃月令优先于专旺格/从强格** — 月令为建禄/羊刃时，建禄格/羊刃格优先于专旺格和从强格。`_screen_layer0` 中排除 `is_jianlu_yangren_month`，对齐《子平真诠》"用神专寻月令"原则。
+- **从格用神方向** — 从强/专旺→印星，从财→财星，从官杀→官杀，从儿→食伤。忌神是逆势五行。
+- **金水伤官除外** — 伤官格破格检测中，庚/辛日主（金日主）的伤官见官不标记破格。
+- **破格检测函数签名** — `_screen_layer1/2/3` 和 `_build_jianlu_yuejie` 需要传入 `bazi_parts` 参数。
+- **SHISHEN_WUXING_REL 无 '印比'** — 印星和比劫需单独映射，从强格/专旺格用神拆分为 `['印星', '比劫']`。
+
+### 旺衰与五行
+
+- **`percent` vs `percent_adjusted`** — `calc_element_forces()` 返回两者。格局筛查用 `percent`（原始），化气格用 `percent_adjusted`（合化修正）。
+- **旺衰极旺判定官杀修正** — `judge_wangshuai()` 中印比≥75%时，若官杀力量≥15%则不强制判极旺（"官印双全"格），对齐《渊海子平》。
+- **elements.py 月支加成** — 月支本气1.5倍加成使用 `zhi == month_zhi` 参数判断，非硬编码索引 `i==1`。
+
+### 查表映射
+
+- **_GAN_HE_PARTNER 映射** — 天干合查表使用显式映射表（非 frozenset），避免查找失败。
+- **_ZHI_CHONG_MAP 映射** — 地支冲查表使用显式映射表（非 frozenset set），ziping.py 大运吉凶用此表。
+- **神煞查表统一用年支** — 驿马/桃花/华盖/将星/劫煞/绞煞/亡神/红鸾/天喜均使用 `year_zhi`（年支），对齐《三命通会》。
+
+### 流派特定
+
+- **天干合用神检测** — `ziping.py` 大运吉凶中，天干合用神不限制大运天干本身必须是喜用五行，忌神天干合去用神天干同样应标记。
+- **盲派化用五行方向** — `mangpai.py` 化用检测中 `(cg_wx, gan_wx) in SHENG_PAIRS` 表示藏干生天干（体泄秀为用），非 `(gan_wx, cg_wx)`。
+- **Schools lazy loading** — `schools/__init__.py` 使用 `_ensure_schools_loaded()` 延迟导入，避免循环依赖。import 语句用 `import bazi_pro.core.schools.xxx` 风格（非 `from ... import`），加 `# noqa: F401`。
+- **register_school 位置** — 在各流派模块底部调用 `register_school()`，import 在顶部（ziping.py 需 `# noqa: E402`）。
+
+### Server 与前端
+
 - **Server 模块可选** — `server/` 依赖 fastapi/pydantic，不装也不影响核心功能，相关测试自动跳过。
+- **SSE 事件缓冲** — `/api/v2/analysis/{id}/stream` 缓冲已发送事件，迟连接客户端可回放。
+- **紫微斗数时辰** — `analysis.py` 从阳历字段提取出生小时（`solar.split()[1].split(':')[0]`），默认午时(12)。不使用 `mcp_json.get('时辰')`，因为 `BirthAnalyzeRequest` 无此字段。
 - **前端包管理** — 使用 `pnpm`（非 npm/yarn），lock 文件为 `pnpm-lock.yaml`。
 - **前端共享常量** — `frontend/src/lib/constants.ts` 导出 `WUXING_COLORS`/`WUXING_BG`/`WUXING_GLOW`/`WUXING_PILL_BG`/`WUXING_PILL_BORDER`/`GAN_WUXING`/`ZHI_WUXING`/`RELATION_COLORS`/`SCHOOL_OPTIONS`/`SCHOOL_OPTIONS_WITH_ALL`。组件不应本地重复定义这些映射。
 - **CSS 变量与 JS** — `WUXING_COLORS` 值是 `var(--wood)` 形式，不能在 JS 模板字符串中拼接 hex alpha（如 `${color}40`）。需要 rgba 值时用 `WUXING_GLOW`。
 - **Tailwind CSS v4** — 使用 `@tailwindcss/postcss` 插件，非 v3 的 `tailwind.config.js` 模式。
-- **SSE 事件缓冲** — `/api/v2/analysis/{id}/stream` 缓冲已发送事件，迟连接客户端可回放。
 - **React 19 + echarts-for-react 类型不兼容** — echarts-for-react 的类型定义与 React 19 严格类型冲突，使用 ECharts 的文件（RelationGraph、LifeKlineChart、ShishenEnergyChart）需要 `// @ts-nocheck`。
 - **全局 Navbar 布局** — `layout.tsx` 包含固定顶部 Navbar（h-14），内容区已有 `pt-14` 偏移，新页面无需额外处理。
-- **Schools lazy loading** — `schools/__init__.py` 使用 `_ensure_schools_loaded()` 延迟导入，避免循环依赖。import 语句用 `import bazi_pro.core.schools.xxx` 风格（非 `from ... import`），加 `# noqa: F401`。
-- **register_school 位置** — 在各流派模块底部调用 `register_school()`，import 在顶部（ziping.py 需 `# noqa: E402`）。
-- **破格检测函数签名** — `_screen_layer1/2/3` 和 `_build_jianlu_yuejie` 需要传入 `bazi_parts` 参数。
-- **金水伤官除外** — 伤官格破格检测中，庚/辛日主（金日主）的伤官见官不标记破格。
-- **建禄/羊刃月令优先于专旺格/从强格** — 月令为建禄/羊刃时，建禄格/羊刃格优先于专旺格（曲直/炎上/从革/润下/稼穑）和从强格。`_screen_layer0` 中专旺格和从强格检测排除 `is_jianlu_yangren_month`，对齐《子平真诠》"用神专寻月令"原则。
-- **旺衰极旺判定官杀修正** — `judge_wangshuai()` 中印比≥75%时，若官杀力量≥15%则不强制判极旺（"官印双全"格），对齐《渊海子平》。
-- **双源兼容取值** — `full_analysis()` 返回 `result['day_master']`/`result['pillars']`（顶层），`run_analysis()` 返回 `result['validation']['day_master']`/`result['shishen']['pillars']`。取值时需双源回退：`result.get("day_master", "") or result.get("validation", {}).get("day_master", "")`。
-- **紫微斗数时辰** — `analysis.py` 从阳历字段提取出生小时（`solar.split()[1].split(':')[0]`），默认午时(12)。不使用 `mcp_json.get('时辰')`，因为 `BirthAnalyzeRequest` 无此字段。
-- **天干合用神检测** — `ziping.py` 大运吉凶中，天干合用神不限制大运天干本身必须是喜用五行，忌神天干合去用神天干同样应标记。
-- **盲派化用五行方向** — `mangpai.py` 化用检测中 `(cg_wx, gan_wx) in SHENG_PAIRS` 表示藏干生天干（体泄秀为用），非 `(gan_wx, cg_wx)`。
-- **神煞查表统一用年支** — 驿马/桃花/华盖/将星/劫煞/绞煞/亡神/红鸾/天喜均使用 `year_zhi`（年支），对齐《三命通会》。
-- **elements.py 月支加成** — 月支本气1.5倍加成使用 `zhi == month_zhi` 参数判断，非硬编码索引 `i==1`。
-- **SHISHEN_WUXING_REL 无 '印比'** — 印星和比劫需单独映射，从强格/专旺格用神拆分为 `['印星', '比劫']`。
-- **_GAN_HE_PARTNER 映射** — 天干合查表使用显式映射表（非 frozenset），避免查找失败。
-- **_ZHI_CHONG_MAP 映射** — 地支冲查表使用显式映射表（非 frozenset set），ziping.py 大运吉凶用此表。
+
+### 平台兼容
+
+- **Windows 兼容** — 子进程测试使用 `sys.executable`（非 `python3`），文件读写指定 `encoding="utf-8"`。
 
 ## Plugin system
 

@@ -194,6 +194,8 @@ def detect_relations(bazi_parts: list[str]) -> list[dict]:
 
     # ── 地支两两关系：冲、合、害、刑 ──
     # 遍历所有地支对，依次检测四种关系
+    # 提前计算地支集合，用于三刑子集判断
+    zhi_set = set(zhis)
     for i in range(len(zhis)):
         for j in range(i + 1, len(zhis)):
             pair = frozenset({zhis[i], zhis[j]})
@@ -215,10 +217,18 @@ def detect_relations(bazi_parts: list[str]) -> list[dict]:
                     'result': f'{zhis[i]}害{zhis[j]}',
                 })
             if pair in ZHI_XING:
-                relations.append({
-                    'type': '地支刑', 'elements': [zhis[i], zhis[j]],
-                    'result': f'{zhis[i]}刑{zhis[j]}',
-                })
+                # 跳过已属于三刑子集的两两相刑对
+                # 《三命通会》"三刑者，三支相刑也"——三刑优先于两两相刑
+                in_sanxing = False
+                for group, _ in ZHI_SANXING:
+                    if pair.issubset(group) and group.issubset(zhi_set):
+                        in_sanxing = True
+                        break
+                if not in_sanxing:
+                    relations.append({
+                        'type': '地支刑', 'elements': [zhis[i], zhis[j]],
+                        'result': f'{zhis[i]}刑{zhis[j]}',
+                    })
 
     # ── 三合局 ──
     # 三支齐备方成局，记录已成立的三合局用于排除半合子集

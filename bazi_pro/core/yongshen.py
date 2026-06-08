@@ -31,7 +31,7 @@ from bazi_pro.core.ten_gods import SHISHEN_WUXING_REL
 
 def derive_yongshen(day_master: str, bazi_parts: list[str],
                     pattern_result: dict, wangshuai: dict,
-                    element_forces: dict) -> dict:
+                    element_forces: dict, tiaohou: dict = None) -> dict:
     """推导用神、喜神、忌神的顶层入口函数
 
     推导流程：
@@ -103,6 +103,18 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
                                pattern_type=pattern_type)
     xishen_wx = _derive_xishen(pattern_name, dm_wx, yongshen_wx, jishen_wx)
 
+    # ── 调候用神整合 ──
+    # 《子平真诠》第十四章"论用神配气候得失"：调候为辅助用神，不凌驾格局用神之上
+    # 当调候五行与格局用神不同时，调候作为喜神补充；当冲突时，调候不改变用神
+    tiaohou_wx_list = []
+    if tiaohou and tiaohou.get('has_tiaohou'):
+        tiaohou_wx_list = tiaohou.get('tiaohou_wx', [])
+        for th_wx in tiaohou_wx_list:
+            if th_wx and th_wx != yongshen_wx and th_wx not in xishen_wx and th_wx not in jishen_wx:
+                xishen_wx.append(th_wx)
+                trace.setdefault('tiaohou_integration', []).append(
+                    f'调候{th_wx}≠用神{yongshen_wx}，加入喜神')
+
     return {
         'yongshen': yongshen_wx,
         'yongshen_gan': WUXING_TO_GAN.get(yongshen_wx, ''),
@@ -112,7 +124,7 @@ def derive_yongshen(day_master: str, bazi_parts: list[str],
         'jishen_gan': [WUXING_TO_GAN.get(w, '') for w in jishen_wx],
         'confidence': pattern_result.get('confidence', 0.5),
         'pattern_basis': pattern_name,
-        'note': '确定性推导，基于格局+旺衰规则。调候用神需查穷通宝鉴，由LLM补充。',
+        'note': '基于格局+旺衰+调候三位一体推导。' + (f'调候用神({",".join(tiaohou_wx_list)})已纳入喜神。' if tiaohou_wx_list else ''),
         'trace': trace,
     }
 

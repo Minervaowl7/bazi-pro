@@ -93,9 +93,9 @@ def full_analysis(mcp_json: dict) -> dict:
             merged.append(r)
     relations = merged
     pattern = screen_pattern(day_master, bazi_parts, wangshuai, element_forces)
-    yongshen = derive_yongshen(day_master, bazi_parts, pattern, wangshuai, element_forces)
-    disease = detect_disease(day_master, bazi_parts, element_forces)
     tiaohou = lookup_tiaohou(day_master, month_zhi)
+    yongshen = derive_yongshen(day_master, bazi_parts, pattern, wangshuai, element_forces, tiaohou=tiaohou)
+    disease = detect_disease(day_master, bazi_parts, element_forces)
 
     # Augment jishen with disease sources not already present
     if disease['has_disease']:

@@ -193,17 +193,11 @@ def _check_formation(bazi_parts, target_wx):
             }
 
     # 优先级3：同五行地支≥3：视为完整会方
-    # 《子平真诠·论杂格》："壬癸全亥子"即润下格，不须丑
-    # 三个以上同五行地支即可成方，不必严格匹配会方地支组合
-    wx_count = sum(1 for b in branches if ZHI_WUXING.get(b, '') == target_wx)
-    if wx_count >= 3:
-        wx_branches = sorted([b for b in branches if ZHI_WUXING.get(b, '') == target_wx])
-        return {
-            'has_formation': True,
-            'type': '会方',
-            'branches': wx_branches,
-            'element': target_wx,
-        }
+    # 优先级3已移除：原"同五行地支≥3即视为会方"过度放宽
+    # 《滴天髓》"方是方兮局是局，要得方，莫混局"
+    # 会方要求严格的地支组合（寅卯辰、巳午未、申酉戌、亥子丑），
+    # 不应将任意三个同五行地支混同为会方。
+    # 三合局（申子辰等）已在优先级2中检测，无需重复。
 
     # 优先级4：半会（会方中2个地支）
     for fang_set, fang_wx in ZHI_HUIFANG:
@@ -1255,7 +1249,11 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
     # 印比合计≥80%且无本气/中气根 → 从强格
     # 阈值80%：印比力量需占绝对主导才能"从强"
     # 但建禄/羊刃月令不从强（走建禄/羊刃格路径）
-    if yin_bi_pct >= 80 and not has_strong_root and not is_jianlu_yangren_month:
+    # 《渊海子平》：官印双全时不应判从强——官杀力量≥15%则有制身之力
+    # 《滴天髓·从象》"日主孤立无气"要求"绝无一毫生扶之意"，
+    # 官杀在天干有一定力量（≥15%）说明异党有势，不应从强
+    guansha_pct = sum(pct.get(wx, 0) for wx in [KE_MAP.get(dm_wx, '')] if wx)
+    if yin_bi_pct >= 80 and not has_strong_root and not is_jianlu_yangren_month and guansha_pct < 15:
         return {
             'layer': 0, 'type': '从强格', 'pattern': '从强格',
             'confidence': 0.85,

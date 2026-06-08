@@ -44,6 +44,15 @@ def calc_deling(day_master: str, month_zhi: str) -> tuple[str, int]:
     changsheng_table = SHIER_CHANGSHENG.get(day_master, {})
     status = changsheng_table.get(month_zhi, '')
     score = DELING_SCORE.get(status, 0)
+
+    # 阴干长生力量修正 —《滴天髓·论阴阳生死》
+    # "阳长生有力，而阴长生不甚有力，然亦不弱"
+    # "若是逢库，则阳为有根，而阴为无用"
+    # 阴干：仅墓加深（阴逢库为无用），长生保持不变（"然亦不弱"）
+    if day_master in '乙丁己辛癸':
+        if status == '墓':
+            score = -2  # 阴逢库为无用，比阳干更不利
+
     return status, score
 
 
