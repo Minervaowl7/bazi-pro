@@ -997,7 +997,94 @@ def build_report_system_prompt(analysis_result: dict, narration: dict, dayun_dat
 """
 
 
+# ============ 命书：LLM 润色的人生报告 ============
+
+LIFE_REPORT_SYSTEM_PROMPT = """你是一位从业四十年的命理大师，精通子平八字、穷通宝鉴、滴天髓、渊海子平等经典。现在为坐在你面前的命主撰写一份命书。
+
+【语言要求】
+1. 用第一人称"老夫"或"我"与命主对话
+2. 语气沉稳有力，如真正的老先生在面授机宜
+3. 每个论断必须基于提供的确定性计算数据，不得编造不存在的干支、十神或神煞
+4. 引用古籍时用「」标注，如「《滴天髓》有云：...」，必须注明书名
+5. 时间预测必须给出干支年份+公历年份，如"丙午年（2026）"
+6. 用"从命盘来看"、"格局显示"等客观表述，不用"你一定会"、"绝对"等绝对化措辞
+
+【严禁事项】
+- 禁止使用"作为 AI""根据数据分析""从数据来看""根据命盘数据"等措辞
+- 禁止使用 bullet point 列表，用连贯的段落
+- 禁止使用 markdown 标题（##），用加粗（**）作为段落小标题
+- 禁止出现"值得注意的是""需要指出的是"等 AI 典型过渡语
+- 禁止编造未提供的干支、十神、神煞或流年事件
+
+【报告结构】（用加粗小标题分段，不用 ## 标题）
+
+**命局总论**
+用 3-5 句话概括命局核心特征。包含格局定性、旺衰判定、用神方向。如"观此命局，日主XX生于XX月，得令/失令，格局属XX..."
+
+**性格与天赋**
+基于日主五行、十神配置、格局特征推断性格。引用古籍说明日主本性。结合天干十神推断外在表现和内在特质。
+
+**事业与财运**
+适合的行业方向（基于用神五行）、事业高峰期（具体干支年份）、求财方式、需要警惕的年份。给出可执行的建议。
+
+**婚恋感情**
+配偶星特征、配偶宫状态、最佳婚恋时间（干支年份）、感情中需要注意的风险点。
+
+**健康养生**
+体质特点（寒热燥湿）、重点关注的脏腑方向、养生建议。
+
+**未来十年运势**
+从当前年份开始，逐年分析未来 10 年流年。每一年必须给出干支年份+公历年份，用[吉]/[凶]/[平]标记。选出最吉和最凶的年份并说明依据。
+
+**趋吉避凶**
+基于用神喜忌给出：有利方位、吉利颜色、适合行业、贵人属相。建议必须具体，避免空泛。
+"""
+
+
+def build_life_report_prompt(analysis_result: dict, narration: dict) -> str:
+    """构建命书 LLM prompt
+
+    从确定性计算结果中提取所有关键数据，构造命书撰写 prompt。
+    """
+    ctx = _format_analysis_context(analysis_result, narration, "ziping")
+
+    # 提取命局评分
+    quality = analysis_result.get('chart_quality', {})
+    quality_str = ""
+    if quality:
+        total = quality.get('total', 0)
+        level = quality.get('level', '')
+        quality_str = f"\n命局评分：{total}/100（{level}）"
+
+    # 提取大运数据
+    dayun = analysis_result.get('dayun', [])
+    dayun_str = ""
+    if dayun:
+        dayun_str = "\n## 大运列表\n"
+        for dy in dayun:
+            if isinstance(dy, dict):
+                dayun_str += f"  {dy.get('age_range', '')}: {dy.get('gan_zhi', '')}\n"
+
+    # 提取叙述文本
+    narration_str = ""
+    if narration:
+        for key in ['overview', 'personality', 'career', 'marriage', 'health', 'wealth']:
+            text = narration.get(key, '')
+            if text:
+                narration_str += f"\n{key}: {text}\n"
+
+    return f"""请为以下命主撰写一份命书。
+
+{ctx}
+{quality_str}
+{dayun_str}
+{narration_str}
+
+请按照系统提示词的要求，用大师口吻撰写完整的命书。记住：不要用 ## 标题，用**加粗**做段落小标题；不要用列表，用连贯段落；每句话必须有数据或典籍依据。"""
+
+
 def build_analysis_system_prompt(analysis_result: dict, narration: dict, school: str = "ziping") -> str:
+    """构建分析系统提示词（通用版）"""
     """构建分析系统提示词（通用版）"""
     ctx = _format_analysis_context(analysis_result, narration, school)
     school_ctx = _get_school_context(school)

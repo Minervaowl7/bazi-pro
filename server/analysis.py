@@ -322,6 +322,38 @@ async def run_analysis(mcp_json: dict, run_id: str,
                 logger.debug("LLM overview generation failed (non-fatal): %s", e)
                 await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览跳过')
 
+        # ── 命书：LLM 润色的人生报告（自动触发，可选） ──
+        if not skip_llm_overview:
+            try:
+                from server.llm import (
+                    LIFE_REPORT_SYSTEM_PROMPT,
+                    build_life_report_prompt,
+                    chat_completion as _chat,
+                    is_llm_configured as _llm_ok,
+                )
+                if _llm_ok():
+                    await manager.send_progress(run_id, 'life_report', 'running', '命书撰写中...')
+                    # 生成确定性叙述用于 prompt 上下文
+                    try:
+                        from bazi_pro.narrator import narrate_analysis as _narrate
+                        _narration = _narrate(result) if isinstance(result, dict) else {}
+                    except Exception:
+                        _narration = {}
+                    report_prompt = build_life_report_prompt(result, _narration)
+                    report_messages = [
+                        {"role": "system", "content": LIFE_REPORT_SYSTEM_PROMPT},
+                        {"role": "user", "content": report_prompt},
+                    ]
+                    report_text = await _chat(report_messages, temperature=0.7, max_tokens=4096)
+                    if report_text:
+                        result['life_report'] = report_text
+                        await manager.send_progress(run_id, 'life_report', 'done', '命书完成')
+                    else:
+                        await manager.send_progress(run_id, 'life_report', 'done', '命书（无输出）')
+            except Exception as e:
+                logger.debug("Life report generation failed (non-fatal): %s", e)
+                await manager.send_progress(run_id, 'life_report', 'done', '命书跳过')
+
         if solar and gender:
             try:
                 from server.ziwei import get_ziwei_chart

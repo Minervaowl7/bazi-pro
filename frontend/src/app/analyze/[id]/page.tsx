@@ -20,6 +20,7 @@ import DimensionAnalysisPanel from "@/components/DimensionAnalysisPanel";
 import ZiweiPanel from "@/components/ZiweiPanel";
 import ChatPanel from "@/components/ChatPanel";
 import ExportPanel from "@/components/ExportPanel";
+import LifeReport from "@/components/LifeReport";
 import { SCHOOL_OPTIONS_WITH_ALL, WUXING_COLORS, GAN_WUXING, ZHI_WUXING } from "@/lib/constants";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -384,6 +385,20 @@ export default function AnalyzePage() {
                 </div>
               )}
             </div>
+
+            {/* 命书 — LLM 润色的人生报告 */}
+            {analysisResult?.life_report && (
+              <LifeReport
+                content={analysisResult.life_report as string}
+                isLlmGenerated={true}
+              />
+            )}
+            {!analysisResult?.life_report && analysisResult?.llm_overview && (
+              <LifeReport
+                content={analysisResult.llm_overview as string}
+                isLlmGenerated={true}
+              />
+            )}
 
             {/* Tab 导航栏 — 分段控制器 */}
             <div role="tablist" aria-label="分析结果分区" onKeyDown={(e)=>{
