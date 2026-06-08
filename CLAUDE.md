@@ -45,6 +45,7 @@ cd frontend && pnpm install
 cd frontend && pnpm dev          # 开发
 cd frontend && pnpm build        # 生产构建
 cd frontend && pnpm lint         # ESLint（零 warning 策略）
+cd frontend && npx tsc --noEmit  # TypeScript 类型检查
 ```
 
 ## Architecture
@@ -123,6 +124,10 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 - 亮色/暗色双主题（默认亮色），所有 UI 文本为中文
 - 全局 Navbar（排盘/合婚导航 + 主题切换）
 - 路由：`/`（首页表单）、`/analyze/[id]`（分析结果）、`/compare`（合婚）
+- **设计令牌**：`globals.css` 为单一来源，组件通过 `var(--xxx)` 引用。JS 层 `constants.ts` 镜像 CSS 变量
+- **CSS 工具类**：`.card`（卡片容器）、`.form-input`/`.form-label`（表单）、`.hover-scale`/`.hover-lift`/`.hover-row`/`.hover-card`（hover 交互）、`.focus-ring`（焦点态）、`.gold-divider`/`.cinnabar-bar`（装饰线）
+- **prefers-reduced-motion**：JS 动画使用 `usePrefersReducedMotion` hook（`lib/usePrefersReducedMotion.ts`），CSS 动画由 `@media (prefers-reduced-motion: reduce)` 兜底
+- **Navbar 滚动态**：`color-mix(in srgb, var(--bg) 92%, transparent)` + `backdrop-filter`，仅在 `scrollY > 10` 时生效
 - 流派选择下拉框 + SchoolComparePanel 三列对比
 - BaziChartCard: 纵向四柱卡片（含纳音/长生/藏干）
 - StrengthSlider: 日主强弱滑块（得令/得地/得势）
@@ -307,8 +312,8 @@ cd frontend && pnpm lint         # ESLint（零 warning 策略）
 - **SSE 事件缓冲** — `/api/v2/analysis/{id}/stream` 缓冲已发送事件，迟连接客户端可回放。
 - **紫微斗数时辰** — `analysis.py` 从阳历字段提取出生小时（`solar.split()[1].split(':')[0]`），默认午时(12)。不使用 `mcp_json.get('时辰')`，因为 `BirthAnalyzeRequest` 无此字段。
 - **前端包管理** — 使用 `pnpm`（非 npm/yarn），lock 文件为 `pnpm-lock.yaml`。
-- **前端共享常量** — `frontend/src/lib/constants.ts` 导出 `WUXING_COLORS`/`WUXING_BG`/`WUXING_GLOW`/`WUXING_PILL_BG`/`WUXING_PILL_BORDER`/`GAN_WUXING`/`ZHI_WUXING`/`RELATION_COLORS`/`SCHOOL_OPTIONS`/`SCHOOL_OPTIONS_WITH_ALL`。组件不应本地重复定义这些映射。
-- **CSS 变量与 JS** — `WUXING_COLORS` 值是 `var(--wood)` 形式，不能在 JS 模板字符串中拼接 hex alpha（如 `${color}40`）。需要 rgba 值时用 `WUXING_GLOW`。
+- **前端共享常量** — `frontend/src/lib/constants.ts` 导出 `WUXING_COLORS`/`WUXING_BG`/`WUXING_GRADIENT_BG`/`WUXING_BAR_GRADIENT`/`GAN_WUXING`/`ZHI_WUXING`/`RELATION_COLORS`/`SCHOOL_OPTIONS`/`SCHOOL_OPTIONS_WITH_ALL`。组件不应本地重复定义这些映射。
+- **CSS 变量与 JS** — `WUXING_COLORS` 值是 `var(--wx-wood)` 形式，不能在 JS 模板字符串中拼接 hex alpha（如 `${color}40`）。需要 rgba 值时用 `WUXING_GLOW`（已移除，改用 CSS 变量）。
 - **Tailwind CSS v4** — 使用 `@tailwindcss/postcss` 插件，非 v3 的 `tailwind.config.js` 模式。
 - **React 19 + echarts-for-react 类型不兼容** — echarts-for-react 的类型定义与 React 19 严格类型冲突，使用 ECharts 的文件（RelationGraph、LifeKlineChart、ShishenEnergyChart）需要 `// @ts-nocheck`。
 - **全局 Navbar 布局** — `layout.tsx` 包含固定顶部 Navbar（h-14），内容区已有 `pt-14` 偏移，新页面无需额外处理。
