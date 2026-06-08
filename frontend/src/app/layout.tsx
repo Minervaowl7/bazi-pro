@@ -36,9 +36,9 @@ export default function RootLayout({
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--surface)] focus:text-[var(--ink)] focus:border focus:border-[var(--border)]" style={{top:8,left:8}}>跳到主要内容</a>
         <ThemeProvider>
           <Navbar />
-          <div id="main-content" className="pt-14">
+          <main id="main-content" className="pt-14">
             {children}
-          </div>
+          </main>
         </ThemeProvider>
       </body>
     </html>

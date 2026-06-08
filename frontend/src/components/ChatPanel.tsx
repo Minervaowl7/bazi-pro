@@ -107,7 +107,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
   return (
     <section className="card">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-7 py-[18px]">
+      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 sm:px-7 py-[18px]">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--cinnabar), #c0392b)", boxShadow: "0 2px 8px rgba(192,57,43,0.25)" }}>
             <span className="text-lg text-white">☯</span>

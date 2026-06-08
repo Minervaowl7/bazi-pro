@@ -358,7 +358,8 @@ export default function AnalyzePage() {
             )}
 
             {/* Tab 导航栏 — 分段控制器 */}
-            <div role="tablist" aria-label="分析结果分区" className="flex gap-0.5 mb-8 p-[3px] overflow-auto" style={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: "var(--r)" }} onKeyDown={(e)=>{
+            <div className="relative mb-8">
+            <div role="tablist" aria-label="分析结果分区" className="flex gap-0.5 p-[3px] overflow-auto scrollbar-none" style={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: "var(--r)" }} onKeyDown={(e)=>{
               const idx=TABS.findIndex(t=>t.id===activeTab);
               if(e.key==="ArrowRight"||e.key==="ArrowDown"){e.preventDefault();setActiveTab(TABS[(idx+1)%TABS.length].id);}
               else if(e.key==="ArrowLeft"||e.key==="ArrowUp"){e.preventDefault();setActiveTab(TABS[(idx-1+TABS.length)%TABS.length].id);}
@@ -386,6 +387,9 @@ export default function AnalyzePage() {
                   </button>
                 );
               })}
+            </div>
+            {/* 右侧滚动提示渐变 */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none sm:hidden" style={{ background: "linear-gradient(to left, var(--surface-2), transparent)" }} />
             </div>
 
             {/* Tab 内容区 */}

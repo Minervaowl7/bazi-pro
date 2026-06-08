@@ -142,6 +142,10 @@ body::before {
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
 
+/* 隐藏滚动条但保留滚动功能 */
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
 /* 选区 */
 ::selection {
   background: color-mix(in srgb, var(--cinnabar) 12%, transparent);

@@ -124,7 +124,7 @@ export default function BaziChartCard({ result }: Props) {
         </div>
 
         {/* 四柱 */}
-        <div className="grid grid-cols-4" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+        <div className="grid grid-cols-4 min-w-0" style={{ borderTop: "1px solid var(--border-subtle)" }}>
           {pillars.map((p, i) => {
             const isDayPillar = i === 2;
             const gan = p.gan || "";

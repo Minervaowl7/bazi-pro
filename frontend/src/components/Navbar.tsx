@@ -26,6 +26,7 @@ export default function Navbar() {
   return (
     <>
       <nav
+        aria-label="主导航"
         className="fixed top-0 left-0 right-0 z-50 h-14 flex items-center transition-colors duration-200"
         style={{
           background: scrolled
@@ -103,7 +104,7 @@ export default function Navbar() {
             {/* 功能按钮 */}
             <button
               onClick={() => setSettingsOpen(true)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-150"
+              className="w-11 h-11 rounded-lg flex items-center justify-center transition-colors duration-150"
               style={{ color: "var(--text-2)" }}
               aria-label="设置"
             >
@@ -124,7 +125,7 @@ export default function Navbar() {
 
             <button
               onClick={toggleTheme}
-              className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-150"
+              className="w-11 h-11 rounded-lg flex items-center justify-center transition-colors duration-150"
               style={{ color: "var(--text-2)" }}
               aria-label="切换主题"
             >

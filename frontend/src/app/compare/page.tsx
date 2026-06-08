@@ -253,7 +253,7 @@ export default function ComparePage() {
             {result.pillar_diff && result.pillar_diff.length > 0 && (
               <div className="p-6 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                 <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--text-2)" }}>四柱对比</h3>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {result.pillar_diff.map((p, i) => (
                     <div key={i} className="text-center p-3 rounded-lg" style={{ background: "var(--surface-2)" }}>
                       <div className="text-[11px] mb-1" style={{ color: "var(--text-3)" }}>{p.position}</div>

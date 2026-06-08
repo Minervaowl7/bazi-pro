@@ -166,9 +166,9 @@ export default function LifeKlineChart({ analysisId }: Props) {
         type: "slider" as const,
         height: 20,
         bottom: 4,
-        borderColor: "rgba(28,25,23,0.08)",
-        backgroundColor: "rgba(28,25,23,0.02)",
-        fillerColor: "rgba(45,62,95,0.06)",
+        borderColor: cssVar("--border-subtle", "rgba(28,25,23,0.08)"),
+        backgroundColor: cssVar("--surface-2", "rgba(28,25,23,0.02)"),
+        fillerColor: cssVar("--wx-water-bg", "rgba(45,62,95,0.06)"),
         handleStyle: { color: cssVar("--ink", "#2d3e5f") },
         textStyle: { fontSize: 9, color: cssVar("--text-3", "#a8a29e") },
       },
@@ -182,11 +182,11 @@ export default function LifeKlineChart({ analysisId }: Props) {
         symbol: "circle",
         symbolSize: 4,
         lineStyle: {
-          color: "#2d5f8f",
+          color: cssVar("--wx-water", "#2d5f8f"),
           width: 2,
         },
         itemStyle: {
-          color: "#2d5f8f",
+          color: cssVar("--wx-water", "#2d5f8f"),
         },
         areaStyle: {
           color: {
@@ -204,8 +204,8 @@ export default function LifeKlineChart({ analysisId }: Props) {
           data: [
             {
               xAxis: currentYear,
-              lineStyle: { color: "#b84a3c", width: 1.5, type: "dashed" },
-              label: { formatter: "今年", position: "end", fontSize: 11, color: "#b84a3c", fontWeight: 700 },
+              lineStyle: { color: cssVar("--wx-fire", "#b84a3c"), width: 1.5, type: "dashed" },
+              label: { formatter: "今年", position: "end", fontSize: 11, color: cssVar("--wx-fire", "#b84a3c"), fontWeight: 700 },
             },
           ],
         },
@@ -217,7 +217,7 @@ export default function LifeKlineChart({ analysisId }: Props) {
         smooth: true,
         symbol: "none",
         lineStyle: {
-          color: "#c49a42",
+          color: cssVar("--wx-metal", "#c49a42"),
           width: 1.5,
           type: "dashed" as const,
         },
@@ -229,7 +229,7 @@ export default function LifeKlineChart({ analysisId }: Props) {
         smooth: true,
         symbol: "none",
         lineStyle: {
-          color: "#8b5a3c",
+          color: cssVar("--wx-earth", "#8b5a3c"),
           width: 1.5,
           type: "dashed" as const,
         },
