@@ -173,7 +173,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
   const inputStyle: React.CSSProperties = {
     fontSize: 14, padding: "10px 12px",
     background: "var(--surface-2)", color: "var(--ink)",
-    border: "1px solid var(--border-subtle)",
+    borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-subtle)",
     fontFamily: "var(--font-mono)", outline: "none", width: "100%", boxSizing: "border-box",
     transition: "border-color 0.15s, box-shadow 0.15s",
   };

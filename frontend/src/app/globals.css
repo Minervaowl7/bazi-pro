@@ -317,7 +317,7 @@ select.form-input {
 .hover-lift {
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
-.hover-lift:hover {
+.hover-lift:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 20px rgba(201,100,66,0.3);
 }
@@ -338,7 +338,7 @@ select.form-input {
 .focus-ring {
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
-.focus-ring:focus {
+.focus-ring:focus-visible {
   border-color: var(--scholar-blue);
   box-shadow: 0 0 0 2px rgba(45,62,95,0.12);
   outline: none;
