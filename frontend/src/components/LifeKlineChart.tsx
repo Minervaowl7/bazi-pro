@@ -8,6 +8,13 @@ import { getDayunLiunian } from "@/lib/api";
 
 const EChartsReact = dynamic(() => import("echarts-for-react"), { ssr: false });
 
+/** 读取 CSS 变量值（ECharts 不支持 var()） */
+function cssVar(name: string, fallback: string): string {
+  if (typeof window === "undefined") return fallback;
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+
 interface LiunianScore {
   year: number;
   age: number;
@@ -75,7 +82,7 @@ export default function LifeKlineChart({ analysisId }: Props) {
       textStyle: {
         fontSize: 17,
         fontWeight: 700,
-        color: "#1c1917",
+        color: cssVar("--ink", "#1c1917"),
         fontFamily: '"Noto Serif SC", "Source Han Serif SC", serif',
       },
     },
@@ -110,7 +117,7 @@ export default function LifeKlineChart({ analysisId }: Props) {
       data: ["运势分数", "MA5", "MA10"],
       top: 4,
       right: 0,
-      textStyle: { fontSize: 11, color: "#a8a29e" },
+      textStyle: { fontSize: 11, color: cssVar("--text-3", "#a8a29e") },
     },
     grid: {
       top: 50,
@@ -123,10 +130,10 @@ export default function LifeKlineChart({ analysisId }: Props) {
       data: years,
       axisLabel: {
         fontSize: 11,
-        color: "#a8a29e",
+        color: cssVar("--text-3", "#a8a29e"),
         interval: Math.ceil(years.length / 14),
       },
-      axisLine: { lineStyle: { color: "rgba(28,25,23,0.08)" } },
+      axisLine: { lineStyle: { color: cssVar("--border-subtle", "rgba(28,25,23,0.08)") } },
       splitLine: { show: false },
       axisTick: { show: false },
     },
@@ -137,13 +144,13 @@ export default function LifeKlineChart({ analysisId }: Props) {
       splitNumber: 5,
       axisLabel: {
         fontSize: 11,
-        color: "#a8a29e",
+        color: cssVar("--text-3", "#a8a29e"),
         formatter: "{value}",
       },
-      axisLine: { lineStyle: { color: "rgba(28,25,23,0.08)" } },
+      axisLine: { lineStyle: { color: cssVar("--border-subtle", "rgba(28,25,23,0.08)") } },
       splitLine: {
         lineStyle: {
-          color: "rgba(28,25,23,0.05)",
+          color: cssVar("--border-subtle", "rgba(28,25,23,0.05)"),
           type: "solid",
         },
       },
@@ -162,8 +169,8 @@ export default function LifeKlineChart({ analysisId }: Props) {
         borderColor: "rgba(28,25,23,0.08)",
         backgroundColor: "rgba(28,25,23,0.02)",
         fillerColor: "rgba(45,62,95,0.06)",
-        handleStyle: { color: "#2d3e5f" },
-        textStyle: { fontSize: 9, color: "#a8a29e" },
+        handleStyle: { color: cssVar("--ink", "#2d3e5f") },
+        textStyle: { fontSize: 9, color: cssVar("--text-3", "#a8a29e") },
       },
     ],
     series: [

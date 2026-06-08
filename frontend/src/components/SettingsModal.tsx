@@ -217,7 +217,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
               background: keySet ? "var(--wx-wood)" : "var(--wx-fire)",
             }} />
             <span style={{ fontSize: 13, fontWeight: 500, color: keySet ? "var(--wx-wood)" : "var(--wx-fire)" }}>
-              {keySet ? "API Key 已配置" : "API Key 未配置 — AI 解读功能不可用"}
+              {keySet ? "API Key 已配置" : "API Key 未配置，AI 解读功能不可用"}
             </span>
           </div>
 
