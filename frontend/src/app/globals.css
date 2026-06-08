@@ -301,6 +301,49 @@ select.form-input {
   animation: shimmer 1.8s infinite;
 }
 
+/* 交互 hover 类 — 替代 JS onMouseEnter/onMouseLeave */
+.hover-scale {
+  transition: transform 180ms ease;
+}
+.hover-scale:hover {
+  transform: scale(1.06);
+}
+.hover-scale-sm {
+  transition: transform 180ms ease;
+}
+.hover-scale-sm:hover {
+  transform: scale(1.04);
+}
+.hover-lift {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(201,100,66,0.3);
+}
+.hover-row {
+  transition: background 150ms ease;
+}
+.hover-row:hover {
+  background: var(--surface-2);
+}
+.hover-card {
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+.hover-card:hover {
+  border-color: var(--scholar-blue);
+  box-shadow: 0 2px 8px rgba(45,62,95,0.1);
+  transform: translateY(-1px);
+}
+.focus-ring {
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.focus-ring:focus {
+  border-color: var(--scholar-blue);
+  box-shadow: 0 0 0 2px rgba(45,62,95,0.12);
+  outline: none;
+}
+
 /* 页面过渡 */
 @view-transition { navigation: auto; }
 

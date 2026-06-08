@@ -99,10 +99,8 @@ export default function ChartQuality({ data }: Props) {
         {/* Toggle */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 mt-4 transition-colors duration-150"
+          className="flex items-center gap-1 mt-4 transition-colors duration-150 hover:text-[var(--scholar-blue)]"
           style={{ fontSize: 13, color: "var(--text-4)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = "var(--scholar-blue)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-4)"; }}
         >
           {expanded ? '收起详情 ▲' : '查看详情 ▼'}
         </button>

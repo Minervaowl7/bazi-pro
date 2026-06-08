@@ -152,7 +152,7 @@ export default function BaziChartCard({ result }: Props) {
 
                 {/* 天干 */}
                 <div
-                  className="flex items-center justify-center mb-2 transition-transform duration-200"
+                  className="flex items-center justify-center mb-2 hover-scale"
                   style={{
                     width: 68, height: 68,
                     background: ganWx ? WUXING_GRADIENT_BG[ganWx] : "var(--surface-2)",
@@ -160,8 +160,6 @@ export default function BaziChartCard({ result }: Props) {
                     borderRadius: 10,
                     boxShadow: isDayPillar ? "0 0 0 2px rgba(201,100,66,0.1), 0 2px 8px rgba(201,100,66,0.1)" : "none",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
                 >
                   <span style={{ fontSize: 30, fontWeight: 700, color: ganWx ? WUXING_COLORS[ganWx] : "var(--ink)", fontFamily: "var(--font-display)" }}>
                     {gan || "—"}
@@ -173,7 +171,7 @@ export default function BaziChartCard({ result }: Props) {
 
                 {/* 地支 */}
                 <div
-                  className="flex items-center justify-center mb-3 transition-transform duration-200"
+                  className="flex items-center justify-center mb-3 hover-scale"
                   style={{
                     width: 68, height: 68,
                     background: zhiWx ? WUXING_GRADIENT_BG[zhiWx] : "var(--surface-2)",
@@ -181,8 +179,6 @@ export default function BaziChartCard({ result }: Props) {
                     borderRadius: 10,
                     boxShadow: isDayPillar ? "0 0 0 2px rgba(201,100,66,0.1), 0 2px 8px rgba(201,100,66,0.1)" : "none",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
                 >
                   <span style={{ fontSize: 30, fontWeight: 700, color: zhiWx ? WUXING_COLORS[zhiWx] : "var(--ink)", fontFamily: "var(--font-display)" }}>
                     {zhi || "—"}
@@ -370,7 +366,7 @@ function ShenShaInline({ result }: { result: Record<string, unknown> }) {
                     <div key={i} style={{ position: "relative" }}>
                       <button
                         onClick={() => setActiveItem(isActive ? null : { name: item.name, position: item.position })}
-                        className="px-3 py-1.5 transition-all duration-200"
+                        className="px-3 py-1.5 hover-scale-sm"
                         style={{
                           fontSize: 13,
                           fontWeight: 500,
@@ -381,8 +377,6 @@ function ShenShaInline({ result }: { result: Record<string, unknown> }) {
                           borderRadius: 9999,
                           cursor: "pointer",
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
                       >
                         {item.name}
                       </button>

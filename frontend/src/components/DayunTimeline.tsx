@@ -3,6 +3,7 @@
 import { useState, useRef, useLayoutEffect } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { WUXING_COLORS, WUXING_BG, GAN_WUXING, ZHI_WUXING, RELATION_COLORS } from "@/lib/constants";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 const TIANGAN = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
 const DIZHI = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
@@ -46,10 +47,7 @@ export default function DayunTimeline({ result }: Props) {
   const currentBadgeRef = useRef<HTMLSpanElement>(null);
   const expandCtx = useRef<gsap.Context | null>(null);
 
-  const prefersReducedMotion =
-    typeof window !== "undefined"
-      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      : false;
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useGSAP(() => {
     if (prefersReducedMotion) {
@@ -160,12 +158,10 @@ export default function DayunTimeline({ result }: Props) {
               <button
                 data-dayun-row
                 aria-expanded={isExpanded}
-                className="dayun-row w-full flex items-center pr-6 py-3.5 transition-colors duration-150 relative"
+                className="dayun-row w-full flex items-center pr-6 py-3.5 hover-row relative"
                 style={{
                   background: isCurrent ? "linear-gradient(135deg, rgba(201,100,66,0.06), rgba(180,154,92,0.06))" : "transparent",
                 }}
-                onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = "var(--surface-2)"; }}
-                onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
                 onClick={() => handleDayunClick(i)}
               >
                 {/* 圆点装饰 */}

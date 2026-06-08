@@ -158,10 +158,8 @@ export default function BirthForm() {
                 {filteredCities.length === 0 && <div className="px-3 py-2 text-[13px]" style={{ color: "var(--text-3)" }}>无匹配城市</div>}
                 {filteredCities.map(c => (
                   <div key={c.name} onClick={() => handleCitySelect(c.name, c.lng)}
-                    className="flex items-center justify-between px-3 py-2 cursor-pointer text-[13px] transition-colors duration-100"
-                    style={{ color: "var(--ink)", background: form.city === c.name ? "var(--cinnabar-light)" : "transparent" }}
-                    onMouseEnter={e => { if (form.city !== c.name) e.currentTarget.style.background = "var(--surface-2)"; }}
-                    onMouseLeave={e => { if (form.city !== c.name) e.currentTarget.style.background = "transparent"; }}>
+                    className="flex items-center justify-between px-3 py-2 cursor-pointer text-[13px] hover-row"
+                    style={{ color: "var(--ink)", background: form.city === c.name ? "var(--cinnabar-light)" : "transparent" }}>
                     <span>{c.name}</span>
                     <span className="text-[11px]" style={{ color: "var(--text-3)" }}>东经{c.lng.toFixed(1)}°</span>
                   </div>
@@ -178,10 +176,8 @@ export default function BirthForm() {
 
         {/* 提交按钮 */}
         <button type="submit" disabled={isSubmitting}
-          className="form-input text-center font-semibold tracking-[0.1em] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ height: 42, background: "linear-gradient(135deg, var(--cinnabar), #a8503a)", color: "#fff", boxShadow: "0 2px 12px rgba(201,100,66,0.2)" }}
-          onMouseEnter={e => { if (!isSubmitting) { e.currentTarget.style.boxShadow = "0 4px 20px rgba(201,100,66,0.3)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
-          onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 2px 12px rgba(201,100,66,0.2)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+          className="form-input text-center font-semibold tracking-[0.1em] hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ height: 42, background: "linear-gradient(135deg, var(--cinnabar), #a8503a)", color: "#fff", boxShadow: "0 2px 12px rgba(201,100,66,0.2)" }}>
           {paipanLoading ? "排盘中…" : "排盘"}
         </button>
       </form>

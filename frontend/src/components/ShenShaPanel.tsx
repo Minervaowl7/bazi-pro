@@ -84,7 +84,7 @@ export default function ShenShaPanel({ result }: Props) {
                         <div key={i} style={{ position: "relative" }}>
                           <button
                             onClick={() => setActiveItem(isActive ? null : item)}
-                            className="px-3 py-1.5 transition-all duration-200"
+                            className="px-3 py-1.5 hover-scale-sm"
                             style={{
                               fontSize: 13,
                               fontWeight: 500,
@@ -95,8 +95,6 @@ export default function ShenShaPanel({ result }: Props) {
                               borderRadius: 9999,
                               cursor: "pointer",
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
                           >
                             {item.name}
                           </button>
@@ -108,7 +106,8 @@ export default function ShenShaPanel({ result }: Props) {
                                 bottom: "calc(100% + 8px)",
                                 left: "50%",
                                 transform: "translateX(-50%)",
-                                width: 280,
+                                width: "max-content",
+                                maxWidth: "min(280px, calc(100vw - 32px))",
                                 padding: "12px 14px",
                                 background: "var(--surface)",
                                 border: "1px solid var(--border-strong)",
@@ -116,6 +115,7 @@ export default function ShenShaPanel({ result }: Props) {
                                 boxShadow: "var(--shadow-lg)",
                                 zIndex: 50,
                                 animation: "fadeIn 0.15s ease",
+                                wordBreak: "break-word" as const,
                               }}
                             >
                               {/* 小三角 */}

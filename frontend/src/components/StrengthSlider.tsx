@@ -2,6 +2,7 @@
 
 import { useRef, useMemo } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 const LEVELS = ["极弱", "偏弱", "中和", "偏旺", "极旺"] as const;
 
@@ -53,10 +54,7 @@ export default function StrengthSlider({ strength, dayMaster }: Props) {
     { label: "得势", data: deshi },
   ], [deling, dedi, deshi]);
 
-  const prefersReducedMotion =
-    typeof window !== "undefined"
-      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      : false;
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useGSAP(
     () => {

@@ -210,22 +210,12 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             {QUICK_QUESTIONS.map((item, i) => (
               <button key={i} onClick={() => handleSend(item.q)} disabled={loading}
-                className="group flex items-center gap-2.5 px-4 py-3 rounded-lg transition-all duration-200 text-left disabled:opacity-50"
+                className="group flex items-center gap-2.5 px-4 py-3 rounded-lg hover-card text-left disabled:opacity-50"
                 style={{
                   fontSize: 13, fontWeight: 500,
                   color: "var(--text-2)",
                   background: "var(--surface)",
                   border: "1px solid var(--border-subtle)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--scholar-blue)";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(45,62,95,0.1)";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-subtle)";
-                  e.currentTarget.style.boxShadow = "none";
-                  e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
                 <span style={{ fontSize: 16, opacity: 0.7, flexShrink: 0 }}>{item.icon}</span>
@@ -245,7 +235,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
               aria-label="输入你的问题"
               placeholder="向命理师提问…"
               rows={1}
-              className="w-full resize-none transition-all duration-200"
+              className="w-full resize-none transition-all duration-200 focus:border-[var(--scholar-blue)] focus:shadow-[0_0_0_3px_rgba(45,62,95,0.1)]"
               style={{
                 fontSize: 15, fontFamily: "var(--font-body)",
                 background: "var(--surface-2)",
@@ -256,8 +246,6 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
                 maxHeight: 100,
                 outline: "none",
               }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--scholar-blue)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(45,62,95,0.1)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.boxShadow = "none"; }}
               disabled={loading}
             />
           </div>

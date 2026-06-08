@@ -181,16 +181,6 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
     fontSize: 12, fontWeight: 600, color: "var(--text-2)",
     textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6,
   };
-  const focusProps = {
-    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = "var(--scholar-blue)";
-      e.currentTarget.style.boxShadow = "0 0 0 2px rgba(45,62,95,0.12)";
-    },
-    onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = "var(--border-subtle)";
-      e.currentTarget.style.boxShadow = "none";
-    },
-  };
 
   return (
     <div
@@ -281,7 +271,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
                 placeholder="https://api.example.com/v1"
                 value={apiBase}
                 onChange={(e) => setApiBase(e.target.value)}
-                style={inputStyle} {...focusProps}
+                style={inputStyle} className="focus-ring"
               />
             ) : (
               <div style={{
@@ -312,7 +302,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 style={{ ...inputStyle, paddingRight: 44 }}
-                {...focusProps}
+                className="focus-ring"
               />
               <button aria-label={showKey ? "隐藏" : "显示"}
                 onClick={() => setShowKey(!showKey)}
@@ -367,7 +357,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
                   placeholder="输入模型名称，如 mimo-v2.5-pro"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  style={inputStyle} {...focusProps}
+                  style={inputStyle} className="focus-ring"
                 />
                 {provider && (
                   <button onClick={() => { setCustomModel(false); setModel(provider.models[0]); }}

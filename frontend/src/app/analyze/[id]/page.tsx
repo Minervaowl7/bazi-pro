@@ -18,6 +18,7 @@ import GongweiPanel from "@/components/GongweiPanel";
 import ShenShaPanel from "@/components/ShenShaPanel";
 import DimensionAnalysisPanel from "@/components/DimensionAnalysisPanel";
 import ZiweiPanel from "@/components/ZiweiPanel";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import ChatPanel from "@/components/ChatPanel";
 import ExportPanel from "@/components/ExportPanel";
 import LifeReport from "@/components/LifeReport";
@@ -127,7 +128,7 @@ export default function AnalyzePage() {
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tabContentRef = useRef<HTMLDivElement>(null);
-  const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     if (!analysisId) return;
