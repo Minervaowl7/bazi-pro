@@ -12,35 +12,46 @@ set "BACKEND_PORT=8711"
 set "FRONTEND_PORT=3000"
 
 set "PYTHON_EXE="
+REM 优先使用已知安装路径（避免 Windows Store 占位程序）
+if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" (
+    set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+    goto :verify_python
+)
+if exist "%LOCALAPPDATA%\Programs\Python\Python311\python.exe" (
+    set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
+    goto :verify_python
+)
+if exist "%LOCALAPPDATA%\Programs\Python\Python310\python.exe" (
+    set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python310\python.exe"
+    goto :verify_python
+)
+if exist "C:\Python312\python.exe" (
+    set "PYTHON_EXE=C:\Python312\python.exe"
+    goto :verify_python
+)
+REM 回退到 PATH 查找，但需验证是否为真实 Python
 for %%c in (python py python3) do (
     where %%c >nul 2>&1
     if not errorlevel 1 (
         set "PYTHON_EXE=%%c"
-        goto :found_python
+        goto :verify_python
     )
-)
-if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" (
-    set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
-    goto :found_python
-)
-if exist "%LOCALAPPDATA%\Programs\Python\Python311\python.exe" (
-    set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
-    goto :found_python
-)
-if exist "%LOCALAPPDATA%\Programs\Python\Python310\python.exe" (
-    set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python310\python.exe"
-    goto :found_python
-)
-if exist "C:\Python312\python.exe" (
-    set "PYTHON_EXE=C:\Python312\python.exe"
-    goto :found_python
 )
 echo  ERROR: Python not found in PATH!
 echo  Please install Python 3.10+ and add to PATH.
 echo  Searched: PATH, %LOCALAPPDATA%\Programs\Python\Python31x\, C:\Python31x\
 pause
 exit /b 1
-:found_python
+:verify_python
+REM 验证找到的 Python 是否可用（排除 Windows Store 占位程序）
+%PYTHON_EXE% -c "print('ok')" >nul 2>&1
+if errorlevel 1 (
+    echo  ERROR: %PYTHON_EXE% is not a working Python installation.
+    echo  If Windows Store stub is blocking, install Python from https://python.org
+    pause
+    exit /b 1
+)
+echo  Using Python: %PYTHON_EXE%
 
 set "PNPM_EXE="
 for %%c in (pnpm npx) do (
@@ -77,7 +88,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%FRONTEND_PORT% " ^| findst
 timeout /t 1 /nobreak >nul
 
 echo  [2/3] Starting backend ^(http://127.0.0.1:%BACKEND_PORT%^) ...
-start "Bazi-Backend" cmd /c "cd /d "%ROOT%" && %PYTHON_EXE% -m uvicorn server.app:app --host 127.0.0.1 --port %BACKEND_PORT%"
+start "Bazi-Backend" cmd /c "cd /d "%ROOT%" && "%PYTHON_EXE%" -m uvicorn server.app:app --host 127.0.0.1 --port %BACKEND_PORT%"
 
 echo  [3/3] Starting frontend ^(http://localhost:%FRONTEND_PORT%^) ...
 timeout /t 2 /nobreak >nul
