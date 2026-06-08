@@ -2,7 +2,6 @@
 import json
 from collections import defaultdict
 from datetime import datetime
-from pathlib import Path
 
 from benchmarks.config import BAZIQA_DIR, RESULTS_DIR
 from benchmarks.scoring.extractor import extract_answer, load_ground_truth
@@ -153,8 +152,8 @@ def generate_markdown_report(baseline: dict) -> str:
 
     overall = baseline.get("overall", {})
     lines.append("## 总体结果\n")
-    lines.append(f"| 指标 | 数值 |")
-    lines.append(f"|------|------|")
+    lines.append("| 指标 | 数值 |")
+    lines.append("|------|------|")
     lines.append(f"| 总题数 | {overall.get('total', 0)} |")
     lines.append(f"| 正确数 | {overall.get('correct', 0)} |")
     lines.append(f"| 准确率 | {overall.get('accuracy', 0):.1%} |")
@@ -162,24 +161,24 @@ def generate_markdown_report(baseline: dict) -> str:
     cat = baseline.get("by_category", {})
     if cat:
         lines.append("\n## 按分类统计\n")
-        lines.append(f"| 分类 | 题数 | 正确 | 准确率 |")
-        lines.append(f"|------|------|------|--------|")
+        lines.append("| 分类 | 题数 | 正确 | 准确率 |")
+        lines.append("|------|------|------|--------|")
         for name, v in sorted(cat.items(), key=lambda x: -x[1]["accuracy"]):
             lines.append(f"| {name} | {v['total']} | {v['correct']} | {v['accuracy']:.1%} |")
 
     yr = baseline.get("by_year", {})
     if yr:
         lines.append("\n## 按年份统计\n")
-        lines.append(f"| 年份 | 题数 | 正确 | 准确率 |")
-        lines.append(f"|------|------|------|--------|")
+        lines.append("| 年份 | 题数 | 正确 | 准确率 |")
+        lines.append("|------|------|------|--------|")
         for name, v in sorted(yr.items()):
             lines.append(f"| {name} | {v['total']} | {v['correct']} | {v['accuracy']:.1%} |")
 
     wrong = baseline.get("wrong_questions", [])
     if wrong:
         lines.append(f"\n## 错题列表（共 {len(wrong)} 题）\n")
-        lines.append(f"| 题目ID | 命主ID | 预期 | 提取 | 分类 |")
-        lines.append(f"|--------|--------|------|------|------|")
+        lines.append("| 题目ID | 命主ID | 预期 | 提取 | 分类 |")
+        lines.append("|--------|--------|------|------|------|")
         for w in wrong:
             lines.append(
                 f"| {w['question_id']} | {w['person_id']} | {w['expected']} "

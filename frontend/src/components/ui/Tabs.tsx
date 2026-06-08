@@ -32,7 +32,7 @@ function TabsList({ children, className }: { children: ReactNode; className?: st
   return (
     <div className={cn(
       "inline-flex items-center gap-1 rounded-lg p-1",
-      "bg-[var(--color-bg-panel)] border border-[var(--color-border)]",
+      "bg-[var(--surface-2)] border border-[var(--border)]",
       className
     )}>
       {children}
@@ -50,8 +50,8 @@ function TabsTrigger({ value, children, className }: { value: string; children: 
       className={cn(
         "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
         active
-          ? "bg-[var(--surface)] text-[var(--color-text-primary)] shadow-sm"
-          : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
+          ? "bg-[var(--surface)] text-[var(--ink)] shadow-sm"
+          : "text-[var(--text-3)] hover:text-[var(--text-2)]",
         className
       )}
     >

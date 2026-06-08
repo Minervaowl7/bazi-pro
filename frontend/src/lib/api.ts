@@ -20,7 +20,7 @@ function _getApiKey(): string {
   }
 }
 
-async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
+async function fetchApi<T>(path: string, init?: RequestInit, timeoutMs = 30000): Promise<T> {
   const apiKey = _getApiKey();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -29,12 +29,22 @@ async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
   if (apiKey) {
     headers["X-API-Key"] = apiKey;
   }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+    res = await fetch(`${API_BASE}${path}`, { ...init, headers, signal: controller.signal });
   } catch (networkErr) {
-    const message = networkErr instanceof Error ? networkErr.message : "网络连接失败";
-    throw new ApiError(message, 0, "NETWORK_ERROR");
+    const message = networkErr instanceof Error
+      ? networkErr.name === "AbortError"
+        ? "请求超时，请检查后端服务是否启动"
+        : networkErr.message
+      : "网络连接失败";
+    throw new ApiError(message, 0, networkErr instanceof Error && networkErr.name === "AbortError" ? "TIMEOUT" : "NETWORK_ERROR");
+  } finally {
+    clearTimeout(timer);
   }
   if (!res.ok) {
     if (res.status === 404) {

@@ -26,34 +26,14 @@ function SectionCard({ sectionKey, content }: { sectionKey: string; content: str
   const lines = content.split("\n").filter((l) => l.trim());
 
   return (
-    <section style={{
-      background: "var(--surface)",
-      border: "1px solid var(--color-border)",
-      width: "100%",
-      maxWidth: 860,
-      marginLeft: "auto",
-      marginRight: "auto",
-    }}>
-      <div style={{
-        borderBottom: "1px solid var(--color-border-subtle)",
-        padding: "18px 32px",
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-      }}>
-        <span aria-hidden="true" style={{ fontSize: 16, opacity: 0.7 }}>{meta.icon}</span>
-        <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)", letterSpacing: "0.02em" }}>
-          {meta.label}
-        </h3>
+    <section className="card w-full max-w-[860px] mx-auto">
+      <div className="flex items-center gap-2.5 border-b border-[var(--border-subtle)] px-8 py-[18px]">
+        <span aria-hidden="true" className="text-base opacity-70">{meta.icon}</span>
+        <h3 className="text-base font-semibold tracking-wide" style={{ fontFamily: "var(--font-display)" }}>{meta.label}</h3>
       </div>
-      <div style={{ padding: "24px 32px" }}>
+      <div className="px-8 py-6">
         {lines.map((line, i) => (
-          <p key={i} style={{
-            fontSize: 15,
-            lineHeight: 2,
-            color: "var(--color-text-secondary)",
-            marginBottom: i < lines.length - 1 ? 8 : 0,
-          }}>{line}</p>
+          <p key={i} className="text-[15px] leading-loose" style={{ color: "var(--text-2)", marginBottom: i < lines.length - 1 ? 8 : 0 }}>{line}</p>
         ))}
       </div>
     </section>
@@ -64,28 +44,12 @@ function SchoolSectionCard({ title, icon, color, children }: {
   title: string; icon: string; color: string; children: React.ReactNode;
 }) {
   return (
-    <section style={{
-      background: "var(--surface)",
-      border: "1px solid var(--color-border)",
-      borderLeft: `3px solid ${color}`,
-      width: "100%",
-      maxWidth: 860,
-      marginLeft: "auto",
-      marginRight: "auto",
-    }}>
-      <div style={{
-        borderBottom: "1px solid var(--color-border-subtle)",
-        padding: "18px 32px",
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-      }}>
-        <span aria-hidden="true" style={{ fontSize: 16, opacity: 0.7 }}>{icon}</span>
-        <h3 style={{ fontSize: 16, fontWeight: 600, color, fontFamily: "var(--font-serif)", letterSpacing: "0.02em" }}>
-          {title}
-        </h3>
+    <section className="card w-full max-w-[860px] mx-auto" style={{ borderLeft: `3px solid ${color}` }}>
+      <div className="flex items-center gap-2.5 border-b border-[var(--border-subtle)] px-8 py-[18px]">
+        <span aria-hidden="true" className="text-base opacity-70">{icon}</span>
+        <h3 className="text-base font-semibold tracking-wide" style={{ color, fontFamily: "var(--font-display)" }}>{title}</h3>
       </div>
-      <div style={{ padding: "22px 32px" }}>
+      <div className="px-8 py-[22px]">
         {children}
       </div>
     </section>
@@ -97,7 +61,7 @@ function WuxingSpan({ text }: { text: string }) {
     <>
       {text.split("").map((ch, i) => {
         const wx = ["金", "木", "水", "火", "土"].includes(ch) ? ch : "";
-        const color = wx ? WUXING_COLORS[wx] : "var(--color-text-primary)";
+        const color = wx ? WUXING_COLORS[wx] : "var(--ink)";
         return <span key={i} style={{ color }}>{ch}</span>;
       })}
     </>
@@ -112,70 +76,69 @@ function ZipingSchoolView({ data }: { data: Record<string, unknown> }) {
   const dayunVerdict = data.dayun_verdict as Array<{ step?: number; gan?: string; zhi?: string; shishen?: string; verdict?: string; detail?: string }> | undefined;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <SchoolSectionCard title="子平格局判定" icon="🏛" color="var(--el-water)">
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <span style={{ fontSize: 20, fontWeight: 700, color: "var(--el-water)", fontFamily: "var(--font-serif)" }}>{pattern?.pattern || "—"}</span>
+    <div className="flex flex-col gap-5">
+      <SchoolSectionCard title="子平格局判定" icon="🏛" color="var(--wx-water)">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <span className="text-xl font-bold" style={{ color: "var(--wx-water)", fontFamily: "var(--font-display)" }}>{pattern?.pattern || "—"}</span>
             {pattern?.confidence !== undefined && (
               <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
-                <div style={{ flex: 1, height: 6, background: "var(--bg-secondary)", overflow: "hidden" }}>
+                <div style={{ flex: 1, height: 6, background: "var(--surface-2)", overflow: "hidden" }}>
                   <div style={{
                     width: `${Math.min(pattern.confidence * 100, 100)}%`,
                     height: "100%",
                     background: pattern.confidence >= 0.8 ? "var(--success)" : pattern.confidence >= 0.6 ? "var(--warning)" : "var(--danger)",
                   }} />
                 </div>
-                <span style={{ fontSize: 14, color: "var(--color-text-muted)", fontVariantNumeric: "tabular-nums" }}>
+                <span style={{ fontSize: 14, color: "var(--text-3)", fontVariantNumeric: "tabular-nums" }}>
                   {(pattern.confidence * 100).toFixed(0)}%
                 </span>
               </div>
             )}
           </div>
           {pattern?.reason && (
-            <p style={{ fontSize: 15, lineHeight: 1.85, color: "var(--color-text-secondary)" }}>{pattern.reason}</p>
+            <p style={{ fontSize: 15, lineHeight: 1.85, color: "var(--text-2)" }}>{pattern.reason}</p>
           )}
           {wangshuai?.verdict && (
-            <p style={{ fontSize: 15 }}>旺衰：<span style={{ fontWeight: 700, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>{wangshuai.verdict}</span></p>
+            <p style={{ fontSize: 15 }}>旺衰：<span style={{ fontWeight: 700, color: "var(--ink)", fontFamily: "var(--font-display)" }}>{wangshuai.verdict}</span></p>
           )}
         </div>
       </SchoolSectionCard>
 
-      <SchoolSectionCard title="子平用神（破格调整后）" icon="✦" color="var(--el-water)">
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 13, padding: "4px 12px", background: "rgba(45,125,91,0.10)", color: "var(--success)" }}>用神</span>
-            <span style={{ fontSize: 18, fontWeight: 700, fontFamily: "var(--font-serif)" }}><WuxingSpan text={yongshen?.yongshen || "—"} /></span>
+      <SchoolSectionCard title="子平用神（破格调整后）" icon="✦" color="var(--wx-water)">
+        <div className="flex flex-col gap-3.5">
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-[13px] px-3 py-1 rounded" style={{ background: "rgba(45,125,91,0.10)", color: "var(--success)" }}>用神</span>
+            <span className="text-lg font-bold" style={{ fontFamily: "var(--font-display)" }}><WuxingSpan text={yongshen?.yongshen || "—"} /></span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 13, padding: "4px 12px", background: "rgba(53,94,133,0.08)", color: "var(--el-water)" }}>喜神</span>
-            <span style={{ fontSize: 17, color: "var(--color-text-secondary)" }}><WuxingSpan text={(yongshen?.xishen || []).join("、") || "—"} /></span>
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-[13px] px-3 py-1 rounded" style={{ background: "rgba(53,94,133,0.08)", color: "var(--wx-water)" }}>喜神</span>
+            <span className="text-[17px]" style={{ color: "var(--text-2)" }}><WuxingSpan text={(yongshen?.xishen || []).join("、") || "—"} /></span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 13, padding: "4px 12px", background: "rgba(196,60,44,0.08)", color: "var(--danger)" }}>忌神</span>
-            <span style={{ fontSize: 17, color: "var(--color-text-secondary)" }}><WuxingSpan text={(yongshen?.jishen || []).join("、") || "—"} /></span>
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-[13px] px-3 py-1 rounded" style={{ background: "rgba(196,60,44,0.08)", color: "var(--danger)" }}>忌神</span>
+            <span className="text-[17px]" style={{ color: "var(--text-2)" }}><WuxingSpan text={(yongshen?.jishen || []).join("、") || "—"} /></span>
           </div>
           {yongshen?.trace?.reason && (
-            <p style={{ fontSize: 14, color: "var(--color-text-muted)", marginTop: 4 }}>推导：{yongshen.trace.reason}</p>
+            <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>推导：{yongshen.trace.reason}</p>
           )}
         </div>
       </SchoolSectionCard>
 
       {breakConditions.length > 0 && (
         <SchoolSectionCard title="破格条件" icon="⚠" color="var(--warning)">
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="flex flex-col gap-3">
             {breakConditions.map((bc, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                <span style={{
-                  fontWeight: 700, flexShrink: 0, fontSize: 13, padding: "3px 10px",
+              <div key={i} className="flex items-start gap-3">
+                <span className="font-bold shrink-0 text-[13px] px-2.5 py-[3px] rounded" style={{
                   background: bc.severity === "high" ? "rgba(196,60,44,0.08)" : "rgba(184,146,63,0.08)",
                   color: bc.severity === "high" ? "var(--danger)" : "var(--warning)",
                 }}>
                   {bc.severity === "high" ? "重" : bc.severity === "medium" ? "中" : "轻"}
                 </span>
                 <div>
-                  <span style={{ fontWeight: 600, fontSize: 15, color: "var(--color-text-primary)" }}>{bc.type}</span>
-                  {bc.detail && <span style={{ fontSize: 14, color: "var(--color-text-muted)", marginLeft: 8 }}>{bc.detail}</span>}
+                  <span style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>{bc.type}</span>
+                  {bc.detail && <span style={{ fontSize: 14, color: "var(--text-3)", marginLeft: 8 }}>{bc.detail}</span>}
                 </div>
               </div>
             ))}
@@ -184,18 +147,17 @@ function ZipingSchoolView({ data }: { data: Record<string, unknown> }) {
       )}
 
       {dayunVerdict && dayunVerdict.length > 0 && (
-        <SchoolSectionCard title="大运吉凶（子平法）" icon="🌊" color="var(--el-water)">
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <SchoolSectionCard title="大运吉凶（子平法）" icon="🌊" color="var(--wx-water)">
+          <div className="flex flex-col gap-2.5">
             {dayunVerdict.slice(0, 8).map((d, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ flexShrink: 0, width: 28, fontSize: 13, color: "var(--color-text-faint)", fontVariantNumeric: "tabular-nums" }}>{d.step}</span>
-                <span style={{ fontWeight: 700, flexShrink: 0, fontSize: 17, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>{d.gan}{d.zhi}</span>
-                <span style={{
-                  fontWeight: 700, flexShrink: 0, fontSize: 13, padding: "3px 10px",
+              <div key={i} className="flex items-center gap-3">
+                <span className="shrink-0 w-7 text-[13px] tabular-nums" style={{ color: "var(--text-4)" }}>{d.step}</span>
+                <span className="font-bold shrink-0 text-[17px]" style={{ fontFamily: "var(--font-display)" }}>{d.gan}{d.zhi}</span>
+                <span className="font-bold shrink-0 text-[13px] px-2.5 py-[3px] rounded" style={{
                   background: d.verdict === "吉" ? "rgba(45,125,91,0.10)" : d.verdict === "凶" ? "rgba(196,60,44,0.08)" : "rgba(184,146,63,0.08)",
                   color: d.verdict === "吉" ? "var(--success)" : d.verdict === "凶" ? "var(--danger)" : "var(--warning)",
                 }}>{d.verdict}</span>
-                <span style={{ fontSize: 14, color: "var(--color-text-secondary)" }}>{d.detail}</span>
+                <span className="text-sm" style={{ color: "var(--text-2)" }}>{d.detail}</span>
               </div>
             ))}
           </div>
@@ -221,32 +183,32 @@ function MangpaiSchoolView({ data }: { data: Record<string, unknown> }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="flex flex-col gap-5">
       <SchoolSectionCard title="宾主分析" icon="👥" color="#a855f7">
         {(binzhu?.interpretations || []).length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="flex flex-col gap-3">
             {(binzhu?.interpretations || []).map((interp, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                <span style={{ fontWeight: 700, flexShrink: 0, fontSize: 13, padding: "3px 10px", background: "rgba(168,85,247,0.10)", color: "#a855f7" }}>
+              <div key={i} className="flex items-start gap-3">
+                <span className="font-bold shrink-0 text-[13px] px-2.5 py-[3px] rounded" style={{ background: "rgba(168,85,247,0.10)", color: "#a855f7" }}>
                   {interp.type}
                 </span>
-                <span style={{ fontSize: 15, color: "var(--color-text-secondary)", lineHeight: 1.75 }}>{interp.meaning}</span>
+                <span className="text-[15px] leading-[1.75]" style={{ color: "var(--text-2)" }}>{interp.meaning}</span>
               </div>
             ))}
           </div>
         ) : (
-          <p style={{ fontSize: 15, color: "var(--color-text-muted)" }}>宾主无明显交战</p>
+          <p className="text-[15px]" style={{ color: "var(--text-3)" }}>宾主无明显交战</p>
         )}
       </SchoolSectionCard>
 
       <SchoolSectionCard title="体用分析" icon="⚖" color="#a855f7">
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 20, fontSize: 16 }}>
-            <span>体 <span style={{ fontWeight: 700, color: "#a855f7", fontFamily: "var(--font-serif)", fontSize: 18 }}>{(tiyong?.ti || []).map(t => t.gan).join(" ") || "无"}</span></span>
-            <span style={{ color: "var(--color-text-faint)" }}>vs</span>
-            <span>用 <span style={{ fontWeight: 700, color: "#a855f7", fontFamily: "var(--font-serif)", fontSize: 18 }}>{(tiyong?.yong || []).map(t => t.gan).join(" ") || "无"}</span></span>
+        <div className="flex flex-col gap-3.5">
+          <div className="flex items-center gap-5 text-base">
+            <span>体 <span style={{ fontWeight: 700, color: "#a855f7", fontFamily: "var(--font-display)", fontSize: 18 }}>{(tiyong?.ti || []).map(t => t.gan).join(" ") || "无"}</span></span>
+            <span style={{ color: "var(--text-4)" }}>vs</span>
+            <span>用 <span style={{ fontWeight: 700, color: "#a855f7", fontFamily: "var(--font-display)", fontSize: 18 }}>{(tiyong?.yong || []).map(t => t.gan).join(" ") || "无"}</span></span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "var(--color-text-muted)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "var(--text-3)" }}>
             <span>体力 {tiyong?.ti_strength?.toFixed(1) || 0}</span>
             <span>·</span>
             <span>用力 {tiyong?.yong_strength?.toFixed(1) || 0}</span>
@@ -256,13 +218,13 @@ function MangpaiSchoolView({ data }: { data: Record<string, unknown> }) {
 
       {allGong.length > 0 && (
         <SchoolSectionCard title="做功分析" icon="⚙" color="#a855f7">
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="flex flex-col gap-3">
             {allGong.slice(0, 6).map((g, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                <span style={{ fontWeight: 700, flexShrink: 0, fontSize: 13, padding: "3px 10px", background: "rgba(168,85,247,0.10)", color: "#a855f7" }}>
+              <div key={i} className="flex items-start gap-3">
+                <span className="font-bold shrink-0 text-[13px] px-2.5 py-[3px] rounded" style={{ background: "rgba(168,85,247,0.10)", color: "#a855f7" }}>
                   {g.type}
                 </span>
-                <span style={{ fontSize: 15, color: "var(--color-text-secondary)" }}>{g.description}</span>
+                <span className="text-[15px]" style={{ color: "var(--text-2)" }}>{g.description}</span>
               </div>
             ))}
           </div>
@@ -270,26 +232,26 @@ function MangpaiSchoolView({ data }: { data: Record<string, unknown> }) {
       )}
 
       <SchoolSectionCard title="功力评定" icon="📊" color="#a855f7">
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 20, color: "#a855f7", fontFamily: "var(--font-serif)" }}>{gongli?.level || "—"}</span>
-            <span style={{ fontSize: 14, color: "var(--color-text-muted)" }}>{gongli?.score ?? "—"}分</span>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xl font-bold" style={{ color: "#a855f7", fontFamily: "var(--font-display)" }}>{gongli?.level || "—"}</span>
+            <span className="text-sm" style={{ color: "var(--text-3)" }}>{gongli?.score ?? "—"}分</span>
           </div>
           {gongli?.analysis && (
-            <p style={{ fontSize: 15, lineHeight: 1.85, color: "var(--color-text-secondary)" }}>{gongli.analysis}</p>
+            <p className="text-[15px] leading-[1.85]" style={{ color: "var(--text-2)" }}>{gongli.analysis}</p>
           )}
         </div>
       </SchoolSectionCard>
 
       {yingqi && (yingqi.triggers || []).length > 0 && (
         <SchoolSectionCard title="应期提示" icon="🕐" color="#a855f7">
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="flex flex-col gap-3">
             {(yingqi.triggers || []).map((t, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                <span style={{ fontWeight: 700, flexShrink: 0, fontSize: 13, padding: "3px 10px", background: "rgba(168,85,247,0.10)", color: "#a855f7" }}>
+              <div key={i} className="flex items-start gap-3">
+                <span className="font-bold shrink-0 text-[13px] px-2.5 py-[3px] rounded" style={{ background: "rgba(168,85,247,0.10)", color: "#a855f7" }}>
                   {t.type}
                 </span>
-                <span style={{ fontSize: 15, color: "var(--color-text-secondary)" }}>{t.description}</span>
+                <span className="text-[15px]" style={{ color: "var(--text-2)" }}>{t.description}</span>
               </div>
             ))}
           </div>
@@ -298,7 +260,7 @@ function MangpaiSchoolView({ data }: { data: Record<string, unknown> }) {
 
       {summary && (
         <SchoolSectionCard title="盲派总评" icon="👁" color="#a855f7">
-          <p style={{ fontSize: 15, lineHeight: 2, color: "var(--color-text-secondary)" }}>{summary}</p>
+          <p className="text-[15px] leading-loose" style={{ color: "var(--text-2)" }}>{summary}</p>
         </SchoolSectionCard>
       )}
     </div>
@@ -314,40 +276,40 @@ function XinpaiSchoolView({ data }: { data: Record<string, unknown> }) {
   const dayunVerdict = data.dayun_verdict as Array<{ step?: number; gan?: string; zhi?: string; verdict?: string; detail?: string }> | undefined;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="flex flex-col gap-5">
       <SchoolSectionCard title="身扶判定" icon="⚖" color="#22c55e">
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <span style={{ fontWeight: 700, fontSize: 20, color: "#22c55e", fontFamily: "var(--font-serif)" }}>{yongJi?.sheng_fu || "—"}</span>
+        <div className="flex flex-col gap-3">
+          <span style={{ fontWeight: 700, fontSize: 20, color: "#22c55e", fontFamily: "var(--font-display)" }}>{yongJi?.sheng_fu || "—"}</span>
           {yongJi?.reason && (
-            <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>{yongJi.reason}</p>
+            <p style={{ fontSize: 14, color: "var(--text-3)" }}>{yongJi.reason}</p>
           )}
         </div>
       </SchoolSectionCard>
 
       <SchoolSectionCard title="新派用忌神" icon="✦" color="#22c55e">
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 13, padding: "4px 12px", background: "rgba(45,125,91,0.10)", color: "var(--success)" }}>用神</span>
-            <span style={{ fontSize: 17, fontWeight: 700, fontFamily: "var(--font-serif)" }}><WuxingSpan text={(yongJi?.yongshen_name || []).join("、") || "—"} /></span>
+        <div className="flex flex-col gap-3.5">
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-[13px] px-3 py-1 rounded" style={{ background: "rgba(45,125,91,0.10)", color: "var(--success)" }}>用神</span>
+            <span className="text-[17px] font-bold" style={{ fontFamily: "var(--font-display)" }}><WuxingSpan text={(yongJi?.yongshen_name || []).join("、") || "—"} /></span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 13, padding: "4px 12px", background: "rgba(196,60,44,0.08)", color: "var(--danger)" }}>忌神</span>
-            <span style={{ fontSize: 17, color: "var(--color-text-secondary)" }}><WuxingSpan text={(yongJi?.jishen_name || []).join("、") || "—"} /></span>
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-[13px] px-3 py-1 rounded" style={{ background: "rgba(196,60,44,0.08)", color: "var(--danger)" }}>忌神</span>
+            <span className="text-[17px]" style={{ color: "var(--text-2)" }}><WuxingSpan text={(yongJi?.jishen_name || []).join("、") || "—"} /></span>
           </div>
         </div>
       </SchoolSectionCard>
 
       {baishen && baishen.replacements && Object.keys(baishen.replacements).length > 0 && (
         <SchoolSectionCard title="百神论替换" icon="🔄" color="#22c55e">
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="flex flex-col gap-3">
             {Object.entries(baishen.replacements).map(([key, val], i) => {
               const v = val as { original?: string; replacement?: string; reason?: string };
               return (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                  <span style={{ fontWeight: 700, flexShrink: 0, fontSize: 13, padding: "3px 10px", background: "rgba(34,197,94,0.10)", color: "#22c55e" }}>
+                <div key={i} className="flex items-start gap-3">
+                  <span className="font-bold shrink-0 text-[13px] px-2.5 py-[3px] rounded" style={{ background: "rgba(34,197,94,0.10)", color: "#22c55e" }}>
                     {v.original || key}
                   </span>
-                  <span style={{ fontSize: 15, color: "var(--color-text-secondary)" }}>→ {v.replacement}{v.reason ? `（${v.reason}）` : ""}</span>
+                  <span className="text-[15px]" style={{ color: "var(--text-2)" }}>→ {v.replacement}{v.reason ? `（${v.reason}）` : ""}</span>
                 </div>
               );
             })}
@@ -357,34 +319,34 @@ function XinpaiSchoolView({ data }: { data: Record<string, unknown> }) {
 
       <SchoolSectionCard title="空亡论" icon="◯" color="#22c55e">
         {(kongwang?.kongwang_zhi || []).length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          <div className="flex flex-col gap-3.5">
+            <div className="flex flex-wrap gap-2.5">
               {(kongwang?.kongwang_zhi || []).map((zhi) => (
-                <span key={zhi} style={{ fontWeight: 700, padding: "4px 14px", fontSize: 15, background: "rgba(34,197,94,0.08)", color: "#22c55e", fontFamily: "var(--font-serif)" }}>
+                <span key={zhi} className="font-bold px-3.5 py-1 text-[15px] rounded" style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e", fontFamily: "var(--font-display)" }}>
                   {zhi}
                 </span>
               ))}
             </div>
             {(kongwang?.affected || []).length > 0 && (
-              <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
+              <p className="text-sm" style={{ color: "var(--text-3)" }}>
                 影响柱位：{(kongwang?.affected || []).map(a => a.position).join("、")}
               </p>
             )}
           </div>
         ) : (
-          <p style={{ fontSize: 15, color: "var(--color-text-muted)" }}>无空亡</p>
+          <p style={{ fontSize: 15, color: "var(--text-3)" }}>无空亡</p>
         )}
       </SchoolSectionCard>
 
       {fanduan && (fanduan.total_conditions || 0) > 0 && (
         <SchoolSectionCard title="反断论" icon="↕" color="#22c55e">
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="flex flex-col gap-3">
             {(fanduan.conditions || []).map((c, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                <span style={{ fontWeight: 700, flexShrink: 0, fontSize: 13, padding: "3px 10px", background: "rgba(34,197,94,0.10)", color: "#22c55e" }}>
+              <div key={i} className="flex items-start gap-3">
+                <span className="font-bold shrink-0 text-[13px] px-2.5 py-[3px] rounded" style={{ background: "rgba(34,197,94,0.10)", color: "#22c55e" }}>
                   {c.action}
                 </span>
-                <span style={{ fontSize: 15, color: "var(--color-text-secondary)" }}>{c.description}</span>
+                <span className="text-[15px]" style={{ color: "var(--text-2)" }}>{c.description}</span>
               </div>
             ))}
           </div>
@@ -393,17 +355,16 @@ function XinpaiSchoolView({ data }: { data: Record<string, unknown> }) {
 
       {dayunVerdict && dayunVerdict.length > 0 && (
         <SchoolSectionCard title="大运吉凶（新派）" icon="🌊" color="#22c55e">
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="flex flex-col gap-2.5">
             {dayunVerdict.slice(0, 8).map((d, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ flexShrink: 0, width: 28, fontSize: 13, color: "var(--color-text-faint)", fontVariantNumeric: "tabular-nums" }}>{d.step}</span>
-                <span style={{ fontWeight: 700, flexShrink: 0, fontSize: 17, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>{d.gan}{d.zhi}</span>
-                <span style={{
-                  fontWeight: 700, flexShrink: 0, fontSize: 13, padding: "3px 10px",
+              <div key={i} className="flex items-center gap-3">
+                <span className="shrink-0 w-7 text-[13px] tabular-nums" style={{ color: "var(--text-4)" }}>{d.step}</span>
+                <span className="font-bold shrink-0 text-[17px]" style={{ fontFamily: "var(--font-display)" }}>{d.gan}{d.zhi}</span>
+                <span className="font-bold shrink-0 text-[13px] px-2.5 py-[3px] rounded" style={{
                   background: d.verdict === "吉" ? "rgba(45,125,91,0.10)" : d.verdict === "凶" ? "rgba(196,60,44,0.08)" : "rgba(184,146,63,0.08)",
                   color: d.verdict === "吉" ? "var(--success)" : d.verdict === "凶" ? "var(--danger)" : "var(--warning)",
                 }}>{d.verdict}</span>
-                <span style={{ fontSize: 14, color: "var(--color-text-secondary)" }}>{d.detail}</span>
+                <span className="text-sm" style={{ color: "var(--text-2)" }}>{d.detail}</span>
               </div>
             ))}
           </div>
@@ -412,7 +373,7 @@ function XinpaiSchoolView({ data }: { data: Record<string, unknown> }) {
 
       {summary?.advice && (
         <SchoolSectionCard title="新派总评" icon="✧" color="#22c55e">
-          <p style={{ fontSize: 15, lineHeight: 2, color: "var(--color-text-secondary)" }}>{summary.advice}</p>
+          <p className="text-[15px] leading-loose" style={{ color: "var(--text-2)" }}>{summary.advice}</p>
         </SchoolSectionCard>
       )}
     </div>
@@ -434,7 +395,7 @@ export default function SchoolPanel({ result, narration }: Props) {
   }).filter(s => s.content);
 
   const SCHOOL_META: Record<string, { label: string; icon: string; color: string }> = {
-    ziping: { label: "传统子平法", icon: "☯", color: "var(--el-water)" },
+    ziping: { label: "传统子平法", icon: "☯", color: "var(--wx-water)" },
     mangpai: { label: "盲派", icon: "👁", color: "#a855f7" },
     xinpai: { label: "新派", icon: "✧", color: "#22c55e" },
   };
@@ -442,31 +403,20 @@ export default function SchoolPanel({ result, narration }: Props) {
   const schoolMeta = SCHOOL_META[school] || SCHOOL_META.ziping;
 
   return (
-    <div style={{ width: "100%" }}>
-      <div style={{
-        maxWidth: 860,
-        marginLeft: "auto",
-        marginRight: "auto",
-        marginBottom: 32,
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        flexWrap: "wrap",
-      }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>
-          命理解读
-        </h2>
-        <span style={{ fontWeight: 600, fontSize: 13, padding: "4px 12px", background: "var(--bg-secondary)", color: "var(--color-text-secondary)" }}>
+    <div className="w-full">
+      <div className="max-w-[860px] mx-auto mb-8 flex items-center gap-3 flex-wrap">
+        <h2 className="text-xl font-bold" style={{ fontFamily: "var(--font-display)" }}>命理解读</h2>
+        <span className="font-semibold text-[13px] px-3 py-1 rounded" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>
           {sections.length} 维度
         </span>
         {hasSchoolData && (
-          <span style={{ fontWeight: 600, fontSize: 13, padding: "4px 12px", background: `${schoolMeta.color}12`, color: schoolMeta.color }}>
+          <span className="font-semibold text-[13px] px-3 py-1 rounded" style={{ background: `${schoolMeta.color}12`, color: schoolMeta.color }}>
             {schoolMeta.icon} {schoolMeta.label}
           </span>
         )}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <div className="flex flex-col gap-6">
         {sections.map((s) => (
           <SectionCard key={s.key} sectionKey={s.key} content={s.content} />
         ))}

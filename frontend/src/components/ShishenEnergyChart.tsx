@@ -14,20 +14,20 @@ const SHENG_MAP: Record<string, string> = { 木: "火", 火: "土", 土: "金", 
 const KE_MAP: Record<string, string> = { 木: "土", 火: "金", 土: "水", 金: "木", 水: "火" };
 
 function getShishenColor(dayMasterWx: string, groupLabel: string): string {
-  if (!dayMasterWx) return "var(--color-text-muted)";
+  if (!dayMasterWx) return "var(--text-3)";
   switch (groupLabel) {
-    case "同我": return WUXING_COLORS[dayMasterWx] || "var(--color-text-muted)";
-    case "我生": return WUXING_COLORS[SHENG_MAP[dayMasterWx]] || "var(--color-text-muted)";
-    case "我克": return WUXING_COLORS[KE_MAP[dayMasterWx]] || "var(--color-text-muted)";
+    case "同我": return WUXING_COLORS[dayMasterWx] || "var(--text-3)";
+    case "我生": return WUXING_COLORS[SHENG_MAP[dayMasterWx]] || "var(--text-3)";
+    case "我克": return WUXING_COLORS[KE_MAP[dayMasterWx]] || "var(--text-3)";
     case "克我": {
-      for (const [k, v] of Object.entries(KE_MAP)) { if (v === dayMasterWx) return WUXING_COLORS[k] || "var(--color-text-muted)"; }
-      return "var(--color-text-muted)";
+      for (const [k, v] of Object.entries(KE_MAP)) { if (v === dayMasterWx) return WUXING_COLORS[k] || "var(--text-3)"; }
+      return "var(--text-3)";
     }
     case "生我": {
-      for (const [k, v] of Object.entries(SHENG_MAP)) { if (v === dayMasterWx) return WUXING_COLORS[k] || "var(--color-text-muted)"; }
-      return "var(--color-text-muted)";
+      for (const [k, v] of Object.entries(SHENG_MAP)) { if (v === dayMasterWx) return WUXING_COLORS[k] || "var(--text-3)"; }
+      return "var(--text-3)";
     }
-    default: return "var(--color-text-muted)";
+    default: return "var(--text-3)";
   }
 }
 
@@ -55,9 +55,9 @@ export default function ShishenEnergyChart({ result }: Props) {
   const total = Math.max(1, Object.values(counts).reduce((a, b) => a + b, 0));
 
   return (
-    <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
-      <div style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "16px 24px" }}>
-        <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>十神能量分布</h3>
+    <section className="card">
+      <div className="border-b-2 border-[var(--border-strong)] px-6 py-4">
+        <h3 className="font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>十神能量分布</h3>
       </div>
       <div className="p-7 space-y-6">
         {SHISHEN_GROUPS.map((group) => {
@@ -68,16 +68,16 @@ export default function ShishenEnergyChart({ result }: Props) {
           return (
             <div key={group.label}>
               <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold" style={{ fontSize: 16, color, fontFamily: "var(--font-serif)" }}>{group.label}</span>
-                <span className="tabular-nums font-semibold" style={{ fontSize: 14, color: "var(--color-text-muted)" }}>{groupPct.toFixed(0)}%</span>
+                <span className="font-semibold text-base" style={{ color, fontFamily: "var(--font-display)" }}>{group.label}</span>
+                <span className="tabular-nums font-semibold text-sm" style={{ color: "var(--text-3)" }}>{groupPct.toFixed(0)}%</span>
               </div>
-              <div className="h-9 flex overflow-hidden" style={{ background: "var(--bg-secondary)" }}>
+              <div className="h-9 flex overflow-hidden" style={{ background: "var(--surface-2)" }}>
                 {group.items.map((item, ii) => {
                   const val = counts[item] || 0;
                   const pct = (val / total) * 100;
                   if (pct === 0) return null;
                   return (
-                    <div key={item} className="h-full flex items-center justify-center font-semibold transition-all duration-500" style={{ width: `${pct}%`, background: color, opacity: ii === 0 ? 0.85 : 0.5, color: "var(--bg-primary)", fontSize: pct > 8 ? 14 : 11 }} title={`${item}: ${pct.toFixed(1)}%`}>
+                    <div key={item} className="h-full flex items-center justify-center font-semibold transition-all duration-500" style={{ width: `${pct}%`, background: color, opacity: ii === 0 ? 0.85 : 0.5, color: "var(--bg)", fontSize: pct > 8 ? 14 : 11 }} title={`${item}: ${pct.toFixed(1)}%`}>
                       {pct > 8 ? item : ""}
                     </div>
                   );
@@ -85,9 +85,9 @@ export default function ShishenEnergyChart({ result }: Props) {
               </div>
               <div className="flex gap-4 mt-2">
                 {group.items.map((item) => (
-                  <span key={item} style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
+                  <span key={item} className="text-sm" style={{ color: "var(--text-3)" }}>
                     {item}{" "}
-                    <span className="tabular-nums font-medium" style={{ color: "var(--color-text-faint)" }}>{((counts[item]||0)/total*100).toFixed(0)}%</span>
+                    <span className="tabular-nums font-medium" style={{ color: "var(--text-4)" }}>{((counts[item]||0)/total*100).toFixed(0)}%</span>
                   </span>
                 ))}
               </div>

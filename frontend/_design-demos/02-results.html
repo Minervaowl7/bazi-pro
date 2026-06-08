@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BaZi Pro — 结果页 Demo v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #f5f2eb;
+  --surface: #fffdf9;
+  --surface-2: #f0ede6;
+  --border: rgba(180,160,120,0.2);
+  --border-strong: rgba(180,160,120,0.35);
+  --gold: #b49a5c;
+  --gold-muted: rgba(180,154,92,0.08);
+  --cinnabar: #c96442;
+  --cinnabar-light: rgba(201,100,66,0.1);
+  --ink: #2c2418;
+  --text-2: #6b6154;
+  --text-3: #9e9488;
+  --text-4: #c4bcb0;
+  --wood: #3a7d5c;
+  --fire: #c4523a;
+  --earth: #8b6a3a;
+  --metal: #c5a55a;
+  --water: #2e5c8a;
+  --font-serif: 'Noto Serif SC', 'Songti SC', serif;
+  --font-body: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --radius: 12px;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 0 0 0.5px rgba(180,160,120,0.15);
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.65;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  padding-top: 56px;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: rgba(245,242,235,0.92);
+  backdrop-filter: blur(24px) saturate(1.3);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 clamp(16px, 4vw, 40px); z-index: 100;
+}
+.nav-left { display: flex; align-items: center; gap: 10px; }
+.nav-logo {
+  width: 30px; height: 30px; border-radius: 7px;
+  background: linear-gradient(135deg, #c96442, #a17f40);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: var(--font-serif); font-size: 14px; font-weight: 700;
+  box-shadow: 0 1px 4px rgba(201,100,66,0.2);
+}
+.nav-brand { font-family: var(--font-serif); font-size: 16px; font-weight: 600; color: var(--ink); }
+.nav-links { display: flex; gap: 2px; }
+.nav-link {
+  padding: 6px 14px; font-size: 13px; color: var(--text-2);
+  text-decoration: none; border-radius: 6px; transition: all 200ms ease; position: relative;
+}
+.nav-link:hover { color: var(--ink); background: var(--gold-muted); }
+.nav-link.active { color: var(--ink); font-weight: 500; }
+.nav-link.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+  width: 16px; height: 2px; background: var(--cinnabar); border-radius: 1px;
+}
+.nav-right { display: flex; align-items: center; gap: 6px; }
+.nav-btn {
+  width: 32px; height: 32px; border: 1px solid transparent; border-radius: 6px;
+  background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); transition: all 200ms ease;
+}
+.nav-btn:hover { border-color: var(--border); color: var(--text-2); background: var(--surface); }
+
+/* ===== MAIN ===== */
+.main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 24px 80px;
+}
+
+/* ===== ACTION BAR ===== */
+.action-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+}
+.action-left { display: flex; align-items: center; gap: 10px; }
+.school-select {
+  height: 36px; padding: 0 28px 0 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  font-family: var(--font-body); font-size: 13px; color: var(--ink); cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239e9488' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  transition: border-color 200ms ease;
+}
+.school-select:hover { border-color: var(--border-strong); }
+.action-right { display: flex; align-items: center; gap: 8px; }
+.btn-ghost {
+  height: 36px; padding: 0 14px; background: transparent;
+  border: 1px solid var(--border); border-radius: 8px;
+  font-family: var(--font-body); font-size: 13px; color: var(--text-2);
+  cursor: pointer; transition: all 200ms ease;
+}
+.btn-ghost:hover { border-color: var(--border-strong); color: var(--ink); background: var(--surface); }
+
+/* ===== SUMMARY PILLS ===== */
+.summary-pills {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 10px; margin-bottom: 20px;
+}
+.pill {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius); padding: 16px 12px; text-align: center;
+  box-shadow: var(--shadow-card);
+  position: relative; overflow: hidden;
+  transition: transform 250ms ease, box-shadow 250ms ease;
+}
+.pill::before {
+  content: ''; position: absolute; top: 0; left: 20%; right: 20%;
+  height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.4;
+}
+.pill:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(180,160,120,0.2); }
+.pill-label {
+  font-size: 11px; color: var(--text-3); text-transform: uppercase;
+  letter-spacing: 0.06em; margin-bottom: 6px;
+}
+.pill-value { font-family: var(--font-serif); font-size: 18px; font-weight: 600; }
+.pill-value.wood { color: var(--wood); }
+.pill-value.fire { color: var(--fire); }
+.pill-value.earth { color: var(--earth); }
+.pill-value.metal { color: var(--metal); }
+.pill-value.water { color: var(--water); }
+.pill-value.cinnabar { color: var(--cinnabar); }
+
+/* ===== CHART CARD ===== */
+.chart-card {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-card);
+  overflow: hidden; margin-bottom: 20px;
+  transition: box-shadow 300ms ease;
+}
+.chart-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(180,160,120,0.2); }
+.chart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.chart-header::after {
+  content: ''; position: absolute; bottom: -1px; left: 28px;
+  width: 40px; height: 2px; background: linear-gradient(90deg, var(--gold), rgba(180,154,92,0.3));
+}
+.chart-header-left { display: flex; align-items: center; gap: 12px; }
+.chart-title { font-family: var(--font-serif); font-size: 17px; font-weight: 600; }
+.wangshuai-badge {
+  padding: 3px 12px; border-radius: 9999px; font-size: 11px; font-weight: 500;
+  background: var(--cinnabar-light); color: var(--cinnabar);
+  border: 1px solid rgba(201,100,66,0.2);
+  letter-spacing: 0.02em;
+}
+.chart-header-right { font-size: 13px; color: var(--text-3); }
+.chart-header-right strong { color: var(--cinnabar); font-family: var(--font-serif); font-weight: 600; }
+
+/* ===== 四柱 ===== */
+.chart-body { padding: 24px 28px; }
+.pillars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.pillar {
+  text-align: center; padding: 8px 0;
+  border-radius: 10px; transition: background 250ms ease;
+}
+.pillar:hover { background: var(--gold-muted); }
+.pillar-label {
+  font-size: 11px; color: var(--text-3); margin-bottom: 10px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.pillar-shishen { font-size: 11px; color: var(--text-4); margin-bottom: 6px; }
+.pillar-gan, .pillar-zhi {
+  width: 68px; height: 68px; margin: 0 auto 6px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; font-family: var(--font-serif);
+  font-size: 30px; font-weight: 700;
+  border: 1.5px solid; position: relative;
+  transition: transform 250ms ease, box-shadow 250ms ease;
+}
+.pillar-gan:hover, .pillar-zhi:hover { transform: scale(1.06); }
+/* 五行色底 — 微妙渐变 */
+.pillar-gan.wood, .pillar-zhi.wood { border-color: var(--wood); color: var(--wood); background: linear-gradient(135deg, rgba(58,125,92,0.04), rgba(58,125,92,0.08)); }
+.pillar-gan.fire, .pillar-zhi.fire { border-color: var(--fire); color: var(--fire); background: linear-gradient(135deg, rgba(201,100,66,0.04), rgba(201,100,66,0.08)); }
+.pillar-gan.earth, .pillar-zhi.earth { border-color: var(--earth); color: var(--earth); background: linear-gradient(135deg, rgba(139,106,58,0.04), rgba(139,106,58,0.08)); }
+.pillar-gan.metal, .pillar-zhi.metal { border-color: var(--metal); color: var(--metal); background: linear-gradient(135deg, rgba(197,165,90,0.04), rgba(197,165,90,0.08)); }
+.pillar-gan.water, .pillar-zhi.water { border-color: var(--water); color: var(--water); background: linear-gradient(135deg, rgba(46,92,138,0.04), rgba(46,92,138,0.08)); }
+/* 日柱高亮 */
+.pillar-gan.day, .pillar-zhi.day { box-shadow: 0 0 0 2px var(--cinnabar-light), 0 2px 8px rgba(201,100,66,0.1); }
+.pillar-canggan { font-size: 11px; color: var(--text-3); margin-top: 2px; line-height: 1.4; }
+.pillar-nayin { font-size: 10px; color: var(--text-4); margin-top: 6px; font-style: italic; letter-spacing: 0.03em; }
+
+/* 干支分隔线 */
+.pillar-sep {
+  width: 24px; height: 1px; margin: 4px auto;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+}
+
+/* ===== 五行分布 ===== */
+.wuxing-section {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  padding-top: 20px; border-top: 1px solid var(--border);
+  position: relative;
+}
+.wuxing-section::before {
+  content: ''; position: absolute; top: -1px; left: 0;
+  width: 40px; height: 1px; background: var(--gold);
+}
+.wuxing-title {
+  font-family: var(--font-serif); font-size: 13px; font-weight: 600;
+  color: var(--text-2); margin-bottom: 16px; letter-spacing: 0.02em;
+}
+.wuxing-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.wuxing-bar-label {
+  width: 20px; font-family: var(--font-serif); font-size: 14px; font-weight: 600;
+}
+.wuxing-bar-label.wood { color: var(--wood); }
+.wuxing-bar-label.fire { color: var(--fire); }
+.wuxing-bar-label.earth { color: var(--earth); }
+.wuxing-bar-label.metal { color: var(--metal); }
+.wuxing-bar-label.water { color: var(--water); }
+.wuxing-bar-track {
+  flex: 1; height: 6px; background: var(--surface-2);
+  border-radius: 3px; overflow: hidden;
+}
+.wuxing-bar-fill { height: 100%; border-radius: 3px; }
+.wuxing-bar-fill.wood { background: linear-gradient(90deg, var(--wood), rgba(58,125,92,0.6)); }
+.wuxing-bar-fill.fire { background: linear-gradient(90deg, var(--fire), rgba(201,100,66,0.6)); }
+.wuxing-bar-fill.earth { background: linear-gradient(90deg, var(--earth), rgba(139,106,58,0.6)); }
+.wuxing-bar-fill.metal { background: linear-gradient(90deg, var(--metal), rgba(197,165,90,0.6)); }
+.wuxing-bar-fill.water { background: linear-gradient(90deg, var(--water), rgba(46,92,138,0.6)); }
+.wuxing-bar-pct { width: 36px; font-size: 12px; color: var(--text-3); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 刑冲合害 */
+.relations { display: flex; flex-wrap: wrap; gap: 8px; }
+.relation-badge {
+  padding: 5px 14px; border-radius: 9999px; font-size: 12px;
+  border: 1px solid; letter-spacing: 0.02em;
+  transition: transform 200ms ease;
+}
+.relation-badge:hover { transform: scale(1.04); }
+.relation-badge.conflict { border-color: rgba(201,100,66,0.25); color: var(--cinnabar); background: var(--cinnabar-light); }
+.relation-badge.combine { border-color: rgba(58,125,92,0.25); color: var(--wood); background: rgba(58,125,92,0.06); }
+.relation-badge.punish { border-color: rgba(139,106,58,0.25); color: var(--earth); background: rgba(139,106,58,0.06); }
+
+/* ===== TWO COL ===== */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+/* 强弱滑块 */
+.strength-card {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-card); padding: 24px;
+  transition: box-shadow 300ms ease;
+}
+.strength-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(180,160,120,0.2); }
+.strength-title {
+  font-family: var(--font-serif); font-size: 14px; font-weight: 600;
+  margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+}
+.strength-title::before {
+  content: ''; width: 3px; height: 14px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--gold), rgba(180,154,92,0.3));
+}
+.strength-bar {
+  height: 6px; border-radius: 3px; position: relative; margin-bottom: 12px;
+  background: linear-gradient(90deg,
+    var(--water) 0%, var(--water) 20%,
+    var(--earth) 40%, var(--earth) 60%,
+    var(--fire) 80%, var(--fire) 100%);
+  opacity: 0.7;
+}
+.strength-marker {
+  position: absolute; top: 50%; left: 62%; transform: translate(-50%, -50%);
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--cinnabar);
+  box-shadow: 0 0 0 3px rgba(201,100,66,0.12), 0 1px 4px rgba(201,100,66,0.2);
+}
+.strength-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-4); }
+.strength-verdict {
+  text-align: center; margin-top: 16px;
+  font-family: var(--font-serif); font-size: 20px; font-weight: 600; color: var(--cinnabar);
+  position: relative;
+}
+.strength-verdict::before {
+  content: '「'; position: absolute; left: calc(50% - 52px); color: var(--text-4); font-size: 16px;
+}
+.strength-verdict::after {
+  content: '」'; position: absolute; right: calc(50% - 52px); color: var(--text-4); font-size: 16px;
+}
+
+/* 十神能量 */
+.shishen-card {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-card); padding: 24px;
+  transition: box-shadow 300ms ease;
+}
+.shishen-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(180,160,120,0.2); }
+.shishen-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.shishen-name { width: 40px; font-size: 12px; color: var(--text-2); text-align: right; font-weight: 500; }
+.shishen-bar { flex: 1; height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.shishen-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--gold), rgba(180,154,92,0.5)); }
+.shishen-pct { width: 32px; font-size: 11px; color: var(--text-3); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ===== TAB BAR ===== */
+.tab-bar {
+  display: flex; gap: 2px; background: var(--surface-2);
+  border-radius: 10px; padding: 3px; margin-bottom: 20px;
+  overflow-x: auto; border: 0.5px solid var(--border);
+}
+.tab-btn {
+  flex: 1; min-width: 0; padding: 8px 10px;
+  border: none; border-radius: 8px; background: transparent;
+  font-family: var(--font-body); font-size: 13px; color: var(--text-3);
+  cursor: pointer; transition: all 200ms ease; white-space: nowrap; text-align: center;
+  position: relative;
+}
+.tab-btn:hover { color: var(--text-2); }
+.tab-btn.active {
+  background: var(--surface); color: var(--ink); font-weight: 500;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* ===== TAB CONTENT ===== */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ===== 命书 ===== */
+.life-report {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-card);
+  padding: 32px; margin-bottom: 20px; position: relative; overflow: hidden;
+}
+.life-report::before {
+  content: ''; position: absolute; top: 0; left: 0; bottom: 0;
+  width: 3px; background: linear-gradient(180deg, var(--cinnabar), var(--gold), transparent);
+  border-radius: 0 2px 2px 0;
+}
+.life-report-header { margin-bottom: 20px; padding-left: 16px; }
+.life-report-title {
+  font-family: var(--font-serif); font-size: 20px; font-weight: 600; margin-bottom: 4px;
+}
+.life-report-sub { font-size: 12px; color: var(--text-3); letter-spacing: 0.04em; }
+.gold-divider {
+  height: 1px; background: linear-gradient(90deg, var(--gold), rgba(180,154,92,0.3), transparent);
+  margin: 0 0 20px 16px; max-width: 200px;
+}
+.life-report-body { padding-left: 16px; }
+.life-report-body p {
+  font-size: 15px; line-height: 1.85; color: var(--text-2);
+  text-indent: 2em; margin-bottom: 14px;
+}
+.life-report-body p:first-child::first-letter {
+  font-family: var(--font-serif); font-size: 28px; font-weight: 700;
+  color: var(--cinnabar); float: left; line-height: 1;
+  margin: 4px 8px 0 0;
+}
+.life-report-body p:last-child { margin-bottom: 0; }
+
+/* ===== 大运 ===== */
+.dayun-timeline {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-card);
+  padding: 28px; margin-bottom: 20px; position: relative;
+}
+.dayun-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 0; position: relative;
+  border-bottom: 1px solid rgba(180,160,120,0.1);
+}
+.dayun-item:last-child { border-bottom: none; }
+.dayun-item::before {
+  content: ''; position: absolute; left: 52px; top: 0; bottom: 0;
+  width: 1px; background: rgba(180,160,120,0.12);
+}
+.dayun-item:first-child::before { top: 50%; }
+.dayun-item:last-child::before { bottom: 50%; }
+.dayun-dot {
+  position: absolute; left: 48px; top: 50%; transform: translate(-50%, -50%);
+  width: 9px; height: 9px; border-radius: 50%; background: var(--surface);
+  border: 2px solid var(--gold); z-index: 1;
+}
+.dayun-age { width: 40px; font-size: 12px; color: var(--text-3); text-align: right; z-index: 1; }
+.dayun-ganzhi {
+  font-family: var(--font-serif); font-size: 20px; font-weight: 600;
+  width: 64px; text-align: center; z-index: 1;
+}
+.dayun-ganzhi .gan { color: var(--cinnabar); }
+.dayun-ganzhi .zhi { color: var(--ink); }
+.dayun-range { font-size: 12px; color: var(--text-3); flex: 1; font-variant-numeric: tabular-nums; z-index: 1; }
+.dayun-badge {
+  padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.02em; z-index: 1;
+}
+.dayun-badge.good { background: rgba(58,125,92,0.08); color: var(--wood); border: 1px solid rgba(58,125,92,0.2); }
+.dayun-badge.bad { background: var(--cinnabar-light); color: var(--cinnabar); border: 1px solid rgba(201,100,66,0.2); }
+.dayun-badge.neutral { background: var(--gold-muted); color: var(--earth); border: 1px solid rgba(139,106,58,0.2); }
+.dayun-badge.current {
+  background: linear-gradient(135deg, rgba(201,100,66,0.12), rgba(180,154,92,0.12));
+  color: var(--cinnabar); border: 1px solid rgba(201,100,66,0.25);
+  box-shadow: 0 0 8px rgba(201,100,66,0.1);
+}
+
+/* ===== 深度分析 ===== */
+.dimension-card {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-card);
+  padding: 28px; margin-bottom: 14px;
+  transition: box-shadow 250ms ease, transform 250ms ease;
+}
+.dimension-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); transform: translateY(-1px); }
+.dimension-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.dimension-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.dimension-icon.marriage { background: var(--cinnabar-light); color: var(--cinnabar); }
+.dimension-icon.health { background: rgba(58,125,92,0.08); color: var(--wood); }
+.dimension-icon.wealth { background: var(--gold-muted); color: var(--gold); }
+.dimension-title { font-family: var(--font-serif); font-size: 16px; font-weight: 600; }
+.dimension-body { font-size: 14px; line-height: 1.8; color: var(--text-2); }
+.dimension-body p { margin-bottom: 10px; text-indent: 2em; }
+.dimension-body p:last-child { margin-bottom: 0; }
+
+/* ===== 神煞 — 分类 pill 布局 ===== */
+.shensha-group { margin-bottom: 16px; }
+.shensha-group:last-child { margin-bottom: 0; }
+.shensha-group-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px; cursor: pointer; user-select: none;
+}
+.shensha-group-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.shensha-group-dot.ji { background: var(--wood); }
+.shensha-group-dot.xiong { background: var(--cinnabar); }
+.shensha-group-dot.zhong { background: var(--earth); }
+.shensha-group-title {
+  font-family: var(--font-serif); font-size: 13px; font-weight: 600;
+  color: var(--text-2);
+}
+.shensha-group-count {
+  font-size: 11px; color: var(--text-4);
+  background: var(--surface-2); padding: 1px 8px; border-radius: 9999px;
+}
+.shensha-group-arrow {
+  margin-left: auto; color: var(--text-4); font-size: 10px;
+  transition: transform 200ms ease;
+}
+.shensha-group.collapsed .shensha-group-arrow { transform: rotate(-90deg); }
+.shensha-group.collapsed .shensha-pills { display: none; }
+.shensha-pills {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.shensha-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 9999px; font-size: 12px;
+  border: 0.5px solid; cursor: default;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  position: relative;
+}
+.shensha-pill:hover { transform: scale(1.04); }
+.shensha-pill .shensha-pill-dot {
+  width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0;
+}
+/* 吉神 */
+.shensha-pill.ji {
+  border-color: rgba(58,125,92,0.2); background: rgba(58,125,92,0.04); color: var(--wood);
+}
+.shensha-pill.ji .shensha-pill-dot { background: var(--wood); }
+.shensha-pill.ji:hover { box-shadow: 0 2px 8px rgba(58,125,92,0.1); }
+/* 凶煞 */
+.shensha-pill.xiong {
+  border-color: rgba(201,100,66,0.2); background: rgba(201,100,66,0.04); color: var(--cinnabar);
+}
+.shensha-pill.xiong .shensha-pill-dot { background: var(--cinnabar); }
+.shensha-pill.xiong:hover { box-shadow: 0 2px 8px rgba(201,100,66,0.1); }
+/* 中性 */
+.shensha-pill.zhong {
+  border-color: rgba(139,106,58,0.15); background: rgba(139,106,58,0.04); color: var(--earth);
+}
+.shensha-pill.zhong .shensha-pill-dot { background: var(--earth); }
+.shensha-pill.zhong:hover { box-shadow: 0 2px 8px rgba(139,106,58,0.1); }
+/* 位置标签 */
+.shensha-pill-pos {
+  font-size: 10px; color: var(--text-4); margin-left: 2px;
+}
+/* tooltip */
+.shensha-pill[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #e8e4dc; font-size: 11px; line-height: 1.4;
+  padding: 6px 10px; border-radius: 6px; white-space: nowrap;
+  pointer-events: none; z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .summary-pills { grid-template-columns: repeat(3, 1fr); }
+  .pillars { gap: 6px; }
+  .pillar-gan, .pillar-zhi { width: 52px; height: 52px; font-size: 22px; }
+  .two-col { grid-template-columns: 1fr; }
+  .wuxing-section { grid-template-columns: 1fr; }
+  .shensha-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="nav-logo">命</div>
+    <span class="nav-brand">BaZi Pro</span>
+  </div>
+  <div class="nav-links">
+    <a href="#" class="nav-link">排盘</a>
+    <a href="#" class="nav-link">合婚</a>
+    <a href="#" class="nav-link active">分析</a>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 10a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" stroke-width="1.2"/><path d="M13.5 8a5.5 5.5 0 01-.3 1.8l1.1.9-1.4 1.4-.9-1.1a5.5 5.5 0 01-1.8.3c-1.7 0-3.1-1.4-3.1-3.1S6.3 4.9 8 4.9s3.1 1.4 3.1 3.1z" stroke="currentColor" stroke-width="1.2"/></svg></button>
+    <button class="nav-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="action-bar">
+    <div class="action-left">
+      <select class="school-select"><option>子平法</option><option>盲派</option><option>新派</option></select>
+      <button class="btn-ghost">详细报告</button>
+    </div>
+    <div class="action-right">
+      <button class="btn-ghost">导出</button>
+      <button class="btn-ghost">分享</button>
+    </div>
+  </div>
+
+  <div class="summary-pills">
+    <div class="pill"><div class="pill-label">旺衰</div><div class="pill-value cinnabar">偏旺</div></div>
+    <div class="pill"><div class="pill-label">格局</div><div class="pill-value">正官格</div></div>
+    <div class="pill"><div class="pill-label">用神</div><div class="pill-value water">水</div></div>
+    <div class="pill"><div class="pill-label">喜神</div><div class="pill-value metal">金</div></div>
+    <div class="pill"><div class="pill-label">忌神</div><div class="pill-value fire">火</div></div>
+    <div class="pill"><div class="pill-label">调候</div><div class="pill-value water">壬水</div></div>
+  </div>
+
+  <!-- 命书 -->
+  <div class="life-report">
+    <div class="life-report-header">
+      <div class="life-report-title">命书</div>
+      <div class="life-report-sub">AI 解读 · 基于确定性计算</div>
+    </div>
+    <div class="gold-divider"></div>
+    <div class="life-report-body">
+      <p>日主庚金生于巳月，火旺金相。庚金坐午火之上，虽得月令之气，然午火克身，根基不稳。好在年柱癸水透出，食神泄秀，时柱壬水润泽，形成「金水相涵」之象。全局来看，日主偏旺而有制化，格局清正。</p>
+      <p>正官格成格，月令巳中丙火正官透出，得年干癸水配合，官印相生有情。格局忌伤官见官，幸命局中伤官不透，格局无破。此命主为人正直有担当，适合在体制内或大组织中发展，中年后运势渐入佳境。</p>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('chart',this)">命盘</button>
+    <button class="tab-btn" onclick="switchTab('dayun',this)">大运</button>
+    <button class="tab-btn" onclick="switchTab('gongwei',this)">宫位神煞</button>
+    <button class="tab-btn" onclick="switchTab('ziwei',this)">紫微斗数</button>
+    <button class="tab-btn" onclick="switchTab('deep',this)">深度分析</button>
+    <button class="tab-btn" onclick="switchTab('school',this)">流派解读</button>
+    <button class="tab-btn" onclick="switchTab('chat',this)">问答</button>
+  </div>
+
+  <!-- 命盘 Tab -->
+  <div class="tab-content active" id="tab-chart">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-header-left">
+          <span class="chart-title">四柱命盘</span>
+          <span class="wangshuai-badge">日主偏旺</span>
+        </div>
+        <div class="chart-header-right">日主 <strong>庚金</strong></div>
+      </div>
+      <div class="chart-body">
+        <div class="pillars">
+          <div class="pillar">
+            <div class="pillar-label">年柱</div>
+            <div class="pillar-shishen">伤官</div>
+            <div class="pillar-gan water">癸</div>
+            <div class="pillar-sep"></div>
+            <div class="pillar-zhi water">酉</div>
+            <div class="pillar-canggan" style="color:var(--metal);">藏 辛金</div>
+            <div class="pillar-nayin">剑锋金</div>
+          </div>
+          <div class="pillar">
+            <div class="pillar-label">月柱</div>
+            <div class="pillar-shishen">正官</div>
+            <div class="pillar-gan fire">丙</div>
+            <div class="pillar-sep"></div>
+            <div class="pillar-zhi fire">午</div>
+            <div class="pillar-canggan" style="color:var(--fire);">藏 丁火 · 己土</div>
+            <div class="pillar-nayin">天河水</div>
+          </div>
+          <div class="pillar">
+            <div class="pillar-label">日柱</div>
+            <div class="pillar-shishen" style="color:var(--cinnabar);">日主</div>
+            <div class="pillar-gan metal day">庚</div>
+            <div class="pillar-sep"></div>
+            <div class="pillar-zhi fire day">午</div>
+            <div class="pillar-canggan" style="color:var(--fire);">藏 丁火 · 己土</div>
+            <div class="pillar-nayin">路旁土</div>
+          </div>
+          <div class="pillar">
+            <div class="pillar-label">时柱</div>
+            <div class="pillar-shishen">食神</div>
+            <div class="pillar-gan water">壬</div>
+            <div class="pillar-sep"></div>
+            <div class="pillar-zhi water">申</div>
+            <div class="pillar-canggan" style="color:var(--metal);">藏 庚金 · 壬水</div>
+            <div class="pillar-nayin">剑锋金</div>
+          </div>
+        </div>
+
+        <div class="wuxing-section">
+          <div>
+            <div class="wuxing-title">五行力量分布</div>
+            <div class="wuxing-bar-row"><span class="wuxing-bar-label wood">木</span><div class="wuxing-bar-track"><div class="wuxing-bar-fill wood" style="width:8%"></div></div><span class="wuxing-bar-pct">8%</span></div>
+            <div class="wuxing-bar-row"><span class="wuxing-bar-label fire">火</span><div class="wuxing-bar-track"><div class="wuxing-bar-fill fire" style="width:32%"></div></div><span class="wuxing-bar-pct">32%</span></div>
+            <div class="wuxing-bar-row"><span class="wuxing-bar-label earth">土</span><div class="wuxing-bar-track"><div class="wuxing-bar-fill earth" style="width:18%"></div></div><span class="wuxing-bar-pct">18%</span></div>
+            <div class="wuxing-bar-row"><span class="wuxing-bar-label metal">金</span><div class="wuxing-bar-track"><div class="wuxing-bar-fill metal" style="width:28%"></div></div><span class="wuxing-bar-pct">28%</span></div>
+            <div class="wuxing-bar-row"><span class="wuxing-bar-label water">水</span><div class="wuxing-bar-track"><div class="wuxing-bar-fill water" style="width:14%"></div></div><span class="wuxing-bar-pct">14%</span></div>
+          </div>
+          <div>
+            <div class="wuxing-title">刑冲合害</div>
+            <div class="relations">
+              <span class="relation-badge combine">午未合</span>
+              <span class="relation-badge conflict">子午冲</span>
+              <span class="relation-badge punish">丑戌刑</span>
+              <span class="relation-badge combine">巳申合</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="strength-card">
+        <div class="strength-title">日主强弱</div>
+        <div class="strength-bar"><div class="strength-marker"></div></div>
+        <div class="strength-labels"><span>极弱</span><span>偏弱</span><span>中和</span><span>偏旺</span><span>极旺</span></div>
+        <div class="strength-verdict">偏旺</div>
+      </div>
+      <div class="shishen-card">
+        <div class="strength-title">十神能量</div>
+        <div class="shishen-item"><span class="shishen-name">比肩</span><div class="shishen-bar"><div class="shishen-fill" style="width:28%"></div></div><span class="shishen-pct">28%</span></div>
+        <div class="shishen-item"><span class="shishen-name">食神</span><div class="shishen-bar"><div class="shishen-fill" style="width:14%"></div></div><span class="shishen-pct">14%</span></div>
+        <div class="shishen-item"><span class="shishen-name">正官</span><div class="shishen-bar"><div class="shishen-fill" style="width:22%"></div></div><span class="shishen-pct">22%</span></div>
+        <div class="shishen-item"><span class="shishen-name">偏财</span><div class="shishen-bar"><div class="shishen-fill" style="width:18%"></div></div><span class="shishen-pct">18%</span></div>
+        <div class="shishen-item"><span class="shishen-name">伤官</span><div class="shishen-bar"><div class="shishen-fill" style="width:12%"></div></div><span class="shishen-pct">12%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 大运 Tab -->
+  <div class="tab-content" id="tab-dayun">
+    <div class="dayun-timeline">
+      <div class="wuxing-title">大运流年</div>
+      <div class="dayun-item"><span class="dayun-age">6岁</span><span class="dayun-dot"></span><span class="dayun-ganzhi"><span class="gan">乙</span><span class="zhi">卯</span></span><span class="dayun-range">1996 — 2005</span><span class="dayun-badge bad">忌运</span></div>
+      <div class="dayun-item"><span class="dayun-age">16岁</span><span class="dayun-dot"></span><span class="dayun-ganzhi"><span class="gan">甲</span><span class="zhi">寅</span></span><span class="dayun-range">2006 — 2015</span><span class="dayun-badge bad">忌运</span></div>
+      <div class="dayun-item"><span class="dayun-age">26岁</span><span class="dayun-dot"></span><span class="dayun-ganzhi"><span class="gan">癸</span><span class="zhi">丑</span></span><span class="dayun-range">2016 — 2025</span><span class="dayun-badge good">喜运</span></div>
+      <div class="dayun-item"><span class="dayun-age">36岁</span><span class="dayun-dot"></span><span class="dayun-ganzhi"><span class="gan">壬</span><span class="zhi">子</span></span><span class="dayun-range">2026 — 2035</span><span class="dayun-badge current">当前</span></div>
+      <div class="dayun-item"><span class="dayun-age">46岁</span><span class="dayun-dot"></span><span class="dayun-ganzhi"><span class="gan">辛</span><span class="zhi">亥</span></span><span class="dayun-range">2036 — 2045</span><span class="dayun-badge good">喜运</span></div>
+      <div class="dayun-item"><span class="dayun-age">56岁</span><span class="dayun-dot"></span><span class="dayun-ganzhi"><span class="gan">庚</span><span class="zhi">戌</span></span><span class="dayun-range">2046 — 2055</span><span class="dayun-badge neutral">平运</span></div>
+    </div>
+  </div>
+
+  <!-- 深度分析 Tab -->
+  <div class="tab-content" id="tab-deep">
+    <div class="dimension-card">
+      <div class="dimension-header">
+        <div class="dimension-icon marriage">&#x2764;</div>
+        <div class="dimension-title">感情婚姻</div>
+      </div>
+      <div class="dimension-body">
+        <p>日主庚金，以乙木为正财（妻星），以甲木为偏财。命局中乙木不透，妻星暗藏，主婚缘来得稍晚但质量上乘。日支午火为夫妻宫，午中丁火正官、己土正印，配偶为有能力、有教养之人。</p>
+        <p>月令巳火与日支午火形成「官杀混杂」之势，感情中需注意第三方介入的可能。建议择偶时选择五行属水或属金的对象，以水润金、以金助身，婚姻更稳。</p>
+      </div>
+    </div>
+    <div class="dimension-card">
+      <div class="dimension-header">
+        <div class="dimension-icon health">&#x2766;</div>
+        <div class="dimension-title">健康</div>
+      </div>
+      <div class="dimension-body">
+        <p>庚金日主，金主肺与大肠。命局火旺克金，需注意呼吸系统和皮肤方面的问题。午火重重，心脏和血液循环也需留意。</p>
+        <p>建议日常多接触水元素（游泳、近水而居），佩戴金属饰品以补金气。秋冬季节注意保暖，避免感冒反复。</p>
+      </div>
+    </div>
+    <div class="dimension-card">
+      <div class="dimension-header">
+        <div class="dimension-icon wealth">&#x2726;</div>
+        <div class="dimension-title">财运</div>
+      </div>
+      <div class="dimension-body">
+        <p>正官格配食伤生财，财运路径清晰。壬水食神透出时柱，食神生财为最佳求财方式——靠专业技能和创造力赚钱，而非投机。</p>
+        <p>36岁后进入壬子大运，水旺生财，是财运高峰期。建议在此阶段积累资产、稳健投资，不宜冒进。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 宫位神煞 Tab -->
+  <div class="tab-content" id="tab-gongwei">
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div class="chart-header"><span class="chart-title">宫位</span></div>
+      <div class="chart-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div class="shensha-pill zhong" style="justify-content:center;flex-direction:column;padding:16px;border-radius:10px;gap:4px;">
+            <span style="font-size:11px;">胎元</span>
+            <span style="font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--ink);">甲子</span>
+            <span style="font-size:10px;color:var(--text-4);">海中金</span>
+          </div>
+          <div class="shensha-pill zhong" style="justify-content:center;flex-direction:column;padding:16px;border-radius:10px;gap:4px;">
+            <span style="font-size:11px;">命宫</span>
+            <span style="font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--ink);">丙寅</span>
+            <span style="font-size:10px;color:var(--text-4);">炉中火</span>
+          </div>
+          <div class="shensha-pill zhong" style="justify-content:center;flex-direction:column;padding:16px;border-radius:10px;gap:4px;">
+            <span style="font-size:11px;">身宫</span>
+            <span style="font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--ink);">戊申</span>
+            <span style="font-size:10px;color:var(--text-4);">大驿土</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 神煞 — 分类 pill 布局（模拟 25 个神煞） -->
+    <div class="chart-card">
+      <div class="chart-header"><span class="chart-title">神煞</span><span style="font-size:12px;color:var(--text-3);">共 25 条</span></div>
+      <div class="chart-body">
+
+        <!-- 吉神 -->
+        <div class="shensha-group" onclick="this.classList.toggle('collapsed')">
+          <div class="shensha-group-header">
+            <span class="shensha-group-dot ji"></span>
+            <span class="shensha-group-title">吉神</span>
+            <span class="shensha-group-count">10</span>
+            <span class="shensha-group-arrow">▼</span>
+          </div>
+          <div class="shensha-pills">
+            <span class="shensha-pill ji" data-tip="年支酉见丑未 · 主贵人扶持"><span class="shensha-pill-dot"></span>天乙贵人<span class="shensha-pill-pos">年</span></span>
+            <span class="shensha-pill ji" data-tip="日主庚见巳 · 主文才出众"><span class="shensha-pill-dot"></span>文昌贵人<span class="shensha-pill-pos">月</span></span>
+            <span class="shensha-pill ji" data-tip="年支酉见子 · 主福气深厚"><span class="shensha-pill-dot"></span>福星贵人<span class="shensha-pill-pos">年</span></span>
+            <span class="shensha-pill ji" data-tip="日主庚见丑 · 主聪慧过人"><span class="shensha-pill-dot"></span>天德贵人<span class="shensha-pill-pos">日</span></span>
+            <span class="shensha-pill ji" data-tip="月支午见酉 · 主逢凶化吉"><span class="shensha-pill-dot"></span>月德贵人<span class="shensha-pill-pos">月</span></span>
+            <span class="shensha-pill ji" data-tip="年支酉见巳 · 主文章显达"><span class="shensha-pill-dot"></span>天厨贵人<span class="shensha-pill-pos">年</span></span>
+            <span class="shensha-pill ji" data-tip="日主庚见申 · 主学识渊博"><span class="shensha-pill-dot"></span>金舆<span class="shensha-pill-pos">日</span></span>
+            <span class="shensha-pill ji" data-tip="时柱壬申 · 主子女有出息"><span class="shensha-pill-dot"></span>红鸾<span class="shensha-pill-pos">时</span></span>
+            <span class="shensha-pill ji" data-tip="年支酉 · 主有权势"><span class="shensha-pill-dot"></span>将星<span class="shensha-pill-pos">年</span></span>
+            <span class="shensha-pill ji" data-tip="日主庚见午 · 主技艺超群"><span class="shensha-pill-dot"></span>天乙贵人<span class="shensha-pill-pos">日</span></span>
+          </div>
+        </div>
+
+        <!-- 凶煞 -->
+        <div class="shensha-group" onclick="this.classList.toggle('collapsed')">
+          <div class="shensha-group-header">
+            <span class="shensha-group-dot xiong"></span>
+            <span class="shensha-group-title">凶煞</span>
+            <span class="shensha-group-count">8</span>
+            <span class="shensha-group-arrow">▼</span>
+          </div>
+          <div class="shensha-pills">
+            <span class="shensha-pill xiong" data-tip="年支酉见寅 · 主奔波劳碌"><span class="shensha-pill-dot"></span>驿马<span class="shensha-pill-pos">年</span></span>
+            <span class="shensha-pill xiong" data-tip="日支午见子 · 主感情波折"><span class="shensha-pill-dot"></span>桃花煞<span class="shensha-pill-pos">日</span></span>
+            <span class="shensha-pill xiong" data-tip="年支酉见戌 · 主孤克"><span class="shensha-pill-dot"></span>孤辰<span class="shensha-pill-pos">年</span></span>
+            <span class="shensha-pill xiong" data-tip="时柱壬申 · 主晚运不济"><span class="shensha-pill-dot"></span>寡宿<span class="shensha-pill-pos">时</span></span>
+            <span class="shensha-pill xiong" data-tip="月支午见卯 · 主官非口舌"><span class="shensha-pill-dot"></span>劫煞<span class="shensha-pill-pos">月</span></span>
+            <span class="shensha-pill xiong" data-tip="年支酉见辰 · 主意外灾祸"><span class="shensha-pill-dot"></span>亡神<span class="shensha-pill-pos">年</span></span>
+            <span class="shensha-pill xiong" data-tip="日主庚见午 · 主血光之灾"><span class="shensha-pill-dot"></span>羊刃<span class="shensha-pill-pos">日</span></span>
+            <span class="shensha-pill xiong" data-tip="月支午见酉 · 主小人暗害"><span class="shensha-pill-dot"></span>绞煞<span class="shensha-pill-pos">月</span></span>
+          </div>
+        </div>
+
+        <!-- 中性 -->
+        <div class="shensha-group" onclick="this.classList.toggle('collapsed')">
+          <div class="shensha-group-header">
+            <span class="shensha-group-dot zhong"></span>
+            <span class="shensha-group-title">中性</span>
+            <span class="shensha-group-count">7</span>
+            <span class="shensha-group-arrow">▼</span>
+          </div>
+          <div class="shensha-pills">
+            <span class="shensha-pill zhong" data-tip="年支酉见丑 · 主才华内敛"><span class="shensha-pill-dot"></span>华盖<span class="shensha-pill-pos">年</span></span>
+            <span class="shensha-pill zhong" data-tip="日主庚见酉 · 主独立自主"><span class="shensha-pill-dot"></span>禄神<span class="shensha-pill-pos">日</span></span>
+            <span class="shensha-pill zhong" data-tip="月支午见午 · 主精力旺盛"><span class="shensha-pill-dot"></span>天医<span class="shensha-pill-pos">月</span></span>
+            <span class="shensha-pill zhong" data-tip="年支酉见亥 · 主迁徙变动"><span class="shensha-pill-dot"></span>驿马星<span class="shensha-pill-pos">年</span></span>
+            <span class="shensha-pill zhong" data-tip="时柱壬申 · 主子息缘薄"><span class="shensha-pill-dot"></span>天喜<span class="shensha-pill-pos">时</span></span>
+            <span class="shensha-pill zhong" data-tip="日主庚见午 · 主刚毅果断"><span class="shensha-pill-dot"></span>将星<span class="shensha-pill-pos">日</span></span>
+            <span class="shensha-pill zhong" data-tip="月支午见巳 · 主聪敏好学"><span class="shensha-pill-dot"></span>天解<span class="shensha-pill-pos">月</span></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+
+</body>
+</html>

@@ -234,13 +234,13 @@ export default function LifeKlineChart({ analysisId }: Props) {
     <section
       style={{
         background: "var(--surface)",
-        border: "1px solid var(--color-border)",
+        border: "1px solid var(--border)",
         boxShadow: "var(--shadow-sm)",
       }}
     >
       <div
         style={{
-          borderBottom: "2px solid var(--color-border-strong)",
+          borderBottom: "2px solid var(--border-strong)",
           padding: "16px 24px",
           display: "flex",
           alignItems: "center",
@@ -251,13 +251,13 @@ export default function LifeKlineChart({ analysisId }: Props) {
           className="font-bold"
           style={{
             fontSize: 16,
-            color: "var(--color-text-primary)",
-            fontFamily: "var(--font-serif)",
+            color: "var(--ink)",
+            fontFamily: "var(--font-display)",
           }}
         >
           百年运势走势
         </h3>
-        <span style={{ fontSize: 11, color: "var(--color-text-faint)" }}>
+        <span style={{ fontSize: 11, color: "var(--text-4)" }}>
           基于用神喜忌计算 · 可滚轮缩放
         </span>
       </div>

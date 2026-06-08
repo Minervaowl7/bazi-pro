@@ -5,7 +5,7 @@ interface Props {
 }
 
 const SCHOOL_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  ziping: { label: "传统子平法", icon: "☯", color: "var(--water)", bg: "rgba(63,111,159,0.12)" },
+  ziping: { label: "传统子平法", icon: "☯", color: "var(--wx-water)", bg: "rgba(63,111,159,0.12)" },
   mangpai: { label: "盲派", icon: "👁", color: "#a855f7", bg: "rgba(168,85,247,0.12)" },
   xinpai: { label: "新派", icon: "✧", color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
 };
@@ -19,21 +19,21 @@ function ZipingColumn({ data }: { data: Record<string, unknown> }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-        <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">旺衰</div>
-        <div className="text-xs font-semibold text-[var(--text-primary)]">
+      <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+        <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">旺衰</div>
+        <div className="text-xs font-semibold text-[var(--ink)]">
           {wangshuai?.verdict || "—"}
         </div>
       </div>
 
-      <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-        <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">格局</div>
-        <div className="text-xs font-semibold text-[var(--text-primary)]">
+      <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+        <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">格局</div>
+        <div className="text-xs font-semibold text-[var(--ink)]">
           {pattern?.pattern || "—"}
         </div>
         {pattern?.confidence !== undefined && (
           <div className="mt-2 flex items-center gap-2">
-            <div className="flex-1 rounded-full" style={{ height: 4, background: "var(--bg-hover)" }}>
+            <div className="flex-1 rounded-full" style={{ height: 4, background: "var(--surface-2)" }}>
               <div
                 className="h-full rounded-full"
                 style={{
@@ -42,15 +42,15 @@ function ZipingColumn({ data }: { data: Record<string, unknown> }) {
                 }}
               />
             </div>
-            <span className="text-[10px] tabular-nums text-[var(--text-muted)]">
+            <span className="text-[10px] tabular-nums text-[var(--text-3)]">
               {(pattern.confidence * 100).toFixed(0)}%
             </span>
           </div>
         )}
       </div>
 
-      <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-        <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">用神</div>
+      <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+        <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">用神</div>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(74,222,128,0.15)", color: "var(--success)" }}>用</span>
@@ -68,8 +68,8 @@ function ZipingColumn({ data }: { data: Record<string, unknown> }) {
       </div>
 
       {tiaohou?.has_tiaohou && (
-        <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-          <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">调候</div>
+        <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+          <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">调候</div>
           <div className="text-xs" style={{ color: "var(--warning)" }}>
             {(tiaohou.tiaohou_gan || []).join(" ")}
           </div>
@@ -77,8 +77,8 @@ function ZipingColumn({ data }: { data: Record<string, unknown> }) {
       )}
 
       {breakConditions && breakConditions.length > 0 && (
-        <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-          <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">破格条件</div>
+        <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+          <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">破格条件</div>
           <div className="space-y-1.5">
             {breakConditions.map((bc, i) => (
               <div key={i} className="flex items-start gap-1.5">
@@ -92,7 +92,7 @@ function ZipingColumn({ data }: { data: Record<string, unknown> }) {
                   {bc.type}
                 </span>
                 {bc.detail && (
-                  <span className="text-[10px] leading-relaxed text-[var(--text-muted)]">
+                  <span className="text-[10px] leading-relaxed text-[var(--text-3)]">
                     {bc.detail}
                   </span>
                 )}
@@ -109,20 +109,20 @@ function MangpaiColumn({ data }: { data: Record<string, unknown> }) {
   const binzhu = data.binzhu as { interpretations?: Array<{ type?: string; meaning?: string }> } | undefined;
   const tiyong = data.tiyong as { ti?: Array<{ shishen?: string; gan?: string }>; yong?: Array<{ shishen?: string; gan?: string }>; ti_strength?: number; yong_strength?: number } | undefined;
   const gongli = data.gongli as { level?: string; score?: number; analysis?: string } | undefined;
-  const zuogong = data.zuogong as Record<string, Array<{ type?: string; description?: string }>> | undefined;
+  const zuokong = data.zuokong as Record<string, Array<{ type?: string; description?: string }>> | undefined;
   const summary = data.summary as string | undefined;
 
   const allGong: Array<{ type?: string; description?: string }> = [];
-  if (zuogong) {
-    for (const gongList of Object.values(zuogong)) {
+  if (zuokong) {
+    for (const gongList of Object.values(zuokong)) {
       if (Array.isArray(gongList)) allGong.push(...gongList);
     }
   }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-        <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">宾主</div>
+      <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+        <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">宾主</div>
         {(binzhu?.interpretations || []).length > 0 ? (
           <div className="space-y-1.5">
             {(binzhu?.interpretations || []).map((interp, i) => (
@@ -130,35 +130,35 @@ function MangpaiColumn({ data }: { data: Record<string, unknown> }) {
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7" }}>
                   {interp.type}
                 </span>
-                <span className="text-xs text-[var(--text-secondary)]">{interp.meaning}</span>
+                <span className="text-xs text-[var(--text-2)]">{interp.meaning}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-xs text-[var(--text-muted)]">宾主无明显交战</div>
+          <div className="text-xs text-[var(--text-3)]">宾主无明显交战</div>
         )}
       </div>
 
-      <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-        <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">体用</div>
+      <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+        <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">体用</div>
         <div className="flex items-center gap-3 text-xs">
           <span>
             体 <span className="font-semibold" style={{ color: "#a855f7" }}>{(tiyong?.ti || []).length}</span>
           </span>
-          <span className="text-[var(--text-muted)]">·</span>
+          <span className="text-[var(--text-3)]">·</span>
           <span>
             用 <span className="font-semibold" style={{ color: "#a855f7" }}>{(tiyong?.yong || []).length}</span>
           </span>
         </div>
-        <div className="mt-2 flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
+        <div className="mt-2 flex items-center gap-2 text-[10px] text-[var(--text-3)]">
           <span>体力 {tiyong?.ti_strength?.toFixed(1) || 0}</span>
           <span>·</span>
           <span>用力 {tiyong?.yong_strength?.toFixed(1) || 0}</span>
         </div>
       </div>
 
-      <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-        <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">做功</div>
+      <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+        <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">做功</div>
         {allGong.length > 0 ? (
           <div className="space-y-1.5">
             {allGong.slice(0, 5).map((g, i) => (
@@ -166,34 +166,34 @@ function MangpaiColumn({ data }: { data: Record<string, unknown> }) {
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7" }}>
                   {g.type}
                 </span>
-                <span className="text-[10px] text-[var(--text-secondary)]">{g.description}</span>
+                <span className="text-[10px] text-[var(--text-2)]">{g.description}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-xs text-[var(--text-muted)]">暂无有效做功</div>
+          <div className="text-xs text-[var(--text-3)]">暂无有效做功</div>
         )}
       </div>
 
-      <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-        <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">功力</div>
+      <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+        <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">功力</div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold" style={{ color: "#a855f7" }}>
             {gongli?.level || "—"}
           </span>
-          <span className="text-[10px] text-[var(--text-muted)]">
+          <span className="text-[10px] text-[var(--text-3)]">
             {gongli?.score ?? "—"}分
           </span>
         </div>
         {gongli?.analysis && (
-          <div className="mt-1.5 text-[10px] text-[var(--text-muted)]">{gongli.analysis}</div>
+          <div className="mt-1.5 text-[10px] text-[var(--text-3)]">{gongli.analysis}</div>
         )}
       </div>
 
       {summary && (
-        <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-          <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">总评</div>
-          <div className="text-xs leading-relaxed text-[var(--text-secondary)]">{summary}</div>
+        <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+          <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">总评</div>
+          <div className="text-xs leading-relaxed text-[var(--text-2)]">{summary}</div>
         </div>
       )}
     </div>
@@ -208,18 +208,18 @@ function XinpaiColumn({ data }: { data: Record<string, unknown> }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-        <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">身扶判定</div>
+      <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+        <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">身扶判定</div>
         <div className="text-xs font-semibold" style={{ color: "#22c55e" }}>
           {yongJi?.sheng_fu || "—"}
         </div>
         {yongJi?.reason && (
-          <div className="mt-1 text-[10px] text-[var(--text-muted)]">{yongJi.reason}</div>
+          <div className="mt-1 text-[10px] text-[var(--text-3)]">{yongJi.reason}</div>
         )}
       </div>
 
-      <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-        <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">用忌神</div>
+      <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+        <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">用忌神</div>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(74,222,128,0.15)", color: "var(--success)" }}>用</span>
@@ -232,8 +232,8 @@ function XinpaiColumn({ data }: { data: Record<string, unknown> }) {
         </div>
       </div>
 
-      <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-        <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">空亡</div>
+      <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+        <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">空亡</div>
         {(kongwang?.kongwang_zhi || []).length > 0 ? (
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
@@ -248,26 +248,26 @@ function XinpaiColumn({ data }: { data: Record<string, unknown> }) {
               ))}
             </div>
             {(kongwang?.affected || []).length > 0 && (
-              <div className="text-[10px] text-[var(--text-muted)]">
+              <div className="text-[10px] text-[var(--text-3)]">
                 影响柱位：{(kongwang?.affected || []).map((a) => a.position).join("、")}
               </div>
             )}
           </div>
         ) : (
-          <div className="text-xs text-[var(--text-muted)]">无空亡</div>
+          <div className="text-xs text-[var(--text-3)]">无空亡</div>
         )}
       </div>
 
       {fanduan && (fanduan.total_conditions || 0) > 0 && (
-        <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-          <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">反断条件</div>
+        <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+          <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">反断条件</div>
           <div className="space-y-1.5">
             {(fanduan.conditions || []).map((c, i) => (
               <div key={i} className="flex items-start gap-2">
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>
                   {c.action}
                 </span>
-                <span className="text-[10px] text-[var(--text-secondary)]">{c.description}</span>
+                <span className="text-[10px] text-[var(--text-2)]">{c.description}</span>
               </div>
             ))}
           </div>
@@ -275,9 +275,9 @@ function XinpaiColumn({ data }: { data: Record<string, unknown> }) {
       )}
 
       {summary && (
-        <div className="rounded-xl px-6 py-4 bg-[var(--bg-secondary)]">
-          <div className="text-[10px] font-medium mb-2 text-[var(--text-muted)]">总评</div>
-          <div className="text-xs leading-relaxed text-[var(--text-secondary)]">
+        <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
+          <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">总评</div>
+          <div className="text-xs leading-relaxed text-[var(--text-2)]">
             {summary.advice}
           </div>
         </div>
@@ -299,8 +299,8 @@ export default function SchoolComparePanel({ schoolAnalyses }: Props) {
 
   if (columns.length === 0) {
     return (
-      <div className="rounded-2xl bg-[var(--surface)] border border-[var(--color-border)] p-8 text-center">
-        <p className="text-xs text-[var(--text-muted)]">
+      <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] p-8 text-center">
+        <p className="text-xs text-[var(--text-3)]">
           暂无流派对比数据
         </p>
       </div>
@@ -310,18 +310,18 @@ export default function SchoolComparePanel({ schoolAnalyses }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 mb-2">
-        <h2 className="text-base font-medium text-[var(--text-primary)]">
+        <h2 className="text-base font-medium text-[var(--ink)]">
           全流派对比
         </h2>
         <span
           className="text-[10px] px-2.5 py-1 rounded-full font-medium"
-          style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}
+          style={{ background: "var(--surface-2)", color: "var(--text-2)" }}
         >
           {columns.length} 派
         </span>
       </div>
 
-      <div className="rounded-2xl bg-[var(--surface)] border border-[var(--color-border)] overflow-hidden">
+      <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] overflow-hidden">
         <div
           className="grid"
           style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}
@@ -335,7 +335,7 @@ export default function SchoolComparePanel({ schoolAnalyses }: Props) {
                   borderRight: i < columns.length - 1 ? "1px solid var(--border)" : "none",
                 }}
               >
-                <div className="px-6 py-4 flex items-center gap-2.5 relative border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
+                <div className="px-6 py-4 flex items-center gap-2.5 relative border-b border-[var(--border-subtle)] bg-[var(--surface-2)]">
                   <span
                     className="absolute top-0 left-0 right-0 h-[2px]"
                     style={{ background: meta.color }}

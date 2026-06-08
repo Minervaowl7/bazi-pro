@@ -52,8 +52,8 @@ export default function Navbar() {
       ease: "power2.out",
       overwrite: "auto",
     });
-    e.currentTarget.style.background = "var(--bg-hover)";
-    e.currentTarget.style.color = "var(--color-text-secondary)";
+    e.currentTarget.style.background = "var(--surface-2)";
+    e.currentTarget.style.color = "var(--text-2)";
   });
 
   const handleSettingsLeave = contextSafe((e: React.MouseEvent<HTMLButtonElement>) => {
@@ -64,7 +64,7 @@ export default function Navbar() {
       overwrite: "auto",
     });
     e.currentTarget.style.background = "transparent";
-    e.currentTarget.style.color = "var(--color-text-muted)";
+    e.currentTarget.style.color = "var(--text-3)";
   });
 
   const handleThemeToggleClick = contextSafe(() => {
@@ -83,20 +83,21 @@ export default function Navbar() {
         className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 sm:px-8 lg:px-12 h-14"
         style={{
           visibility: "hidden",
-          background: "color-mix(in srgb, var(--surface) 88%, transparent)",
-          backdropFilter: "blur(20px) saturate(1.2)",
-          WebkitBackdropFilter: "blur(20px) saturate(1.2)",
-          borderBottom: "1px solid var(--color-border)",
+          background: "rgba(245,242,235,0.92)",
+          backdropFilter: "blur(24px) saturate(1.3)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.3)",
+          borderBottom: "1px solid var(--border)",
         }}
       >
-        <Link href="/" className="font-bold shrink-0 flex items-center gap-2.5" style={{ fontSize: 15, color: "var(--color-scholar-blue)", fontFamily: "var(--font-serif)", letterSpacing: "-0.01em" }}>
+        <Link href="/" className="font-bold shrink-0 flex items-center gap-2.5" style={{ fontSize: 15, color: "var(--ink)", fontFamily: "var(--font-display)", letterSpacing: "-0.01em" }}>
           <span style={{
-            width: 26, height: 26, borderRadius: 7,
-            background: "linear-gradient(135deg, var(--color-cinnabar), var(--color-gold))",
+            width: 30, height: 30, borderRadius: 7,
+            background: "linear-gradient(135deg, var(--cinnabar), var(--gold))",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 13, color: "#fff", fontWeight: 700,
+            fontSize: 14, color: "#fff", fontWeight: 700,
+            boxShadow: "0 1px 4px rgba(201,100,66,0.2)",
           }}>命</span>
-          八字排盘
+          BaZi Pro
         </Link>
 
         <div className="flex items-center gap-0.5">
@@ -109,9 +110,9 @@ export default function Navbar() {
                 className="relative px-4 py-2 font-medium"
                 style={{
                   fontSize: 13,
-                  color: isActive ? "var(--color-ink)" : "var(--color-text-muted)",
-                  borderRadius: 8,
-                  background: isActive ? "rgba(45,62,95,0.04)" : "transparent",
+                  color: isActive ? "var(--ink)" : "var(--text-3)",
+                  borderRadius: 6,
+                  background: "transparent",
                 }}
                 onMouseEnter={handleLinkEnter}
                 onMouseLeave={handleLinkLeave}
@@ -120,13 +121,13 @@ export default function Navbar() {
                 {isActive && (
                   <span style={{
                     position: "absolute",
-                    bottom: 2,
+                    bottom: -1,
                     left: "50%",
                     transform: "translateX(-50%)",
                     width: 16,
                     height: 2,
                     borderRadius: 1,
-                    background: "var(--color-cinnabar)",
+                    background: "var(--cinnabar)",
                     opacity: 0.7,
                   }} />
                 )}
@@ -138,9 +139,9 @@ export default function Navbar() {
               className="relative px-4 py-2 font-medium"
               style={{
                 fontSize: 13,
-                color: "var(--color-ink)",
-                borderRadius: 8,
-                background: "rgba(45,62,95,0.04)",
+                color: "var(--ink)",
+                borderRadius: 6,
+                background: "transparent",
               }}
             >
               分析
@@ -152,7 +153,7 @@ export default function Navbar() {
                 width: 16,
                 height: 2,
                 borderRadius: 1,
-                background: "var(--color-cinnabar)",
+                background: "var(--cinnabar)",
                 opacity: 0.7,
               }} />
             </span>
@@ -170,12 +171,12 @@ export default function Navbar() {
               border: "none",
               borderRadius: 8,
               cursor: "pointer",
-              color: "var(--color-text-muted)",
+              color: "var(--text-3)",
             }}
             onMouseEnter={handleSettingsEnter}
             onMouseLeave={handleSettingsLeave}
           >
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
           </button>

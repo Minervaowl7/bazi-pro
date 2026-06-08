@@ -57,11 +57,11 @@ function SectionCard({
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-6 py-5 text-left transition-colors duration-200"
-        style={{ background: open ? "var(--bg-secondary)" : "transparent" }}
+        style={{ background: open ? "var(--surface-2)" : "transparent" }}
       >
         <span className="flex items-center gap-3">
           <span className="text-lg">{icon}</span>
-          <span className="text-base font-semibold" style={{ color: "var(--accent)" }}>
+          <span className="text-base font-semibold" style={{ color: "var(--cinnabar)" }}>
             {title}
           </span>
         </span>
@@ -75,7 +75,7 @@ function SectionCard({
           strokeLinejoin="round"
           className="w-5 h-5 transition-transform duration-300"
           style={{
-            color: "var(--text-muted)",
+            color: "var(--text-3)",
             transform: open ? "rotate(180deg)" : "rotate(0deg)",
           }}
         >
@@ -89,7 +89,7 @@ function SectionCard({
         >
           <div
             className="prose-sm"
-            style={{ color: "var(--text-secondary)", lineHeight: 1.85 }}
+            style={{ color: "var(--text-2)", lineHeight: 1.85 }}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
           </div>
@@ -97,8 +97,8 @@ function SectionCard({
             <div
               className="mt-4 px-3 py-2.5 rounded-md text-xs leading-relaxed"
               style={{
-                background: "var(--bg-secondary)",
-                color: "var(--text-muted)",
+                background: "var(--surface-2)",
+                color: "var(--text-3)",
                 border: "1px solid var(--border)",
               }}
             >
@@ -123,29 +123,29 @@ function SkeletonSection() {
       <div className="px-6 py-5 flex items-center gap-3">
         <div
           className="h-5 w-5 rounded-md animate-shimmer"
-          style={{ background: "var(--bg-hover)" }}
+          style={{ background: "var(--surface-2)" }}
         />
         <div
           className="h-5 rounded-md w-32 animate-shimmer"
-          style={{ background: "var(--bg-hover)" }}
+          style={{ background: "var(--surface-2)" }}
         />
       </div>
       <div className="px-6 pb-6 space-y-3">
         <div
           className="h-3 rounded-md w-full animate-shimmer"
-          style={{ background: "var(--bg-hover)" }}
+          style={{ background: "var(--surface-2)" }}
         />
         <div
           className="h-3 rounded-md w-5/6 animate-shimmer"
-          style={{ background: "var(--bg-hover)" }}
+          style={{ background: "var(--surface-2)" }}
         />
         <div
           className="h-3 rounded-md w-4/6 animate-shimmer"
-          style={{ background: "var(--bg-hover)" }}
+          style={{ background: "var(--surface-2)" }}
         />
         <div
           className="h-3 rounded-md w-3/4 animate-shimmer"
-          style={{ background: "var(--bg-hover)" }}
+          style={{ background: "var(--surface-2)" }}
         />
       </div>
     </div>
@@ -261,7 +261,7 @@ export default function ReportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
+      <div className="min-h-screen" style={{ background: "var(--bg)" }}>
         <div className="max-w-4xl mx-auto px-8 py-8">
           <div className="space-y-6">
             <div
@@ -278,13 +278,13 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
+    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
       <div className="max-w-4xl mx-auto px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <Link
             href={`/analyze/${analysisId}`}
-            className="text-sm transition-colors duration-200 hover:text-[var(--accent)]"
-            style={{ color: "var(--text-muted)" }}
+            className="text-sm transition-colors duration-200 hover:text-[var(--cinnabar)]"
+            style={{ color: "var(--text-3)" }}
           >
             ← 返回分析页
           </Link>
@@ -302,52 +302,52 @@ export default function ReportPage() {
         >
           <h1
             className="text-2xl font-bold mb-5"
-            style={{ color: "var(--accent)" }}
+            style={{ color: "var(--cinnabar)" }}
           >
             详批报告
           </h1>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div
               className="rounded-xl p-4 text-center"
-              style={{ background: "var(--bg-secondary)" }}
+              style={{ background: "var(--surface-2)" }}
             >
-              <div className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
+              <div className="text-xs mb-1.5" style={{ color: "var(--text-3)" }}>
                 八字
               </div>
-              <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              <div className="text-sm font-semibold" style={{ color: "var(--ink)" }}>
                 {validation?.bazi || "—"}
               </div>
             </div>
             <div
               className="rounded-xl p-4 text-center"
-              style={{ background: "var(--bg-secondary)" }}
+              style={{ background: "var(--surface-2)" }}
             >
-              <div className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
+              <div className="text-xs mb-1.5" style={{ color: "var(--text-3)" }}>
                 格局
               </div>
-              <div className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
+              <div className="text-sm font-semibold" style={{ color: "var(--cinnabar)" }}>
                 {pattern?.pattern || "—"}
               </div>
             </div>
             <div
               className="rounded-xl p-4 text-center"
-              style={{ background: "var(--bg-secondary)" }}
+              style={{ background: "var(--surface-2)" }}
             >
-              <div className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
+              <div className="text-xs mb-1.5" style={{ color: "var(--text-3)" }}>
                 用神
               </div>
-              <div className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
+              <div className="text-sm font-semibold" style={{ color: "var(--cinnabar)" }}>
                 {yongshen?.yongshen || "—"}
               </div>
             </div>
             <div
               className="rounded-xl p-4 text-center"
-              style={{ background: "var(--bg-secondary)" }}
+              style={{ background: "var(--surface-2)" }}
             >
-              <div className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
+              <div className="text-xs mb-1.5" style={{ color: "var(--text-3)" }}>
                 旺衰
               </div>
-              <div className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
+              <div className="text-sm font-semibold" style={{ color: "var(--cinnabar)" }}>
                 {strength?.wangshuai?.verdict || "—"}
               </div>
             </div>
@@ -356,7 +356,7 @@ export default function ReportPage() {
 
         {!report && !generating && (
           <div className="text-center py-16">
-            <p className="text-base mb-6" style={{ color: "var(--text-secondary)" }}>
+            <p className="text-base mb-6" style={{ color: "var(--text-2)" }}>
               尚未生成详批报告
             </p>
 
@@ -372,10 +372,10 @@ export default function ReportPage() {
                   style={{
                     background: "var(--bg-card)",
                     border: "1px solid var(--border)",
-                    color: "var(--text-primary)",
+                    color: "var(--ink)",
                   }}
                 >
-                  <span style={{ color: "var(--text-muted)" }}>分析视角：</span>
+                  <span style={{ color: "var(--text-3)" }}>分析视角：</span>
                   <span className="font-semibold">
                     {SCHOOL_OPTIONS.find((s) => s.value === selectedSchool)?.label || "传统子平法"}
                   </span>
@@ -412,7 +412,7 @@ export default function ReportPage() {
                           setSelectedSchool(s.value);
                           setSchoolDropdownOpen(false);
                         }}
-                        className="w-full px-5 py-3 text-left transition-colors hover:bg-[var(--bg-hover)]"
+                        className="w-full px-5 py-3 text-left transition-colors hover:bg-[var(--surface-2)]"
                         style={{
                           fontSize: 13,
                           background:
@@ -426,13 +426,13 @@ export default function ReportPage() {
                           style={{
                             color:
                               selectedSchool === s.value
-                                ? "var(--accent)"
-                                : "var(--text-primary)",
+                                ? "var(--cinnabar)"
+                                : "var(--ink)",
                           }}
                         >
                           {s.label}
                         </div>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                        <div style={{ fontSize: 11, color: "var(--text-3)" }}>
                           {s.desc}
                         </div>
                       </button>
@@ -446,7 +446,7 @@ export default function ReportPage() {
               onClick={handleGenerate}
               className="px-8 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
-                background: "var(--accent)",
+                background: "var(--cinnabar)",
                 color: "#0c0c14",
               }}
             >
@@ -458,8 +458,8 @@ export default function ReportPage() {
         {generating && (
           <div className="space-y-6">
             <div className="flex items-center justify-center gap-3 py-4">
-              <div className="animate-pulse-glow w-3 h-3 rounded-full" style={{ background: "var(--accent)" }} />
-              <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+              <div className="animate-pulse-glow w-3 h-3 rounded-full" style={{ background: "var(--cinnabar)" }} />
+              <span className="text-sm" style={{ color: "var(--text-3)" }}>
                 正在以「{SCHOOL_OPTIONS.find((s) => s.value === selectedSchool)?.label || "传统子平法"}」视角生成报告，请稍候...
               </span>
             </div>
@@ -472,8 +472,8 @@ export default function ReportPage() {
         {report?.status === "generating" && !generating && (
           <div className="space-y-6">
             <div className="flex items-center justify-center gap-3 py-4">
-              <div className="animate-pulse-glow w-3 h-3 rounded-full" style={{ background: "var(--accent)" }} />
-              <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+              <div className="animate-pulse-glow w-3 h-3 rounded-full" style={{ background: "var(--cinnabar)" }} />
+              <span className="text-sm" style={{ color: "var(--text-3)" }}>
                 报告生成中，自动刷新中...
               </span>
             </div>
@@ -552,7 +552,7 @@ export default function ReportPage() {
           <div
             className="fixed bottom-0 left-0 right-0 py-4 px-8 flex items-center justify-center gap-4 no-print"
             style={{
-              background: "linear-gradient(to top, var(--bg-primary) 60%, transparent)",
+              background: "linear-gradient(to top, var(--bg) 60%, transparent)",
               zIndex: 50,
             }}
           >
@@ -560,7 +560,7 @@ export default function ReportPage() {
               onClick={handleExportPDF}
               className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
-                background: "var(--accent)",
+                background: "var(--cinnabar)",
                 color: "#0c0c14",
               }}
             >
@@ -571,7 +571,7 @@ export default function ReportPage() {
               className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
                 background: "var(--bg-card)",
-                color: "var(--text-primary)",
+                color: "var(--ink)",
                 border: "1px solid var(--border)",
               }}
             >
@@ -581,8 +581,8 @@ export default function ReportPage() {
               onClick={() => router.push(`/analyze/${analysisId}`)}
               className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
-                background: "var(--bg-secondary)",
-                color: "var(--text-secondary)",
+                background: "var(--surface-2)",
+                color: "var(--text-2)",
                 border: "1px solid var(--border)",
               }}
             >

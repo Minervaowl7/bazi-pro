@@ -21,44 +21,11 @@ import ZiweiPanel from "@/components/ZiweiPanel";
 import ChatPanel from "@/components/ChatPanel";
 import ExportPanel from "@/components/ExportPanel";
 import LifeReport from "@/components/LifeReport";
+import LlmOverview from "@/components/LlmOverview";
 import { SCHOOL_OPTIONS_WITH_ALL, WUXING_COLORS, GAN_WUXING, ZHI_WUXING } from "@/lib/constants";
 import { gsap, useGSAP } from "@/lib/gsap";
 
-import ReactMarkdown from "react-markdown";
-import RemarkGfm from "remark-gfm";
 import ChartQuality, { type ChartQualityData } from "@/components/ChartQuality";
-
-function LlmOverview({ content }: { content: string }) {
-  return (
-    <section style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-md)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-      <div style={{ borderBottom: "1px solid var(--color-border-subtle)", padding: "20px 32px" }} className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, var(--color-cinnabar), #a04030)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(201,100,66,0.25)" }}>
-            <span style={{ fontSize: 16, color: "#fff", fontFamily: "var(--font-serif)" }}>命</span>
-          </div>
-          <div>
-            <h3 className="font-bold" style={{ fontSize: 18, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)", letterSpacing: "-0.01em" }}>命书</h3>
-            <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 2 }}>基于确定性计算 · 深度解读</p>
-          </div>
-        </div>
-      </div>
-      <div className="llm-overview-body" style={{ padding: "32px", color: "var(--color-text-secondary)", lineHeight: 1.75, fontSize: 16, fontFamily: "var(--font-serif)" }}>
-        <ReactMarkdown remarkPlugins={[RemarkGfm]}>{content}</ReactMarkdown>
-      </div>
-      <style jsx>{`
-        .llm-overview-body :global(h2) { color: var(--color-cinnabar); font-size: 1.25rem; font-weight: 700; font-family: var(--font-serif); margin-top: 2rem; margin-bottom: 0.8rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border-subtle); }
-        .llm-overview-body :global(h2:first-child) { margin-top: 0; }
-        .llm-overview-body :global(h3) { color: var(--color-text-primary); font-size: 1.1rem; font-weight: 600; font-family: var(--font-serif); margin-top: 1.4rem; margin-bottom: 0.6rem; }
-        .llm-overview-body :global(p) { margin-bottom: 0.8rem; }
-        .llm-overview-body :global(strong) { color: var(--color-text-primary); font-weight: 700; }
-        .llm-overview-body :global(ul), .llm-overview-body :global(ol) { padding-left: 1.3rem; margin: 0.6rem 0; }
-        .llm-overview-body :global(li) { margin: 0.3rem 0; line-height: 1.75; }
-        .llm-overview-body :global(blockquote) { border-left: 3px solid var(--color-cinnabar); padding-left: 1rem; opacity: 0.9; margin: 0.8rem 0; font-style: italic; }
-        .llm-overview-body :global(code) { background: var(--surface-warm); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-      `}</style>
-    </section>
-  );
-}
 
 const SCHOOL_OPTIONS = SCHOOL_OPTIONS_WITH_ALL;
 
@@ -73,11 +40,11 @@ function Safe({ children, fallback }: FallbackProps) { return <ErrorBoundary fal
 const RelationGraph = dynamic(() => import("@/components/RelationGraph").then((m) => m.default), {
   ssr: false,
   loading: () => (
-    <section style={{background:"var(--surface)",border:"1px solid var(--color-border)"}}>
-      <div style={{borderBottom:"2px solid var(--color-border-strong)",padding:"16px 24px"}}>
-        <h3 className="font-bold" style={{fontSize:16,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)"}}>关系图谱</h3>
+    <section className="card">
+      <div className="border-b border-[var(--border)] px-6 py-4">
+        <h3 className="font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>关系图谱</h3>
       </div>
-      <div className="p-12 text-center" style={{fontSize:14,color:"var(--color-text-muted)"}}>关系图谱加载中…</div>
+      <div className="p-12 text-center text-sm" style={{ color: "var(--text-3)" }}>关系图谱加载中…</div>
     </section>
   ),
 });
@@ -85,11 +52,11 @@ const RelationGraph = dynamic(() => import("@/components/RelationGraph").then((m
 const LifeKlineChart = dynamic(() => import("@/components/LifeKlineChart").then((m) => m.default), {
   ssr: false,
   loading: () => (
-    <section style={{background:"var(--surface)",border:"1px solid var(--color-border)"}}>
-      <div style={{borderBottom:"2px solid var(--color-border-strong)",padding:"16px 24px"}}>
-        <h3 className="font-bold" style={{fontSize:16,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)"}}>人生 K 线</h3>
+    <section className="card">
+      <div className="border-b border-[var(--border)] px-6 py-4">
+        <h3 className="font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>人生 K 线</h3>
       </div>
-      <div className="p-12 text-center" style={{fontSize:14,color:"var(--color-text-muted)"}}>K线图加载中…</div>
+      <div className="p-12 text-center text-sm" style={{ color: "var(--text-3)" }}>K线图加载中…</div>
     </section>
   ),
 });
@@ -107,15 +74,15 @@ type TabId = typeof TABS[number]["id"];
 
 function SkeletonCard() {
   return (
-    <section className="p-7 mb-6 animate-pulse border" style={{background:"var(--surface)",borderColor:"var(--color-border)"}}>
-      <div className="h-5 w-32 mb-6" style={{background:"var(--bg-hover)"}} />
+    <section className="card p-7 mb-6 animate-pulse">
+      <div className="h-5 w-32 mb-6 rounded" style={{ background: "var(--surface-2)" }} />
       <div className="grid grid-cols-4 gap-4">
         {[1,2,3,4].map(i=>(
-          <div key={i} className="text-center p-6 border" style={{background:"var(--bg-secondary)",borderColor:"var(--color-border-subtle)"}}>
-            <div className="h-3 w-16 mx-auto mb-4" style={{background:"var(--bg-hover)"}} />
-            <div className="h-14 w-14 mx-auto mb-3" style={{background:"var(--bg-hover)"}} />
-            <div className="h-14 w-14 mx-auto mb-3" style={{background:"var(--bg-hover)"}} />
-            <div className="h-4 w-12 mx-auto" style={{background:"var(--bg-hover)"}} />
+          <div key={i} className="text-center p-6 border border-[var(--border-subtle)] rounded-xl" style={{ background: "var(--surface-2)" }}>
+            <div className="h-3 w-16 mx-auto mb-4 rounded" style={{ background: "var(--surface-2)" }} />
+            <div className="h-14 w-14 mx-auto mb-3 rounded" style={{ background: "var(--surface-2)" }} />
+            <div className="h-14 w-14 mx-auto mb-3 rounded" style={{ background: "var(--surface-2)" }} />
+            <div className="h-4 w-12 mx-auto rounded" style={{ background: "var(--surface-2)" }} />
           </div>
         ))}
       </div>
@@ -127,12 +94,12 @@ function SkeletonNarration() {
   return (
     <div className="space-y-4 mb-6">
       {[1,2,3].map(i=>(
-        <div key={i} className="p-6 animate-pulse border-l-4" style={{background:"var(--surface)",borderLeftColor:"var(--color-border-subtle)",borderRight:"1px solid var(--color-border)",borderTop:"1px solid var(--color-border)",borderBottom:"1px solid var(--color-border)"}}>
-          <div className="h-4 w-24 mb-4" style={{background:"var(--bg-hover)"}} />
+        <div key={i} className="card p-6 animate-pulse border-l-4" style={{ borderLeftColor: "var(--border-subtle)" }}>
+          <div className="h-4 w-24 mb-4 rounded" style={{ background: "var(--surface-2)" }} />
           <div className="space-y-3">
-            <div className="h-4 w-full" style={{background:"var(--bg-hover)"}} />
-            <div className="h-4 w-5/6" style={{background:"var(--bg-hover)"}} />
-            <div className="h-4 w-4/6" style={{background:"var(--bg-hover)"}} />
+            <div className="h-4 w-full rounded" style={{ background: "var(--surface-2)" }} />
+            <div className="h-4 w-5/6 rounded" style={{ background: "var(--surface-2)" }} />
+            <div className="h-4 w-4/6 rounded" style={{ background: "var(--surface-2)" }} />
           </div>
         </div>
       ))}
@@ -248,8 +215,8 @@ export default function AnalyzePage() {
   }, { scope: containerRef, dependencies: [activeTab], revertOnUpdate: true });
 
   return (
-    <div ref={containerRef} style={{minHeight:"100vh",background:"var(--background)"}}>
-      <main style={{width:"100%",maxWidth:960,margin:"0 auto",paddingTop:72,paddingBottom:40,paddingLeft:24,paddingRight:24}}>
+    <div ref={containerRef} className="min-h-screen" style={{ background: "var(--bg)" }}>
+      <main className="w-full max-w-[960px] mx-auto pt-[72px] pb-10 px-6">
 
         {/* ===== 操作栏 ===== */}
         {analysisResult && (
@@ -257,14 +224,8 @@ export default function AnalyzePage() {
             <div className="relative">
               <button
                 onClick={(e)=>{e.stopPropagation();setSchoolDropdownOpen(!schoolDropdownOpen);}}
-                className="flex items-center gap-1.5 px-3.5 py-2 font-medium border transition-colors"
-                style={{
-                  fontSize:13,
-                  color:"var(--color-text-secondary)",
-                  background:"var(--surface)",
-                  borderColor:"var(--color-border)",
-                  borderRadius:"var(--radius-sm)",
-                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium border border-[var(--border)] rounded-lg transition-colors"
+                style={{ color:"var(--text-2)", background:"var(--surface)" }}
               >
                 {SCHOOL_OPTIONS.find(s=>s.value===currentSchool)?.label||"传统子平"}
                 <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
@@ -274,24 +235,23 @@ export default function AnalyzePage() {
               </button>
               {schoolDropdownOpen && (
                 <div
-                  className="absolute left-0 top-full mt-1.5 w-60 z-50 overflow-hidden"
-                  style={{background:"var(--surface)",border:"1px solid var(--color-border)",boxShadow:"var(--shadow-lg)",borderRadius:"var(--radius-md)"}}
+                  className="card absolute left-0 top-full mt-1.5 w-60 z-50 overflow-hidden"
                 >
                   {SCHOOL_OPTIONS.map(s=>(
                     <button key={s.value}
                       onClick={()=>{setSelectedSchool(s.value);setSchoolDropdownOpen(false);}}
-                      className="w-full px-5 py-2.5 text-left transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{fontSize:13,background:selectedSchool===s.value?"var(--accent-dim)":"transparent"}}
+                      className="w-full px-5 py-2.5 text-left transition-colors hover:bg-[var(--surface-2)]"
+                      style={{fontSize:13,background:selectedSchool===s.value?"var(--cinnabar-light)":"transparent"}}
                     >
-                      <div className="font-medium" style={{color:selectedSchool===s.value?"var(--el-water)":"var(--color-text-primary)"}}>{s.label}</div>
-                      <div style={{fontSize:11,color:"var(--color-text-faint)"}}>{s.desc}</div>
+                      <div className="font-medium" style={{color:selectedSchool===s.value?"var(--wx-water)":"var(--ink)"}}>{s.label}</div>
+                      <div style={{fontSize:11,color:"var(--text-4)"}}>{s.desc}</div>
                     </button>
                   ))}
-                  <div style={{borderTop:"1px solid var(--color-border)"}}>
+                  <div style={{borderTop:"1px solid var(--border)"}}>
                     <button onClick={()=>{setSchoolDropdownOpen(false);handleReanalyze();}}
                       disabled={!birthInput||isLoading}
-                      className="w-full px-5 py-2.5 font-medium disabled:opacity-50 transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{fontSize:13,color:"var(--el-water)"}}
+                      className="w-full px-5 py-2.5 font-medium disabled:opacity-50 transition-colors hover:bg-[var(--surface-2)]"
+                      style={{fontSize:13,color:"var(--wx-water)"}}
                     >
                       以「{SCHOOL_OPTIONS.find(s=>s.value===selectedSchool)?.label}」重新分析
                     </button>
@@ -301,14 +261,8 @@ export default function AnalyzePage() {
             </div>
 
             <button onClick={handleGenerateReport}
-              className="flex items-center gap-1.5 px-3.5 py-2 font-medium border transition-colors"
-              style={{
-                fontSize:13,
-                color:"var(--color-text-secondary)",
-                background:"var(--surface)",
-                borderColor:"var(--color-border)",
-                borderRadius:"var(--radius-sm)",
-              }}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium border border-[var(--border)] rounded-lg transition-colors"
+              style={{ color:"var(--text-2)", background:"var(--surface)" }}
             >
               <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               详批报告
@@ -323,9 +277,9 @@ export default function AnalyzePage() {
         {isLoading && <AnalysisProgress />}
 
         {status==="failed" && (
-          <section className="p-6 mb-6" style={{background:"var(--surface)",border:"1px solid var(--danger)",borderRadius:"var(--radius-md)",boxShadow:"var(--shadow-sm)"}}>
-            <h3 className="font-bold mb-2" style={{fontSize:16,color:"var(--danger)"}}>分析失败</h3>
-            <p style={{fontSize:15,color:"var(--color-text-secondary)"}}>{error||"未知错误"}</p>
+          <section className="card p-6 mb-6" style={{ border: "1px solid var(--danger)" }}>
+            <h3 className="font-bold text-base mb-2" style={{ color: "var(--danger)" }}>分析失败</h3>
+            <p className="text-[15px]" style={{ color: "var(--text-2)" }}>{error||"未知错误"}</p>
           </section>
         )}
 
@@ -333,9 +287,9 @@ export default function AnalyzePage() {
         {(isLoading || (status !== "completed" && status !== "failed" && !analysisResult)) && (
           <>
             {!isLoading && (
-              <section className="p-5 mb-6 flex items-center gap-3" style={{background:"var(--surface)",border:"1px solid var(--color-border)",borderRadius:"var(--radius-md)",boxShadow:"var(--shadow-sm)"}}>
-                <span className="w-2 h-2 shrink-0 animate-pulse" style={{background:"var(--el-water)"}} />
-                <span style={{fontSize:15,color:"var(--color-text-muted)"}}>正在加载分析结果…</span>
+              <section className="card p-5 mb-6 flex items-center gap-3">
+                <span className="w-2 h-2 shrink-0 animate-pulse" style={{ background: "var(--wx-water)" }} />
+                <span className="text-[15px]" style={{ color: "var(--text-3)" }}>正在加载分析结果…</span>
               </section>
             )}
             <SkeletonCard /><SkeletonNarration />
@@ -350,21 +304,22 @@ export default function AnalyzePage() {
               {[
                 {label:"旺衰",value:wangshuai?.verdict||"—"},
                 {label:"格局",value:pattern?.pattern||"—"},
-                {label:"用神",value:yongshen?.yongshen||"—",bg:"var(--el-wood-bg)"},
-                {label:"喜神",value:(yongshen?.xishen||[]).join(" ")||"—",bg:"var(--el-water-bg)"},
-                {label:"忌神",value:(yongshen?.jishen||[]).join(" ")||"—",bg:"var(--el-fire-bg)"},
+                {label:"用神",value:yongshen?.yongshen||"—",bg:"var(--wx-wood-bg)"},
+                {label:"喜神",value:(yongshen?.xishen||[]).join(" ")||"—",bg:"var(--wx-water-bg)"},
+                {label:"忌神",value:(yongshen?.jishen||[]).join(" ")||"—",bg:"var(--wx-fire-bg)"},
               ].map((item:{label:string;value:string;bg?:string})=>(
-                <div data-pill key={item.label} className="text-center p-4" style={{
-                  background:item.bg||"var(--surface)",
-                  border:"1px solid var(--color-border)",
-                  borderRadius:"var(--radius-md)",
-                  boxShadow:"var(--shadow-sm)",
-                }}>
-                  <div className="mb-1.5 font-semibold" style={{fontSize:12,color:"var(--color-text-muted)",fontFamily:"var(--font-serif)"}}>{item.label}</div>
-                  <div className="font-bold" style={{fontSize:16}}>
+                <div data-pill key={item.label} className="card text-center relative overflow-hidden p-4 px-3" style={{ background: item.bg || "var(--surface)" }}>
+                  {/* 顶部金线 */}
+                  <div style={{
+                    position:"absolute",top:0,left:"20%",right:"20%",height:1,
+                    background:"linear-gradient(90deg,transparent,var(--gold),transparent)",
+                    opacity:0.4,
+                  }} />
+                  <div className="mb-1.5 text-[11px] uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>{item.label}</div>
+                  <div className="text-lg font-semibold" style={{ fontFamily: "var(--font-display)" }}>
                     {item.value.split("").map((ch,i)=>{
                       const wx = GAN_WUXING[ch] || ZHI_WUXING[ch] || (["金","木","水","火","土"].includes(ch) ? ch : "");
-                      const color = wx ? WUXING_COLORS[wx] : "var(--color-text-primary)";
+                      const color = wx ? WUXING_COLORS[wx] : "var(--ink)";
                       return (
                         <span key={i} style={{color,marginRight:1}}>{ch}</span>
                       );
@@ -373,12 +328,13 @@ export default function AnalyzePage() {
                 </div>
               ))}
               {tiaohou?.has_tiaohou&&(
-                <div data-pill className="text-center p-4 border" style={{background:"rgba(184,146,63,0.04)",borderColor:"var(--color-border)"}}>
-                  <div className="mb-1.5 font-semibold uppercase tracking-wider" style={{fontSize:11,color:"var(--warning)",letterSpacing:"0.08em"}}>调候</div>
-                  <div className="font-bold" style={{fontSize:15}}>
+                <div data-pill className="card text-center relative overflow-hidden p-4 px-3" style={{ background: "rgba(197,165,90,0.04)" }}>
+                  <div className="absolute top-0 left-[20%] right-[20%] h-px opacity-40" style={{ background: "linear-gradient(90deg,transparent,var(--gold),transparent)" }} />
+                  <div className="mb-1.5 text-[11px] uppercase tracking-[0.06em]" style={{ color: "var(--gold)" }}>调候</div>
+                  <div className="text-lg font-semibold" style={{ fontFamily: "var(--font-display)" }}>
                     {(tiaohou.tiaohou_gan||[]).map((ch,i)=>{
                       const wx = GAN_WUXING[ch] || "";
-                      const color = wx ? WUXING_COLORS[wx] : "var(--warning)";
+                      const color = wx ? WUXING_COLORS[wx] : "var(--gold)";
                       return <span key={i} style={{color,marginRight:2}}>{ch}</span>;
                     })}
                   </div>
@@ -401,20 +357,12 @@ export default function AnalyzePage() {
             )}
 
             {/* Tab 导航栏 — 分段控制器 */}
-            <div role="tablist" aria-label="分析结果分区" onKeyDown={(e)=>{
+            <div role="tablist" aria-label="分析结果分区" className="flex gap-0.5 mb-8 p-[3px] overflow-auto" style={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: "var(--r)" }} onKeyDown={(e)=>{
               const idx=TABS.findIndex(t=>t.id===activeTab);
               if(e.key==="ArrowRight"||e.key==="ArrowDown"){e.preventDefault();setActiveTab(TABS[(idx+1)%TABS.length].id);}
               else if(e.key==="ArrowLeft"||e.key==="ArrowUp"){e.preventDefault();setActiveTab(TABS[(idx-1+TABS.length)%TABS.length].id);}
               else if(e.key==="Home"){e.preventDefault();setActiveTab(TABS[0].id);}
               else if(e.key==="End"){e.preventDefault();setActiveTab(TABS[TABS.length-1].id);}
-            }} style={{
-              display:"flex",
-              gap:2,
-              marginBottom:32,
-              padding:3,
-              background:"var(--surface-warm)",
-              border:"1px solid var(--color-border)",
-              borderRadius:"var(--radius-md)",
             }}>
               {TABS.map(tab=>{
                 const isActive=activeTab===tab.id;
@@ -424,20 +372,13 @@ export default function AnalyzePage() {
                     aria-selected={isActive}
                     tabIndex={isActive?0:-1}
                     onClick={()=>setActiveTab(tab.id)}
+                    className="flex-1 py-2.5 px-1.5 text-[13px] text-center rounded-md cursor-pointer relative transition-all duration-150"
                     style={{
-                      flex:1,
-                      padding:"10px 6px",
-                      fontSize:13,
-                      fontWeight:isActive?600:500,
-                      fontFamily:"var(--font-sans)",
-                      color:isActive?"var(--color-text-primary)":"var(--color-text-muted)",
-                      background:isActive?"var(--surface)":"transparent",
-                      border:"none",
-                      borderRadius:"6px",
-                      cursor:"pointer",
-                      boxShadow:isActive?"var(--shadow-xs)":"none",
-                      transition:"all 0.15s ease",
-                      position:"relative",
+                      fontWeight: isActive ? 600 : 500,
+                      fontFamily: "var(--font-body)",
+                      color: isActive ? "var(--ink)" : "var(--text-3)",
+                      background: isActive ? "var(--surface)" : "transparent",
+                      boxShadow: isActive ? "var(--shadow-xs)" : "none",
                     }}
                   >
                     <span aria-hidden="true" style={{marginRight:5,fontSize:14}}>{tab.icon}</span>{tab.label}
@@ -464,26 +405,26 @@ export default function AnalyzePage() {
                   </div>
 
                   <Safe fallback={
-                    <section className="p-10 text-center border" style={{background:"var(--surface)",borderColor:"var(--color-border)"}}>
-                      <span style={{fontSize:14,color:"var(--color-text-muted)"}}>关系图谱暂不可用</span>
+                    <section className="card p-10 text-center">
+                      <span className="text-sm" style={{ color: "var(--text-3)" }}>关系图谱暂不可用</span>
                     </section>
                   }>
                     <RelationGraph result={analysisResult} />
                   </Safe>
 
                   {pattern?.reason && (
-                    <section style={{background:"var(--surface)",border:"1px solid var(--color-border)"}}>
-                      <div style={{borderBottom:"2px solid var(--color-border-strong)",padding:"16px 24px"}}>
-                        <h3 className="font-bold" style={{fontSize:16,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)"}}>格局判定依据</h3>
+                    <section className="card">
+                      <div className="border-b border-[var(--border)] px-6 py-4">
+                        <h3 className="font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>格局判定依据</h3>
                         {pattern.confidence!==undefined&&(
-                          <span className="tabular-nums ml-3" style={{fontSize:13,color:"var(--color-text-faint)"}}>{(pattern.confidence*100).toFixed(0)}%</span>
+                          <span className="tabular-nums ml-3" style={{fontSize:13,color:"var(--text-4)"}}>{(pattern.confidence*100).toFixed(0)}%</span>
                         )}
                       </div>
                       <div className="p-7">
-                        <p style={{fontSize:15,lineHeight:1.8,color:"var(--color-text-secondary)"}}>{pattern.reason}</p>
+                        <p className="text-[15px] leading-relaxed" style={{ color: "var(--text-2)" }}>{pattern.reason}</p>
                         {pattern.confidence!==undefined&&(
                           <div className="mt-4 flex items-center gap-3">
-                            <div className="flex-1 h-2 overflow-hidden" style={{background:"var(--bg-secondary)"}}>
+                            <div className="flex-1 h-2 overflow-hidden" style={{background:"var(--surface-2)"}}>
                               <div className="h-full" style={{
                                 width:`${Math.min(pattern.confidence*100,100)}%`,
                                 transition:"width 0.7s",
@@ -504,8 +445,8 @@ export default function AnalyzePage() {
                   <DayunTimeline result={analysisResult} />
 
                   <Safe fallback={
-                    <section className="p-10 text-center border" style={{background:"var(--surface)",borderColor:"var(--color-border)"}}>
-                      <span style={{fontSize:14,color:"var(--color-text-muted)"}}>K线图暂不可用</span>
+                    <section className="card p-10 text-center">
+                      <span className="text-sm" style={{ color: "var(--text-3)" }}>K线图暂不可用</span>
                     </section>
                   }>
                     <LifeKlineChart analysisId={analysisId} />
@@ -519,6 +460,7 @@ export default function AnalyzePage() {
               {activeTab==="detail"&&(
                 <div className="space-y-10">
                   <GongweiPanel result={analysisResult} />
+                  <ShenShaPanel result={analysisResult} />
                 </div>
               )}
 
@@ -526,15 +468,15 @@ export default function AnalyzePage() {
               {activeTab==="ziwei"&&(
                 <div>
                   {analysisResult?.ziwei ? (
-                    <section className="p-6 border" style={{background:"var(--surface)",borderColor:"var(--color-border)"}}>
-                      <div style={{borderBottom:"2px solid var(--color-border-strong)",paddingBottom:12,marginBottom:16}}>
-                        <h3 className="font-bold" style={{fontSize:16,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)"}}>紫微斗数命盘</h3>
+                    <section className="card p-6">
+                      <div className="border-b border-[var(--border)] pb-3 mb-4">
+                        <h3 className="font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>紫微斗数命盘</h3>
                       </div>
                       <ZiweiPanel data={analysisResult.ziwei as Record<string, unknown>} />
                     </section>
                   ) : (
-                    <section className="p-6 border" style={{background:"var(--surface)",borderColor:"var(--color-border)"}}>
-                      <p style={{fontSize:15,color:"var(--color-text-muted)"}}>紫微斗数数据不可用（需安装 iztro-py 依赖）</p>
+                    <section className="card p-6">
+                      <p className="text-[15px]" style={{ color: "var(--text-3)" }}>紫微斗数数据不可用（需安装 iztro-py 依赖）</p>
                     </section>
                   )}
                 </div>
@@ -585,8 +527,8 @@ export default function AnalyzePage() {
         ):null}
 
         {status==="completed"&&!analysisResult&&result?.status==="completed"&&(
-          <section className="p-6 border" style={{background:"var(--surface)",borderColor:"var(--color-border)"}}>
-            <p style={{fontSize:15,color:"var(--color-text-secondary)"}}>分析已完成，但无详细结果数据。</p>
+          <section className="card p-6">
+            <p className="text-[15px]" style={{ color: "var(--text-2)" }}>分析已完成，但无详细结果数据。</p>
           </section>
         )}
       </main>

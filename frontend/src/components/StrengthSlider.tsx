@@ -3,12 +3,12 @@
 import { useRef, useMemo } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 
-const LEVELS = ["极弱", "身弱", "中和", "偏旺", "极旺"] as const;
+const LEVELS = ["极弱", "偏弱", "中和", "偏旺", "极旺"] as const;
 
 function verdictToPosition(verdict?: string): number {
   if (!verdict) return 2;
   if (verdict === "极弱") return 0;
-  if (verdict === "身弱" || verdict === "中和偏弱") return 1;
+  if (verdict === "身弱" || verdict === "中和偏弱" || verdict === "偏弱") return 1;
   if (verdict === "中和") return 2;
   if (verdict === "偏旺" || verdict === "中和偏旺" || verdict === "身旺") return 3;
   if (verdict === "极旺") return 4;
@@ -41,9 +41,6 @@ export default function StrengthSlider({ strength, dayMaster }: Props) {
   const deshi = strength?.deshi;
   const position = verdictToPosition(verdict);
   const pct = (position / (LEVELS.length - 1)) * 100;
-  const isWeak = position <= 1;
-  const isStrong = position >= 3;
-  const trackColor = isWeak ? "var(--el-water)" : isStrong ? "var(--el-fire)" : "var(--color-text-muted)";
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const verdictBadgeRef = useRef<HTMLDivElement>(null);
@@ -92,12 +89,7 @@ export default function StrengthSlider({ strength, dayMaster }: Props) {
 
       tl.to(
         barRefs.current,
-        {
-          scaleX: 1,
-          duration: 0.8,
-          stagger: 0.15,
-          ease: "power2.out",
-        },
+        { scaleX: 1, duration: 0.8, stagger: 0.15, ease: "power2.out" },
         "-=0.2"
       );
 
@@ -116,46 +108,72 @@ export default function StrengthSlider({ strength, dayMaster }: Props) {
   return (
     <section
       ref={sectionRef}
-      style={{
-        background: "var(--surface)",
-        border: "1px solid var(--color-border)",
-        boxShadow: "var(--shadow-sm)",
-        opacity: prefersReducedMotion ? 1 : 0,
-      }}
+      className="card"
+      style={{ opacity: prefersReducedMotion ? 1 : 0 }}
     >
-      <div style={{ borderBottom: "2px solid var(--color-border-strong)", padding: "16px 24px" }} className="flex items-center justify-between">
-        <h3 className="font-bold" style={{ fontSize: 16, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>日主强弱</h3>
+      <div className="relative flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+        <div className="flex items-center gap-3">
+          {/* 标题左侧金色装饰条 */}
+          <div className="w-[3px] h-3.5 rounded-sm" style={{ background: "linear-gradient(180deg, var(--gold), rgba(180,154,92,0.3))" }} />
+          <h3 className="font-bold text-sm" style={{ fontFamily: "var(--font-display)" }}>日主强弱</h3>
+        </div>
         {dayMaster && (
-          <span className="font-bold" style={{ fontSize: 17, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>{dayMaster}</span>
+          <span className="font-bold text-[17px]" style={{ fontFamily: "var(--font-display)" }}>{dayMaster}</span>
         )}
       </div>
 
-      <div className="p-7">
+      <div className="p-6">
+        {/* 三色渐变轨道 */}
         <div className="relative mb-6">
-          <div style={{ height: 4, background: "var(--bg-secondary)" }} />
-          <div className="absolute top-0 left-0" style={{ width: `${pct}%`, height: 4, background: trackColor }} />
+          <div style={{
+            height: 6,
+            borderRadius: 3,
+            background: "linear-gradient(90deg, var(--wx-water) 0%, var(--wx-water) 20%, var(--wx-earth) 40%, var(--wx-earth) 60%, var(--wx-fire) 80%, var(--wx-fire) 100%)",
+            opacity: 0.7,
+          }} />
 
+          {/* 圆形 marker */}
           <div className="absolute top-1/2" style={{ left: `${pct}%`, transform: "translate(-50%,-50%)" }}>
-            <div style={{ width: 20, height: 20, background: "var(--surface)", border: `3px solid ${trackColor}`, boxShadow: `0 0 0 4px ${trackColor}15` }} />
+            <div style={{
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
+              background: "var(--surface)",
+              border: "2px solid var(--cinnabar)",
+              boxShadow: "0 0 0 3px rgba(201,100,66,0.12), 0 1px 4px rgba(201,100,66,0.2)",
+            }} />
           </div>
         </div>
 
+        {/* 五段标签 */}
         <div className="flex justify-between mb-6">
           {LEVELS.map((l, i) => (
-            <span key={l} className="font-medium" style={{ fontSize: 14, color: i === position ? trackColor : "var(--color-text-faint)", fontWeight: i === position ? 700 : 400, fontFamily: "var(--font-serif)" }}>
+            <span key={l} className="font-medium" style={{
+              fontSize: 13,
+              color: i === position ? "var(--cinnabar)" : "var(--text-4)",
+              fontWeight: i === position ? 700 : 400,
+              fontFamily: "var(--font-display)",
+            }}>
               {l}
             </span>
           ))}
         </div>
 
+        {/* 判定结论 — 「」引号装饰 */}
         {verdict && (
           <div ref={verdictBadgeRef} className="text-center mb-7">
-            <span className="inline-block px-5 py-1.5 font-bold" style={{ fontSize: 15, background: isWeak ? "rgba(53,94,133,0.08)" : isStrong ? "rgba(196,60,44,0.08)" : "var(--bg-secondary)", color: isWeak ? "var(--el-water)" : isStrong ? "var(--el-fire)" : "var(--color-text-secondary)" }}>
-              {verdict}
+            <span style={{
+              fontSize: 20,
+              fontWeight: 600,
+              color: "var(--cinnabar)",
+              fontFamily: "var(--font-display)",
+            }}>
+              「{verdict}」
             </span>
           </div>
         )}
 
+        {/* 得令/得地/得势 三栏 */}
         <div className="grid grid-cols-3 gap-4">
           {bars.map((item, idx) => {
             const d = item.data as Record<string, unknown> | undefined;
@@ -166,18 +184,18 @@ export default function StrengthSlider({ strength, dayMaster }: Props) {
             const barWidth = scoreToBarWidth(item.data?.score);
 
             return (
-              <div key={item.label} className="text-center p-5" style={{ background: "var(--bg-secondary)" }}>
-                <div className="mb-2 font-semibold uppercase tracking-wider" style={{ fontSize: 12, color: "var(--color-text-faint)", letterSpacing: "0.08em" }}>{item.label}</div>
-                <div className="font-bold mb-1" style={{ fontSize: 18, color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>{display}</div>
-                {scoreDisplay && <div style={{ fontSize: 14, color: "var(--color-text-muted)" }}>{scoreDisplay}</div>}
+              <div key={item.label} className="text-center p-5 rounded-[10px]" style={{ background: "var(--surface-2)" }}>
+                <div className="mb-2 font-semibold text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-4)" }}>{item.label}</div>
+                <div className="font-bold text-lg mb-1" style={{ fontFamily: "var(--font-display)" }}>{display}</div>
+                {scoreDisplay && <div className="text-[13px]" style={{ color: "var(--text-3)" }}>{scoreDisplay}</div>}
                 <div
                   ref={(el) => { barRefs.current[idx] = el; }}
                   style={{
                     height: 3,
                     marginTop: 6,
                     width: `${barWidth}%`,
-                    background: trackColor,
                     borderRadius: 2,
+                    background: "linear-gradient(90deg, var(--gold), rgba(180,154,92,0.5))",
                     transformOrigin: "left center",
                     transform: prefersReducedMotion ? "scaleX(1)" : "scaleX(0)",
                   }}
@@ -188,8 +206,8 @@ export default function StrengthSlider({ strength, dayMaster }: Props) {
         </div>
 
         {verdict && (
-          <div ref={reasonRef} className="mt-5 text-center" style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
-            {isWeak ? "日主偏弱，宜扶助" : isStrong ? "日主偏旺，宜抑制" : "日主中和，五行流通"}
+          <div ref={reasonRef} className="mt-5 text-center text-[13px]" style={{ color: "var(--text-3)" }}>
+            {position <= 1 ? "日主偏弱，宜扶助" : position >= 3 ? "日主偏旺，宜抑制" : "日主中和，五行流通"}
           </div>
         )}
       </div>

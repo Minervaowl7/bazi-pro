@@ -23,29 +23,29 @@ interface SectionProps {
 const levelStyles: Record<string, React.CSSProperties> = {
   hero: {
     background: "var(--surface)",
-    border: "1px solid var(--color-border)",
-    borderRadius: "var(--radius-lg)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--r-lg)",
     boxShadow: "var(--shadow-lg)",
     padding: "40px 48px",
   },
   primary: {
     background: "var(--surface)",
-    border: "1px solid var(--color-border)",
-    borderRadius: "var(--radius-md)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--r)",
     boxShadow: "var(--shadow-md)",
     padding: "32px 36px",
   },
   secondary: {
     background: "var(--surface)",
-    border: "1px solid var(--color-border)",
-    borderRadius: "var(--radius-md)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--r)",
     boxShadow: "var(--shadow-sm)",
     padding: "24px 28px",
   },
   tertiary: {
-    background: "var(--surface-warm)",
-    border: "1px solid var(--color-border-subtle)",
-    borderRadius: "var(--radius-sm)",
+    background: "var(--surface-2)",
+    border: "1px solid var(--border-subtle)",
+    borderRadius: "var(--r-sm)",
     boxShadow: "var(--shadow-xs)",
     padding: "20px 24px",
   },
@@ -58,8 +58,6 @@ export default function Section({
   titleExtra,
   className = "",
   animate = true,
-  collapsible = false,
-  defaultOpen = true,
 }: SectionProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -90,16 +88,16 @@ export default function Section({
         <div
           className="flex items-center justify-between mb-4"
           style={{
-            borderBottom: "1px solid var(--color-border-subtle)",
+            borderBottom: "1px solid var(--border-subtle)",
             paddingBottom: "12px",
           }}
         >
           <h2
             style={{
-              fontFamily: "var(--font-serif)",
+              fontFamily: "var(--font-display)",
               fontSize: level === "hero" ? 22 : 18,
               fontWeight: 700,
-              color: "var(--color-text-primary)",
+              color: "var(--ink)",
               letterSpacing: "-0.01em",
               lineHeight: 1.3,
             }}

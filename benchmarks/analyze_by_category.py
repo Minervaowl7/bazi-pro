@@ -1,7 +1,6 @@
 import json
-import re
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 DATA_DIR = Path(__file__).parent / "data" / "baziqa"
 RESULT_FILE = Path(__file__).parent / "results" / "baziqa_ziping_20260607_181405.json"
@@ -119,4 +118,4 @@ def main():
             continue
         print(f"\n【{cat}】错 {len(errors)} 题，准确率 {acc:.1f}%")
         for qid, qtext, gt, pred in errors[:5]:
-            short_q = qtext[:50] + "..." if len(qtext)
+            qtext[:50] + "..." if len(qtext) > 50 else qtext

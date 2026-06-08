@@ -1,10 +1,9 @@
 """Prompt A/B 测试器"""
 import asyncio
 from pathlib import Path
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
 
 from benchmarks.scoring.extractor import extract_answer
-
 
 DIMENSION_TEMPLATES: dict[str, str] = {
     "事业": "根据命盘分析此人的事业运势特点，选择最符合的选项。",

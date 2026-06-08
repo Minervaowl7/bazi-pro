@@ -328,7 +328,11 @@ async def run_analysis(mcp_json: dict, run_id: str,
                 from server.llm import (
                     LIFE_REPORT_SYSTEM_PROMPT,
                     build_life_report_prompt,
+                )
+                from server.llm import (
                     chat_completion as _chat,
+                )
+                from server.llm import (
                     is_llm_configured as _llm_ok,
                 )
                 if _llm_ok():

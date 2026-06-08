@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import os
 import subprocess
+import sys
 from pathlib import Path
 
 # 常见的 Git 安装位置
@@ -37,12 +37,12 @@ if not found_git:
         )
         if result.stdout:
             print(f"找到: {result.stdout}")
-    except:
+    except Exception:
         pass
 
     sys.exit(1)
 
-import sys
+
 print(f"\n使用 git: {found_git}")
 
 # 测试 git

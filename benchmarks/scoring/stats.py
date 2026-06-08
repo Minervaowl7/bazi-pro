@@ -6,7 +6,6 @@ from pathlib import Path
 from benchmarks.config import BAZIQA_DIR, RESULTS_DIR
 from benchmarks.scoring.extractor import extract_answer, load_ground_truth
 
-
 CATEGORIES = ["感情", "财富", "六亲", "事业", "健康", "学业", "性格", "运势", "其他"]
 
 

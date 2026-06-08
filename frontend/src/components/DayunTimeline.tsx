@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useLayoutEffect } from "react";
-import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
+import { gsap, useGSAP } from "@/lib/gsap";
 import { WUXING_COLORS, WUXING_BG, GAN_WUXING, ZHI_WUXING, RELATION_COLORS } from "@/lib/constants";
 
 const TIANGAN = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
@@ -54,37 +54,26 @@ export default function DayunTimeline({ result }: Props) {
   useGSAP(() => {
     if (prefersReducedMotion) {
       gsap.set(containerRef.current, { autoAlpha: 1 });
-      gsap.set(".dayun-row", { autoAlpha: 1 });
       return;
     }
 
-    gsap.from(containerRef.current, {
-      y: 30,
-      autoAlpha: 0,
-      duration: 0.7,
-      ease: "power3.out",
+    const tl = gsap.timeline();
+
+    tl.from(containerRef.current, {
+      y: 30, autoAlpha: 0, duration: 0.7, ease: "power3.out",
     });
 
-    ScrollTrigger.batch(".dayun-row", {
-      onEnter: (elements) => {
-        gsap.from(elements, {
-          autoAlpha: 0,
-          x: -20,
-          stagger: 0.08,
-          duration: 0.5,
-        });
-      },
-      start: "top 90%",
-      once: true,
-    });
+    // 大运行交错入场
+    const rows = containerRef.current?.querySelectorAll("[data-dayun-row]");
+    if (rows && rows.length > 0) {
+      tl.from(rows, {
+        x: -16, autoAlpha: 0, stagger: 0.06, duration: 0.4, ease: "power2.out",
+      }, "-=0.3");
+    }
 
     if (currentBadgeRef.current) {
       gsap.to(currentBadgeRef.current, {
-        scale: 1.06,
-        duration: 1.2,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
+        scale: 1.06, duration: 1.2, repeat: -1, yoyo: true, ease: "sine.inOut",
       });
     }
   }, { scope: containerRef });
@@ -129,102 +118,145 @@ export default function DayunTimeline({ result }: Props) {
   const natalZhis=(shishen?.pillars||[]).map((p)=>p.zhi||"").filter(Boolean);
 
   const handleDayunClick = contextSafe((i: number) => {
-    if (expandedIdx === i) {
-      setExpandedIdx(null);
-    } else {
-      setExpandedIdx(i);
-    }
+    setExpandedIdx(expandedIdx === i ? null : i);
   });
 
   return (
     <section
       ref={containerRef}
-      style={{
-        background: "var(--surface)",
-        border: "1px solid var(--color-border)",
-        boxShadow: "var(--shadow-sm)",
-        opacity: prefersReducedMotion ? 1 : 0,
-      }}
+      className="card"
+      style={{ opacity: prefersReducedMotion ? 1 : 0 }}
     >
-      <div style={{borderBottom:"2px solid var(--color-border-strong)",padding:"16px 24px"}} className="flex items-center justify-between">
-        <h3 className="font-bold" style={{fontSize:16,color:"var(--color-text-primary)",fontFamily:"var(--font-serif)"}}>大运流年</h3>
-        <span style={{fontSize:13,color:"var(--color-text-faint)"}}>共{dayun.length}步大运</span>
+      <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+        <h3 className="font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>大运流年</h3>
+        <span className="text-[13px]" style={{ color: "var(--text-4)" }}>共{dayun.length}步大运</span>
       </div>
 
-      <div style={{borderTop:"1px solid var(--color-border-subtle)"}}>
-        {dayun.map((d,i)=>{
-          const gan=String(d.gan||""), zhi=String(d.zhi||"");
-          const ganWx=d.gan_wuxing as string|undefined;
-          const zhiWx=d.zhi_wuxing as string|undefined;
-          const ganColor=ganWx?WUXING_COLORS[ganWx]:"var(--color-text-primary)";
-          const zhiColor=zhiWx?WUXING_COLORS[zhiWx]:"var(--color-text-primary)";
-          const ageRange=String(d.age_range||"");
-          const startAge=Number(d.start_age||0), endAge=startAge+9;
-          const isCurrent=currentAge>=startAge&&currentAge<=endAge&&startAge>0;
-          const isExpanded=expandedIdx===i;
-          const startYear=birthYear?birthYear+startAge:0;
+      <div style={{ borderTop: "1px solid var(--border-subtle)", position: "relative" }}>
+        {/* 左侧垂直时间线 */}
+        <div style={{
+          position: "absolute",
+          left: 72,
+          top: 0,
+          bottom: 0,
+          width: 1,
+          background: "rgba(180,160,120,0.12)",
+        }} />
+
+        {dayun.map((d, i) => {
+          const gan = String(d.gan || ""), zhi = String(d.zhi || "");
+          const ganWx = d.gan_wuxing as string | undefined;
+          const zhiWx = d.zhi_wuxing as string | undefined;
+          const ganColor = ganWx ? WUXING_COLORS[ganWx] : "var(--ink)";
+          const zhiColor = zhiWx ? WUXING_COLORS[zhiWx] : "var(--ink)";
+          const ageRange = String(d.age_range || "");
+          const startAge = Number(d.start_age || 0), endAge = startAge + 9;
+          const isCurrent = currentAge >= startAge && currentAge <= endAge && startAge > 0;
+          const isExpanded = expandedIdx === i;
+          const startYear = birthYear ? birthYear + startAge : 0;
 
           return (
-            <div key={i} style={{borderBottom:i<dayun.length-1?"1px solid var(--color-border-subtle)" : "none"}}>
+            <div key={i} className={i < dayun.length - 1 ? "border-b border-[var(--border-subtle)]" : ""}>
               <button
                 data-dayun-row
                 aria-expanded={isExpanded}
-                className="dayun-row w-full flex items-center gap-3 transition-colors duration-150"
-                style={{padding:"16px 24px",background:isCurrent?"rgba(184,74,60,0.03)":"transparent",opacity:prefersReducedMotion?1:0}}
-                onMouseEnter={(e)=>{if(!isCurrent)e.currentTarget.style.background="var(--bg-hover)";}}
-                onMouseLeave={(e)=>{if(!isCurrent)e.currentTarget.style.background="transparent";}}
-                onClick={()=>handleDayunClick(i)}
+                className="dayun-row w-full flex items-center pr-6 py-3.5 transition-colors duration-150 relative"
+                style={{
+                  background: isCurrent ? "linear-gradient(135deg, rgba(201,100,66,0.06), rgba(180,154,92,0.06))" : "transparent",
+                }}
+                onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = "var(--surface-2)"; }}
+                onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
+                onClick={() => handleDayunClick(i)}
               >
+                {/* 圆点装饰 */}
+                <div className="absolute left-[68px] top-1/2 -translate-x-1/2 -translate-y-1/2 w-[9px] h-[9px] rounded-full z-[1]" style={{
+                  background: isCurrent ? "var(--cinnabar)" : "var(--surface)",
+                  border: `2px solid ${isCurrent ? "var(--cinnabar)" : "var(--gold)"}`,
+                }} />
+
+                {/* 年龄标签 */}
+                <span className="shrink-0" style={{ width: 40, textAlign: "right", fontSize: 12, color: "var(--text-4)", fontVariantNumeric: "tabular-nums" }}>
+                  {ageRange || `${startAge}`}
+                </span>
+
+                {/* 间距 */}
+                <span style={{ width: 32 }} />
+
+                {/* 干支 */}
+                <span className="font-bold shrink-0" style={{ width: 64, textAlign: "center", fontSize: 20, fontFamily: "var(--font-display)" }}>
+                  <span style={{ color: ganColor }}>{gan}</span>
+                  <span style={{ color: zhiColor }}>{zhi}</span>
+                </span>
+
+                {/* 年份范围 */}
+                {startYear > 0 && (
+                  <span className="shrink-0 tabular-nums" style={{ fontSize: 12, color: "var(--text-4)", marginLeft: 12 }}>
+                    {startYear}-{startYear + 9}
+                  </span>
+                )}
+
+                {/* 五行 badge */}
+                <div className="flex gap-1.5 ml-auto shrink-0">
+                  {ganWx && <span className="px-2 py-0.5 font-medium" style={{ fontSize: 11, color: ganColor, background: WUXING_BG[ganWx], borderRadius: 9999 }}>{ganWx}</span>}
+                  {zhiWx && <span className="px-2 py-0.5 font-medium" style={{ fontSize: 11, color: zhiColor, background: WUXING_BG[zhiWx], borderRadius: 9999 }}>{zhiWx}</span>}
+                </div>
+
+                {/* 当前大运徽章 */}
                 {isCurrent && (
-                  <span ref={currentBadgeRef} className="font-bold shrink-0 px-2.5 py-1" style={{fontSize:12,background:ganColor,color:"var(--bg-primary)",transformOrigin:"center center",display:"inline-block"}}>
+                  <span ref={currentBadgeRef} className="font-bold shrink-0 px-2.5 py-0.5" style={{
+                    fontSize: 11,
+                    background: "linear-gradient(135deg, rgba(201,100,66,0.12), rgba(180,154,92,0.12))",
+                    color: "var(--cinnabar)",
+                    borderRadius: 9999,
+                    border: "1px solid rgba(201,100,66,0.25)",
+                    boxShadow: "0 0 8px rgba(201,100,66,0.1)",
+                    transformOrigin: "center center",
+                    display: "inline-block",
+                    marginLeft: 8,
+                  }}>
                     当前
                   </span>
                 )}
-                <span className="font-bold" style={{fontSize:20,color:ganColor,fontFamily:"var(--font-serif)"}}>{gan}</span>
-                <span className="font-bold" style={{fontSize:20,color:zhiColor,fontFamily:"var(--font-serif)"}}>{zhi}</span>
-                <span style={{fontSize:14,color:"var(--color-text-faint)"}}>{ageRange||`${startAge}-${endAge}岁`}</span>
-                {startYear>0 && <span style={{fontSize:13,color:"var(--color-text-faint)"}}>{startYear}-{startYear+9}</span>}
-                <div className="flex gap-2 ml-auto">
-                  {ganWx&&<span className="px-2 py-0.5 font-medium" style={{fontSize:11,color:ganColor,background:WUXING_BG[ganWx]}}>{ganWx}</span>}
-                  {zhiWx&&<span className="px-2 py-0.5 font-medium" style={{fontSize:11,color:zhiColor,background:WUXING_BG[zhiWx]}}>{zhiWx}</span>}
-                </div>
-                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0 transition-transform duration-200" style={{color:"var(--color-text-faint)",transform:isExpanded?"rotate(180deg)":"rotate(0)"}}>
-                  <polyline points="6 9 12 15 18 9"/>
+
+                {/* 展开箭头 */}
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0 transition-transform duration-200" style={{ color: "var(--text-4)", transform: isExpanded ? "rotate(180deg)" : "rotate(0)", marginLeft: 8 }}>
+                  <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
 
+              {/* 流年展开详情 */}
               {isExpanded && (
-                <div className="liunian-grid grid grid-cols-1 sm:grid-cols-2 gap-0.5 p-6 md:p-7" style={{background:"var(--bg-secondary)",overflow:"hidden"}}>
-                  {Array.from({length:10},(_,j)=>{
-                    const year=startYear>0?startYear+j:0, age=startAge+j;
-                    const {gan:lnGan,zhi:lnZhi,shengxiao}=year>0?getYearGanzhi(year):{gan:"—",zhi:"",shengxiao:""};
-                    const lnGanWx=GAN_WUXING[lnGan]||"";
-                    const lnGanColor=lnGanWx?WUXING_COLORS[lnGanWx]:"var(--color-text-primary)";
-                    const lnZhiWx=ZHI_WUXING[lnZhi]||"";
-                    const lnZhiColor=lnZhiWx?WUXING_COLORS[lnZhiWx]:"var(--color-text-muted)";
-                    const isThisYear=year>0&&year===currentYear;
-                    const rels=(lnGan&&lnZhi&&natalGans.length>=4)?calcLiunianRelations(lnGan,lnZhi,natalGans,natalZhis):[];
+                <div className="liunian-grid grid grid-cols-1 sm:grid-cols-2 gap-0.5 p-6 md:p-7" style={{ background: "var(--surface-2)", overflow: "hidden" }}>
+                  {Array.from({ length: 10 }, (_, j) => {
+                    const year = startYear > 0 ? startYear + j : 0, age = startAge + j;
+                    const { gan: lnGan, zhi: lnZhi, shengxiao } = year > 0 ? getYearGanzhi(year) : { gan: "—", zhi: "", shengxiao: "" };
+                    const lnGanWx = GAN_WUXING[lnGan] || "";
+                    const lnGanColor = lnGanWx ? WUXING_COLORS[lnGanWx] : "var(--ink)";
+                    const lnZhiWx = ZHI_WUXING[lnZhi] || "";
+                    const lnZhiColor = lnZhiWx ? WUXING_COLORS[lnZhiWx] : "var(--text-3)";
+                    const isThisYear = year > 0 && year === currentYear;
+                    const rels = (lnGan && lnZhi && natalGans.length >= 4) ? calcLiunianRelations(lnGan, lnZhi, natalGans, natalZhis) : [];
                     return (
                       <div key={j} className="flex items-center gap-3 px-4 py-2.5" style={{
-                        fontSize:13,
-                        background:isThisYear?"rgba(184,74,60,0.04)":undefined,
-                        border:isThisYear?"1px solid rgba(184,74,60,0.10)":"1px solid transparent",
+                        fontSize: 13,
+                        background: isThisYear ? "rgba(184,74,60,0.04)" : undefined,
+                        border: isThisYear ? "1px solid rgba(184,74,60,0.10)" : "1px solid transparent",
                       }}>
-                        <span className="tabular-nums w-11 shrink-0" style={{color:"var(--color-text-faint)"}}>{year>0?year:`${age}岁`}</span>
-                        <span className="font-semibold" style={{fontFamily:"var(--font-serif)",fontSize:15}}>
-                          <span style={{color:lnGanColor}}>{lnGan}</span>
-                          <span style={{color:lnZhiColor,marginLeft:3}}>{lnZhi}</span>
+                        <span className="tabular-nums w-11 shrink-0" style={{ color: "var(--text-4)" }}>{year > 0 ? year : `${age}岁`}</span>
+                        <span className="font-semibold" style={{ fontFamily: "var(--font-display)", fontSize: 15 }}>
+                          <span style={{ color: lnGanColor }}>{lnGan}</span>
+                          <span style={{ color: lnZhiColor, marginLeft: 3 }}>{lnZhi}</span>
                         </span>
-                        <span style={{color:"var(--color-text-faint)"}}>{shengxiao}</span>
-                        {rels.length>0&&(
+                        <span style={{ color: "var(--text-4)" }}>{shengxiao}</span>
+                        {rels.length > 0 && (
                           <span className="flex gap-1 ml-auto">
-                            {rels.slice(0,3).map((r,ri)=>{
-                              const bgMap:{[k:string]:string}={"冲":"rgba(196,60,44,0.08)","合":"rgba(53,94,133,0.08)","刑":"rgba(148,102,54,0.07)","害":"rgba(184,146,63,0.06)"};
-                              return <span key={ri} className="px-2 py-0.5 font-semibold" style={{fontSize:11,color:RELATION_COLORS[r.type]||"#a0a0b8",background:bgMap[r.type]||"rgba(160,160,184,0.07)"}} title={r.desc}>{r.type}</span>;
+                            {rels.slice(0, 3).map((r, ri) => {
+                              const bgMap: Record<string, string> = { "冲": "rgba(196,60,44,0.08)", "合": "rgba(53,94,133,0.08)", "刑": "rgba(148,102,54,0.07)", "害": "rgba(184,146,63,0.06)" };
+                              return <span key={ri} className="px-2 py-0.5 font-semibold" style={{ fontSize: 11, color: RELATION_COLORS[r.type] || "#a0a0b8", background: bgMap[r.type] || "rgba(160,160,184,0.07)", borderRadius: 9999 }} title={r.desc}>{r.type}</span>;
                             })}
                           </span>
                         )}
-                        <span className="ml-auto tabular-nums shrink-0" style={{color:"var(--color-text-faint)"}}>{year>0?`${age}岁`:""}</span>
+                        <span className="ml-auto tabular-nums shrink-0" style={{ color: "var(--text-4)" }}>{year > 0 ? `${age}岁` : ""}</span>
                       </div>
                     );
                   })}

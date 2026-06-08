@@ -138,7 +138,7 @@ export default function RelationGraph({ result }: Props): JSX.Element | null {
       >
         <h3
           className="text-sm font-medium"
-          style={{ color: "var(--text-muted)" }}
+          style={{ color: "var(--text-3)" }}
         >
           关系图谱
         </h3>
@@ -160,7 +160,7 @@ export default function RelationGraph({ result }: Props): JSX.Element | null {
                 borderTop: type === "冲" ? `2px dashed ${color}` : "none",
               }}
             />
-            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[10px]" style={{ color: "var(--text-3)" }}>
               {type}
             </span>
           </div>

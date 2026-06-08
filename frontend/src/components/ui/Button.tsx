@@ -5,10 +5,10 @@ type Variant = "primary" | "secondary" | "ghost" | "outline" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const variantStyles: Record<Variant, string> = {
-  primary: "bg-[var(--color-accent)] text-white hover:opacity-90 shadow-sm",
-  secondary: "bg-[var(--color-bg-panel)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-panel-hover)]",
-  ghost: "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-panel)] hover:text-[var(--color-text-primary)]",
-  outline: "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-panel)]",
+  primary: "bg-[var(--cinnabar)] text-white hover:opacity-90 shadow-sm",
+  secondary: "bg-[var(--surface-2)] text-[var(--text-2)] border border-[var(--border)] hover:bg-[var(--surface-2)]",
+  ghost: "text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]",
+  outline: "border border-[var(--border)] text-[var(--text-2)] hover:bg-[var(--surface-2)]",
   danger: "bg-[var(--danger)] text-white hover:opacity-90",
 };
 
@@ -29,7 +29,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       className={cn(
         "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--water)] focus-visible:ring-offset-1",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--wx-water)] focus-visible:ring-offset-1",
         "disabled:pointer-events-none disabled:opacity-50",
         "active:scale-[0.97]",
         variantStyles[variant],

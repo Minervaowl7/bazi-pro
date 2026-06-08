@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BaZi Pro — 首页 Demo v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #f5f2eb;
+  --surface: #fffdf9;
+  --surface-2: #f0ede6;
+  --border: rgba(180,160,120,0.2);
+  --border-strong: rgba(180,160,120,0.35);
+  --gold: #b49a5c;
+  --gold-muted: rgba(180,154,92,0.08);
+  --cinnabar: #c96442;
+  --cinnabar-light: rgba(201,100,66,0.1);
+  --ink: #2c2418;
+  --text-2: #6b6154;
+  --text-3: #9e9488;
+  --text-4: #c4bcb0;
+  --wood: #3a7d5c;
+  --fire: #c4523a;
+  --earth: #8b6a3a;
+  --metal: #c5a55a;
+  --water: #2e5c8a;
+  --font-serif: 'Noto Serif SC', 'Songti SC', serif;
+  --font-body: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --radius: 12px;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 0 0 0.5px rgba(180,160,120,0.15);
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.65;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  background: rgba(245,242,235,0.92);
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(16px, 4vw, 40px);
+  z-index: 100;
+}
+.nav-left { display: flex; align-items: center; gap: 10px; }
+.nav-logo {
+  width: 30px; height: 30px; border-radius: 7px;
+  background: linear-gradient(135deg, #c96442, #a17f40);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: var(--font-serif); font-size: 14px; font-weight: 700;
+  box-shadow: 0 1px 4px rgba(201,100,66,0.2);
+}
+.nav-brand {
+  font-family: var(--font-serif); font-size: 16px; font-weight: 600;
+  color: var(--ink); letter-spacing: -0.01em;
+}
+.nav-links { display: flex; gap: 2px; }
+.nav-link {
+  padding: 6px 14px; font-size: 13px; color: var(--text-2);
+  text-decoration: none; border-radius: 6px;
+  transition: all 200ms ease; position: relative;
+}
+.nav-link:hover { color: var(--ink); background: var(--gold-muted); }
+.nav-link.active { color: var(--ink); font-weight: 500; }
+.nav-link.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+  width: 16px; height: 2px; background: var(--cinnabar); border-radius: 1px;
+}
+.nav-right { display: flex; align-items: center; gap: 6px; }
+.nav-btn {
+  width: 32px; height: 32px; border: 1px solid transparent; border-radius: 6px;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); transition: all 200ms ease;
+}
+.nav-btn:hover { border-color: var(--border); color: var(--text-2); background: var(--surface); }
+
+/* ===== HERO — 严格垂直居中 ===== */
+.hero {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 0 24px;
+}
+
+/* 同心圆装饰 — 以 viewport 中心为锚点 */
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.hero::before {
+  width: min(600px, 80vw);
+  height: min(600px, 80vw);
+  border: 1px solid rgba(180,160,120,0.1);
+}
+.hero::after {
+  width: min(400px, 56vw);
+  height: min(400px, 56vw);
+  border: 1px solid rgba(180,160,120,0.06);
+}
+
+/* 五行装饰 — 均匀分布在圆周上 */
+.wuxing-deco {
+  position: absolute;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  opacity: 0.1;
+  pointer-events: none;
+  user-select: none;
+}
+/* 用 CSS 圆周分布：5 个元素，间隔 72°，从顶部 0° 开始 */
+.wuxing-deco:nth-child(1) { /* 木 - 顶部 */
+  top: calc(50% - min(300px, 40vw));
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--wood);
+}
+.wuxing-deco:nth-child(2) { /* 火 - 右上 */
+  top: calc(50% - min(185px, 24.7vw));
+  right: calc(50% - min(285px, 38vw));
+  color: var(--fire);
+}
+.wuxing-deco:nth-child(3) { /* 土 - 右下 */
+  bottom: calc(50% - min(185px, 24.7vw));
+  right: calc(50% - min(285px, 38vw));
+  color: var(--earth);
+}
+.wuxing-deco:nth-child(4) { /* 金 - 左下 */
+  bottom: calc(50% - min(185px, 24.7vw));
+  left: calc(50% - min(285px, 38vw));
+  color: var(--metal);
+}
+.wuxing-deco:nth-child(5) { /* 水 - 左上 */
+  top: calc(50% - min(185px, 24.7vw));
+  left: calc(50% - min(285px, 38vw));
+  color: var(--water);
+}
+
+/* ===== HERO CONTENT — 精确居中 ===== */
+.hero-content {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 品牌印章 */
+.brand-seal {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #c96442, #8a3a24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08) inset,
+    0 2px 8px rgba(201,100,66,0.2),
+    0 0 24px rgba(201,100,66,0.1);
+  position: relative;
+}
+.brand-seal::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.brand-seal span {
+  color: #fff;
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 6vw, 52px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.hero-subtitle {
+  font-family: var(--font-serif);
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 400;
+  color: var(--text-2);
+  margin-bottom: 8px;
+  letter-spacing: 0.15em;
+}
+.hero-divider {
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), rgba(180,154,92,0.3));
+  margin-bottom: 12px;
+  border-radius: 1px;
+}
+.hero-desc {
+  font-size: 14px;
+  color: var(--text-3);
+  margin-bottom: 36px;
+  letter-spacing: 0.02em;
+}
+
+/* ===== FORM CARD ===== */
+.form-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  position: relative;
+}
+.form-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cinnabar), var(--gold), var(--wood));
+  opacity: 0.6;
+}
+.form-body {
+  padding: 28px 28px 24px;
+}
+
+/* 表单元素 */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.form-input {
+  height: 38px;
+  padding: 0 11px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+select.form-input {
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239e9488' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+.form-input:focus {
+  border-color: var(--cinnabar);
+  box-shadow: 0 0 0 3px rgba(201,100,66,0.08);
+}
+.form-input::placeholder { color: var(--text-4); }
+
+/* 性别选择 */
+.gender-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.gender-btn {
+  flex: 1;
+  height: 38px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+.gender-btn.active {
+  border-color: var(--cinnabar);
+  background: var(--cinnabar-light);
+  color: var(--cinnabar);
+  font-weight: 500;
+}
+.gender-btn:hover:not(.active) {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+/* 提交按钮 */
+.form-submit {
+  width: 100%;
+  height: 42px;
+  margin-top: 6px;
+  background: linear-gradient(135deg, #c96442, #a8503a);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(201,100,66,0.2);
+  transition: all 200ms ease;
+  letter-spacing: 0.1em;
+  position: relative;
+  overflow: hidden;
+}
+.form-submit::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.form-submit:hover {
+  box-shadow: 0 4px 20px rgba(201,100,66,0.3);
+  transform: translateY(-1px);
+}
+.form-submit:hover::after { opacity: 1; }
+.form-submit:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 8px rgba(201,100,66,0.2);
+}
+
+/* ===== CAPABILITY BAR ===== */
+.capabilities {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 40px;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+}
+.cap-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+}
+.cap-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cap-dot.wood { background: var(--wood); }
+.cap-dot.earth { background: var(--earth); }
+.cap-dot.water { background: var(--water); }
+.cap-dot.fire { background: var(--cinnabar); }
+
+/* ===== FOOTER ===== */
+.hero-footer {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--text-4);
+  letter-spacing: 0.1em;
+  z-index: 1;
+}
+
+/* ===== CITY SEARCH DROPDOWN ===== */
+.city-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0; right: 0;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  z-index: 10;
+}
+.city-dropdown.open { display: block; }
+.city-option {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 150ms ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.city-option:hover { background: var(--surface-2); }
+.city-option.selected { color: var(--cinnabar); font-weight: 500; }
+.city-option.hidden { display: none; }
+.city-lng {
+  font-size: 11px;
+  color: var(--text-4);
+  font-family: monospace;
+}
+.city-option.selected .city-lng { color: var(--cinnabar); opacity: 0.6; }
+.city-count {
+  font-size: 11px;
+  color: var(--text-4);
+  padding: 6px 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .hero-content { max-width: 100%; }
+  .form-body { padding: 20px; }
+  .form-row { grid-template-columns: 1fr; }
+  .capabilities { flex-direction: column; align-items: center; gap: 8px; }
+  .wuxing-deco { display: none; }
+  .hero::before, .hero::after { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="nav-logo">命</div>
+    <span class="nav-brand">BaZi Pro</span>
+  </div>
+  <div class="nav-links">
+    <a href="#" class="nav-link active">排盘</a>
+    <a href="#" class="nav-link">合婚</a>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" title="设置">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 10a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" stroke-width="1.2"/><path d="M13.5 8a5.5 5.5 0 01-.3 1.8l1.1.9-1.4 1.4-.9-1.1a5.5 5.5 0 01-1.8.3c-1.7 0-3.1-1.4-3.1-3.1S6.3 4.9 8 4.9s3.1 1.4 3.1 3.1z" stroke="currentColor" stroke-width="1.2"/></svg>
+    </button>
+    <button class="nav-btn" title="切换主题">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <!-- 五行装饰 -->
+  <span class="wuxing-deco">木</span>
+  <span class="wuxing-deco">火</span>
+  <span class="wuxing-deco">土</span>
+  <span class="wuxing-deco">金</span>
+  <span class="wuxing-deco">水</span>
+
+  <div class="hero-content">
+    <!-- 品牌印章 -->
+    <div class="brand-seal"><span>命</span></div>
+
+    <h1 class="hero-title">八字排盘</h1>
+    <p class="hero-subtitle">古法排盘 · 智能解读</p>
+    <div class="hero-divider"></div>
+    <p class="hero-desc">每一步推导皆可追溯至古籍原文，零幻觉</p>
+
+    <!-- 表单卡片 -->
+    <div class="form-card">
+      <div class="form-body">
+        <!-- 性别 -->
+        <div class="gender-group">
+          <button class="gender-btn active">男</button>
+          <button class="gender-btn">女</button>
+        </div>
+
+        <!-- 出生日期 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">出生日期</label>
+            <input type="date" class="form-input" value="1990-06-15">
+          </div>
+          <div class="form-group">
+            <label class="form-label">出生时辰</label>
+            <select class="form-input">
+              <option>子时 (23:00-01:00)</option>
+              <option>丑时 (01:00-03:00)</option>
+              <option>寅时 (03:00-05:00)</option>
+              <option>卯时 (05:00-07:00)</option>
+              <option>辰时 (07:00-09:00)</option>
+              <option selected>巳时 (09:00-11:00)</option>
+              <option>午时 (11:00-13:00)</option>
+              <option>未时 (13:00-15:00)</option>
+              <option>申时 (15:00-17:00)</option>
+              <option>酉时 (17:00-19:00)</option>
+              <option>戌时 (19:00-21:00)</option>
+              <option>亥时 (21:00-23:00)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 出生城市（可搜索） -->
+        <div class="form-group" style="margin-bottom: 14px; position: relative;" id="city-wrapper">
+          <label class="form-label">出生城市（真太阳时校正）</label>
+          <input type="text" class="form-input" id="city-input" placeholder="输入城市名搜索…" autocomplete="off" value="上海">
+          <input type="hidden" id="city-lng" value="121.47">
+          <div class="city-dropdown" id="city-dropdown">
+            <div class="city-option" data-name="北京" data-lng="116.40">北京 <span class="city-lng">东经116.4°</span></div>
+            <div class="city-option selected" data-name="上海" data-lng="121.47">上海 <span class="city-lng">东经121.5°</span></div>
+            <div class="city-option" data-name="广州" data-lng="113.26">广州 <span class="city-lng">东经113.3°</span></div>
+            <div class="city-option" data-name="深圳" data-lng="114.06">深圳 <span class="city-lng">东经114.1°</span></div>
+            <div class="city-option" data-name="成都" data-lng="104.07">成都 <span class="city-lng">东经104.1°</span></div>
+            <div class="city-option" data-name="重庆" data-lng="106.55">重庆 <span class="city-lng">东经106.6°</span></div>
+            <div class="city-option" data-name="武汉" data-lng="114.30">武汉 <span class="city-lng">东经114.3°</span></div>
+            <div class="city-option" data-name="杭州" data-lng="120.15">杭州 <span class="city-lng">东经120.2°</span></div>
+            <div class="city-option" data-name="南京" data-lng="118.78">南京 <span class="city-lng">东经118.8°</span></div>
+            <div class="city-option" data-name="天津" data-lng="117.20">天津 <span class="city-lng">东经117.2°</span></div>
+            <div class="city-option" data-name="西安" data-lng="108.94">西安 <span class="city-lng">东经108.9°</span></div>
+            <div class="city-option" data-name="长沙" data-lng="112.97">长沙 <span class="city-lng">东经113.0°</span></div>
+            <div class="city-option" data-name="沈阳" data-lng="123.43">沈阳 <span class="city-lng">东经123.4°</span></div>
+            <div class="city-option" data-name="哈尔滨" data-lng="126.63">哈尔滨 <span class="city-lng">东经126.6°</span></div>
+            <div class="city-option" data-name="大连" data-lng="121.62">大连 <span class="city-lng">东经121.6°</span></div>
+            <div class="city-option" data-name="济南" data-lng="117.00">济南 <span class="city-lng">东经117.0°</span></div>
+            <div class="city-option" data-name="青岛" data-lng="120.38">青岛 <span class="city-lng">东经120.4°</span></div>
+            <div class="city-option" data-name="郑州" data-lng="113.65">郑州 <span class="city-lng">东经113.7°</span></div>
+            <div class="city-option" data-name="昆明" data-lng="102.73">昆明 <span class="city-lng">东经102.7°</span></div>
+            <div class="city-option" data-name="兰州" data-lng="103.83">兰州 <span class="city-lng">东经103.8°</span></div>
+            <div class="city-option" data-name="太原" data-lng="112.55">太原 <span class="city-lng">东经112.6°</span></div>
+            <div class="city-option" data-name="合肥" data-lng="117.28">合肥 <span class="city-lng">东经117.3°</span></div>
+            <div class="city-option" data-name="福州" data-lng="119.30">福州 <span class="city-lng">东经119.3°</span></div>
+            <div class="city-option" data-name="厦门" data-lng="118.10">厦门 <span class="city-lng">东经118.1°</span></div>
+            <div class="city-option" data-name="南昌" data-lng="115.89">南昌 <span class="city-lng">东经115.9°</span></div>
+            <div class="city-option" data-name="长春" data-lng="125.32">长春 <span class="city-lng">东经125.3°</span></div>
+            <div class="city-option" data-name="石家庄" data-lng="114.51">石家庄 <span class="city-lng">东经114.5°</span></div>
+            <div class="city-option" data-name="贵阳" data-lng="106.71">贵阳 <span class="city-lng">东经106.7°</span></div>
+            <div class="city-option" data-name="南宁" data-lng="108.37">南宁 <span class="city-lng">东经108.4°</span></div>
+            <div class="city-option" data-name="海口" data-lng="110.35">海口 <span class="city-lng">东经110.4°</span></div>
+            <div class="city-option" data-name="呼和浩特" data-lng="111.75">呼和浩特 <span class="city-lng">东经111.8°</span></div>
+            <div class="city-option" data-name="乌鲁木齐" data-lng="87.62">乌鲁木齐 <span class="city-lng">东经87.6°</span></div>
+            <div class="city-option" data-name="拉萨" data-lng="91.11">拉萨 <span class="city-lng">东经91.1°</span></div>
+            <div class="city-option" data-name="银川" data-lng="106.27">银川 <span class="city-lng">东经106.3°</span></div>
+            <div class="city-option" data-name="西宁" data-lng="101.77">西宁 <span class="city-lng">东经101.8°</span></div>
+            <div class="city-option" data-name="台北" data-lng="121.56">台北 <span class="city-lng">东经121.6°</span></div>
+            <div class="city-option" data-name="香港" data-lng="114.17">香港 <span class="city-lng">东经114.2°</span></div>
+            <div class="city-option" data-name="澳门" data-lng="113.55">澳门 <span class="city-lng">东经113.6°</span></div>
+          </div>
+        </div>
+
+        <button class="form-submit">排 盘</button>
+      </div>
+    </div>
+
+    <!-- 能力标签 -->
+    <div class="capabilities">
+      <div class="cap-item"><span class="cap-dot wood"></span>确定性计算 · 零 LLM</div>
+      <div class="cap-item"><span class="cap-dot earth"></span>古籍引用 · 2964 条</div>
+      <div class="cap-item"><span class="cap-dot water"></span>三流派 · 一键对比</div>
+      <div class="cap-item"><span class="cap-dot fire"></span>破格检测 · 六层筛查</div>
+    </div>
+  </div>
+
+  <div class="hero-footer">bazi-pro v5.3</div>
+</section>
+
+<script>
+// 性别切换
+document.querySelectorAll('.gender-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// 城市搜索
+const cityInput = document.getElementById('city-input');
+const cityDropdown = document.getElementById('city-dropdown');
+const cityLng = document.getElementById('city-lng');
+const cityOptions = cityDropdown.querySelectorAll('.city-option');
+
+cityInput.addEventListener('focus', () => {
+  cityDropdown.classList.add('open');
+  filterCities('');
+});
+
+cityInput.addEventListener('input', (e) => {
+  filterCities(e.target.value.trim());
+});
+
+function filterCities(query) {
+  let count = 0;
+  cityOptions.forEach(opt => {
+    const name = opt.dataset.name;
+    const match = !query || name.includes(query);
+    opt.classList.toggle('hidden', !match);
+    if (match) count++;
+  });
+  // 更新或创建计数
+  let counter = cityDropdown.querySelector('.city-count');
+  if (!counter) {
+    counter = document.createElement('div');
+    counter.className = 'city-count';
+    cityDropdown.appendChild(counter);
+  }
+  counter.textContent = query ? `${count} 个匹配` : '全部 38 个城市';
+}
+
+cityOptions.forEach(opt => {
+  opt.addEventListener('click', () => {
+    cityInput.value = opt.dataset.name;
+    cityLng.value = opt.dataset.lng;
+    cityDropdown.classList.remove('open');
+    cityOptions.forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+
+// 点击外部关闭
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('city-wrapper').contains(e.target)) {
+    cityDropdown.classList.remove('open');
+  }
+});
+</script>
+
+</body>
+</html>

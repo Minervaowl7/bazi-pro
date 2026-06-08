@@ -55,7 +55,7 @@ from bazi_pro.core.branches import (
     ZHI_SANHE,  # 地支三合局：[(三合地支集合, 五行), ...]
     ZHI_XING,  # 地支相刑：[frozenset({地支1, 地支2}), ...]
 )
-from bazi_pro.core.constants import GAN_WUXING, ZHI_WUXING, derive_shishen
+from bazi_pro.core.constants import GAN_WUXING, derive_shishen
 from bazi_pro.core.hidden_stems import get_canggan
 from bazi_pro.core.stems import GAN_HE, KE_MAP, SHENG_MAP, WO_KE_MAP
 from bazi_pro.core.ten_gods import _count_shishen_categories, _get_yongshen_direction

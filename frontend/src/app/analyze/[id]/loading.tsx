@@ -3,8 +3,8 @@ export default function Loading() {
     <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-          style={{ borderColor: "var(--color-border)", borderTopColor: "transparent" }} />
-        <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>加载中...</span>
+          style={{ borderColor: "var(--border)", borderTopColor: "transparent" }} />
+        <span className="text-sm" style={{ color: "var(--text-3)" }}>加载中...</span>
       </div>
     </div>
   );

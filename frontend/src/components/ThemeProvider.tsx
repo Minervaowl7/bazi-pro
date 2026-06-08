@@ -60,7 +60,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       style={{
         borderColor: "var(--border)",
         background: "var(--bg-card)",
-        color: "var(--text-secondary)",
+        color: "var(--text-2)",
       }}
       title={theme === "dark" ? "切换到亮色模式" : "切换到暗色模式"}
       aria-label="切换主题"

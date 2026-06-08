@@ -172,22 +172,22 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
 
   const inputStyle: React.CSSProperties = {
     fontSize: 14, padding: "10px 12px",
-    background: "var(--bg-secondary)", color: "var(--color-text-primary)",
-    border: "1px solid var(--color-border-subtle)",
+    background: "var(--surface-2)", color: "var(--ink)",
+    border: "1px solid var(--border-subtle)",
     fontFamily: "var(--font-mono)", outline: "none", width: "100%", boxSizing: "border-box",
     transition: "border-color 0.15s, box-shadow 0.15s",
   };
   const labelStyle: React.CSSProperties = {
-    fontSize: 12, fontWeight: 600, color: "var(--color-text-secondary)",
+    fontSize: 12, fontWeight: 600, color: "var(--text-2)",
     textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6,
   };
   const focusProps = {
     onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = "var(--color-scholar-blue)";
+      e.currentTarget.style.borderColor = "var(--scholar-blue)";
       e.currentTarget.style.boxShadow = "0 0 0 2px rgba(45,62,95,0.12)";
     },
     onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = "var(--color-border-subtle)";
+      e.currentTarget.style.borderColor = "var(--border-subtle)";
       e.currentTarget.style.boxShadow = "none";
     },
   };
@@ -195,39 +195,25 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
   return (
     <div
       role="dialog" aria-modal="true" aria-label="AI 模型设置"
-      style={{
-        position: "fixed", inset: 0, zIndex: 100,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(28,25,23,0.45)", backdropFilter: "blur(4px)",
-      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center"
+      style={{ background: "rgba(28,25,23,0.45)", backdropFilter: "blur(4px)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{
-        width: "100%", maxWidth: 520, maxHeight: "90vh", overflow: "auto",
-        background: "var(--surface)", border: "1px solid var(--color-border)",
-        boxShadow: "0 25px 50px -12px rgba(28,25,23,0.25)",
-      }}>
+      <div className="w-full max-w-[520px] max-h-[90vh] overflow-auto" style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "0 25px 50px -12px rgba(28,25,23,0.25)" }}>
         {/* Header */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "20px 24px 16px", borderBottom: "1px solid var(--color-border)",
-        }}>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--color-ink)", fontFamily: "var(--font-serif)", margin: 0 }}>
-              AI 模型设置
-            </h2>
-            <p style={{ fontSize: 12, color: "var(--color-text-muted)", margin: "4px 0 0" }}>
-              配置 AI 解读所使用的大语言模型
-            </p>
+            <h2 className="text-[17px] font-bold m-0" style={{ fontFamily: "var(--font-display)" }}>AI 模型设置</h2>
+            <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>配置 AI 解读所使用的大语言模型</p>
           </div>
           <button aria-label="关闭" onClick={onClose}
-            style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "var(--color-text-muted)" }}>
+            className="w-8 h-8 flex items-center justify-center bg-transparent border-none cursor-pointer" style={{ color: "var(--text-3)" }}>
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 24 }}>
+        <div className="flex flex-col gap-6 px-6 py-5">
 
           {/* Status */}
           <div style={{
@@ -238,9 +224,9 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           }}>
             <div style={{
               width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-              background: keySet ? "var(--el-wood)" : "var(--el-fire)",
+              background: keySet ? "var(--wx-wood)" : "var(--wx-fire)",
             }} />
-            <span style={{ fontSize: 13, fontWeight: 500, color: keySet ? "var(--el-wood)" : "var(--el-fire)" }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: keySet ? "var(--wx-wood)" : "var(--wx-fire)" }}>
               {keySet ? "API Key 已配置" : "API Key 未配置 — AI 解读功能不可用"}
             </span>
           </div>
@@ -255,15 +241,15 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
                   <button key={p.id} onClick={() => handleProviderSelect(p)}
                     style={{
                       padding: "10px 8px", textAlign: "left", cursor: "pointer",
-                      background: active ? "rgba(45,62,95,0.06)" : "var(--bg-secondary)",
-                      border: `1.5px solid ${active ? "var(--color-scholar-blue)" : "var(--color-border-subtle)"}`,
+                      background: active ? "rgba(45,62,95,0.06)" : "var(--surface-2)",
+                      border: `1.5px solid ${active ? "var(--scholar-blue)" : "var(--border-subtle)"}`,
                       transition: "all 0.15s",
                     }}
                   >
-                    <div style={{ fontSize: 13, fontWeight: 600, color: active ? "var(--color-scholar-blue)" : "var(--color-text-primary)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: active ? "var(--scholar-blue)" : "var(--ink)" }}>
                       {p.name}
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 2 }}>
+                    <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
                       {p.desc}
                     </div>
                   </button>
@@ -272,15 +258,15 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
               <button onClick={() => { setCustomBase(true); setMsg(null); }}
                 style={{
                   padding: "10px 8px", textAlign: "left", cursor: "pointer",
-                  background: customBase ? "rgba(45,62,95,0.06)" : "var(--bg-secondary)",
-                  border: `1.5px solid ${customBase ? "var(--color-scholar-blue)" : "var(--color-border-subtle)"}`,
+                  background: customBase ? "rgba(45,62,95,0.06)" : "var(--surface-2)",
+                  border: `1.5px solid ${customBase ? "var(--scholar-blue)" : "var(--border-subtle)"}`,
                   transition: "all 0.15s",
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 600, color: customBase ? "var(--color-scholar-blue)" : "var(--color-text-primary)" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: customBase ? "var(--scholar-blue)" : "var(--ink)" }}>
                   自定义
                 </div>
-                <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
                   其他 OpenAI 兼容 API
                 </div>
               </button>
@@ -300,8 +286,8 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
             ) : (
               <div style={{
                 fontSize: 13, padding: "10px 12px", fontFamily: "var(--font-mono)",
-                background: "var(--bg-secondary)", color: "var(--color-text-secondary)",
-                border: "1px solid var(--color-border-subtle)", wordBreak: "break-all",
+                background: "var(--surface-2)", color: "var(--text-2)",
+                border: "1px solid var(--border-subtle)", wordBreak: "break-all",
               }}>
                 {apiBase}
               </div>
@@ -313,7 +299,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
               <span style={labelStyle}>API Key</span>
               {keySet && (
-                <span style={{ fontSize: 11, color: "var(--el-wood)", fontWeight: 500 }}>
+                <span style={{ fontSize: 11, color: "var(--wx-wood)", fontWeight: 500 }}>
                   已保存
                 </span>
               )}
@@ -333,7 +319,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
                 style={{
                   position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
                   background: "transparent", border: "none", cursor: "pointer",
-                  color: "var(--color-text-muted)", padding: 4,
+                  color: "var(--text-3)", padding: 4,
                 }}>
                 <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   {showKey
@@ -356,9 +342,9 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
                       style={{
                         padding: "8px 14px", fontSize: 13, fontFamily: "var(--font-mono)",
                         cursor: "pointer", fontWeight: model === m ? 600 : 400,
-                        background: model === m ? "rgba(45,62,95,0.08)" : "var(--bg-secondary)",
-                        border: `1.5px solid ${model === m ? "var(--color-scholar-blue)" : "var(--color-border-subtle)"}`,
-                        color: model === m ? "var(--color-scholar-blue)" : "var(--color-text-primary)",
+                        background: model === m ? "rgba(45,62,95,0.08)" : "var(--surface-2)",
+                        border: `1.5px solid ${model === m ? "var(--scholar-blue)" : "var(--border-subtle)"}`,
+                        color: model === m ? "var(--scholar-blue)" : "var(--ink)",
                         transition: "all 0.15s",
                       }}
                     >
@@ -368,7 +354,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
                 </div>
                 <button onClick={() => setCustomModel(true)}
                   style={{
-                    fontSize: 12, color: "var(--color-scholar-blue)", background: "none",
+                    fontSize: 12, color: "var(--scholar-blue)", background: "none",
                     border: "none", cursor: "pointer", padding: "4px 0", textAlign: "left",
                     textDecoration: "underline", textUnderlineOffset: "2px",
                   }}>
@@ -386,7 +372,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
                 {provider && (
                   <button onClick={() => { setCustomModel(false); setModel(provider.models[0]); }}
                     style={{
-                      fontSize: 12, color: "var(--color-scholar-blue)", background: "none",
+                      fontSize: 12, color: "var(--scholar-blue)", background: "none",
                       border: "none", cursor: "pointer", padding: "4px 0", textAlign: "left",
                       textDecoration: "underline", textUnderlineOffset: "2px",
                     }}>
@@ -401,7 +387,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           {msg && (
             <div aria-live="polite" style={{
               fontSize: 13, fontWeight: 500,
-              color: msg.ok ? "var(--el-wood)" : "var(--el-fire)",
+              color: msg.ok ? "var(--wx-wood)" : "var(--wx-fire)",
               padding: "10px 14px",
               background: msg.ok ? "rgba(45,125,91,0.06)" : "rgba(184,74,60,0.06)",
               border: `1px solid ${msg.ok ? "rgba(45,125,91,0.15)" : "rgba(184,74,60,0.15)"}`,
@@ -415,34 +401,34 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
         {/* Footer */}
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
-          padding: "16px 24px 20px", borderTop: "1px solid var(--color-border)",
+          padding: "16px 24px 20px", borderTop: "1px solid var(--border)",
         }}>
           <button onClick={handleTest} disabled={testing || !keySet}
             style={{
               fontSize: 13, fontWeight: 500, padding: "8px 16px",
-              background: "transparent", border: "1px solid var(--color-border)",
-              color: "var(--color-text-primary)", cursor: testing || !keySet ? "not-allowed" : "pointer",
-              fontFamily: "var(--font-sans)", opacity: testing || !keySet ? 0.5 : 1,
+              background: "transparent", border: "1px solid var(--border)",
+              color: "var(--ink)", cursor: testing || !keySet ? "not-allowed" : "pointer",
+              fontFamily: "var(--font-body)", opacity: testing || !keySet ? 0.5 : 1,
               display: "flex", alignItems: "center", gap: 6,
             }}>
             {testing ? (
-              <><span style={{ display: "inline-block", width: 12, height: 12, border: "2px solid var(--color-border)", borderTopColor: "var(--color-scholar-blue)", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} /> 测试中…</>
+              <><span style={{ display: "inline-block", width: 12, height: 12, border: "2px solid var(--border)", borderTopColor: "var(--scholar-blue)", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} /> 测试中…</>
             ) : "测试连接"}
           </button>
           <div style={{ display: "flex", gap: 10 }}>
             <button onClick={onClose}
               style={{
                 fontSize: 14, fontWeight: 500, padding: "9px 20px",
-                background: "transparent", border: "1px solid var(--color-border)",
-                color: "var(--color-text-primary)", cursor: "pointer", fontFamily: "var(--font-sans)",
+                background: "transparent", border: "1px solid var(--border)",
+                color: "var(--ink)", cursor: "pointer", fontFamily: "var(--font-body)",
               }}>
               取消
             </button>
             <button onClick={handleSave} disabled={saving}
               style={{
                 fontSize: 14, fontWeight: 600, padding: "9px 24px",
-                background: "var(--color-scholar-blue)", border: "none",
-                color: "#fff", cursor: saving ? "wait" : "pointer", fontFamily: "var(--font-sans)",
+                background: "var(--scholar-blue)", border: "none",
+                color: "#fff", cursor: saving ? "wait" : "pointer", fontFamily: "var(--font-body)",
                 opacity: saving ? 0.7 : 1,
               }}>
               {saving ? "保存中…" : "保存"}

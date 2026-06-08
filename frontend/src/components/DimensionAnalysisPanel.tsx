@@ -180,10 +180,10 @@ function extractTags(dimension: string, data: Record<string, unknown>): Tag[] {
 }
 
 const VARIANT_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  default: { bg: "var(--bg-secondary)", color: "var(--color-text-secondary)", border: "var(--color-border-subtle)" },
-  good: { bg: "rgba(45,125,91,0.08)", color: "var(--success)", border: "rgba(45,125,91,0.18)" },
-  warn: { bg: "rgba(184,146,63,0.08)", color: "var(--warning)", border: "rgba(184,146,63,0.16)" },
-  bad: { bg: "rgba(196,60,44,0.08)", color: "var(--danger)", border: "rgba(196,60,44,0.16)" },
+  default: { bg: "var(--surface-2)", color: "var(--text-2)", border: "var(--border-subtle)" },
+  good: { bg: "rgba(58,125,92,0.08)", color: "var(--success)", border: "rgba(58,125,92,0.18)" },
+  warn: { bg: "rgba(197,165,90,0.08)", color: "var(--warning)", border: "rgba(197,165,90,0.16)" },
+  bad: { bg: "rgba(196,82,58,0.08)", color: "var(--danger)", border: "rgba(196,82,58,0.16)" },
 };
 
 export default function DimensionAnalysisPanel({ dimension, data, narration }: Props) {
@@ -194,16 +194,10 @@ export default function DimensionAnalysisPanel({ dimension, data, narration }: P
   if (!cfg) return null;
 
   return (
-    <section style={{
-      background: cfg.accentBg,
-      border: `1px solid ${cfg.accentBorder}`,
-      boxShadow: "var(--shadow-sm)",
-      borderLeft: `4px solid ${cfg.accentColor}`,
-    }}>
+    <section className="rounded-xl" style={{ background: cfg.accentBg, border: `1px solid ${cfg.accentBorder}`, borderLeft: `4px solid ${cfg.accentColor}` }}>
       <button
         aria-expanded={expanded}
-        className="w-full flex items-center justify-between transition-colors duration-150 hover:bg-[var(--bg-hover)]"
-        style={{ padding: "16px 24px" }}
+        className="w-full flex items-center justify-between px-6 py-4 transition-colors duration-150 hover:bg-[var(--surface-2)]"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-3">
@@ -212,27 +206,17 @@ export default function DimensionAnalysisPanel({ dimension, data, narration }: P
             height: 28,
             borderRadius: "50%",
             background: `${cfg.accentColor}18`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 14,
-            color: cfg.accentColor,
           }}>
             {cfg.icon}
           </span>
-          <h3 className="font-bold" style={{
-            fontSize: 16,
-            color: "var(--color-text-primary)",
-            fontFamily: "var(--font-serif)",
-            letterSpacing: "0.02em",
-          }}>
+          <h3 className="font-bold text-base tracking-wide" style={{ fontFamily: "var(--font-display)" }}>
             {cfg.title}
           </h3>
         </div>
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
           className="transition-transform duration-200"
-          style={{ color: "var(--color-text-faint)", transform: expanded ? "rotate(180deg)" : "rotate(0)" }}>
+          style={{ color: "var(--text-4)", transform: expanded ? "rotate(180deg)" : "rotate(0)" }}>
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
@@ -249,7 +233,7 @@ export default function DimensionAnalysisPanel({ dimension, data, narration }: P
                     background: vs.bg,
                     border: `1px solid ${vs.border}`,
                   }}>
-                    <span style={{ color: "var(--color-text-faint)", fontSize: 11 }}>{tag.label}</span>
+                    <span style={{ color: "var(--text-4)", fontSize: 11 }}>{tag.label}</span>
                     <span className="font-semibold" style={{ color: vs.color }}>{tag.value}</span>
                   </div>
                 );
@@ -260,7 +244,7 @@ export default function DimensionAnalysisPanel({ dimension, data, narration }: P
           <div style={{
             fontSize: 15,
             lineHeight: 1.9,
-            color: "var(--color-text-secondary)",
+            color: "var(--text-2)",
             whiteSpace: "pre-wrap",
           }}>
             {narration || "分析数据暂未生成。"}

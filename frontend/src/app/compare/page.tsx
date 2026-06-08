@@ -28,9 +28,9 @@ function PersonForm({ label, form, setForm, history }: {
   history: HistoryItem[];
 }) {
   return (
-    <div className="p-6 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow)" }}>
+    <div className="p-6 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow)" }}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold" style={{ color: "var(--color-scholar-blue)" }}>{label}</h3>
+        <h3 className="text-sm font-bold" style={{ color: "var(--scholar-blue)" }}>{label}</h3>
         <div className="flex gap-1">
           {["男", "女"].map((g) => (
             <button
@@ -38,9 +38,9 @@ function PersonForm({ label, form, setForm, history }: {
               onClick={() => setForm({ ...form, gender: g })}
               className="px-2.5 py-1 rounded-md text-xs font-medium transition-all"
               style={{
-                background: form.gender === g ? "var(--color-scholar-blue)" : "var(--color-bg-panel)",
-                color: form.gender === g ? "#fff" : "var(--color-text-muted)",
-                border: form.gender === g ? "none" : "1px solid var(--color-border)",
+                background: form.gender === g ? "var(--scholar-blue)" : "var(--surface-2)",
+                color: form.gender === g ? "#fff" : "var(--text-3)",
+                border: form.gender === g ? "none" : "1px solid var(--border)",
               }}
             >
               {g}
@@ -51,7 +51,7 @@ function PersonForm({ label, form, setForm, history }: {
 
       {history.length > 0 && (
         <div className="mb-4">
-          <label className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+          <label className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
             从历史记录选择
           </label>
           <select
@@ -60,7 +60,7 @@ function PersonForm({ label, form, setForm, history }: {
               if (item) setForm({ bazi: item.bazi, dayMaster: item.day_master, gender: item.gender || form.gender });
             }}
             className="w-full px-3 py-2 rounded-lg text-xs"
-            style={{ background: "var(--color-bg-panel)", border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink)" }}
           >
             <option value="">手动输入</option>
             {history.map((h) => (
@@ -72,7 +72,7 @@ function PersonForm({ label, form, setForm, history }: {
 
       <div className="space-y-3">
         <div>
-          <label className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+          <label className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
             八字（空格分隔四柱）
           </label>
           <input
@@ -80,11 +80,11 @@ function PersonForm({ label, form, setForm, history }: {
             onChange={(e) => setForm({ ...form, bazi: e.target.value })}
             placeholder="如：辛卯 庚子 壬申 辛亥"
             className="w-full px-3 py-2.5 rounded-lg text-sm"
-            style={{ background: "var(--color-bg-panel)", border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink)" }}
           />
         </div>
         <div>
-          <label className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+          <label className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
             日主
           </label>
           <input
@@ -92,7 +92,7 @@ function PersonForm({ label, form, setForm, history }: {
             onChange={(e) => setForm({ ...form, dayMaster: e.target.value })}
             placeholder="如：壬"
             className="w-full px-3 py-2.5 rounded-lg text-sm"
-            style={{ background: "var(--color-bg-panel)", border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink)" }}
           />
         </div>
       </div>
@@ -109,14 +109,14 @@ function ScoreRing({ score }: { score: number }) {
   return (
     <div className="relative w-36 h-36 mx-auto">
       <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--color-border)" strokeWidth="8" />
+        <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--border)" strokeWidth="8" />
         <circle cx="60" cy="60" r={radius} fill="none" stroke={color} strokeWidth="8"
           strokeDasharray={circumference} strokeDashoffset={offset}
           strokeLinecap="round" className="transition-all duration-1000" />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-3xl font-bold tabular-nums" style={{ color }}>{score}</span>
-        <span className="text-[10px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>兼容度</span>
+        <span className="text-[10px] mt-0.5" style={{ color: "var(--text-3)" }}>兼容度</span>
       </div>
     </div>
   );
@@ -171,15 +171,15 @@ export default function ComparePage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)]" style={{ background: "var(--background)" }}>
+    <div className="min-h-[calc(100vh-3.5rem)]" style={{ background: "var(--bg)" }}>
       <div className="w-full px-6 md:px-12 lg:px-16 xl:px-24 py-10">
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-2xl md:text-3xl font-bold mb-2"
-            style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-serif)" }}>
+            style={{ color: "var(--ink)", fontFamily: "var(--font-display)" }}>
             八字合婚
           </h1>
-          <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-sm" style={{ color: "var(--text-3)" }}>
             基于五行生克、日主关系、用神互补的确定性兼容度分析
           </p>
         </div>
@@ -202,7 +202,7 @@ export default function ComparePage() {
               type="submit"
               disabled={loading}
               className="px-10 py-3 rounded-xl text-sm font-medium text-white disabled:opacity-50 transition-all active:scale-[0.97]"
-              style={{ background: "var(--color-scholar-blue)", boxShadow: "0 2px 12px rgba(44,62,107,0.3)" }}
+              style={{ background: "var(--scholar-blue)", boxShadow: "0 2px 12px rgba(44,62,107,0.3)" }}
             >
               {loading ? "分析中..." : "合婚分析"}
             </button>
@@ -214,25 +214,25 @@ export default function ComparePage() {
           <div className="mt-12 space-y-6 animate-fade-in">
             {/* Score */}
             <div className="p-8 rounded-xl text-center"
-              style={{ background: "var(--surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow)" }}>
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow)" }}>
               <ScoreRing score={result.compatibility_score} />
-              <p className="text-sm mt-4" style={{ color: "var(--color-text-secondary)" }}>
+              <p className="text-sm mt-4" style={{ color: "var(--text-2)" }}>
                 {result.compatibility_note}
               </p>
             </div>
 
             {/* Relation analysis */}
             {result.relation_analysis && result.relation_analysis.length > 0 && (
-              <div className="p-6 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--color-border)" }}>
-                <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--color-text-secondary)" }}>关系分析</h3>
+              <div className="p-6 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--text-2)" }}>关系分析</h3>
                 <div className="space-y-2.5">
                   {result.relation_analysis.map((r, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <span className="text-[11px] px-2 py-0.5 rounded-md font-medium shrink-0"
-                        style={{ background: "var(--accent-dim)", color: "var(--color-accent)" }}>
+                        style={{ background: "var(--cinnabar-light)", color: "var(--cinnabar)" }}>
                         {r.type}
                       </span>
-                      <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>{r.description}</span>
+                      <span className="text-sm" style={{ color: "var(--text-2)" }}>{r.description}</span>
                     </div>
                   ))}
                 </div>
@@ -241,13 +241,13 @@ export default function ComparePage() {
 
             {/* Pillar diff */}
             {result.pillar_diff && result.pillar_diff.length > 0 && (
-              <div className="p-6 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--color-border)" }}>
-                <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--color-text-secondary)" }}>四柱对比</h3>
+              <div className="p-6 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--text-2)" }}>四柱对比</h3>
                 <div className="grid grid-cols-4 gap-3">
                   {result.pillar_diff.map((p, i) => (
-                    <div key={i} className="text-center p-3 rounded-lg" style={{ background: "var(--color-bg-panel)" }}>
-                      <div className="text-[11px] mb-1" style={{ color: "var(--color-text-muted)" }}>{p.position}</div>
-                      <div className="text-xs font-medium" style={{ color: "var(--color-text-primary)" }}>{p.diff || "—"}</div>
+                    <div key={i} className="text-center p-3 rounded-lg" style={{ background: "var(--surface-2)" }}>
+                      <div className="text-[11px] mb-1" style={{ color: "var(--text-3)" }}>{p.position}</div>
+                      <div className="text-xs font-medium" style={{ color: "var(--ink)" }}>{p.diff || "—"}</div>
                     </div>
                   ))}
                 </div>

@@ -228,8 +228,6 @@ def run_baziqa(years: list[int] | None = None, max_persons: int = 0,
     results = []
     total_q = 0
     correct_q = 0
-    semaphore = asyncio.Semaphore(concurrency)
-
     for i, person in enumerate(persons):
         pid = person["person_id"]
         profile = person.get("profile", {})

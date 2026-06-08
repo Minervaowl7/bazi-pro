@@ -4,8 +4,8 @@ import asyncio
 import logging
 from collections import Counter
 
-from benchmarks.scoring.extractor import extract_answer
 from benchmarks.optimizers.exam_prompts import build_hybrid_prompt
+from benchmarks.scoring.extractor import extract_answer
 
 logger = logging.getLogger(__name__)
 

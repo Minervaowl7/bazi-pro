@@ -40,8 +40,8 @@ def cmd_run(args):
 
 
 def cmd_score(args):
-    from benchmarks.scoring.extractor import extract_answer, load_ground_truth
     from benchmarks.config import BAZIQA_DIR, RESULTS_DIR
+    from benchmarks.scoring.extractor import extract_answer, load_ground_truth
 
     results = sorted(RESULTS_DIR.glob("baziqa_*.json"), reverse=True)
     if not results:
@@ -117,8 +117,13 @@ def cmd_list(args):
 def cmd_calibrate(args):
     action = args.cal_action
     if action == "baseline":
-        from benchmarks.calibrator.baseline import compute_baseline, generate_markdown_report, save_report
-        from benchmarks.calibrator.baseline import load_dataset, load_latest_result
+        from benchmarks.calibrator.baseline import (
+            compute_baseline,
+            generate_markdown_report,
+            load_dataset,
+            load_latest_result,
+            save_report,
+        )
         result = load_latest_result()
         if not result:
             print("未找到评测结果，请先运行: python -m benchmarks run baziqa")
@@ -129,8 +134,8 @@ def cmd_calibrate(args):
         save_report(baseline, report)
         print(report)
     elif action == "analyze":
-        from benchmarks.calibrator.baseline import compute_baseline, load_dataset, load_latest_result
         from benchmarks.calibrator.analyzer import analyze_errors, print_error_report
+        from benchmarks.calibrator.baseline import compute_baseline, load_dataset, load_latest_result
         result = load_latest_result()
         if not result:
             print("未找到评测结果，请先运行: python -m benchmarks run baziqa")

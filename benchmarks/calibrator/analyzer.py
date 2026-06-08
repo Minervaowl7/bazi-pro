@@ -1,7 +1,6 @@
 """错题分析器"""
 from collections import defaultdict
 
-
 _ERROR_RULES: list[tuple[str, list[str]]] = [
     ("从格误判", ["从"]),
     ("旺衰误判", ["旺", "弱", "身强", "身弱"]),

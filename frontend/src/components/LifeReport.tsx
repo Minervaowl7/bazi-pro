@@ -34,8 +34,8 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
       ref={ref}
       style={{
         background: "var(--surface)",
-        border: "1px solid var(--color-border)",
-        borderRadius: "var(--radius-lg)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--r-lg)",
         boxShadow: "var(--shadow-lg)",
         overflow: "hidden",
       }}
@@ -43,21 +43,21 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
       {/* 顶部装饰带 */}
       <div style={{
         height: 3,
-        background: "linear-gradient(90deg, var(--color-cinnabar), var(--color-gold), var(--color-jade))",
+        background: "linear-gradient(90deg, var(--cinnabar), var(--gold), var(--jade))",
         opacity: 0.6,
       }} />
 
       {/* 标题区 */}
       <div style={{
         padding: "28px 40px 20px",
-        borderBottom: "1px solid var(--color-border-subtle)",
+        borderBottom: "1px solid var(--border-subtle)",
       }}>
         <div className="flex items-center gap-4">
           <div style={{
             width: 48,
             height: 48,
             borderRadius: "50%",
-            background: "linear-gradient(135deg, var(--color-cinnabar), #a04030)",
+            background: "linear-gradient(135deg, var(--cinnabar), #a04030)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -66,7 +66,7 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
             <span style={{
               fontSize: 22,
               color: "#fff",
-              fontFamily: "var(--font-serif)",
+              fontFamily: "var(--font-display)",
               fontWeight: 700,
             }}>命</span>
           </div>
@@ -74,8 +74,8 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
             <h2 style={{
               fontSize: 24,
               fontWeight: 700,
-              fontFamily: "var(--font-serif)",
-              color: "var(--color-text-primary)",
+              fontFamily: "var(--font-display)",
+              color: "var(--ink)",
               letterSpacing: "-0.02em",
               lineHeight: 1.2,
             }}>
@@ -83,9 +83,9 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
             </h2>
             <p style={{
               fontSize: 13,
-              color: "var(--color-text-muted)",
+              color: "var(--text-3)",
               marginTop: 4,
-              fontFamily: "var(--font-serif)",
+              fontFamily: "var(--font-display)",
             }}>
               {isLlmGenerated
                 ? "基于确定性计算 · 深度解读"
@@ -100,10 +100,10 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
         className="life-report-body"
         style={{
           padding: "36px 40px 40px",
-          color: "var(--color-text-secondary)",
+          color: "var(--text-2)",
           lineHeight: 1.80,
           fontSize: 16,
-          fontFamily: "var(--font-serif)",
+          fontFamily: "var(--font-display)",
         }}
       >
         <ReactMarkdown remarkPlugins={[RemarkGfm]}>{content}</ReactMarkdown>
@@ -112,12 +112,12 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
       {/* 底部标注 */}
       <div style={{
         padding: "12px 40px",
-        borderTop: "1px solid var(--color-border-subtle)",
-        background: "var(--surface-warm)",
+        borderTop: "1px solid var(--border-subtle)",
+        background: "var(--surface-2)",
       }}>
         <p style={{
           fontSize: 11,
-          color: "var(--color-text-faint)",
+          color: "var(--text-4)",
           textAlign: "center",
         }}>
           {isLlmGenerated
@@ -135,7 +135,7 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
           text-indent: 0;
         }
         .life-report-body :global(strong) {
-          color: var(--color-text-primary);
+          color: var(--ink);
           font-weight: 700;
           display: block;
           text-indent: 0;
@@ -148,7 +148,7 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
           margin-top: 0;
         }
         .life-report-body :global(blockquote) {
-          border-left: 3px solid var(--color-cinnabar);
+          border-left: 3px solid var(--cinnabar);
           padding-left: 1rem;
           margin: 1rem 0;
           opacity: 0.9;
@@ -156,7 +156,7 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
           text-indent: 0;
         }
         .life-report-body :global(em) {
-          color: var(--color-cinnabar);
+          color: var(--cinnabar);
           font-style: normal;
         }
       `}</style>

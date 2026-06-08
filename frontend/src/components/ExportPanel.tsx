@@ -126,7 +126,7 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
 
       const header = document.createElement("div");
       header.className = "print-header";
-      header.innerHTML = `<div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #6366f1;padding-bottom:16px;page-break-after:avoid;"><h1 style="font-size:24px;font-weight:700;color:#4f46e5;margin:0 0 8px;">八字分析报告</h1><p style="font-size:12px;color:#999;margin:0;">分析编号：${analysisId}</p></div>`;
+      header.innerHTML = `<div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #2d3e5f;padding-bottom:16px;page-break-after:avoid;"><h1 style="font-size:24px;font-weight:700;color:#2d3e5f;margin:0 0 8px;">八字分析报告</h1><p style="font-size:12px;color:#999;margin:0;">分析编号：${analysisId}</p></div>`;
       innerEl.insertBefore(header, innerEl.firstChild);
 
       document.querySelectorAll(".no-print-temp").forEach((el) => el.classList.remove("no-print-temp"));
@@ -179,7 +179,7 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
       <button
         onClick={() => setShowMenu(!showMenu)}
         disabled={exporting}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--color-border)] bg-[var(--surface)] text-[var(--color-text-secondary)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-50"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--surface-2)] transition-colors disabled:opacity-50"
       >
         {exporting ? (
           <>
@@ -202,11 +202,11 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
       </button>
 
       {showMenu && (
-        <div className="absolute right-0 mt-1.5 w-40 rounded-xl shadow-lg overflow-hidden z-50 animate-fade-in bg-[var(--surface)] border border-[var(--color-border)]">
+        <div className="absolute right-0 mt-1.5 w-40 rounded-xl shadow-lg overflow-hidden z-50 animate-fade-in bg-[var(--surface)] border border-[var(--border)]">
           <button
             onClick={handleExportPDF}
             disabled={exporting}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs transition-colors text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs transition-colors text-[var(--text-2)] hover:bg-[var(--surface-2)]"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
@@ -218,7 +218,7 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
           </button>
           <button
             onClick={handleCopyText}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs transition-colors text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border-t border-[var(--border-subtle)]"
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs transition-colors text-[var(--text-2)] hover:bg-[var(--surface-2)] border-t border-[var(--border-subtle)]"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />

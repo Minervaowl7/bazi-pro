@@ -46,35 +46,35 @@ export default function AnalysisProgress() {
   };
 
   return (
-    <div className="rounded-2xl bg-[var(--surface)] border border-[var(--color-border)] mb-5">
+    <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] mb-5">
       <div className="px-6 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0 bg-[var(--water)]" />
-          <h3 className="text-sm font-medium text-[var(--text-muted)]">正在分析</h3>
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0 bg-[var(--wx-water)]" />
+          <h3 className="text-sm font-medium text-[var(--text-3)]">正在分析</h3>
         </div>
-        <span className="text-[10px] font-mono tabular-nums text-[var(--text-muted)]">
+        <span className="text-[10px] font-mono tabular-nums text-[var(--text-3)]">
           {formatTime(elapsed)}
         </span>
       </div>
 
       <div className="px-6 py-4">
-        <div className="w-full rounded-full overflow-hidden mb-4 h-1.5 bg-[var(--bg-secondary)]">
+        <div className="w-full rounded-full overflow-hidden mb-4 h-1.5 bg-[var(--surface-2)]">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out"
             style={{
               width: `${pct}%`,
-              background: "linear-gradient(90deg, var(--water), var(--wood))",
+              background: "linear-gradient(90deg, var(--wx-water), var(--wx-wood))",
             }}
           />
         </div>
 
         {latestStep && (
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-xs text-[var(--text-primary)]">
+            <span className="text-xs text-[var(--ink)]">
               {STEP_LABELS[latestStep.step] || latestStep.name || `步骤 ${latestStep.step}`}
             </span>
             {latestStep.status === "running" && (
-              <span className="text-[10px] animate-pulse text-[var(--text-muted)]">处理中...</span>
+              <span className="text-[10px] animate-pulse text-[var(--text-3)]">处理中...</span>
             )}
             {latestStep.status === "done" && (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -97,8 +97,8 @@ export default function AnalysisProgress() {
                   isDone
                     ? { background: "rgba(74,222,128,0.12)", color: "var(--success)" }
                     : isRunning
-                      ? { background: "rgba(96,165,250,0.1)", color: "var(--water)" }
-                      : { background: "var(--bg-secondary)", color: "var(--text-muted)" }
+                      ? { background: "rgba(96,165,250,0.1)", color: "var(--wx-water)" }
+                      : { background: "var(--surface-2)", color: "var(--text-3)" }
                 }
               >
                 {isDone && (
