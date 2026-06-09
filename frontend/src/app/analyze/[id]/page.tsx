@@ -186,7 +186,7 @@ export default function AnalyzePage() {
         if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
         return;
       }
-      fetchResult(analysisId).catch(() => {});
+      fetchResult(analysisId).catch((err) => console.warn("[poll]", err));
     }, 5000);
     return () => { if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; } };
   }, [analysisId, status, fetchResult]);

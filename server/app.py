@@ -69,7 +69,7 @@ async def _lifespan(app: FastAPI):
                 _logger.warning("BM25 古籍索引预热失败，首次检索将延迟", exc_info=True)
         await _aio.to_thread(_warm_bm25)
     except Exception:
-        pass
+        logger.warning("BM25 古籍索引预热线程异常", exc_info=True)
     yield
     await close_db()
 
