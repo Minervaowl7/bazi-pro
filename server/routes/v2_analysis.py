@@ -262,6 +262,13 @@ async def _background_analyze_v2(analysis_id: str, mcp_json: dict, detail_level:
 
     v2_active_ids.add(analysis_id)
     try:
+        # 等待 SSE 客户端连接（最多 2 秒），避免首个进度事件丢失
+        for _ in range(20):
+            async with lock:
+                if subscribers.get(analysis_id):
+                    break
+            await asyncio.sleep(0.1)
+
         await broadcast(analysis_id, "progress", {
             "step": "0", "name": "启动分析", "status": "running", "message": "正在初始化..."
         })

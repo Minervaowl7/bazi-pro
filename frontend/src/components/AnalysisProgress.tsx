@@ -79,11 +79,11 @@ export default function AnalysisProgress() {
     if (progress.length > 0) firstEventRef.current = true;
   }, [progress.length]);
 
-  /* 连接超时检测：10秒无事件显示警告，30秒显示超时。setTimeout 回调中的 setState 是安全的。 */
+  /* 连接超时检测：5秒无事件显示警告，20秒显示超时。setTimeout 回调中的 setState 是安全的。 */
   useEffect(() => {
     if (status !== "streaming" || firstEventRef.current) return;
-    const warnTimer = setTimeout(() => setConnectWarn(true), 10000);
-    const timeoutTimer = setTimeout(() => setConnectTimeout(true), 30000);
+    const warnTimer = setTimeout(() => setConnectWarn(true), 5000);
+    const timeoutTimer = setTimeout(() => setConnectTimeout(true), 20000);
     return () => { clearTimeout(warnTimer); clearTimeout(timeoutTimer); };
   }, [status]);
 
@@ -163,7 +163,7 @@ export default function AnalysisProgress() {
                   : connectTimeout
                     ? "连接超时，请检查后端服务是否运行（端口 8711）"
                     : connectWarn
-                      ? "正在连接，若长时间无响应请检查后端..."
+                      ? "首次分析需加载古籍索引，请稍候..."
                       : "正在连接分析引擎..."}
               </p>
             </div>

@@ -52,6 +52,21 @@ _enable_docs = os.environ.get('BAZI_ENABLE_DOCS', '').lower() in ('1', 'true', '
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     await get_db()
+    # 预热 BM25 古籍索引（避免首次请求阻塞 3-10 秒）
+    try:
+        import asyncio as _aio
+        def _warm_bm25():
+            try:
+                from bazi_pro.retrieve_classical import _resolve_corpus, load_corpus, get_bm25
+                corpus = _resolve_corpus()
+                entries = load_corpus(corpus)
+                if entries:
+                    get_bm25(corpus, entries)
+            except Exception:
+                pass
+        await _aio.to_thread(_warm_bm25)
+    except Exception:
+        pass
     yield
     await close_db()
 

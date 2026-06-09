@@ -100,6 +100,7 @@ async def run_analysis(mcp_json: dict, run_id: str,
                 paipan_result = None
 
         await manager.send_progress(run_id, '0', 'running', '古籍条文检索中...')
+        await asyncio.sleep(0)  # 确保进度事件立即发送
         retrieval = await _do_retrieve(mcp_json)
         await manager.send_progress(run_id, '0', 'done',
                                      f'检索完成，命中 {len(retrieval.get("results", []))} 条',
