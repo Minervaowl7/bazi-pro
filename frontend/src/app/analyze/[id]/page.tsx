@@ -222,7 +222,7 @@ export default function AnalyzePage() {
 
   return (
     <div ref={containerRef} className="min-h-screen" style={{ background: "var(--bg)" }}>
-      <main className="w-full max-w-[960px] mx-auto pt-14 pb-10 px-6">
+      <div className="w-full max-w-[960px] mx-auto pb-10 px-6">
 
         {/* ===== 操作栏 ===== */}
         {analysisResult && (
@@ -541,7 +541,7 @@ export default function AnalyzePage() {
             <p className="text-[15px]" style={{ color: "var(--text-2)" }}>分析已完成，但无详细结果数据。</p>
           </section>
         )}
-      </main>
+      </div>
     </div>
   );
 }
