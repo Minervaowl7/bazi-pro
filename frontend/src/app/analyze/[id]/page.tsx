@@ -41,9 +41,9 @@ class ErrorBoundary extends Component<FallbackProps, { hasError: boolean; error?
         <section className="card p-8 text-center" style={{ margin: "2rem auto", maxWidth: 600 }}>
           <h3 style={{ color: "var(--danger)", marginBottom: 8 }}>渲染出错</h3>
           <p style={{ color: "var(--text-2)", fontSize: 14 }}>{this.state.error?.message || "未知错误"}</p>
-          <button onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+          <button onClick={() => this.setState({ hasError: false, error: undefined })}
             style={{ marginTop: 16, padding: "8px 20px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", color: "var(--ink)" }}>
-            刷新重试
+            重试
           </button>
         </section>
       );
@@ -257,11 +257,17 @@ export default function AnalyzePage() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
         <section className="card p-8 text-center" style={{ maxWidth: 500 }}>
           <h3 style={{ color: "var(--danger)", fontSize: 18, fontWeight: 700, marginBottom: 8 }}>页面渲染出错</h3>
-          <p style={{ color: "var(--text-2)", fontSize: 14, marginBottom: 16 }}>分析结果渲染时发生异常，请刷新页面重试。</p>
-          <button onClick={() => window.location.reload()}
-            style={{ padding: "10px 24px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", color: "var(--ink)", fontSize: 14 }}>
-            刷新页面
-          </button>
+          <p style={{ color: "var(--text-2)", fontSize: 14, marginBottom: 16 }}>分析结果渲染时发生异常，请重试或返回首页。</p>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <button onClick={() => window.location.reload()}
+              style={{ padding: "10px 24px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", color: "var(--ink)", fontSize: 14 }}>
+              重试
+            </button>
+            <button onClick={() => window.location.href = "/"}
+              style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "var(--scholar-blue)", cursor: "pointer", color: "#fff", fontSize: 14 }}>
+              返回首页
+            </button>
+          </div>
         </section>
       </div>
     }>
@@ -340,12 +346,12 @@ export default function AnalyzePage() {
               <section className="card p-6 mb-6" style={{ border: "1px solid var(--warning)" }}>
                 <h3 className="font-bold text-base mb-2" style={{ color: "var(--warning)" }}>加载缓慢</h3>
                 <p className="text-[15px] mb-4" style={{ color: "var(--text-2)" }}>
-                  分析结果加载已超过 15 秒，可能是首次启动需要加载古籍索引。
+                  分析结果加载已超过 15 秒，可能是首次启动需要加载古籍索引，请耐心等待或重试。
                 </p>
-                <button onClick={() => window.location.reload()}
+                <button onClick={() => { setLoadTimeout(false); fetchResult(analysisId); }}
                   className="px-4 py-2 rounded-lg text-sm font-medium"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--ink)", cursor: "pointer" }}>
-                  刷新页面
+                  重新加载
                 </button>
               </section>
             ) : !isLoading ? (
