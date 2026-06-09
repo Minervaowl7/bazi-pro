@@ -370,7 +370,7 @@ select.form-input {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  html { scroll-behavior: auto; }
+  html[data-scroll-behavior="smooth"] { scroll-behavior: auto !important; }
 }
 
 /* 打印 */

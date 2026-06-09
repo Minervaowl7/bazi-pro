@@ -38,6 +38,7 @@ interface AnalysisState {
 }
 
 let _generation = 0; // 防止 SSE fallback 竞态
+let _sseTimeoutId: ReturnType<typeof setTimeout> | null = null; // 15s 超时定时器
 
 export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   birthInput: null,
@@ -58,6 +59,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
       ref.close();
       set({ _sseRef: null });
     }
+    if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
   },
 
   startAnalysis: async (input) => {
@@ -77,13 +79,16 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         resp.analysis_id,
         (event: SSEEvent) => {
           if (event.event === "progress") {
+            if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
             const step = event.data as unknown as ProgressStep;
             set((state) => ({ progress: [...state.progress, step] }));
           } else if (event.event === "done") {
+            if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
             es.close();
             set({ _sseRef: null });
             get().fetchResult(resp.analysis_id);
           } else if (event.event === "error") {
+            if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
             es.close();
             set({ _sseRef: null });
             const data = event.data as Record<string, unknown>;
@@ -92,6 +97,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
           }
         },
         () => {
+          if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
           es.close();
           set({ _sseRef: null });
           const current = get();
@@ -105,7 +111,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
       );
 
       // 15秒无进度事件 → 自动轮询（防止 SSE 连接成功但无事件）
-      setTimeout(() => {
+      _sseTimeoutId = setTimeout(() => {
+        _sseTimeoutId = null;
         if (_generation === gen && get().progress.length === 0 && get().status === "streaming") {
           es.close();
           set({ _sseRef: null, status: "polling" });
@@ -173,6 +180,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   reset: () => {
     const ref = get()._sseRef;
     if (ref) { ref.close(); }
+    if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
     set({
       birthInput: null,
       analysisId: null,

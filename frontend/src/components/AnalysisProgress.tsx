@@ -1,7 +1,7 @@
 "use client";
 
 import { useAnalysisStore } from "@/stores/analysisStore";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 
 /* ── 步骤定义 ── */
 interface StepDef {
@@ -69,17 +69,17 @@ function ElapsedTimer({ active, resetKey }: { active: boolean; resetKey: number 
 
 /* ── 主组件 ── */
 export default function AnalysisProgress() {
-  const { progress, status, error } = useAnalysisStore();
+  const { progress, status } = useAnalysisStore();
+  const firstEventRef = useRef(false);
   const [connectWarn, setConnectWarn] = useState(false);
   const [connectTimeout, setConnectTimeout] = useState(false);
-  const firstEventRef = useRef(false);
 
   /* 监听首个进度事件 */
   useEffect(() => {
     if (progress.length > 0) firstEventRef.current = true;
   }, [progress.length]);
 
-  /* 连接超时检测：10秒无事件显示警告，30秒显示超时 */
+  /* 连接超时检测：10秒无事件显示警告，30秒显示超时。setTimeout 回调中的 setState 是安全的。 */
   useEffect(() => {
     if (status !== "streaming" || firstEventRef.current) return;
     const warnTimer = setTimeout(() => setConnectWarn(true), 10000);
@@ -87,12 +87,12 @@ export default function AnalysisProgress() {
     return () => { clearTimeout(warnTimer); clearTimeout(timeoutTimer); };
   }, [status]);
 
-  /* 重置状态 */
+  /* 重置：status 离开 streaming/submitting 时归零 */
   useEffect(() => {
-    if (status === "idle" || status === "failed") {
-      setConnectWarn(false);
-      setConnectTimeout(false);
+    if (status !== "streaming" && status !== "submitting") {
       firstEventRef.current = false;
+      // 通过 setTimeout 避免 render 中直接 setState
+      setTimeout(() => { setConnectWarn(false); setConnectTimeout(false); }, 0);
     }
   }, [status]);
 
