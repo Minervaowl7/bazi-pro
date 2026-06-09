@@ -56,26 +56,34 @@ export default function BaziChartCard({ result }: Props) {
   useGSAP(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion) {
-      gsap.set("[data-chart-header]", { autoAlpha: 1 });
+      gsap.utils.toArray("[data-chart-header]").forEach((el) => gsap.set(el as Element, { autoAlpha: 1 }));
       pillarRefs.current.forEach((el) => { if (el) gsap.set(el, { autoAlpha: 1 }); });
-      gsap.set("[data-nayin]", { autoAlpha: 1 });
+      gsap.utils.toArray("[data-nayin]").forEach((el) => gsap.set(el as Element, { autoAlpha: 1 }));
       if (dayunRef.current) gsap.set(dayunRef.current, { autoAlpha: 1 });
       return;
     }
 
     const tl = gsap.timeline({ delay: 0.15 });
 
-    tl.from("[data-chart-header]", {
-      y: -20, autoAlpha: 0, duration: 0.5, ease: "power2.out",
-    });
+    const chartHeaders = gsap.utils.toArray("[data-chart-header]");
+    if (chartHeaders.length) {
+      tl.from(chartHeaders, {
+        y: -20, autoAlpha: 0, duration: 0.5, ease: "power2.out",
+      });
+    }
 
-    tl.from(pillarRefs.current, {
-      y: 40, autoAlpha: 0, scale: 0.95, stagger: 0.12, duration: 0.7, ease: "back.out(1.4)",
-    }, "-=0.2");
+    if (pillarRefs.current.length) {
+      tl.from(pillarRefs.current, {
+        y: 40, autoAlpha: 0, scale: 0.95, stagger: 0.12, duration: 0.7, ease: "back.out(1.4)",
+      }, "-=0.2");
+    }
 
-    tl.from("[data-nayin]", {
-      autoAlpha: 0, y: 10, stagger: 0.08, duration: 0.4, ease: "power2.out",
-    }, "-=0.3");
+    const nayinEls = gsap.utils.toArray("[data-nayin]");
+    if (nayinEls.length) {
+      tl.from(nayinEls, {
+        autoAlpha: 0, y: 10, stagger: 0.08, duration: 0.4, ease: "power2.out",
+      }, "-=0.3");
+    }
 
     if (dayunRef.current) {
       tl.from(dayunRef.current, {

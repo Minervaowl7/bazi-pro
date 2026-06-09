@@ -51,9 +51,11 @@ export default function DayunTimeline({ result }: Props) {
 
   useGSAP(() => {
     if (prefersReducedMotion) {
-      gsap.set(containerRef.current, { autoAlpha: 1 });
+      if (containerRef.current) gsap.set(containerRef.current, { autoAlpha: 1 });
       return;
     }
+
+    if (!containerRef.current) return;
 
     const tl = gsap.timeline();
 

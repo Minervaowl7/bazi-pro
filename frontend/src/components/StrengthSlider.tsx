@@ -59,37 +59,43 @@ export default function StrengthSlider({ strength, dayMaster }: Props) {
   useGSAP(
     () => {
       if (prefersReducedMotion) {
-        gsap.set(sectionRef.current, { autoAlpha: 1 });
-        gsap.set(verdictBadgeRef.current, { autoAlpha: 1, x: 0 });
-        gsap.set(barRefs.current, { scaleX: 1 });
-        gsap.set(reasonRef.current, { autoAlpha: 1, y: 0 });
+        if (sectionRef.current) gsap.set(sectionRef.current, { autoAlpha: 1 });
+        if (verdictBadgeRef.current) gsap.set(verdictBadgeRef.current, { autoAlpha: 1, x: 0 });
+        if (barRefs.current.length) gsap.set(barRefs.current, { scaleX: 1 });
+        if (reasonRef.current) gsap.set(reasonRef.current, { autoAlpha: 1, y: 0 });
         return;
       }
 
-      gsap.set(barRefs.current, { scaleX: 0, transformOrigin: "left center" });
-      gsap.set(verdictBadgeRef.current, { autoAlpha: 0, x: -24 });
-      gsap.set(reasonRef.current, { autoAlpha: 0, y: 8 });
+      if (barRefs.current.length) gsap.set(barRefs.current, { scaleX: 0, transformOrigin: "left center" });
+      if (verdictBadgeRef.current) gsap.set(verdictBadgeRef.current, { autoAlpha: 0, x: -24 });
+      if (reasonRef.current) gsap.set(reasonRef.current, { autoAlpha: 0, y: 8 });
 
       const tl = gsap.timeline();
 
-      tl.fromTo(
-        sectionRef.current,
-        { autoAlpha: 0, y: 28 },
-        { autoAlpha: 1, y: 0, duration: 0.7, ease: "power3.out" }
-      );
+      if (sectionRef.current) {
+        tl.fromTo(
+          sectionRef.current,
+          { autoAlpha: 0, y: 28 },
+          { autoAlpha: 1, y: 0, duration: 0.7, ease: "power3.out" }
+        );
+      }
 
-      tl.fromTo(
-        verdictBadgeRef.current,
-        { autoAlpha: 0, x: -24 },
-        { autoAlpha: 1, x: 0, duration: 0.5, ease: "back.out(1.4)" },
-        "-=0.3"
-      );
+      if (verdictBadgeRef.current) {
+        tl.fromTo(
+          verdictBadgeRef.current,
+          { autoAlpha: 0, x: -24 },
+          { autoAlpha: 1, x: 0, duration: 0.5, ease: "back.out(1.4)" },
+          "-=0.3"
+        );
+      }
 
-      tl.to(
-        barRefs.current,
-        { scaleX: 1, duration: 0.8, stagger: 0.15, ease: "power2.out" },
-        "-=0.2"
-      );
+      if (barRefs.current.length) {
+        tl.to(
+          barRefs.current,
+          { scaleX: 1, duration: 0.8, stagger: 0.15, ease: "power2.out" },
+          "-=0.2"
+        );
+      }
 
       if (reasonRef.current) {
         tl.fromTo(

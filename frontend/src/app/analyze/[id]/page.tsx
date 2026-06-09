@@ -188,7 +188,9 @@ export default function AnalyzePage() {
 
   useGSAP(() => {
     if (!analysisResult || prefersReducedMotion) return;
-    gsap.from("[data-pill]", {
+    const targets = gsap.utils.toArray("[data-pill]");
+    if (!targets.length) return;
+    gsap.from(targets, {
       y: -20,
       autoAlpha: 0,
       stagger: 0.08,
@@ -199,7 +201,9 @@ export default function AnalyzePage() {
 
   useGSAP(() => {
     if (!analysisResult || prefersReducedMotion) return;
-    gsap.from("[data-action-bar]", {
+    const targets = gsap.utils.toArray("[data-action-bar]");
+    if (!targets.length) return;
+    gsap.from(targets, {
       x: -30,
       autoAlpha: 0,
       duration: 0.5,
@@ -208,6 +212,7 @@ export default function AnalyzePage() {
 
   useGSAP(() => {
     if (prefersReducedMotion) return;
+    if (!tabContentRef.current) return;
     gsap.from(tabContentRef.current, {
       autoAlpha: 0,
       y: 20,

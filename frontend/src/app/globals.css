@@ -110,7 +110,8 @@
    ================================================================ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+/* Next.js 要求用 data-scroll-behavior 而非直接设在 html 上 */
+html[data-scroll-behavior="smooth"] { scroll-behavior: smooth; }
 
 html, body {
   background: var(--bg);
