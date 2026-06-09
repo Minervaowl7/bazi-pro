@@ -386,7 +386,6 @@ class XinpaiAnalyzer(SchoolAnalyzer):
             # 排除月支检查其他三支是否有根/印（月支本身已是帮扶源）
             month_zhi = pillars[1].get('zhi', '') if len(pillars) > 1 else ''
             month_zhi_wx = ZHI_WUXING.get(month_zhi, '')
-            other_zhis = [z for z in all_zhis if z != month_zhi or all_zhis.count(month_zhi) > 1]
             # 简化：用 has_root/root_count 减去月支贡献判断
             month_is_root = (month_zhi_wx == dm_wx)
             month_is_yin = (month_zhi_wx == yin_wx)

@@ -138,7 +138,6 @@ def _score_yongshen_status(result: dict) -> dict:
     score = 13  # 用神明确基础分（最高可达：13+2+2+4+4=25）
 
     xishen = ys.get('xishen', [])
-    jishen = ys.get('jishen', [])
 
     # 喜神存在 → 加分
     if xishen:
