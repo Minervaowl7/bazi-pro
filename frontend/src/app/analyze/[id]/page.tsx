@@ -304,6 +304,12 @@ export default function AnalyzePage() {
 
         {/* ===== 分析结果（带 Tab 分页）===== */}
         {analysisResult ? (
+          <Safe fallback={
+            <section className="card p-8 text-center">
+              <h3 className="font-bold text-base mb-2" style={{ color: "var(--danger)" }}>渲染出错</h3>
+              <p className="text-[15px]" style={{ color: "var(--text-2)" }}>分析结果渲染时发生异常，请刷新页面重试。</p>
+            </section>
+          }>
           <>
             {/* 核心摘要条 — 始终可见 */}
             <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-3 mb-8">
@@ -534,6 +540,7 @@ export default function AnalyzePage() {
               )}
             </div>
           </>
+          </Safe>
         ):null}
 
         {status==="completed"&&!analysisResult&&result?.status==="completed"&&(

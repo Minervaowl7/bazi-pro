@@ -39,6 +39,8 @@ interface Props { data: ChartQualityData }
 export default function ChartQuality({ data }: Props) {
   const [expanded, setExpanded] = useState(true);
 
+  if (!data || !Array.isArray(data.dimensions) || data.dimensions.length === 0) return null;
+
   return (
     <section style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)", borderRadius: 12, overflow: "hidden" }}>
       {/* Header */}

@@ -139,7 +139,11 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
       try {
         const data = await getAnalysis(analysisId);
         const hasResult = data.result && typeof data.result === "object" && Object.keys(data.result as Record<string, unknown>).length > 0;
-        if (data.status === "completed" && !hasResult) {
+        const resultObj = data.result as Record<string, unknown> | undefined;
+        const hasCoreFields = hasResult && resultObj && (
+          "validation" in resultObj || "shishen" in resultObj || "pattern" in resultObj || "day_master" in resultObj
+        );
+        if (data.status === "completed" && !hasCoreFields) {
           if (retries >= 8 || Date.now() - start > maxPollMs) {
             set({ status: "failed", error: "分析超时，请稍后重试" });
             return;
