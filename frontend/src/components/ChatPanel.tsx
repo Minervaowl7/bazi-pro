@@ -241,8 +241,8 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
               className="w-full resize-none transition-all duration-200 focus:border-[var(--scholar-blue)] focus:shadow-[0_0_0_3px_rgba(45,62,95,0.1)]"
               style={{
                 fontSize: 15, fontFamily: "var(--font-body)",
-                background: "var(--surface)",
-                border: "1.5px solid var(--border-subtle)",
+                background: "color-mix(in srgb, var(--surface) 85%, var(--ink))",
+                border: "1.5px solid var(--border)",
                 borderRadius: 10,
                 color: "var(--ink)",
                 padding: "12px 16px",

@@ -27,6 +27,7 @@ from bazi_pro.core import (
 from bazi_pro.core.branches import SHIER_CHANGSHENG
 from bazi_pro.paipan import paipan_from_datetime
 from server.cache import get_cache
+from server.db import update_analysis_result
 from server.gongwei import calc_gongwei
 from server.nayin import lookup_nayin
 from server.shensha import calc_shensha_enhanced
@@ -302,62 +303,63 @@ async def run_analysis(mcp_json: dict, run_id: str,
             except Exception as e:
                 logger.warning("family analysis failed (non-fatal): %s", e)
 
-        # ── LLM 命盘总览（自动触发，可选） ──
+        # ── LLM 调用（后台执行，不阻塞核心结果返回） ──
+        _llm_task = None
         if not skip_llm_overview:
             try:
-                from server.llm import chat_completion, is_llm_configured
+                from server.llm import is_llm_configured
                 if is_llm_configured():
-                    await manager.send_progress(run_id, 'llm', 'running', 'AI 命盘总览生成中...')
-                    overview_prompt = _build_overview_prompt(result, mcp_json, result.get('dayun', []))
-                    overview_messages = [
-                        {"role": "system", "content": OVERVIEW_SYSTEM_PROMPT},
-                        {"role": "user", "content": overview_prompt},
-                    ]
-                    overview_text = await chat_completion(overview_messages, temperature=0.6, max_tokens=4096)
-                    if overview_text:
-                        result['llm_overview'] = overview_text
-                        await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览完成')
-                    else:
-                        await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览（无输出）')
-            except Exception as e:
-                logger.debug("LLM overview generation failed (non-fatal): %s", e)
-                await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览跳过')
+                    async def _run_llm_background():
+                        try:
+                            from server.llm import chat_completion as _cc
+                            # 命盘总览
+                            try:
+                                await manager.send_progress(run_id, 'llm', 'running', 'AI 命盘总览生成中...')
+                                overview_prompt = _build_overview_prompt(result, mcp_json, result.get('dayun', []))
+                                overview_messages = [
+                                    {"role": "system", "content": OVERVIEW_SYSTEM_PROMPT},
+                                    {"role": "user", "content": overview_prompt},
+                                ]
+                                overview_text = await _cc(overview_messages, temperature=0.6, max_tokens=4096)
+                                if overview_text:
+                                    result['llm_overview'] = overview_text
+                                    await update_analysis_result(run_id, result)
+                                    await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览完成')
+                                else:
+                                    await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览（无输出）')
+                            except Exception as e:
+                                logger.debug("LLM overview failed (non-fatal): %s", e)
+                                await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览跳过')
 
-        # ── 命书：LLM 润色的人生报告（自动触发，可选） ──
-        if not skip_llm_overview:
-            try:
-                from server.llm import (
-                    LIFE_REPORT_SYSTEM_PROMPT,
-                    build_life_report_prompt,
-                )
-                from server.llm import (
-                    chat_completion as _chat,
-                )
-                from server.llm import (
-                    is_llm_configured as _llm_ok,
-                )
-                if _llm_ok():
-                    await manager.send_progress(run_id, 'life_report', 'running', '命书撰写中...')
-                    # 生成确定性叙述用于 prompt 上下文
-                    try:
-                        from bazi_pro.narrator import narrate_analysis as _narrate
-                        _narration = _narrate(result) if isinstance(result, dict) else {}
-                    except Exception:
-                        _narration = {}
-                    report_prompt = build_life_report_prompt(result, _narration)
-                    report_messages = [
-                        {"role": "system", "content": LIFE_REPORT_SYSTEM_PROMPT},
-                        {"role": "user", "content": report_prompt},
-                    ]
-                    report_text = await _chat(report_messages, temperature=0.7, max_tokens=4096)
-                    if report_text:
-                        result['life_report'] = report_text
-                        await manager.send_progress(run_id, 'life_report', 'done', '命书完成')
-                    else:
-                        await manager.send_progress(run_id, 'life_report', 'done', '命书（无输出）')
-            except Exception as e:
-                logger.debug("Life report generation failed (non-fatal): %s", e)
-                await manager.send_progress(run_id, 'life_report', 'done', '命书跳过')
+                            # 命书
+                            try:
+                                from server.llm import LIFE_REPORT_SYSTEM_PROMPT, build_life_report_prompt
+                                await manager.send_progress(run_id, 'life_report', 'running', '命书撰写中...')
+                                try:
+                                    from bazi_pro.narrator import narrate_analysis as _narrate
+                                    _narration = _narrate(result) if isinstance(result, dict) else {}
+                                except Exception:
+                                    _narration = {}
+                                report_prompt = build_life_report_prompt(result, _narration)
+                                report_messages = [
+                                    {"role": "system", "content": LIFE_REPORT_SYSTEM_PROMPT},
+                                    {"role": "user", "content": report_prompt},
+                                ]
+                                report_text = await _cc(report_messages, temperature=0.7, max_tokens=4096)
+                                if report_text:
+                                    result['life_report'] = report_text
+                                    await update_analysis_result(run_id, result)
+                                    await manager.send_progress(run_id, 'life_report', 'done', '命书完成')
+                                else:
+                                    await manager.send_progress(run_id, 'life_report', 'done', '命书（无输出）')
+                            except Exception as e:
+                                logger.debug("Life report failed (non-fatal): %s", e)
+                                await manager.send_progress(run_id, 'life_report', 'done', '命书跳过')
+                        except Exception as e:
+                            logger.debug("LLM background task failed: %s", e)
+                    _llm_task = asyncio.create_task(_run_llm_background())
+            except Exception:
+                pass
 
         if solar and gender:
             try:
@@ -383,25 +385,33 @@ async def run_analysis(mcp_json: dict, run_id: str,
             except Exception:
                 pass  # 紫微斗数为可选功能，失败不影响主流程
 
-        # ── 多智能体协作分析（可选） ──
+        # ── 多智能体协作分析（后台执行，可选） ──
+        _agent_task = None
         try:
             from server.agents import AgentOrchestrator
             orchestrator = AgentOrchestrator()
-            await manager.send_progress(run_id, 'agents', 'running', '多智能体协作分析中...')
-            agent_result = await orchestrator.analyze(mcp_json)
-            if agent_result and agent_result.get('status') != 'failed':
-                result['agent_analysis'] = agent_result
-                await manager.send_progress(run_id, 'agents', 'done',
-                                            f'多智能体分析完成: {agent_result.get("status", "")}',
-                                            agent_result)
-            else:
-                await manager.send_progress(run_id, 'agents', 'done', '多智能体分析跳过')
-        except Exception as e:
-            logger.warning("Agent orchestration failed (non-fatal): %s", e)
-            await manager.send_progress(run_id, 'agents', 'done', '多智能体分析跳过')
+            async def _run_agents_background():
+                try:
+                    await manager.send_progress(run_id, 'agents', 'running', '多智能体协作分析中...')
+                    agent_result = await orchestrator.analyze(mcp_json)
+                    if agent_result and agent_result.get('status') != 'failed':
+                        result['agent_analysis'] = agent_result
+                        await update_analysis_result(run_id, result)
+                        await manager.send_progress(run_id, 'agents', 'done',
+                                                    f'多智能体分析完成: {agent_result.get("status", "")}',
+                                                    agent_result)
+                    else:
+                        await manager.send_progress(run_id, 'agents', 'done', '多智能体分析跳过')
+                except Exception as e:
+                    logger.warning("Agent orchestration failed (non-fatal): %s", e)
+                    await manager.send_progress(run_id, 'agents', 'done', '多智能体分析跳过')
+            _agent_task = asyncio.create_task(_run_agents_background())
+        except Exception:
+            pass
 
         result['completed_at'] = datetime.now(timezone.utc).isoformat()
         cache.set(cache_key, result, ttl=3600)
+        await update_analysis_result(run_id, result)
 
     except Exception as e:
         logger.error("run_analysis failed: %s\n%s", e, traceback.format_exc())

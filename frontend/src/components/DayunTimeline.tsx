@@ -50,24 +50,26 @@ export default function DayunTimeline({ result }: Props) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
   useGSAP(() => {
+    if (!containerRef.current) return;
+
     if (prefersReducedMotion) {
-      if (containerRef.current) gsap.set(containerRef.current, { autoAlpha: 1 });
+      gsap.set(containerRef.current, { autoAlpha: 1, y: 0 });
       return;
     }
 
-    if (!containerRef.current) return;
+    gsap.set(containerRef.current, { autoAlpha: 0, y: 30 });
 
     const tl = gsap.timeline();
-
-    tl.from(containerRef.current, {
-      y: 30, autoAlpha: 0, duration: 0.7, ease: "power3.out",
+    tl.to(containerRef.current, {
+      autoAlpha: 1, y: 0, duration: 0.7, ease: "power3.out",
     });
 
     // 大运行交错入场
     const rows = containerRef.current?.querySelectorAll("[data-dayun-row]");
     if (rows && rows.length > 0) {
-      tl.from(rows, {
-        x: -16, autoAlpha: 0, stagger: 0.06, duration: 0.4, ease: "power2.out",
+      gsap.set(rows, { x: -16, autoAlpha: 0 });
+      tl.to(rows, {
+        x: 0, autoAlpha: 1, stagger: 0.06, duration: 0.4, ease: "power2.out",
       }, "-=0.3");
     }
 
@@ -125,7 +127,6 @@ export default function DayunTimeline({ result }: Props) {
     <section
       ref={containerRef}
       className="card"
-      style={{ opacity: prefersReducedMotion ? 1 : 0 }}
     >
       <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
         <h3 className="font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>大运流年</h3>

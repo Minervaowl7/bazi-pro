@@ -72,7 +72,7 @@ def _get_day_ganzhi(d) -> str:
 _LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://api.openai.com/v1")
 _LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
 _LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
-_LLM_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "60"))
+_LLM_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "300"))
 
 
 def get_llm_config() -> dict:
@@ -148,7 +148,9 @@ async def chat_completion(messages: list[dict], temperature: float = 0.7, max_to
             content = message.get("content")
             reasoning = message.get("reasoning_content", "")
             if not content:
-                if reasoning and not bumped and effective_max < 16384:
+                if reasoning:
+                    return reasoning
+                if not bumped and effective_max < 16384:
                     effective_max = min(effective_max * 4, 16384)
                     bumped = True
                     logger.warning("[llm] content empty (reasoning model), retry with max_tokens=%d", effective_max)
@@ -176,7 +178,7 @@ async def chat_completion_stream(messages: list[dict], temperature: float = 0.7,
     }
 
     has_content = False
-    async with httpx.AsyncClient(timeout=_LLM_TIMEOUT) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(_LLM_TIMEOUT, connect=5.0)) as client:
         async with client.stream("POST", url, headers=headers, json=payload) as resp:
             resp.raise_for_status()
             async for line in resp.aiter_lines():
@@ -188,7 +190,7 @@ async def chat_completion_stream(messages: list[dict], temperature: float = 0.7,
                 try:
                     chunk = json.loads(data_str)
                     delta = chunk.get("choices", [{}])[0].get("delta") or {}
-                    content = delta.get("content", "")
+                    content = delta.get("content") or delta.get("reasoning_content") or ""
                     if content:
                         has_content = True
                         yield content

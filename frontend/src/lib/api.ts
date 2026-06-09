@@ -217,7 +217,7 @@ export async function generateReport(analysisId: string, school: string = "zipin
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ analysis_id: analysisId, school }),
-  });
+  }, 300000);
 }
 
 export async function getReport(analysisId: string): Promise<ReportResponse | null> {
@@ -258,7 +258,7 @@ export interface LLMTestResponse {
 }
 
 export async function testLLMConnection(): Promise<LLMTestResponse> {
-  return fetchApi("/api/v2/settings/llm/test", { method: "POST" });
+  return fetchApi("/api/v2/settings/llm/test", { method: "POST" }, 120000);
 }
 
 export interface DailyFortune {

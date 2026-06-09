@@ -170,6 +170,12 @@ export default function AnalyzePage() {
     const fetchAndLog = (id: string) => {
       fetchResult(id).catch((err) => {
         console.error("[AnalyzePage] fetchResult failed:", err);
+        if (useAnalysisStore.getState().status !== "failed") {
+          useAnalysisStore.setState({
+            status: "failed",
+            error: err instanceof Error ? err.message : "获取分析结果失败",
+          });
+        }
       });
     };
     if (analysisId !== prevIdRef.current) {

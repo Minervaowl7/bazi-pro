@@ -38,7 +38,32 @@ interface AnalysisState {
 }
 
 let _generation = 0; // 防止 SSE fallback 竞态
-let _sseTimeoutId: ReturnType<typeof setTimeout> | null = null; // 15s 超时定时器
+let _sseTimeoutId: ReturnType<typeof setTimeout> | null = null; // 失速检测超时
+
+const STALL_TIMEOUT_MS = 60000; // 60 秒无进度事件 → 切换到轮询
+
+/** 重置失速检测超时 — 每次收到进度事件或初始连接时调用 */
+function _resetStallTimeout(
+  gen: number,
+  es: EventSource,
+  get: () => AnalysisState,
+  set: (partial: Partial<AnalysisState>) => void,
+  analysisId: string,
+) {
+  if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
+  _sseTimeoutId = setTimeout(() => {
+    _sseTimeoutId = null;
+    if (_generation === gen && get().status === "streaming") {
+      es.close();
+      set({ _sseRef: null, status: "polling" });
+      setTimeout(() => {
+        if (_generation === gen) {
+          _safeFetchResult(get, set, analysisId, "SSE 失速后轮询失败");
+        }
+      }, 500);
+    }
+  }, STALL_TIMEOUT_MS);
+}
 
 /** fetchResult 的安全调用包装 — 统一错误处理，避免 3 处重复 .catch() */
 function _safeFetchResult(get: () => AnalysisState, set: (partial: Partial<AnalysisState>) => void, analysisId: string, label: string) {
@@ -89,7 +114,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         resp.analysis_id,
         (event: SSEEvent) => {
           if (event.event === "progress") {
-            if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
+            // 每次收到进度事件都重置失速检测超时，防止后端卡死时前端永远停在 streaming
+            _resetStallTimeout(gen, es, get, set, resp.analysis_id);
             const step = event.data as unknown as ProgressStep;
             set((state) => ({ progress: [...state.progress, step] }));
           } else if (event.event === "done") {
@@ -122,19 +148,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         },
       );
 
-      // 15秒无进度事件 → 自动轮询（防止 SSE 连接成功但无事件）
-      _sseTimeoutId = setTimeout(() => {
-        _sseTimeoutId = null;
-        if (_generation === gen && get().progress.length === 0 && get().status === "streaming") {
-          es.close();
-          set({ _sseRef: null, status: "polling" });
-          setTimeout(() => {
-            if (_generation === gen) {
-              _safeFetchResult(get, set, resp.analysis_id, "SSE 超时后轮询失败");
-            }
-          }, 500);
-        }
-      }, 15000);
+      // 初始失速检测超时（60 秒无任何事件 → 自动轮询）
+      _resetStallTimeout(gen, es, get, set, resp.analysis_id);
 
       set({ _sseRef: es });
       return resp.analysis_id;
