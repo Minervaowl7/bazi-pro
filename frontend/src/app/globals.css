@@ -106,101 +106,104 @@
 }
 
 /* ================================================================
-   Base Reset
+   Base Reset — 必须在 @layer base 中，否则 margin:0 会覆盖 Tailwind 的 mx-auto
+   CSS Cascade Layers 规范：unlayered 样式优先于所有 layered 样式
    ================================================================ */
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-/* Next.js 要求用 data-scroll-behavior 而非直接设在 html 上 */
-html[data-scroll-behavior="smooth"] { scroll-behavior: smooth; }
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* Next.js 要求用 data-scroll-behavior 而非直接设在 html 上 */
+  html[data-scroll-behavior="smooth"] { scroll-behavior: smooth; }
 
-html, body {
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  line-height: 1.65;
-  font-size: 15px;
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.65;
+    font-size: 15px;
+  }
+
+  /* 宣纸纹理 */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.30;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(180,154,92,0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(45,62,95,0.02) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(201,100,66,0.015) 0%, transparent 50%);
+  }
+
+  /* 滚动条 */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+  /* 选区 */
+  ::selection {
+    background: color-mix(in srgb, var(--cinnabar) 12%, transparent);
+    color: var(--ink);
+  }
+
+  /* 焦点 */
+  textarea:focus-visible,
+  input:focus-visible,
+  select:focus-visible {
+    outline: none;
+    border-color: var(--cinnabar) !important;
+    box-shadow: 0 0 0 3px rgba(201,100,66,0.08);
+  }
+  button:focus-visible {
+    outline: 2px solid var(--cinnabar);
+    outline-offset: 2px;
+  }
+
+  /* 链接 */
+  a { color: var(--scholar-blue); text-decoration: none; }
+  a:hover { color: var(--ink); }
+
+  /* 表格 */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px 18px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--text-2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+  tbody tr:hover { background: var(--surface-2); }
+
+  /* 代码 */
+  pre, code { font-family: var(--font-mono); }
+  pre {
+    background: var(--surface-2) !important;
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.7;
+    border-radius: 8px;
+  }
+  code { background: var(--surface-2); padding: 2px 7px; border-radius: 4px; font-size: 0.85em; }
+  pre code { background: transparent; padding: 0; border-radius: 0; }
+
+  /* 引用 */
+  blockquote {
+    margin: 20px 0; padding: 16px 24px;
+    border-left: 3px solid var(--jade);
+    background: rgba(58,125,92,0.03);
+    color: var(--text-2); font-style: italic;
+    border-radius: 0 6px 6px 0;
+  }
+
+  input[type="date"], input[type="time"] { color-scheme: light dark; }
+  .__nextjs-edge-runtime-panel-bottom-left, [data-nextjs-edge-runtime-panel] { display: none !important; }
 }
 
-/* 宣纸纹理 */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.30;
-  background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(180,154,92,0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(45,62,95,0.02) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, rgba(201,100,66,0.015) 0%, transparent 50%);
-}
-
-/* 滚动条 */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
-
-/* 隐藏滚动条但保留滚动功能 */
+/* 隐藏滚动条但保留滚动功能 — 需要 unlayered 以覆盖 Tailwind */
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
-
-/* 选区 */
-::selection {
-  background: color-mix(in srgb, var(--cinnabar) 12%, transparent);
-  color: var(--ink);
-}
-
-/* 焦点 */
-textarea:focus-visible,
-input:focus-visible,
-select:focus-visible {
-  outline: none;
-  border-color: var(--cinnabar) !important;
-  box-shadow: 0 0 0 3px rgba(201,100,66,0.08);
-}
-button:focus-visible {
-  outline: 2px solid var(--cinnabar);
-  outline-offset: 2px;
-}
-
-/* 链接 */
-a { color: var(--scholar-blue); text-decoration: none; }
-a:hover { color: var(--ink); }
-
-/* 表格 */
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 12px 18px; text-align: left; border-bottom: 1px solid var(--border); }
-th { font-weight: 600; color: var(--text-2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
-tbody tr:hover { background: var(--surface-2); }
-
-/* 代码 */
-pre, code { font-family: var(--font-mono); }
-pre {
-  background: var(--surface-2) !important;
-  border: 1px solid var(--border);
-  padding: 20px 24px;
-  overflow-x: auto;
-  font-size: 13px;
-  line-height: 1.7;
-  border-radius: 8px;
-}
-code { background: var(--surface-2); padding: 2px 7px; border-radius: 4px; font-size: 0.85em; }
-pre code { background: transparent; padding: 0; border-radius: 0; }
-
-/* 引用 */
-blockquote {
-  margin: 20px 0; padding: 16px 24px;
-  border-left: 3px solid var(--jade);
-  background: rgba(58,125,92,0.03);
-  color: var(--text-2); font-style: italic;
-  border-radius: 0 6px 6px 0;
-}
-
-input[type="date"], input[type="time"] { color-scheme: light dark; }
-.__nextjs-edge-runtime-panel-bottom-left, [data-nextjs-edge-runtime-panel] { display: none !important; }
 
 /* ================================================================
    Component Patterns — 从 demo HTML 提取的标准样式

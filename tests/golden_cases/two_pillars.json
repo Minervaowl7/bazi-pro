@@ -1,23 +1,21 @@
 {
   "id": "two_pillars",
-  "description": "庚午戊申月令七杀 — 甲木日主身弱",
-  "scenario": "甲木日主，月令申金七杀透干，身弱用土",
+  "description": "庚午戊申月令七杀 — 甲木日主极弱从势",
+  "scenario": "甲木日主极弱无根，庚金七杀+戊土财星成势，克泄耗≥60%触发从势格",
   "input": {
     "day_master": "甲",
     "bazi": "庚午 戊申 甲子 庚午",
     "month_branch": "申",
-    "expected_pattern": "七杀格",
+    "expected_pattern": "从势格",
     "expected_wangshuai": "极弱",
-    "expected_yongshen_wx": "水",
+    "expected_yongshen_wx": "火",
     "expected_deling_score": -3,
     "expected_dedi_level": "不得地",
     "expected_deshi_level": "不得势"
   },
   "must_include": [
-    "七杀格"
+    "从势格"
   ],
-  "must_not_include": [
-    "从格"
-  ],
-  "notes": "原两柱输入已修正为四柱，月令申金庚透干定格七杀格"
+  "must_not_include": [],
+  "notes": "甲木日主极弱无根，庚金七杀×2+戊土财星成势，克泄耗73.8%≥60%，无比劫无印星，从势格成立。层0优先于层3七杀格。"
 }

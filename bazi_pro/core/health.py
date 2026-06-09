@@ -78,7 +78,7 @@ def _assess_organ_risks(
             risks.append({
                 'organ': organ_name,
                 'element': wx,
-                'status': 'weak',
+                'status': '虚弱',
                 'risk_level': 'high',
                 'detail': f'{wx}力仅{ratio:.1f}%，{organs[0]}{organs[1]}虚弱风险',
             })
@@ -86,7 +86,7 @@ def _assess_organ_risks(
             risks.append({
                 'organ': organ_name,
                 'element': wx,
-                'status': 'excess',
+                'status': '亢盛',
                 'risk_level': 'medium',
                 'detail': f'{wx}力{ratio:.1f}%，{organs[0]}{organs[1]}亢盛风险',
             })
@@ -97,7 +97,7 @@ def _assess_organ_risks(
         risks.append({
             'organ': f'日主{dm_organs[0]}{dm_organs[1]}',
             'element': dm_wx,
-            'status': 'weak',
+            'status': '虚弱',
             'risk_level': 'high',
             'detail': f'日主{dm_wx}力仅{dm_ratio:.1f}%，体质偏弱',
         })
@@ -139,7 +139,7 @@ def _assess_body_part_risks(
                                 'part': f'{body[0]}{body[1]}',
                                 'related_gan': gan,
                                 'position': f'{pos}干',
-                                'risk': f'{gan}被合化{hua_wx}，{body[0]}{body[1]}受克',
+                                'risk': f'{gan}被合化{hua_wx}，{body[0]}{body[1]}五行转化',
                             })
 
     gans = [p[0] for p in bazi_parts if len(p) >= 1]
@@ -341,8 +341,8 @@ def _generate_health_summary(
     """生成健康分析摘要文本"""
     parts = []
 
-    weak_organs = [r for r in organ_risks if r['status'] == 'weak']
-    excess_organs = [r for r in organ_risks if r['status'] == 'excess']
+    weak_organs = [r for r in organ_risks if r['status'] == '虚弱']
+    excess_organs = [r for r in organ_risks if r['status'] == '亢盛']
 
     if weak_organs:
         parts.append(f'虚弱脏腑：{"、".join(r["organ"] for r in weak_organs[:2])}')

@@ -5,6 +5,24 @@
 import { useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import { WUXING_COLORS, GAN_WUXING, ZHI_WUXING, RELATION_COLORS } from "@/lib/constants";
+import { useTheme } from "./ThemeProvider";
+
+/** 读取 CSS 变量值（ECharts 不支持 var()） */
+function cssVar(name: string, fallback: string): string {
+  if (typeof window === "undefined") return fallback;
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+
+/** 将 WUXING_COLORS 中的 CSS 变量解析为 ECharts 可用的 hex 值 */
+function resolveWuxingColors(): Record<string, string> {
+  const resolved: Record<string, string> = {};
+  for (const [wx, cssVarRef] of Object.entries(WUXING_COLORS)) {
+    const match = cssVarRef.match(/var\((--[\w-]+)\)/);
+    resolved[wx] = match ? cssVar(match[1], "#888") : cssVarRef;
+  }
+  return resolved;
+}
 
 interface Relation {
   type?: string;
@@ -27,10 +45,15 @@ interface Props {
 export default function RelationGraph({ result }: Props): JSX.Element | null {
   const shishen = result.shishen as { pillars?: PillarDetail[] } | undefined;
   const relations = result.relations as Relation[] | undefined;
+  const { theme } = useTheme();
 
   const option = useMemo(() => {
     const pillars = shishen?.pillars || [];
     if (pillars.length < 4 || !relations || relations.length === 0) return null;
+
+    // 解析 CSS 变量为 ECharts 可用的 hex 值（主题切换时重新计算）
+    const wxColors = resolveWuxingColors();
+    const inkColor = cssVar("--ink", "#2c2418");
 
     const positions = ["年", "月", "日", "时"];
     const nodes: Array<{
@@ -53,16 +76,16 @@ export default function RelationGraph({ result }: Props): JSX.Element | null {
         x: i * 120 + 60,
         y: 40,
         symbolSize: 40,
-        itemStyle: { color: ganWx ? WUXING_COLORS[ganWx] : "#888" },
-        label: { show: true, color: "var(--ink)", fontSize: 12 },
+        itemStyle: { color: ganWx ? wxColors[ganWx] : "#888" },
+        label: { show: true, color: inkColor, fontSize: 12 },
       });
       nodes.push({
         name: `${positions[i]}支·${zhi}`,
         x: i * 120 + 60,
         y: 160,
         symbolSize: 40,
-        itemStyle: { color: zhiWx ? WUXING_COLORS[zhiWx] : "#888" },
-        label: { show: true, color: "var(--ink)", fontSize: 12 },
+        itemStyle: { color: zhiWx ? wxColors[zhiWx] : "#888" },
+        label: { show: true, color: inkColor, fontSize: 12 },
       });
     });
 
@@ -120,7 +143,7 @@ export default function RelationGraph({ result }: Props): JSX.Element | null {
         },
       }],
     };
-  }, [result]);
+  }, [result, theme]);
 
   if (!option) return <></>;
 

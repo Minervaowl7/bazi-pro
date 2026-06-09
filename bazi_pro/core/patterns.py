@@ -1355,7 +1355,11 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
     # 从财格/从官杀格：日主极弱 + 克泄耗≥60% + 财星/官杀成势
     # 阈值60%：克泄耗需占主导但不必绝对优势
     if wangshuai.get('is_extreme_weak', False) and ke_xie_hao_pct >= 60:
-        shishen_counts = _count_shishen_categories(day_master, gans, bazi_parts, include_canggan=False)
+        # _count_shishen_categories 要求 gans 排除日主自身（见函数文档）
+        # 日主自身 derive_shishen(day_master, day_master)='比肩' 会导致比劫≥1，
+        # 使得 bijie_free 恒为 False，从格永远无法命中
+        gans_no_dm = [g for g in gans if g != day_master]
+        shishen_counts = _count_shishen_categories(day_master, gans_no_dm, bazi_parts, include_canggan=False)
         # 《滴天髓》"绝无一毫生扶之意"：印星和比劫均不可有
         bijie_free = shishen_counts.get('比劫', 0) == 0 and not has_bijie_strong_root
         yin_free = shishen_counts.get('印星', 0) == 0
@@ -1417,7 +1421,8 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
     # 不要求极弱，但日主不可身旺有强根
     # "吾儿又得儿"：食伤（儿）须有财星（儿之儿）承接，否则降为食伤泄气
     if ke_xie_hao_pct >= 60:
-        shishen_counts = _count_shishen_categories(day_master, gans, bazi_parts, include_canggan=False)
+        gans_no_dm = [g for g in gans if g != day_master]
+        shishen_counts = _count_shishen_categories(day_master, gans_no_dm, bazi_parts, include_canggan=False)
         bijie_free = shishen_counts.get('比劫', 0) == 0 and not has_bijie_strong_root
         yin_free = shishen_counts.get('印星', 0) == 0
         if shishen_counts.get('食伤', 0) >= 3 and bijie_free and yin_free:
@@ -1446,7 +1451,8 @@ def _screen_layer0(day_master, dm_wx, month_zhi, bazi_parts,
     # 《滴天髓》："五阴从势无情义"
     # 与从财/从官杀的区别：克泄耗多类并存（财+官+食伤≥2类），无单一≥3
     if wangshuai.get('is_extreme_weak', False) and ke_xie_hao_pct >= 60:
-        shishen_counts = _count_shishen_categories(day_master, gans, bazi_parts, include_canggan=False)
+        gans_no_dm = [g for g in gans if g != day_master]
+        shishen_counts = _count_shishen_categories(day_master, gans_no_dm, bazi_parts, include_canggan=False)
         # 《滴天髓》"绝无一毫生扶之意"：印星和比劫均不可有
         bijie_free = shishen_counts.get('比劫', 0) == 0 and not has_bijie_strong_root
         yin_free = shishen_counts.get('印星', 0) == 0

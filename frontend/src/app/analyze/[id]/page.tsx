@@ -401,7 +401,7 @@ export default function AnalyzePage() {
             <div ref={tabContentRef} className="space-y-10">
               {/* Tab 1: 四柱命盘 */}
               {activeTab==="bazi"&&(
-                <div className="space-y-10">
+                <div>
                   <BaziChartCard result={analysisResult} />
 
                   {analysisResult?.chart_quality && <ChartQuality data={analysisResult.chart_quality as unknown as ChartQualityData} />}
@@ -451,7 +451,7 @@ export default function AnalyzePage() {
 
               {/* Tab 2: 大运流年 */}
               {activeTab==="dayun"&&(
-                <div className="space-y-10">
+                <div>
                   <DayunTimeline result={analysisResult} />
 
                   <Safe fallback={
@@ -468,7 +468,7 @@ export default function AnalyzePage() {
 
               {/* Tab 3: 宫位神煞 */}
               {activeTab==="detail"&&(
-                <div className="space-y-10">
+                <div>
                   <GongweiPanel result={analysisResult} />
                   <ShenShaPanel result={analysisResult} />
                 </div>
@@ -520,7 +520,7 @@ export default function AnalyzePage() {
 
               {/* Tab 6: 流派解读 */}
               {activeTab==="analysis"&&(
-                <div className="space-y-10" style={{maxWidth:860,marginLeft:"auto",marginRight:"auto"}}>
+                <div style={{maxWidth:860,marginLeft:"auto",marginRight:"auto"}}>
                   {analysisResult?.llm_overview && <LlmOverview content={analysisResult.llm_overview as string} />}
                   {isCompareMode&&schoolAnalyses?<SchoolComparePanel schoolAnalyses={schoolAnalyses}/>:<SchoolPanel result={analysisResult} narration={narration}/>}
                 </div>

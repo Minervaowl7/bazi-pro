@@ -75,17 +75,6 @@ export default function LifeKlineChart({ analysisId }: Props) {
 
   const option = {
     backgroundColor: "transparent",
-    title: {
-      text: "百年运势走势",
-      left: 0,
-      top: 0,
-      textStyle: {
-        fontSize: 17,
-        fontWeight: 700,
-        color: cssVar("--ink", "#1c1917"),
-        fontFamily: '"Noto Serif SC", "Source Han Serif SC", serif',
-      },
-    },
     tooltip: {
       trigger: "axis" as const,
       axisPointer: { type: "line" as const },
@@ -120,7 +109,7 @@ export default function LifeKlineChart({ analysisId }: Props) {
       textStyle: { fontSize: 11, color: cssVar("--text-3", "#a8a29e") },
     },
     grid: {
-      top: 50,
+      top: 36,
       right: 24,
       bottom: 36,
       left: 52,
