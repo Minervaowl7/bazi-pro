@@ -10,7 +10,7 @@ import logging
 import re
 from datetime import datetime
 from html import escape
-from typing import Optional
+
 
 logger = logging.getLogger("bazi-pro")
 
@@ -474,7 +474,6 @@ def build_report_html(
 
     day_master = validation.get("day_master") or analysis_data.get("day_master") or ""
     bazi = validation.get("bazi") or ""
-    gender = validation.get("gender") or ""
     zodiac = validation.get("zodiac") or ""
     pattern_str = pattern.get("pattern") or analysis_data.get("pattern") or ""
     yongshen_str = yongshen.get("yongshen") or analysis_data.get("yongshen") or ""
