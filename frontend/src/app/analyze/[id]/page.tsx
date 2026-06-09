@@ -31,10 +31,25 @@ import ChartQuality, { type ChartQualityData } from "@/components/ChartQuality";
 const SCHOOL_OPTIONS = SCHOOL_OPTIONS_WITH_ALL;
 
 interface FallbackProps { children: ReactNode; fallback?: ReactNode; }
-class ErrorBoundary extends Component<FallbackProps, { hasError: boolean }> {
+class ErrorBoundary extends Component<FallbackProps, { hasError: boolean; error?: Error }> {
   constructor(props: FallbackProps) { super(props); this.state = { hasError: false }; }
-  static getDerivedStateFromError() { return { hasError: true }; }
-  render() { if (this.state.hasError) return this.props.fallback || null; return this.props.children; }
+  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
+  componentDidCatch(error: Error, info: React.ErrorInfo) { console.error("[ErrorBoundary]", error, info.componentStack); }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <section className="card p-8 text-center" style={{ margin: "2rem auto", maxWidth: 600 }}>
+          <h3 style={{ color: "var(--danger)", marginBottom: 8 }}>渲染出错</h3>
+          <p style={{ color: "var(--text-2)", fontSize: 14 }}>{this.state.error?.message || "未知错误"}</p>
+          <button onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+            style={{ marginTop: 16, padding: "8px 20px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", color: "var(--ink)" }}>
+            刷新重试
+          </button>
+        </section>
+      );
+    }
+    return this.props.children;
+  }
 }
 function Safe({ children, fallback }: FallbackProps) { return <ErrorBoundary fallback={fallback}>{children}</ErrorBoundary>; }
 
@@ -129,13 +144,30 @@ export default function AnalyzePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const tabContentRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
+  const [loadTimeout, setLoadTimeout] = useState(false);
 
   useEffect(() => {
     if (!analysisId) return;
+    // 15 秒加载超时保护 — 防止无限骨架屏
+    const timer = setTimeout(() => {
+      if (status !== "completed" && status !== "failed") {
+        setLoadTimeout(true);
+      }
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [analysisId, status]);
+
+  useEffect(() => {
+    if (!analysisId) return;
+    const fetchAndLog = (id: string) => {
+      fetchResult(id).catch((err) => {
+        console.error("[AnalyzePage] fetchResult failed:", err);
+      });
+    };
     if (analysisId !== prevIdRef.current) {
       prevIdRef.current = analysisId;
-      if (analysisId !== storeAnalysisId) { reset(); fetchResult(analysisId).catch(() => {}); }
-    } else if (status === "idle") { fetchResult(analysisId).catch(() => {}); }
+      if (analysisId !== storeAnalysisId) { reset(); fetchAndLog(analysisId); }
+    } else if (status === "idle") { fetchAndLog(analysisId); }
   }, [analysisId, status, storeAnalysisId, fetchResult, reset]);
 
   const statusRef = useRef(status);
@@ -221,6 +253,18 @@ export default function AnalyzePage() {
   }, { scope: containerRef, dependencies: [activeTab], revertOnUpdate: true });
 
   return (
+    <ErrorBoundary fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
+        <section className="card p-8 text-center" style={{ maxWidth: 500 }}>
+          <h3 style={{ color: "var(--danger)", fontSize: 18, fontWeight: 700, marginBottom: 8 }}>页面渲染出错</h3>
+          <p style={{ color: "var(--text-2)", fontSize: 14, marginBottom: 16 }}>分析结果渲染时发生异常，请刷新页面重试。</p>
+          <button onClick={() => window.location.reload()}
+            style={{ padding: "10px 24px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", color: "var(--ink)", fontSize: 14 }}>
+            刷新页面
+          </button>
+        </section>
+      </div>
+    }>
     <div ref={containerRef} className="min-h-screen" style={{ background: "var(--bg)" }}>
       <div className="w-full max-w-[960px] mx-auto pb-10 px-6">
 
@@ -292,13 +336,25 @@ export default function AnalyzePage() {
         {/* 骨架屏 */}
         {(isLoading || (status !== "completed" && status !== "failed" && !analysisResult)) && (
           <>
-            {!isLoading && (
+            {loadTimeout ? (
+              <section className="card p-6 mb-6" style={{ border: "1px solid var(--warning)" }}>
+                <h3 className="font-bold text-base mb-2" style={{ color: "var(--warning)" }}>加载缓慢</h3>
+                <p className="text-[15px] mb-4" style={{ color: "var(--text-2)" }}>
+                  分析结果加载已超过 15 秒，可能是首次启动需要加载古籍索引。
+                </p>
+                <button onClick={() => window.location.reload()}
+                  className="px-4 py-2 rounded-lg text-sm font-medium"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--ink)", cursor: "pointer" }}>
+                  刷新页面
+                </button>
+              </section>
+            ) : !isLoading ? (
               <section className="card p-5 mb-6 flex items-center gap-3">
                 <span className="w-2 h-2 shrink-0 animate-pulse" style={{ background: "var(--wx-water)" }} />
                 <span className="text-[15px]" style={{ color: "var(--text-3)" }}>正在加载分析结果…</span>
               </section>
-            )}
-            <SkeletonCard /><SkeletonNarration />
+            ) : null}
+            {!loadTimeout && <><SkeletonCard /><SkeletonNarration /></>}
           </>
         )}
 
@@ -550,5 +606,6 @@ export default function AnalyzePage() {
         )}
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

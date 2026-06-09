@@ -86,7 +86,12 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
             if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
             es.close();
             set({ _sseRef: null });
-            get().fetchResult(resp.analysis_id);
+            get().fetchResult(resp.analysis_id).catch((err) => {
+              console.error("[fetchResult] error after SSE done:", err);
+              if (get().status !== "failed") {
+                set({ status: "failed", error: err instanceof Error ? err.message : "获取结果失败" });
+              }
+            });
           } else if (event.event === "error") {
             if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
             es.close();
@@ -104,7 +109,14 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
           if (current.status === "streaming" && _generation === gen) {
             set({ status: "polling" });
             setTimeout(() => {
-              if (_generation === gen) get().fetchResult(resp.analysis_id);
+              if (_generation === gen) {
+                get().fetchResult(resp.analysis_id).catch((err) => {
+                  console.error("[fetchResult] polling error:", err);
+                  if (get().status !== "failed") {
+                    set({ status: "failed", error: err instanceof Error ? err.message : "获取结果失败" });
+                  }
+                });
+              }
             }, 1000);
           }
         },
@@ -117,7 +129,14 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
           es.close();
           set({ _sseRef: null, status: "polling" });
           setTimeout(() => {
-            if (_generation === gen) get().fetchResult(resp.analysis_id);
+            if (_generation === gen) {
+              get().fetchResult(resp.analysis_id).catch((err) => {
+                console.error("[fetchResult] timeout fallback error:", err);
+                if (get().status !== "failed") {
+                  set({ status: "failed", error: err instanceof Error ? err.message : "获取结果失败" });
+                }
+              });
+            }
           }, 500);
         }
       }, 15000);
@@ -138,12 +157,11 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
     while (true) {
       try {
         const data = await getAnalysis(analysisId);
-        const hasResult = data.result && typeof data.result === "object" && Object.keys(data.result as Record<string, unknown>).length > 0;
         const resultObj = data.result as Record<string, unknown> | undefined;
-        const hasCoreFields = hasResult && resultObj && (
-          "validation" in resultObj || "shishen" in resultObj || "pattern" in resultObj || "day_master" in resultObj
-        );
-        if (data.status === "completed" && !hasCoreFields) {
+        const hasResult = resultObj && typeof resultObj === "object" && Object.keys(resultObj).length > 0;
+
+        // status=completed 但结果为空 → 重试（数据库可能尚未写入）
+        if (data.status === "completed" && !hasResult) {
           if (retries >= 8 || Date.now() - start > maxPollMs) {
             set({ status: "failed", error: "分析超时，请稍后重试" });
             return;
@@ -152,8 +170,14 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
           retries++;
           continue;
         }
+
+        // 检测结果是否为 JSON 字符串（双重序列化防护）
+        if (typeof data.result === "string") {
+          try { data.result = JSON.parse(data.result as string); } catch { /* 保留原值 */ }
+        }
+
         const failedError = data.error
-          || (data.result && typeof data.result === "object" ? (data.result as Record<string, unknown>).error as string || undefined : undefined)
+          || (resultObj?.error as string | undefined)
           || "分析过程出错";
         set({ result: data, status: data.status === "failed" ? "failed" : "completed", error: data.status === "failed" ? failedError : null });
         return;
