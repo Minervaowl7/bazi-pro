@@ -47,7 +47,7 @@ export default function BirthForm() {
   const router = useRouter();
   const { submitPaipan, paipanResult, paipanLoading, startAnalysis, status } = useAnalysisStore();
 
-  const [form, setForm] = useState({ gender: "男", solarDate: "", shichen: "", school: "ziping", city: "", cityLng: 0 });
+  const [form, setForm] = useState({ gender: "男", name: "", solarDate: "", shichen: "", school: "ziping", city: "", cityLng: 0 });
   const [error, setError] = useState("");
   const [showPaipan, setShowPaipan] = useState(false);
 
@@ -100,6 +100,7 @@ export default function BirthForm() {
       const analysisId = await startAnalysis({
         性别: paipanResult.性别, 八字: paipanResult.八字, 日主: paipanResult.日主,
         阳历: solarDatetime, 生肖: paipanResult.生肖, school: form.school,
+        name: form.name || undefined,
         ...(form.cityLng ? { longitude: form.cityLng } : {}),
       });
       router.push(`/analyze/${analysisId}`);
@@ -126,6 +127,13 @@ export default function BirthForm() {
               >{g}</button>
             ))}
           </div>
+        </div>
+
+        {/* 姓名 */}
+        <div>
+          <label className="form-label">姓名 <span className="text-[10px] font-normal" style={{ color: "var(--text-4)" }}>选填，留空显示"命主"</span></label>
+          <input type="text" value={form.name} placeholder="请输入姓名" autoComplete="name" className="form-input mt-1.5"
+            onChange={e => handleChange("name", e.target.value)} />
         </div>
 
         {/* 出生日期 + 出生时辰 */}

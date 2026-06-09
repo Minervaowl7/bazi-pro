@@ -291,3 +291,51 @@ async def api_v2_get_report(analysis_id: str):
         "citations": record.get("citations"),
         "created_at": record["created_at"],
     })
+
+
+@router.get("/api/v2/report/{analysis_id}/pdf")
+async def api_v2_report_pdf(analysis_id: str):
+    """下载详批报告 PDF"""
+    from fastapi.responses import Response
+
+    # 获取报告数据
+    record = await get_report(analysis_id)
+    if not record:
+        return error_response(404, "NOT_FOUND", "报告不存在，请先通过 POST /api/v2/report 生成")
+
+    # 获取分析数据
+    analysis = await get_analysis(analysis_id)
+    if not analysis:
+        return error_response(404, "NOT_FOUND", "分析记录不存在")
+
+    # 提取姓名
+    birth_json = analysis.get("birth_json") or {}
+    if isinstance(birth_json, str):
+        try:
+            birth_json = json.loads(birth_json)
+        except Exception:
+            birth_json = {}
+    name = birth_json.get("name") or ""
+
+    # 构造报告数据
+    report_data = {
+        "sections": record.get("report_data") or {},
+        "citations": record.get("citations") or {},
+        "created_at": record.get("created_at"),
+    }
+
+    try:
+        from server.report_pdf import generate_report_pdf
+        pdf_bytes = generate_report_pdf(report_data, analysis, name=name)
+    except Exception as e:
+        logger.error("PDF generation failed for analysis %s: %s", analysis_id, e)
+        return error_response(500, "PDF_ERROR", f"PDF 生成失败: {e}")
+
+    display_name = name or "命主"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="report_{display_name}.pdf"',
+        },
+    )

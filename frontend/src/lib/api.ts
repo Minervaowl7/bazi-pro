@@ -74,6 +74,7 @@ export interface BirthInput {
   school?: string;
   longitude?: number;
   latitude?: number;
+  name?: string;
 }
 
 export interface AnalysisSubmitResponse {

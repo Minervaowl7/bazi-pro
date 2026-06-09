@@ -40,6 +40,7 @@ class BirthAnalyzeRequest(BaseModel):
     latitude: Optional[float] = Field(default=None, description="出生地纬度")
     school: Optional[str] = Field(default="ziping", description="解读流派: ziping/ziwei/qiongtong")
     skip_llm_overview: Optional[bool] = Field(default=False, description="跳过 LLM 命盘总览生成")
+    name: Optional[str] = Field(default="", description="命主姓名（选填）")
 
 
 class PaipanRequest(BaseModel):
