@@ -222,7 +222,7 @@ export default function AnalyzePage() {
 
   return (
     <div ref={containerRef} className="min-h-screen" style={{ background: "var(--bg)" }}>
-      <div className="w-full mx-auto pb-10 px-6" style={{ maxWidth: 960 }}>
+      <div className="w-full max-w-[960px] mx-auto pb-10 px-6">
 
         {/* ===== 操作栏 ===== */}
         {analysisResult && (

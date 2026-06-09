@@ -182,7 +182,7 @@ export default function ComparePage() {
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)]" style={{ background: "var(--bg)" }}>
-      <div className="w-full px-6 md:px-12 lg:px-16 xl:px-24 py-10">
+      <div className="w-full max-w-[960px] mx-auto px-6 py-10">
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-2xl md:text-3xl font-bold mb-2"

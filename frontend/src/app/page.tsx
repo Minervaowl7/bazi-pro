@@ -33,8 +33,8 @@ export default function Home() {
 
   return (
     <div ref={containerRef} className="relative z-[1]">
-      <section className="flex flex-col items-center justify-center px-6" style={{ minHeight: "100dvh" }}>
-        <div className="text-center w-full flex flex-col items-center" style={{ maxWidth: 480 }}>
+      <section className="min-h-[100dvh] flex flex-col items-center justify-center px-6">
+        <div className="text-center w-full max-w-[480px] flex flex-col items-center">
           {/* 品牌印章 */}
           <div className="hero-seal mb-7" style={{ visibility: "hidden" }}>
             <div
@@ -98,8 +98,8 @@ export default function Home() {
 
           {/* 表单卡片 */}
           <div
-            className="hero-form w-full relative"
-            style={{ maxWidth: 420,
+            className="hero-form w-full max-w-[420px] relative"
+            style={{
               background: "var(--surface)",
               border: "0.5px solid var(--border)",
               borderRadius: "var(--r)",
