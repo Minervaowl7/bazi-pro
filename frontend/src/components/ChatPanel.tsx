@@ -94,8 +94,11 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
     } catch (err) {
       if (!mountedRef.current) return;
       const errMsg = err instanceof Error ? err.message : "发送失败";
+      const errCode = err instanceof Error && "code" in err ? (err as { code?: string }).code : undefined;
       if (errMsg.includes("LLM") && (errMsg.includes("未配置") || errMsg.includes("503") || errMsg.includes("not configured"))) {
         setError("LLM 服务未配置。请在服务端设置 LLM_API_KEY 环境变量后重启。");
+      } else if (errCode === "TIMEOUT") {
+        setError("AI 思考超时（120s），请稍后重试或缩短问题。");
       } else { setError(errMsg); }
     } finally {
       if (mountedRef.current) setLoading(false);
@@ -238,7 +241,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
               className="w-full resize-none transition-all duration-200 focus:border-[var(--scholar-blue)] focus:shadow-[0_0_0_3px_rgba(45,62,95,0.1)]"
               style={{
                 fontSize: 15, fontFamily: "var(--font-body)",
-                background: "var(--surface-2)",
+                background: "var(--surface)",
                 border: "1.5px solid var(--border-subtle)",
                 borderRadius: 10,
                 color: "var(--ink)",
@@ -253,7 +256,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
             className="flex items-center justify-center transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
             style={{
               width: 44, height: 44, borderRadius: 10,
-              background: input.trim() ? "var(--scholar-blue)" : "var(--surface-2)",
+              background: input.trim() ? "var(--scholar-blue)" : "var(--surface)",
               border: "none",
               boxShadow: input.trim() ? "0 2px 8px rgba(45,62,95,0.25)" : "none",
             }}

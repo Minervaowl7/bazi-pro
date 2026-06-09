@@ -31,7 +31,7 @@ async function fetchApi<T>(path: string, init?: RequestInit, timeoutMs = 30000):
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort("请求超时"), timeoutMs);
 
   let res: Response;
   try {
@@ -189,7 +189,7 @@ export async function sendChatMessage(analysisId: string, message: string, schoo
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ analysis_id: analysisId, message, school }),
-  });
+  }, 120000);
 }
 
 export async function getChatHistory(analysisId: string, school?: string): Promise<ChatHistoryResponse> {
