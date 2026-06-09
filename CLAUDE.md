@@ -10,6 +10,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **v5.3 重大更新**：核心格局判定三项古籍对齐修正——会方检测收紧（对齐《滴天髓》"方是方兮局是局"）· 从强格官杀guard（对齐《渊海子平》"官印双全"）· 三刑优先于两刑（对齐《三命通会》）· 阴干墓库加深（对齐《滴天髓》"阴逢库为无用"）· 调候整合喜神（对齐《子平真诠》"论用神配气候得失"）。详见 README.md 版本历史。
 
+## 环境要求
+
+- **Python >= 3.10** — 使用了 `list[dict]`、`dict | None` 等 3.10+ 类型注解语法
+- **Node.js >= 18** — Next.js 16 要求
+- **pnpm** — 前端包管理器（非 npm/yarn）
+
 ## Build and test commands
 
 ```bash
@@ -115,7 +121,8 @@ cd frontend && npx tsc --noEmit  # TypeScript 类型检查
 - `server/kline_ohlc.py`: 百年人生 K 线 OHLC 模型（4 维度）
 - `server/dayun_score.py`: 大运流年评分
 - 新增端点：`POST /api/v2/hehun`（合婚）、`GET /api/v2/fortune/daily/{id}`、`GET /api/v2/fortune/monthly/{id}`、`POST /api/v2/reverse-lookup`、`GET /api/v2/cities`
-- LLM 配置：`LLM_API_KEY` / `LLM_API_BASE` / `LLM_MODEL` 环境变量（见 `.env.example`）
+- `server/chart_quality.py`: 命局层次评分（格局清纯度/用神状态/冲突/五行流通/大运配合，5 维度 100 分，确定性无 LLM），结果挂载到 `result['chart_quality']`
+- LLM 配置：`LLM_API_KEY` / `LLM_API_BASE` / `LLM_MODEL` / `LLM_TIMEOUT`（默认 300s）环境变量（见 `.env.example`）
 - CORS 默认允许 `localhost:3000`
 
 **前端** (`frontend/`):
@@ -218,6 +225,7 @@ cd frontend && npx tsc --noEmit  # TypeScript 类型检查
 | `cross_validate.py` | 三流派交叉验证 |
 | `interpretation_modes.py` | 解读模式（通俗/专业/技术） |
 | `dayun_score.py` | 大运流年评分 |
+| `chart_quality.py` | 命局层次评分（格局清纯度/用神状态/冲突/五行流通/大运配合，100 分制） |
 
 ## Critical constraints
 
@@ -286,6 +294,7 @@ cd frontend && npx tsc --noEmit  # TypeScript 类型检查
 - **金水伤官除外** — 伤官格破格检测中，庚/辛日主（金日主）的伤官见官不标记破格。
 - **破格检测函数签名** — `_screen_layer1/2/3` 和 `_build_jianlu_yuejie` 需要传入 `bazi_parts` 参数。
 - **SHISHEN_WUXING_REL 无 '印比'** — 印星和比劫需单独映射，从强格/专旺格用神拆分为 `['印星', '比劫']`。
+- **从格检测 gans 必须排除日主** — `_screen_layer_ccong*` 中调用 `_count_shishen_categories()` 时，传入的天干列表必须排除日主自身（`gans_no_dm = [g for g in gans if g != day_master]`），否则 `derive_shishen(day_master, day_master)` 返回"比肩"，导致 `bijie_free` 恒为 False，从财/从官杀/从儿/从势格永远无法命中。
 
 ### 旺衰与五行
 
