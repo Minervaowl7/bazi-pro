@@ -104,6 +104,17 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         },
       );
 
+      // 15秒无进度事件 → 自动轮询（防止 SSE 连接成功但无事件）
+      setTimeout(() => {
+        if (_generation === gen && get().progress.length === 0 && get().status === "streaming") {
+          es.close();
+          set({ _sseRef: null, status: "polling" });
+          setTimeout(() => {
+            if (_generation === gen) get().fetchResult(resp.analysis_id);
+          }, 500);
+        }
+      }, 15000);
+
       set({ _sseRef: es });
       return resp.analysis_id;
     } catch (e) {

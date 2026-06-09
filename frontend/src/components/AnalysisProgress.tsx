@@ -1,7 +1,7 @@
 "use client";
 
 import { useAnalysisStore } from "@/stores/analysisStore";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 
 /* ── 步骤定义 ── */
 interface StepDef {
@@ -69,7 +69,32 @@ function ElapsedTimer({ active, resetKey }: { active: boolean; resetKey: number 
 
 /* ── 主组件 ── */
 export default function AnalysisProgress() {
-  const { progress, status } = useAnalysisStore();
+  const { progress, status, error } = useAnalysisStore();
+  const [connectWarn, setConnectWarn] = useState(false);
+  const [connectTimeout, setConnectTimeout] = useState(false);
+  const firstEventRef = useRef(false);
+
+  /* 监听首个进度事件 */
+  useEffect(() => {
+    if (progress.length > 0) firstEventRef.current = true;
+  }, [progress.length]);
+
+  /* 连接超时检测：10秒无事件显示警告，30秒显示超时 */
+  useEffect(() => {
+    if (status !== "streaming" || firstEventRef.current) return;
+    const warnTimer = setTimeout(() => setConnectWarn(true), 10000);
+    const timeoutTimer = setTimeout(() => setConnectTimeout(true), 30000);
+    return () => { clearTimeout(warnTimer); clearTimeout(timeoutTimer); };
+  }, [status]);
+
+  /* 重置状态 */
+  useEffect(() => {
+    if (status === "idle" || status === "failed") {
+      setConnectWarn(false);
+      setConnectTimeout(false);
+      firstEventRef.current = false;
+    }
+  }, [status]);
 
   if (status !== "streaming" && status !== "submitting") return null;
 
@@ -132,8 +157,14 @@ export default function AnalysisProgress() {
               <h3 className="text-[15px] font-semibold" style={{ color: "var(--ink)", fontFamily: "var(--font-display)" }}>
                 命理推演中
               </h3>
-              <p className="text-[11px] mt-0.5" style={{ color: "var(--text-4)" }}>
-                {currentIdx >= 0 ? STEPS[currentIdx]?.desc : "正在连接分析引擎..."}
+              <p className="text-[11px] mt-0.5" style={{ color: connectTimeout ? "var(--danger)" : connectWarn ? "var(--warning)" : "var(--text-4)" }}>
+                {currentIdx >= 0
+                  ? STEPS[currentIdx]?.desc
+                  : connectTimeout
+                    ? "连接超时，请检查后端服务是否运行（端口 8711）"
+                    : connectWarn
+                      ? "正在连接，若长时间无响应请检查后端..."
+                      : "正在连接分析引擎..."}
               </p>
             </div>
           </div>

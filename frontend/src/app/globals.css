@@ -1,7 +1,7 @@
 @import "tailwindcss";
-@source "../app";
-@source "../components";
-@source "../lib";
+@source "./src/app";
+@source "./src/components";
+@source "./src/lib";
 
 /* ================================================================
    Design Tokens — 唯一数据源（brand-spec.md Direction C）
