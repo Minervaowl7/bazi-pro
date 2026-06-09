@@ -59,7 +59,7 @@ async def _lifespan(app: FastAPI):
         _logger = _logging.getLogger(__name__)
         def _warm_bm25():
             try:
-                from bazi_pro.retrieve_classical import _resolve_corpus, load_corpus, get_bm25
+                from bazi_pro.retrieve_classical import _resolve_corpus, get_bm25, load_corpus
                 corpus = _resolve_corpus()
                 entries = load_corpus(corpus)
                 if entries:
