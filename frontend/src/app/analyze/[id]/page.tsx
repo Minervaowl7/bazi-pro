@@ -146,16 +146,24 @@ export default function AnalyzePage() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [loadTimeout, setLoadTimeout] = useState(false);
 
+  const statusRef = useRef(status);
+  useEffect(() => { statusRef.current = status; }, [status]);
+
+  // analysisId 变化时重置 loadTimeout，防止旧分析的超时状态污染新分析
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- 分析 ID 变化是明确的重置时机
+  useEffect(() => { setLoadTimeout(false); }, [analysisId]);
+
   useEffect(() => {
     if (!analysisId) return;
-    // 15 秒加载超时保护 — 防止无限骨架屏
+    // 15 秒加载超时保护 — 防止无限骨架屏（不依赖 status，避免状态变化重置计时器）
     const timer = setTimeout(() => {
-      if (status !== "completed" && status !== "failed") {
+      const s = statusRef.current;
+      if (s !== "completed" && s !== "failed") {
         setLoadTimeout(true);
       }
     }, 15000);
     return () => clearTimeout(timer);
-  }, [analysisId, status]);
+  }, [analysisId]);
 
   useEffect(() => {
     if (!analysisId) return;
@@ -169,9 +177,6 @@ export default function AnalyzePage() {
       if (analysisId !== storeAnalysisId) { reset(); fetchAndLog(analysisId); }
     } else if (status === "idle") { fetchAndLog(analysisId); }
   }, [analysisId, status, storeAnalysisId, fetchResult, reset]);
-
-  const statusRef = useRef(status);
-  useEffect(() => { statusRef.current = status; }, [status]);
   useEffect(() => {
     if (!analysisId || status !== "polling") return;
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
@@ -198,7 +203,9 @@ export default function AnalyzePage() {
     try {
       const newId = await startAnalysis({ ...birthInput, school: selectedSchool });
       router.push(`/analyze/${newId}`);
-    } catch {}
+    } catch (err) {
+      console.error("[AnalyzePage] reanalyze failed:", err);
+    }
   }, [birthInput, selectedSchool, startAnalysis, router]);
 
   const handleGenerateReport = useCallback(() => {
@@ -348,7 +355,7 @@ export default function AnalyzePage() {
                 <p className="text-[15px] mb-4" style={{ color: "var(--text-2)" }}>
                   分析结果加载已超过 15 秒，可能是首次启动需要加载古籍索引，请耐心等待或重试。
                 </p>
-                <button onClick={() => { setLoadTimeout(false); useAnalysisStore.setState({ status: "polling" }); fetchResult(analysisId); }}
+                <button onClick={() => { setLoadTimeout(false); useAnalysisStore.setState({ status: "idle" }); }}
                   className="px-4 py-2 rounded-lg text-sm font-medium"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--ink)", cursor: "pointer" }}>
                   重新加载

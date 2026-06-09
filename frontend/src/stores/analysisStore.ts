@@ -40,6 +40,16 @@ interface AnalysisState {
 let _generation = 0; // 防止 SSE fallback 竞态
 let _sseTimeoutId: ReturnType<typeof setTimeout> | null = null; // 15s 超时定时器
 
+/** fetchResult 的安全调用包装 — 统一错误处理，避免 3 处重复 .catch() */
+function _safeFetchResult(get: () => AnalysisState, set: (partial: Partial<AnalysisState>) => void, analysisId: string, label: string) {
+  get().fetchResult(analysisId).catch((err) => {
+    console.error(`[fetchResult] ${label}:`, err);
+    if (get().status !== "failed") {
+      set({ status: "failed", error: err instanceof Error ? err.message : "获取结果失败" });
+    }
+  });
+}
+
 export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   birthInput: null,
   analysisId: null,
@@ -86,12 +96,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
             if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
             es.close();
             set({ _sseRef: null });
-            get().fetchResult(resp.analysis_id).catch((err) => {
-              console.error("[fetchResult] error after SSE done:", err);
-              if (get().status !== "failed") {
-                set({ status: "failed", error: err instanceof Error ? err.message : "获取结果失败" });
-              }
-            });
+            _safeFetchResult(get, set, resp.analysis_id, "SSE done 后获取结果失败");
           } else if (event.event === "error") {
             if (_sseTimeoutId) { clearTimeout(_sseTimeoutId); _sseTimeoutId = null; }
             es.close();
@@ -110,12 +115,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
             set({ status: "polling" });
             setTimeout(() => {
               if (_generation === gen) {
-                get().fetchResult(resp.analysis_id).catch((err) => {
-                  console.error("[fetchResult] polling error:", err);
-                  if (get().status !== "failed") {
-                    set({ status: "failed", error: err instanceof Error ? err.message : "获取结果失败" });
-                  }
-                });
+                _safeFetchResult(get, set, resp.analysis_id, "SSE 断开后轮询失败");
               }
             }, 1000);
           }
@@ -130,12 +130,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
           set({ _sseRef: null, status: "polling" });
           setTimeout(() => {
             if (_generation === gen) {
-              get().fetchResult(resp.analysis_id).catch((err) => {
-                console.error("[fetchResult] timeout fallback error:", err);
-                if (get().status !== "failed") {
-                  set({ status: "failed", error: err instanceof Error ? err.message : "获取结果失败" });
-                }
-              });
+              _safeFetchResult(get, set, resp.analysis_id, "SSE 超时后轮询失败");
             }
           }, 500);
         }
@@ -157,11 +152,9 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
     while (true) {
       try {
         const data = await getAnalysis(analysisId);
-        const resultObj = data.result as Record<string, unknown> | undefined;
-        const hasResult = resultObj && typeof resultObj === "object" && Object.keys(resultObj).length > 0;
 
-        // 仍在处理中，或已完成但结果为空 → 重试
-        if (data.status === "processing" || (data.status === "completed" && !hasResult)) {
+        // 仍在处理中 → 重试（先于 result 解析，避免对 processing 结果做无谓检查）
+        if (data.status === "processing") {
           if (retries >= 8 || Date.now() - start > maxPollMs) {
             set({ status: "failed", error: "分析超时，请稍后重试" });
             return;
@@ -171,9 +164,23 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
           continue;
         }
 
-        // 检测结果是否为 JSON 字符串（双重序列化防护）
+        // 双重序列化防护 — 在提取 resultObj 之前解析
         if (typeof data.result === "string") {
           try { data.result = JSON.parse(data.result as string); } catch { /* 保留原值 */ }
+        }
+
+        const resultObj = data.result as Record<string, unknown> | undefined;
+        const hasResult = resultObj && typeof resultObj === "object" && Object.keys(resultObj).length > 0;
+
+        // 已完成但结果为空 → 重试
+        if (data.status === "completed" && !hasResult) {
+          if (retries >= 8 || Date.now() - start > maxPollMs) {
+            set({ status: "failed", error: "分析超时，请稍后重试" });
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 1500 * Math.pow(1.5, retries)));
+          retries++;
+          continue;
         }
 
         const failedError = data.error

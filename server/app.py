@@ -55,6 +55,8 @@ async def _lifespan(app: FastAPI):
     # 预热 BM25 古籍索引（避免首次请求阻塞 3-10 秒）
     try:
         import asyncio as _aio
+        import logging as _logging
+        _logger = _logging.getLogger(__name__)
         def _warm_bm25():
             try:
                 from bazi_pro.retrieve_classical import _resolve_corpus, load_corpus, get_bm25
@@ -62,8 +64,9 @@ async def _lifespan(app: FastAPI):
                 entries = load_corpus(corpus)
                 if entries:
                     get_bm25(corpus, entries)
+                    _logger.info("BM25 古籍索引预热完成（%d 条）", len(entries))
             except Exception:
-                pass
+                _logger.warning("BM25 古籍索引预热失败，首次检索将延迟", exc_info=True)
         await _aio.to_thread(_warm_bm25)
     except Exception:
         pass
