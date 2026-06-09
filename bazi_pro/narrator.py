@@ -753,7 +753,8 @@ def _narrate_marriage(result, gender):
         impacts = palace.get("impacts", [])
         if impacts:
             for imp in impacts[:3]:
-                lines.append(f"  {imp}")
+                detail = imp.get("detail", "") if isinstance(imp, dict) else str(imp)
+                lines.append(f"  • {detail}")
 
     strength_info = ma.get("spouse_star_strength", {})
     if strength_info.get("level"):
@@ -885,7 +886,8 @@ def _narrate_family(result, gender):
             lines.append(f"{label}：{info['star']}为{label}星，"
                          f"力量{info.get('strength', 0)}分，缘分{info.get('affinity', '中')}。")
             for ind in info.get("indicators", [])[:2]:
-                lines.append(f"  • {ind}")
+                detail = ind.get("detail", "") if isinstance(ind, dict) else str(ind)
+                lines.append(f"  • {detail}")
 
     siblings = fa.get("siblings", {})
     if siblings.get("star"):
@@ -895,7 +897,8 @@ def _narrate_family(result, gender):
     if children.get("star"):
         lines.append(f"子女：{children['star']}为子女星，力量{children.get('strength', 0)}分，缘分{children.get('affinity', '中')}。")
         for ind in children.get("indicators", [])[:2]:
-            lines.append(f"  • {ind}")
+            detail = ind.get("detail", "") if isinstance(ind, dict) else str(ind)
+            lines.append(f"  • {detail}")
 
     risks = fa.get("family_risks", [])
     if risks:
