@@ -348,7 +348,7 @@ export default function AnalyzePage() {
                 <p className="text-[15px] mb-4" style={{ color: "var(--text-2)" }}>
                   分析结果加载已超过 15 秒，可能是首次启动需要加载古籍索引，请耐心等待或重试。
                 </p>
-                <button onClick={() => { setLoadTimeout(false); fetchResult(analysisId); }}
+                <button onClick={() => { setLoadTimeout(false); useAnalysisStore.setState({ status: "polling" }); fetchResult(analysisId); }}
                   className="px-4 py-2 rounded-lg text-sm font-medium"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--ink)", cursor: "pointer" }}>
                   重新加载

@@ -160,8 +160,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         const resultObj = data.result as Record<string, unknown> | undefined;
         const hasResult = resultObj && typeof resultObj === "object" && Object.keys(resultObj).length > 0;
 
-        // status=completed 但结果为空 → 重试（数据库可能尚未写入）
-        if (data.status === "completed" && !hasResult) {
+        // 仍在处理中，或已完成但结果为空 → 重试
+        if (data.status === "processing" || (data.status === "completed" && !hasResult)) {
           if (retries >= 8 || Date.now() - start > maxPollMs) {
             set({ status: "failed", error: "分析超时，请稍后重试" });
             return;
