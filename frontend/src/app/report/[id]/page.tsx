@@ -121,7 +121,7 @@ export default function ReportPage() {
       const res = await fetch(`${API_BASE}/api/v2/report/${analysisId}/pdf`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || data.message || "PDF 生成失败");
+        throw new Error(data?.error?.message || data.detail || data.message || "PDF 生成失败");
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -356,7 +356,7 @@ export default function ReportPage() {
 
             {/* PDF 错误提示 */}
             {pdfError && (
-              <div className="py-3 px-4 rounded-lg" style={{ background: "rgba(201,100,66,0.08)", border: "1px solid var(--danger)" }}>
+              <div className="py-3 px-4 rounded-lg" style={{ background: "var(--cinnabar-light)", border: "1px solid var(--danger)" }}>
                 <p className="text-sm" style={{ color: "var(--danger)" }}>{pdfError}</p>
               </div>
             )}

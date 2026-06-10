@@ -67,7 +67,7 @@
 
   /* ── Z-Index 层级 ── */
   --z-base: 1;
-  --z-dropdown: 50;
+  --z-dropdown: 40;
   --z-navbar: 50;
   --z-tooltip: 60;
   --z-overlay: 70;

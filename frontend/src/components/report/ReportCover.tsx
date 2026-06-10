@@ -42,8 +42,8 @@ export default function ReportCover({
   const dmWx = dayMaster ? GAN_WUXING[dayMaster] : "";
   const dmColor = dmWx ? WUXING_COLORS[dmWx] : "var(--cinnabar)";
 
-  // 八字拆分为四柱，逐字着色
-  const baziChars = bazi ? bazi.replace(/\s+/g, "").split("") : [];
+  // 八字拆分为四柱，逐字着色（过滤非汉字分隔符）
+  const baziChars = bazi ? bazi.replace(/\s+/g, "").split("").filter(ch => /\p{Unified_Ideograph}/u.test(ch)) : [];
 
   const INFO_ITEMS = [
     { label: "格局", value: pattern, accent: true },

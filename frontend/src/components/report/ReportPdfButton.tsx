@@ -27,7 +27,7 @@ export default function ReportPdfButton({
       const res = await fetch(`${API_BASE}/api/v2/report/${analysisId}/pdf`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || data.message || "PDF 生成失败");
+        throw new Error(data?.error?.message || data.detail || data.message || "PDF 生成失败");
       }
 
       const blob = await res.blob();

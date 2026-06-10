@@ -59,16 +59,16 @@ def _md_to_html(text: str) -> str:
             out.append("<hr>")
             continue
 
-        # 无序列表
+        # 无序列表（用 __ul__ 前缀标记类型，后处理时区分）
         ul = re.match(r"^[\-\*]\s+(.+)$", line)
         if ul:
-            out.append(f"<li>{_inline(ul.group(1))}</li>")
+            out.append(f"__ul__<li>{_inline(ul.group(1))}</li>")
             continue
 
-        # 有序列表
+        # 有序列表（用 __ol__ 前缀标记类型，后处理时区分）
         ol = re.match(r"^\d+\.\s+(.+)$", line)
         if ol:
-            out.append(f"<li>{_inline(ol.group(1))}</li>")
+            out.append(f"__ol__<li>{_inline(ol.group(1))}</li>")
             continue
 
         # 引用
@@ -84,22 +84,35 @@ def _md_to_html(text: str) -> str:
         logger.warning("Markdown 内容包含未闭合的代码块，已自动闭合")
         out.append("</code></pre>")
 
-    # 后处理：将连续的裸 <li> 包裹在 <ul> 中
+    # 后处理：将连续的裸 <li> 包裹在 <ul> 或 <ol> 中
     result = []
     in_list = False
+    list_tag = "ul"
     for line in out:
-        if line.startswith("<li>") and line.endswith("</li>"):
-            if not in_list:
-                result.append("<ul>")
+        detected_type = None
+        clean_line = line
+        if line.startswith("__ul__"):
+            detected_type = "ul"
+            clean_line = line[6:]  # 去掉 __ul__ 前缀
+        elif line.startswith("__ol__"):
+            detected_type = "ol"
+            clean_line = line[6:]  # 去掉 __ol__ 前缀
+
+        if detected_type:
+            if not in_list or list_tag != detected_type:
+                if in_list:
+                    result.append(f"</{list_tag}>")
+                result.append(f"<{detected_type}>")
                 in_list = True
-            result.append(line)
+                list_tag = detected_type
+            result.append(clean_line)
         else:
             if in_list:
-                result.append("</ul>")
+                result.append(f"</{list_tag}>")
                 in_list = False
             result.append(line)
     if in_list:
-        result.append("</ul>")
+        result.append(f"</{list_tag}>")
 
     return "\n".join(result)
 
