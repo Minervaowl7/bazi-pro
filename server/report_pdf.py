@@ -82,13 +82,32 @@ def _md_to_html(text: str) -> str:
         out.append(f"<p>{_inline(line)}</p>")
 
     if in_code:
+        logger.warning("Markdown 内容包含未闭合的代码块，已自动闭合")
         out.append("</code></pre>")
 
-    return "\n".join(out)
+    # 后处理：将连续的裸 <li> 包裹在 <ul> 中
+    result = []
+    in_list = False
+    for line in out:
+        if line.startswith("<li>") and line.endswith("</li>"):
+            if not in_list:
+                result.append("<ul>")
+                in_list = True
+            result.append(line)
+        else:
+            if in_list:
+                result.append("</ul>")
+                in_list = False
+            result.append(line)
+    if in_list:
+        result.append("</ul>")
+
+    return "\n".join(result)
 
 
 def _inline(s: str) -> str:
-    """行内格式：粗体、斜体、行内代码"""
+    """行内格式：粗体、斜体、行内代码（先转义 HTML 再处理 markdown）"""
+    s = escape(s)
     s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
     s = re.sub(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)", r"<em>\1</em>", s)
     s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
@@ -187,6 +206,7 @@ body {
     color: white;
     font-size: 32pt;
     font-weight: 700;
+    overflow: hidden;
 }
 
 .cover h1 {
@@ -480,11 +500,28 @@ def build_report_html(
     wangshuai_str = wangshuai.get("verdict") or ""
 
     display_name = name or "命主"
-    now_str = datetime.now().strftime("%Y年%m月%d日")
+
+    # 优先使用报告创建时间，回退到当前时间
+    created_at = report_data.get("created_at")
+    if isinstance(created_at, str):
+        try:
+            created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            created_at = None
+    if isinstance(created_at, datetime):
+        now_str = created_at.strftime("%Y年%m月%d日")
+    else:
+        now_str = datetime.now().strftime("%Y年%m月%d日")
 
     # 提取报告章节
     sections = report_data.get("sections") or {}
+    if not isinstance(sections, dict):
+        logger.warning("report_data['sections'] 类型异常: %s, 使用空字典", type(sections).__name__)
+        sections = {}
     citations = report_data.get("citations") or {}
+    if not isinstance(citations, dict):
+        logger.warning("report_data['citations'] 类型异常: %s, 使用空字典", type(citations).__name__)
+        citations = {}
 
     # ── 封面 ──
     cover_html = f"""
@@ -533,7 +570,12 @@ def build_report_html(
         content = sections.get(key)
         if not content:
             continue
+        if not isinstance(content, str):
+            logger.warning("sections[%r] 类型异常: %s, 跳过", key, type(content).__name__)
+            continue
         citation = citations.get(key) or ""
+        if not isinstance(citation, str):
+            citation = str(citation) if citation else ""
         content_html = _md_to_html(content)
         citation_html = ""
         if citation.strip():
@@ -598,17 +640,14 @@ def generate_report_pdf(
 
     try:
         from weasyprint import HTML
+    except ImportError:
+        raise RuntimeError(
+            "PDF 生成失败：需要安装 weasyprint。"
+            "请运行 pip install weasyprint（需要 GTK+ 运行时）。"
+        )
+
+    try:
         pdf_bytes = HTML(string=html_content).write_pdf()
         return pdf_bytes
-    except ImportError:
-        logger.warning("weasyprint 未安装，尝试使用 pdfkit")
-        try:
-            import pdfkit
-            pdf_bytes = pdfkit.from_string(html_content, False)
-            return pdf_bytes
-        except Exception as e:
-            raise RuntimeError(
-                f"PDF 生成失败：需要安装 weasyprint 或 pdfkit。"
-                f"请运行 pip install weasyprint（需要 GTK+）或 pip install pdfkit（需要 wkhtmltopdf）。"
-                f"原始错误：{e}"
-            )
+    except Exception as e:
+        raise RuntimeError(f"PDF 渲染失败：{e}") from e
