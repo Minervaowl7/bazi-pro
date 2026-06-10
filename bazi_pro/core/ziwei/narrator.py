@@ -298,10 +298,6 @@ def narrate_overview(chart: dict[str, Any], sections: dict[str, str]) -> str:
 
     text += f"命主：{soul}，身主：{body}，五行局：{five_elements_class}\n\n"
 
-    # 提取关键信息
-    ming_palace_text = sections.get("ming_palace", "")
-    pattern_text = sections.get("pattern", "")
-
     # 生成总述
     text += "命宫主星决定了命主的基本性格和人生走向。\n"
     text += "格局高低反映了命主的先天禀赋和后天发展潜力。\n"

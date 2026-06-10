@@ -20,6 +20,24 @@ try:
 except ImportError:
     by_solar = None  # type: ignore[assignment]
 
+# 紫微斗数分析模块（延迟导入以避免循环依赖）
+_ziwei_patterns = None
+_ziwei_sihua = None
+_ziwei_narrator = None
+
+
+def _get_ziwei_modules():
+    """延迟导入紫微斗数模块"""
+    global _ziwei_patterns, _ziwei_sihua, _ziwei_narrator
+    if _ziwei_patterns is None:
+        from bazi_pro.core.ziwei.patterns import detect_patterns
+        from bazi_pro.core.ziwei.sihua import analyze_sihua
+        from bazi_pro.core.ziwei.narrator import narrate_ziwei
+        _ziwei_patterns = detect_patterns
+        _ziwei_sihua = analyze_sihua
+        _ziwei_narrator = narrate_ziwei
+    return _ziwei_patterns, _ziwei_sihua, _ziwei_narrator
+
 
 # ── 时辰编号映射 ──────────────────────────────────────────────
 # time_index: 0=早子时(0:00-1:00), 1=丑时(1:00-3:00), ..., 12=晚子时(23:00-24:00)
@@ -283,7 +301,7 @@ def get_ziwei_patterns(
         chart = astrolabe.to_iztro_dict()
 
         # 检测格局
-        from bazi_pro.core.ziwei.patterns import detect_patterns
+        detect_patterns, _, _ = _get_ziwei_modules()
         patterns = detect_patterns(chart)
 
         return {
@@ -334,7 +352,7 @@ def get_ziwei_sihua(
         chart = astrolabe.to_iztro_dict()
 
         # 分析四化
-        from bazi_pro.core.ziwei.sihua import analyze_sihua
+        _, analyze_sihua, _ = _get_ziwei_modules()
         sihua = analyze_sihua(chart, query_year)
 
         return sihua
@@ -375,7 +393,7 @@ def get_ziwei_analysis(
         chart = astrolabe.to_iztro_dict()
 
         # 生成叙述
-        from bazi_pro.core.ziwei.narrator import narrate_ziwei
+        _, _, narrate_ziwei = _get_ziwei_modules()
         narration = narrate_ziwei(chart, query_year)
 
         return {

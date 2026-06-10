@@ -8,7 +8,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
+
+
+# ── 格局等级类型 ──────────────────────────────────────────────────────────────
+PatternLevel = Literal["excellent", "good", "neutral", "caution"]
 
 
 # ── 四化表 ──────────────────────────────────────────────────────────────────────
@@ -41,7 +45,7 @@ class PatternCondition:
 class Pattern:
     """紫微斗数格局"""
     name: str
-    level: str  # excellent/good/neutral/caution
+    level: PatternLevel  # excellent/good/neutral/caution
     description: str
     palaces: list[str] = field(default_factory=list)  # 涉及宫位
     conditions: PatternCondition | None = None
@@ -390,6 +394,9 @@ BRANCH_INDEX: dict[str, int] = {
     "子": 0, "丑": 1, "寅": 2, "卯": 3, "辰": 4, "巳": 5,
     "午": 6, "未": 7, "申": 8, "酉": 9, "戌": 10, "亥": 11,
 }
+
+# 预计算地支顺序列表（避免重复创建）
+BRANCH_ORDER: list[str] = list(BRANCH_INDEX.keys())
 
 
 # ── 天干索引映射 ──────────────────────────────────────────────────────────────

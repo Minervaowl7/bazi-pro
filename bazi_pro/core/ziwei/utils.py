@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from bazi_pro.core.ziwei.constants import SAN_FANG_OFFSETS, JIA_OFFSETS, BRANCH_INDEX
+from bazi_pro.core.ziwei.constants import SAN_FANG_OFFSETS, JIA_OFFSETS, BRANCH_INDEX, BRANCH_ORDER
 
 
 def get_palace_by_name(chart: dict[str, Any], palace_name: str) -> dict[str, Any] | None:
@@ -60,11 +60,10 @@ def get_san_fang_palaces(chart: dict[str, Any], ming_branch: str) -> list[dict[s
     san_fang_indices = [(ming_idx + offset) % 12 for offset in SAN_FANG_OFFSETS]
 
     # 获取宫位数据
-    palaces = chart.get("palaces", [])
     result = []
     for idx in san_fang_indices:
         # 查找对应地支的宫位
-        target_branch = list(BRANCH_INDEX.keys())[idx]
+        target_branch = BRANCH_ORDER[idx]
         palace = get_palace_by_branch(chart, target_branch)
         if palace:
             result.append(palace)
@@ -113,8 +112,8 @@ def get_jia_palaces(chart: dict[str, Any], branch: str) -> dict[str, dict[str, A
     prev_idx = (idx - 1) % 12
     next_idx = (idx + 1) % 12
 
-    prev_branch = list(BRANCH_INDEX.keys())[prev_idx]
-    next_branch = list(BRANCH_INDEX.keys())[next_idx]
+    prev_branch = BRANCH_ORDER[prev_idx]
+    next_branch = BRANCH_ORDER[next_idx]
 
     return {
         "prev": get_palace_by_branch(chart, prev_branch),
