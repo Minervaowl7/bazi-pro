@@ -250,3 +250,137 @@ def analyze_ziwei_palace(
         return result
     except Exception as e:
         return {"error": f"紫微斗数宫位分析失败: {e}"}
+
+
+def get_ziwei_patterns(
+    solar_date: str,
+    hour: int,
+    gender: int | str = 1,
+) -> dict[str, Any]:
+    """获取紫微斗数格局分析
+
+    Args:
+        solar_date: 阳历日期，格式 YYYY-MM-DD
+        hour: 出生小时(0-23)
+        gender: 性别，1=男/0=女 或 "男"/"女"
+
+    Returns:
+        格局分析结果
+    """
+    if by_solar is None:
+        return {"error": "iztro-py 未安装，请运行 pip install iztro-py"}
+
+    time_index = hour_to_time_index(hour)
+    gender_cn = gender_to_chinese(gender)
+
+    try:
+        astrolabe = by_solar(
+            solar_date=solar_date,
+            time_index=time_index,
+            gender=gender_cn,
+            language="zh-CN",
+        )
+        chart = astrolabe.to_iztro_dict()
+
+        # 检测格局
+        from bazi_pro.core.ziwei.patterns import detect_patterns
+        patterns = detect_patterns(chart)
+
+        return {
+            "patterns": [
+                {
+                    "name": p.name,
+                    "level": p.level,
+                    "description": p.description,
+                    "source": p.source,
+                }
+                for p in patterns
+            ]
+        }
+    except Exception as e:
+        return {"error": f"格局分析失败: {e}"}
+
+
+def get_ziwei_sihua(
+    solar_date: str,
+    hour: int,
+    gender: int | str = 1,
+    query_year: int | None = None,
+) -> dict[str, Any]:
+    """获取紫微斗数四化分析
+
+    Args:
+        solar_date: 阳历日期，格式 YYYY-MM-DD
+        hour: 出生小时(0-23)
+        gender: 性别
+        query_year: 查询年份（可选）
+
+    Returns:
+        四化分析结果
+    """
+    if by_solar is None:
+        return {"error": "iztro-py 未安装，请运行 pip install iztro-py"}
+
+    time_index = hour_to_time_index(hour)
+    gender_cn = gender_to_chinese(gender)
+
+    try:
+        astrolabe = by_solar(
+            solar_date=solar_date,
+            time_index=time_index,
+            gender=gender_cn,
+            language="zh-CN",
+        )
+        chart = astrolabe.to_iztro_dict()
+
+        # 分析四化
+        from bazi_pro.core.ziwei.sihua import analyze_sihua
+        sihua = analyze_sihua(chart, query_year)
+
+        return sihua
+    except Exception as e:
+        return {"error": f"四化分析失败: {e}"}
+
+
+def get_ziwei_analysis(
+    solar_date: str,
+    hour: int,
+    gender: int | str = 1,
+    query_year: int | None = None,
+) -> dict[str, Any]:
+    """获取紫微斗数综合分析（格局+四化+星曜+叙述）
+
+    Args:
+        solar_date: 阳历日期，格式 YYYY-MM-DD
+        hour: 出生小时(0-23)
+        gender: 性别
+        query_year: 查询年份（可选）
+
+    Returns:
+        综合分析结果
+    """
+    if by_solar is None:
+        return {"error": "iztro-py 未安装，请运行 pip install iztro-py"}
+
+    time_index = hour_to_time_index(hour)
+    gender_cn = gender_to_chinese(gender)
+
+    try:
+        astrolabe = by_solar(
+            solar_date=solar_date,
+            time_index=time_index,
+            gender=gender_cn,
+            language="zh-CN",
+        )
+        chart = astrolabe.to_iztro_dict()
+
+        # 生成叙述
+        from bazi_pro.core.ziwei.narrator import narrate_ziwei
+        narration = narrate_ziwei(chart, query_year)
+
+        return {
+            "chart": chart,
+            "narration": narration,
+        }
+    except Exception as e:
+        return {"error": f"综合分析失败: {e}"}
