@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/ThemeProvider";
 import { SCHOOL_OPTIONS } from "@/lib/constants";
 import ReportPreviewModal from "@/components/report/ReportPreviewModal";
 import {
+  API_BASE,
   getAnalysis,
   getReport,
   generateReport,
@@ -28,6 +29,7 @@ export default function ReportPage() {
   const [schoolDropdownOpen, setSchoolDropdownOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -114,11 +116,12 @@ export default function ReportPage() {
 
   const handleDownloadPdf = async () => {
     setDownloadingPdf(true);
+    setPdfError(null);
     try {
-      const res = await fetch(`/api/v2/report/${analysisId}/pdf`);
+      const res = await fetch(`${API_BASE}/api/v2/report/${analysisId}/pdf`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || "PDF 生成失败");
+        throw new Error(data.detail || data.message || "PDF 生成失败");
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -130,7 +133,7 @@ export default function ReportPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "PDF 下载失败");
+      setPdfError(e instanceof Error ? e.message : "PDF 下载失败");
     } finally {
       setDownloadingPdf(false);
     }
@@ -350,6 +353,13 @@ export default function ReportPage() {
                 </>
               )}
             </button>
+
+            {/* PDF 错误提示 */}
+            {pdfError && (
+              <div className="py-3 px-4 rounded-lg" style={{ background: "rgba(201,100,66,0.08)", border: "1px solid var(--danger)" }}>
+                <p className="text-sm" style={{ color: "var(--danger)" }}>{pdfError}</p>
+              </div>
+            )}
 
             {/* 返回按钮 */}
             <button

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_BASE } from "@/lib/api";
 
 interface ReportPdfButtonProps {
   analysisId: string;
@@ -23,10 +24,10 @@ export default function ReportPdfButton({
     setError(null);
 
     try {
-      const res = await fetch(`/api/v2/report/${analysisId}/pdf`);
+      const res = await fetch(`${API_BASE}/api/v2/report/${analysisId}/pdf`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || "PDF 生成失败");
+        throw new Error(data.detail || data.message || "PDF 生成失败");
       }
 
       const blob = await res.blob();
