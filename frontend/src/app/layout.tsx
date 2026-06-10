@@ -36,6 +36,8 @@ export default function RootLayout({
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--surface)] focus:text-[var(--ink)] focus:border focus:border-[var(--border)]" style={{top:8,left:8}}>跳到主要内容</a>
         <ThemeProvider>
           <Navbar />
+          {/* Navbar 滚动检测哨兵 — IntersectionObserver 观测此元素 */}
+          <div id="scroll-sentinel" aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, width: 1, height: 1, pointerEvents: "none" }} />
           <main id="main-content" className="pt-14">
             {children}
           </main>

@@ -28,7 +28,7 @@ function PersonForm({ label, form, setForm, history, idPrefix }: {
   idPrefix: string;
 }) {
   return (
-    <div className="p-6 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow)" }}>
+    <div className="card p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold" style={{ color: "var(--scholar-blue)" }}>{label}</h3>
         <div className="flex gap-1">
@@ -60,8 +60,8 @@ function PersonForm({ label, form, setForm, history, idPrefix }: {
               const item = history.find(h => h.id === e.target.value);
               if (item) setForm({ bazi: item.bazi, dayMaster: item.day_master, gender: item.gender || form.gender });
             }}
-            className="w-full px-3 py-2 rounded-lg text-xs"
-            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink)" }}
+            className="form-input"
+            style={{ fontSize: 12 }}
           >
             <option value="">手动输入</option>
             {history.map((h) => (
@@ -81,8 +81,7 @@ function PersonForm({ label, form, setForm, history, idPrefix }: {
             value={form.bazi}
             onChange={(e) => setForm({ ...form, bazi: e.target.value })}
             placeholder="如：辛卯 庚子 壬申 辛亥"
-            className="w-full px-3 py-2.5 rounded-lg text-sm"
-            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink)" }}
+            className="form-input"
           />
         </div>
         <div>
@@ -94,8 +93,7 @@ function PersonForm({ label, form, setForm, history, idPrefix }: {
             value={form.dayMaster}
             onChange={(e) => setForm({ ...form, dayMaster: e.target.value })}
             placeholder="如：壬"
-            className="w-full px-3 py-2.5 rounded-lg text-sm"
-            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink)" }}
+            className="form-input"
           />
         </div>
       </div>

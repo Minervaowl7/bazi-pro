@@ -18,17 +18,25 @@ export default function Navbar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    // 使用 IntersectionObserver 替代 window.addEventListener('scroll')
+    // 避免每帧触发 setState，性能更优（§5.D）
+    const sentinel = document.getElementById("scroll-sentinel");
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setScrolled(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
   }, []);
 
   return (
     <>
       <nav
         aria-label="主导航"
-        className="fixed top-0 left-0 right-0 z-50 h-14 flex items-center transition-colors duration-200"
+        className="fixed top-0 left-0 right-0 h-14 flex items-center transition-colors duration-200"
         style={{
+          zIndex: "var(--z-navbar)",
           background: scrolled
             ? "color-mix(in srgb, var(--bg) 92%, transparent)"
             : "transparent",

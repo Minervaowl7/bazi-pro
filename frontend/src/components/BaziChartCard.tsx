@@ -164,9 +164,9 @@ export default function BaziChartCard({ result }: Props) {
                   style={{
                     width: 68, height: 68,
                     background: ganWx ? WUXING_GRADIENT_BG[ganWx] : "var(--surface-2)",
-                    border: `1.5px solid ${ganWx ? `rgba(${ganWx === "木" ? "58,125,92" : ganWx === "火" ? "201,100,66" : ganWx === "土" ? "139,106,58" : ganWx === "金" ? "197,165,90" : "46,92,138"},0.18)` : "var(--border-strong)"}`,
+                    border: `1.5px solid ${ganWx ? `color-mix(in srgb, ${WUXING_COLORS[ganWx]} 18%, transparent)` : "var(--border-strong)"}`,
                     borderRadius: 10,
-                    boxShadow: isDayPillar ? "0 0 0 2px rgba(201,100,66,0.1), 0 2px 8px rgba(201,100,66,0.1)" : "none",
+                    boxShadow: isDayPillar ? "0 0 0 2px var(--cinnabar-light), 0 2px 8px var(--cinnabar-light)" : "none",
                   }}
                 >
                   <span style={{ fontSize: 30, fontWeight: 700, color: ganWx ? WUXING_COLORS[ganWx] : "var(--ink)", fontFamily: "var(--font-display)" }}>
@@ -183,9 +183,9 @@ export default function BaziChartCard({ result }: Props) {
                   style={{
                     width: 68, height: 68,
                     background: zhiWx ? WUXING_GRADIENT_BG[zhiWx] : "var(--surface-2)",
-                    border: `1.5px solid ${zhiWx ? `rgba(${zhiWx === "木" ? "58,125,92" : zhiWx === "火" ? "201,100,66" : zhiWx === "土" ? "139,106,58" : zhiWx === "金" ? "197,165,90" : "46,92,138"},0.18)` : "var(--border-strong)"}`,
+                    border: `1.5px solid ${zhiWx ? `color-mix(in srgb, ${WUXING_COLORS[zhiWx]} 18%, transparent)` : "var(--border-strong)"}`,
                     borderRadius: 10,
-                    boxShadow: isDayPillar ? "0 0 0 2px rgba(201,100,66,0.1), 0 2px 8px rgba(201,100,66,0.1)" : "none",
+                    boxShadow: isDayPillar ? "0 0 0 2px var(--cinnabar-light), 0 2px 8px var(--cinnabar-light)" : "none",
                   }}
                 >
                   <span style={{ fontSize: 30, fontWeight: 700, color: zhiWx ? WUXING_COLORS[zhiWx] : "var(--ink)", fontFamily: "var(--font-display)" }}>
@@ -352,7 +352,7 @@ function ShenShaInline({ result }: { result: Record<string, unknown> }) {
   };
 
   return (
-    <section className="card relative" style={{ zIndex: activeItem ? 10 : 1 }}>
+    <section className="card relative" style={{ zIndex: activeItem ? "var(--z-tooltip)" : "var(--z-base)" }}>
       <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
         <h3 className="font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>神煞</h3>
         <span className="text-[13px]" style={{ color: "var(--text-4)" }}>{shensha.length}个</span>

@@ -115,8 +115,8 @@ export default function ReportPreviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col"
-      style={{ background: "var(--bg)" }}
+      className="fixed inset-0 flex flex-col"
+      style={{ background: "var(--bg)", zIndex: "var(--z-overlay)" }}
     >
       {/* 顶部栏 */}
       <header

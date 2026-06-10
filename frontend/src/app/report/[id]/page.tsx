@@ -266,8 +266,8 @@ export default function ReportPage() {
                 </button>
                 {schoolDropdownOpen && (
                   <div
-                    className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 z-50 rounded-xl overflow-hidden"
-                    style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}
+                    className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 rounded-xl overflow-hidden"
+                    style={{ zIndex: "var(--z-dropdown)", background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}
                   >
                     {SCHOOL_OPTIONS.map((s) => (
                       <button

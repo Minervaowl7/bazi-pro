@@ -58,7 +58,7 @@ export default function ShareCard({ result }: Props) {
       </button>
 
       {showPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label="分享卡片">
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50" style={{ zIndex: "var(--z-overlay)" }} role="dialog" aria-modal="true" aria-label="分享卡片">
           <div className="w-full max-w-sm rounded-2xl overflow-hidden bg-[var(--surface)] border border-[var(--border)]">
             <div ref={cardRef} className="p-8" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #2c3e6b 100%)" }}>
               <div className="text-center mb-6">

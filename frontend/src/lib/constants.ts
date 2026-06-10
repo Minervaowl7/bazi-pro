@@ -20,22 +20,22 @@ export const WUXING_BG: Record<string, string> = {
   水: "var(--wx-water-bg)",
 };
 
-/** 五行渐变背景（四柱干支方块） */
+/** 五行渐变背景（四柱干支方块） — 使用 color-mix 自动适配 dark mode */
 export const WUXING_GRADIENT_BG: Record<string, string> = {
-  木: "linear-gradient(135deg, var(--wx-wood-bg), rgba(58,125,92,0.16))",
-  火: "linear-gradient(135deg, var(--wx-fire-bg), rgba(196,82,58,0.16))",
-  土: "linear-gradient(135deg, var(--wx-earth-bg), rgba(139,106,58,0.16))",
-  金: "linear-gradient(135deg, var(--wx-metal-bg), rgba(197,165,90,0.16))",
-  水: "linear-gradient(135deg, var(--wx-water-bg), rgba(46,92,138,0.16))",
+  木: "linear-gradient(135deg, var(--wx-wood-bg), color-mix(in srgb, var(--wx-wood) 16%, transparent))",
+  火: "linear-gradient(135deg, var(--wx-fire-bg), color-mix(in srgb, var(--wx-fire) 16%, transparent))",
+  土: "linear-gradient(135deg, var(--wx-earth-bg), color-mix(in srgb, var(--wx-earth) 16%, transparent))",
+  金: "linear-gradient(135deg, var(--wx-metal-bg), color-mix(in srgb, var(--wx-metal) 16%, transparent))",
+  水: "linear-gradient(135deg, var(--wx-water-bg), color-mix(in srgb, var(--wx-water) 16%, transparent))",
 };
 
-/** 五行渐变填充（力量分布条） */
+/** 五行渐变填充（力量分布条） — 使用 color-mix 自动适配 dark mode */
 export const WUXING_BAR_GRADIENT: Record<string, string> = {
-  木: "linear-gradient(90deg, var(--wx-wood), rgba(58,125,92,0.6))",
-  火: "linear-gradient(90deg, var(--wx-fire), rgba(196,82,58,0.6))",
-  土: "linear-gradient(90deg, var(--wx-earth), rgba(139,106,58,0.6))",
-  金: "linear-gradient(90deg, var(--wx-metal), rgba(197,165,90,0.6))",
-  水: "linear-gradient(90deg, var(--wx-water), rgba(46,92,138,0.6))",
+  木: "linear-gradient(90deg, var(--wx-wood), color-mix(in srgb, var(--wx-wood) 60%, transparent))",
+  火: "linear-gradient(90deg, var(--wx-fire), color-mix(in srgb, var(--wx-fire) 60%, transparent))",
+  土: "linear-gradient(90deg, var(--wx-earth), color-mix(in srgb, var(--wx-earth) 60%, transparent))",
+  金: "linear-gradient(90deg, var(--wx-metal), color-mix(in srgb, var(--wx-metal) 60%, transparent))",
+  水: "linear-gradient(90deg, var(--wx-water), color-mix(in srgb, var(--wx-water) 60%, transparent))",
 };
 
 /** 刑冲合害关系色 */

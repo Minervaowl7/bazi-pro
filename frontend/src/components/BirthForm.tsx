@@ -162,7 +162,7 @@ export default function BirthForm() {
               onFocus={() => setCityOpen(true)}
               onChange={e => { setCityInput(e.target.value); setCityFilter(e.target.value); setCityOpen(true); if (!e.target.value) setForm(prev => ({ ...prev, city: "", cityLng: 0 })); }} />
             {cityOpen && (
-              <div role="listbox" className="absolute top-full left-0 right-1 mt-1 max-h-[200px] overflow-y-auto z-50" style={{ background: "var(--surface)", border: "0.5px solid var(--border)", borderRadius: "var(--r-sm)", boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}>
+              <div role="listbox" className="absolute top-full left-0 right-1 mt-1 max-h-[200px] overflow-y-auto" style={{ zIndex: "var(--z-dropdown)", background: "var(--surface)", border: "0.5px solid var(--border)", borderRadius: "var(--r-sm)", boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}>
                 {filteredCities.length === 0 && <div className="px-3 py-2 text-[13px]" style={{ color: "var(--text-3)" }}>无匹配城市</div>}
                 {filteredCities.map(c => (
                   <div key={c.name} role="option" aria-selected={form.city === c.name} onClick={() => handleCitySelect(c.name, c.lng)}

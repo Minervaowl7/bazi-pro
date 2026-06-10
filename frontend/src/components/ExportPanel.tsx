@@ -208,7 +208,7 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
       </button>
 
       {showMenu && (
-        <div className="absolute right-0 mt-1.5 w-40 rounded-xl shadow-lg overflow-hidden z-50 animate-fade-in bg-[var(--surface)] border border-[var(--border)]">
+        <div className="absolute right-0 mt-1.5 w-40 rounded-xl shadow-lg overflow-hidden animate-fade-in bg-[var(--surface)] border border-[var(--border)]" style={{ zIndex: "var(--z-dropdown)" }}>
           <button
             onClick={handleExportPDF}
             disabled={exporting}

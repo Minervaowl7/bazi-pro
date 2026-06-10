@@ -65,6 +65,13 @@
   --r-lg: 16px;
   --r-pill: 9999px;
 
+  /* ── Z-Index 层级 ── */
+  --z-base: 1;
+  --z-dropdown: 50;
+  --z-navbar: 50;
+  --z-tooltip: 60;
+  --z-overlay: 70;
+
   /* ── 字体 ── */
   --font-display: var(--font-serif-loaded), "Noto Serif SC", "Source Han Serif SC", serif;
   --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;

@@ -14,7 +14,7 @@ export default function NotFound() {
         <Link
           href="/"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white transition-all active:scale-[0.97]"
-          style={{ background: "var(--scholar-blue)" }}
+          style={{ background: "var(--cinnabar)" }}
         >
           返回首页
         </Link>
