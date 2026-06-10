@@ -153,6 +153,7 @@ def narrate_analysis(result: dict) -> dict:
     sections["health"] = _narrate_health(result)
     sections["wealth"] = _narrate_wealth(result)
     sections["family"] = _narrate_family(result, gender)
+    sections["ziwei"] = _narrate_ziwei(result)
     sections["citations"] = _extract_citations(retrieval)
 
     return sections
@@ -910,3 +911,42 @@ def _narrate_family(result, gender):
         lines.append(fa["summary"])
 
     return "\n".join(lines) if lines else "六亲分析数据暂未生成。"
+
+
+def _narrate_ziwei(result):
+    """生成紫微斗数分析段落，从 result['ziwei'] 提取格局/四化/命宫信息。
+
+    紫微斗数数据由 server/analysis.py 调用 get_ziwei_analysis() 生成，
+    包含 chart（原始排盘）和 narration（确定性叙述）。
+    """
+    ziwei = result.get("ziwei")
+    if not ziwei or "error" in ziwei:
+        return ""
+
+    lines = ["【紫微斗数命盘】\n"]
+
+    # 基本信息
+    chart = ziwei.get("chart", {})
+    soul = chart.get("soul", "")
+    body = chart.get("body", "")
+    five_elements_class = chart.get("fiveElementsClass", "")
+    if soul or body or five_elements_class:
+        lines.append(f"命主：{soul}，身主：{body}，五行局：{five_elements_class}\n")
+
+    # 从叙述中提取格局信息
+    narration = ziwei.get("narration", {})
+    pattern_text = narration.get("pattern", "")
+    if pattern_text and "未检测到特殊格局" not in pattern_text:
+        lines.append(pattern_text)
+
+    # 从叙述中提取命宫分析
+    ming_text = narration.get("ming_palace", "")
+    if ming_text:
+        lines.append(ming_text)
+
+    # 从叙述中提取四化分析
+    sihua_text = narration.get("sihua", "")
+    if sihua_text:
+        lines.append(sihua_text)
+
+    return "\n".join(lines) if len(lines) > 1 else ""
