@@ -146,68 +146,43 @@ def get_jia_stars(chart: dict[str, Any], branch: str) -> list[str]:
     return stars
 
 
-def is_bright(palace: dict[str, Any], star_name: str) -> bool:
-    """判断星曜是否庙旺
+def _find_star(palace: dict[str, Any], star_name: str) -> dict[str, Any] | None:
+    """在宫位中查找星曜（内部辅助函数）
 
     Args:
         palace: 宫位数据
         star_name: 星曜名称
 
     Returns:
-        True 如果庙旺
+        星曜数据，未找到返回 None
     """
     for star in palace.get("majorStars", []) + palace.get("minorStars", []):
         if star.get("name") == star_name:
-            return star.get("brightness") == "bright"
-    return False
+            return star
+    return None
+
+
+def is_bright(palace: dict[str, Any], star_name: str) -> bool:
+    """判断星曜是否庙旺"""
+    star = _find_star(palace, star_name)
+    return star is not None and star.get("brightness") == "bright"
 
 
 def is_dim(palace: dict[str, Any], star_name: str) -> bool:
-    """判断星曜是否落陷
-
-    Args:
-        palace: 宫位数据
-        star_name: 星曜名称
-
-    Returns:
-        True 如果落陷
-    """
-    for star in palace.get("majorStars", []) + palace.get("minorStars", []):
-        if star.get("name") == star_name:
-            return star.get("brightness") == "dim"
-    return False
+    """判断星曜是否落陷"""
+    star = _find_star(palace, star_name)
+    return star is not None and star.get("brightness") == "dim"
 
 
 def has_star(palace: dict[str, Any], star_name: str) -> bool:
-    """判断宫位是否有某星曜
-
-    Args:
-        palace: 宫位数据
-        star_name: 星曜名称
-
-    Returns:
-        True 如果有该星曜
-    """
-    for star in palace.get("majorStars", []) + palace.get("minorStars", []):
-        if star.get("name") == star_name:
-            return True
-    return False
+    """判断宫位是否有某星曜"""
+    return _find_star(palace, star_name) is not None
 
 
 def get_star_brightness(palace: dict[str, Any], star_name: str) -> str:
-    """获取星曜亮度
-
-    Args:
-        palace: 宫位数据
-        star_name: 星曜名称
-
-    Returns:
-        亮度（bright/normal/dim），未找到返回空字符串
-    """
-    for star in palace.get("majorStars", []) + palace.get("minorStars", []):
-        if star.get("name") == star_name:
-            return star.get("brightness", "")
-    return ""
+    """获取星曜亮度（bright/normal/dim），未找到返回空字符串"""
+    star = _find_star(palace, star_name)
+    return star.get("brightness", "") if star else ""
 
 
 def get_ming_branch(chart: dict[str, Any]) -> str:

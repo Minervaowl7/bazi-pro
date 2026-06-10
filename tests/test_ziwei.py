@@ -459,6 +459,45 @@ class TestNarrator:
         assert "overview" in result
 
 
+class TestEdgeCases:
+    """边界情况测试"""
+
+    def test_empty_chart(self):
+        """测试空命盘"""
+        chart = {"palaces": []}
+        patterns = detect_patterns(chart)
+        assert isinstance(patterns, list)
+        assert len(patterns) == 0
+
+    def test_missing_year_stem(self):
+        """测试缺失年干"""
+        chart = {"palaces": []}
+        result = analyze_sihua(chart)
+        assert "benming" in result
+
+    def test_palace_no_major_stars(self):
+        """测试宫位无主星"""
+        palace = {"majorStars": [], "minorStars": []}
+        assert has_star(palace, "紫微") is False
+        assert is_bright(palace, "紫微") is False
+        assert is_dim(palace, "紫微") is False
+        assert get_star_brightness(palace, "紫微") == ""
+
+    def test_narrate_empty_chart(self):
+        """测试空命盘叙述"""
+        chart = {"palaces": []}
+        result = narrate_ziwei(chart)
+        assert "ming_palace" in result
+        assert "pattern" in result
+
+    def test_find_star_not_found(self):
+        """测试查找不存在的星曜"""
+        from bazi_pro.core.ziwei.utils import _find_star
+        palace = {"majorStars": [{"name": "紫微", "brightness": "bright"}], "minorStars": []}
+        assert _find_star(palace, "天机") is None
+        assert _find_star(palace, "紫微") is not None
+
+
 class TestIntegration:
     """集成测试"""
 

@@ -136,124 +136,56 @@ def narrate_sihua(chart: dict[str, Any], query_year: int | None = None) -> str:
     return text
 
 
-def narrate_wealth_palace(chart: dict[str, Any]) -> str:
-    """生成财帛宫分析叙述
+def _narrate_palace(chart: dict[str, Any], palace_name: str) -> str:
+    """生成指定宫位分析叙述（内部通用函数）
 
     Args:
         chart: iztro-py 排盘结果
+        palace_name: 宫位名称
 
     Returns:
-        财帛宫分析文本
+        宫位分析文本
     """
-    # 获取财帛宫
-    wealth_palace = get_palace_by_name(chart, "财帛宫")
-    if not wealth_palace:
-        return "未找到财帛宫信息"
+    palace = get_palace_by_name(chart, palace_name)
+    if not palace:
+        return f"未找到{palace_name}信息"
 
-    text = "【财帛宫分析】\n\n"
+    text = f"【{palace_name}分析】\n\n"
 
-    # 主星分析
-    major_stars = get_palace_major_stars(wealth_palace)
+    major_stars = get_palace_major_stars(palace)
     if major_stars:
-        text += "财帛宫主星：\n"
+        text += f"{palace_name}主星：\n"
         for star in major_stars:
-            analysis = analyze_star_in_palace(star, "财帛宫")
+            analysis = analyze_star_in_palace(star, palace_name)
             text += f"- {analysis.get('description', '')}\n"
     else:
-        text += "财帛宫无主星，借对宫主星之力。\n"
+        text += f"{palace_name}无主星，借对宫主星之力。\n"
 
     return text
+
+
+def narrate_wealth_palace(chart: dict[str, Any]) -> str:
+    """生成财帛宫分析叙述"""
+    return _narrate_palace(chart, "财帛宫")
 
 
 def narrate_career_palace(chart: dict[str, Any]) -> str:
-    """生成官禄宫分析叙述
-
-    Args:
-        chart: iztro-py 排盘结果
-
-    Returns:
-        官禄宫分析文本
-    """
-    # 获取官禄宫
-    career_palace = get_palace_by_name(chart, "官禄宫")
-    if not career_palace:
-        return "未找到官禄宫信息"
-
-    text = "【官禄宫分析】\n\n"
-
-    # 主星分析
-    major_stars = get_palace_major_stars(career_palace)
-    if major_stars:
-        text += "官禄宫主星：\n"
-        for star in major_stars:
-            analysis = analyze_star_in_palace(star, "官禄宫")
-            text += f"- {analysis.get('description', '')}\n"
-    else:
-        text += "官禄宫无主星，借对宫主星之力。\n"
-
-    return text
+    """生成官禄宫分析叙述"""
+    return _narrate_palace(chart, "官禄宫")
 
 
 def narrate_marriage_palace(chart: dict[str, Any]) -> str:
-    """生成夫妻宫分析叙述
-
-    Args:
-        chart: iztro-py 排盘结果
-
-    Returns:
-        夫妻宫分析文本
-    """
-    # 获取夫妻宫
-    marriage_palace = get_palace_by_name(chart, "夫妻宫")
-    if not marriage_palace:
-        return "未找到夫妻宫信息"
-
-    text = "【夫妻宫分析】\n\n"
-
-    # 主星分析
-    major_stars = get_palace_major_stars(marriage_palace)
-    if major_stars:
-        text += "夫妻宫主星：\n"
-        for star in major_stars:
-            analysis = analyze_star_in_palace(star, "夫妻宫")
-            text += f"- {analysis.get('description', '')}\n"
-    else:
-        text += "夫妻宫无主星，借对宫主星之力。\n"
-
-    return text
+    """生成夫妻宫分析叙述"""
+    return _narrate_palace(chart, "夫妻宫")
 
 
 def narrate_health_palace(chart: dict[str, Any]) -> str:
-    """生成疾厄宫分析叙述
-
-    Args:
-        chart: iztro-py 排盘结果
-
-    Returns:
-        疾厄宫分析文本
-    """
-    # 获取疾厄宫
-    health_palace = get_palace_by_name(chart, "疾厄宫")
-    if not health_palace:
-        return "未找到疾厄宫信息"
-
-    text = "【疾厄宫分析】\n\n"
-
-    # 主星分析
-    major_stars = get_palace_major_stars(health_palace)
-    if major_stars:
-        text += "疾厄宫主星：\n"
-        for star in major_stars:
-            analysis = analyze_star_in_palace(star, "疾厄宫")
-            text += f"- {analysis.get('description', '')}\n"
-    else:
-        text += "疾厄宫无主星，借对宫主星之力。\n"
-
-    return text
+    """生成疾厄宫分析叙述"""
+    return _narrate_palace(chart, "疾厄宫")
 
 
 def narrate_summary(chart: dict[str, Any], sections: dict[str, str]) -> str:
-    """生成综合评述
+    """生成综合评述（基于各维度分析结果的综合判断）
 
     Args:
         chart: iztro-py 排盘结果
@@ -264,23 +196,31 @@ def narrate_summary(chart: dict[str, Any], sections: dict[str, str]) -> str:
     """
     text = "【综合评述】\n\n"
 
-    # 获取命盘基本信息
-    soul = chart.get("soul", "")  # 命主
-    body = chart.get("body", "")  # 身主
-    five_elements_class = chart.get("fiveElementsClass", "")  # 五行局
+    # 从格局分析中提取关键信息
+    pattern_text = sections.get("pattern", "")
+    if "上格" in pattern_text:
+        text += "命盘格局较高，先天禀赋优异，宜把握机遇。\n"
+    elif "警示格" in pattern_text:
+        text += "命盘有警示格局，需注意化解，趋吉避凶。\n"
+    else:
+        text += "命盘格局平稳，踏实努力可有所成。\n"
 
-    text += f"命主：{soul}，身主：{body}，五行局：{five_elements_class}\n\n"
+    # 从四化分析中提取关键信息
+    sihua_text = sections.get("sihua", "")
+    if "化禄" in sihua_text and "化忌" in sihua_text:
+        text += "四化星曜吉凶交织，运势起伏中蕴含机遇。\n"
 
-    # 综合各维度分析
-    text += "命宫主星决定了命主的基本性格和人生走向。\n"
-    text += "格局高低反映了命主的先天禀赋和后天发展潜力。\n"
-    text += "四化星曜的动态变化影响着不同阶段的运势起伏。\n"
+    # 综合建议
+    text += "\n命宫主星决定了基本性格和人生走向，"
+    text += "格局高低反映了先天禀赋，"
+    text += "四化变化影响不同阶段的运势起伏。"
+    text += "建议结合大限流年，把握关键时机。\n"
 
     return text
 
 
 def narrate_overview(chart: dict[str, Any], sections: dict[str, str]) -> str:
-    """生成命盘总览
+    """生成命盘总览（基本信息 + 格局亮点）
 
     Args:
         chart: iztro-py 排盘结果
@@ -298,10 +238,22 @@ def narrate_overview(chart: dict[str, Any], sections: dict[str, str]) -> str:
 
     text += f"命主：{soul}，身主：{body}，五行局：{five_elements_class}\n\n"
 
-    # 生成总述
-    text += "命宫主星决定了命主的基本性格和人生走向。\n"
-    text += "格局高低反映了命主的先天禀赋和后天发展潜力。\n"
-    text += "四化星曜的动态变化影响着不同阶段的运势起伏。\n"
+    # 从格局分析中提取亮点
+    pattern_text = sections.get("pattern", "")
+    if "上格" in pattern_text:
+        # 提取上格名称
+        for line in pattern_text.split("\n"):
+            if line.startswith("- ") and "：" in line:
+                text += f"✦ {line[2:]}\n"
+    elif "中格" in pattern_text:
+        for line in pattern_text.split("\n"):
+            if line.startswith("- ") and "：" in line:
+                text += f"✧ {line[2:]}\n"
+
+    # 从命宫分析中提取主星信息
+    ming_text = sections.get("ming_palace", "")
+    if "命宫主星" in ming_text:
+        text += "\n" + ming_text.split("\n\n")[1] if "\n\n" in ming_text else ""
 
     return text
 

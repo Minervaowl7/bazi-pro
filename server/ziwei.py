@@ -301,8 +301,8 @@ def get_ziwei_patterns(
         chart = astrolabe.to_iztro_dict()
 
         # 检测格局
-        detect_patterns, _, _ = _get_ziwei_modules()
-        patterns = detect_patterns(chart)
+        _detect_patterns, _, _ = _get_ziwei_modules()
+        patterns = _detect_patterns(chart)
 
         return {
             "patterns": [
@@ -352,8 +352,8 @@ def get_ziwei_sihua(
         chart = astrolabe.to_iztro_dict()
 
         # 分析四化
-        _, analyze_sihua, _ = _get_ziwei_modules()
-        sihua = analyze_sihua(chart, query_year)
+        _, _analyze_sihua, _ = _get_ziwei_modules()
+        sihua = _analyze_sihua(chart, query_year)
 
         return sihua
     except Exception as e:
@@ -393,8 +393,8 @@ def get_ziwei_analysis(
         chart = astrolabe.to_iztro_dict()
 
         # 生成叙述
-        _, _, narrate_ziwei = _get_ziwei_modules()
-        narration = narrate_ziwei(chart, query_year)
+        _, _, _narrate_ziwei = _get_ziwei_modules()
+        narration = _narrate_ziwei(chart, query_year)
 
         return {
             "chart": chart,

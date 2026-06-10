@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from bazi_pro.core.ziwei.constants import Pattern, PatternCondition
+from bazi_pro.core.ziwei.constants import Pattern, PatternCondition, BRANCH_INDEX, BRANCH_ORDER
+from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
 from bazi_pro.core.ziwei.utils import (
     get_san_fang_palaces,
     get_san_fang_stars,
@@ -235,8 +236,28 @@ def detect_wu_tan(chart: dict[str, Any]) -> Pattern | None:
                 source="《骨髓赋》",
             )
 
-    # 检查对宫
-    # TODO: 实现对宫检查
+    # 检查对宫（命宫对宫为迁移宫，地支相差6位）
+    opposite_branch = BRANCH_ORDER[(BRANCH_INDEX[earthly_branch] + 6) % 12] if earthly_branch else ""
+    if opposite_branch:
+        opposite_palace = get_palace_by_branch(chart, opposite_branch)
+        if opposite_palace:
+            opposite_stars = get_palace_major_stars(opposite_palace)
+            # 命宫有武曲，对宫有贪狼（或反之）
+            if ("武曲" in major_stars and "贪狼" in opposite_stars) or \
+               ("贪狼" in major_stars and "武曲" in opposite_stars):
+                if earthly_branch in ["丑", "未"]:
+                    return Pattern(
+                        name="武贪格",
+                        level="excellent",
+                        description="武曲贪狼对宫会照，主财运亨通，晚年发福",
+                        palaces=["命宫", "迁移宫"],
+                        conditions=PatternCondition(
+                            required=["武曲贪狼对宫会照", "丑或未宫"],
+                            bonus=["庙旺"],
+                            breaking=["落陷"],
+                        ),
+                        source="《骨髓赋》",
+                    )
 
     return None
 
@@ -683,7 +704,6 @@ def detect_shuang_lu_chao_yuan(chart: dict[str, Any]) -> Pattern | None:
         # 需要获取年干来判断化禄
         year_stem = chart.get("yearStem", "")
         if year_stem:
-            from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
             sihua = get_sihua_by_stem(year_stem)
             hua_lu_star = sihua.get("化禄", "")
             if hua_lu_star and hua_lu_star in san_fang_stars:
@@ -716,7 +736,6 @@ def detect_san_qi_jia_hui(chart: dict[str, Any]) -> Pattern | None:
     if not year_stem:
         return None
 
-    from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
     sihua = get_sihua_by_stem(year_stem)
 
     hua_lu_star = sihua.get("化禄", "")
@@ -756,7 +775,6 @@ def detect_hua_lu_ru_ming(chart: dict[str, Any]) -> Pattern | None:
     if not year_stem:
         return None
 
-    from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
     sihua = get_sihua_by_stem(year_stem)
     hua_lu_star = sihua.get("化禄", "")
 
@@ -841,7 +859,6 @@ def detect_hua_ji_ru_ming_qian(chart: dict[str, Any]) -> Pattern | None:
     if not year_stem:
         return None
 
-    from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
     sihua = get_sihua_by_stem(year_stem)
     hua_ji_star = sihua.get("化忌", "")
 
@@ -900,7 +917,6 @@ def detect_yang_tuo_jia_ji(chart: dict[str, Any]) -> Pattern | None:
     if not year_stem:
         return None
 
-    from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
     sihua = get_sihua_by_stem(year_stem)
     hua_ji_star = sihua.get("化忌", "")
 
@@ -1213,7 +1229,6 @@ def detect_hua_lu_ru_cai(chart: dict[str, Any]) -> Pattern | None:
     if not year_stem:
         return None
 
-    from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
     sihua = get_sihua_by_stem(year_stem)
     hua_lu_star = sihua.get("化禄", "")
 
@@ -1248,7 +1263,6 @@ def detect_hua_quan_ru_guan(chart: dict[str, Any]) -> Pattern | None:
     if not year_stem:
         return None
 
-    from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
     sihua = get_sihua_by_stem(year_stem)
     hua_quan_star = sihua.get("化权", "")
 
@@ -1278,7 +1292,6 @@ def detect_hua_ke_ru_ming_shen(chart: dict[str, Any]) -> Pattern | None:
     if not year_stem:
         return None
 
-    from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
     sihua = get_sihua_by_stem(year_stem)
     hua_ke_star = sihua.get("化科", "")
 
@@ -1387,7 +1400,6 @@ def detect_ke_quan_shuang_hui(chart: dict[str, Any]) -> Pattern | None:
     if not year_stem:
         return None
 
-    from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
     sihua = get_sihua_by_stem(year_stem)
 
     hua_ke_star = sihua.get("化科", "")
