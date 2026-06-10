@@ -52,6 +52,10 @@ cd frontend && pnpm dev          # 开发
 cd frontend && pnpm build        # 生产构建
 cd frontend && pnpm lint         # ESLint（零 warning 策略）
 cd frontend && npx tsc --noEmit  # TypeScript 类型检查
+
+# 一键启动（后端 + 前端）
+.\start.ps1                      # Windows PowerShell
+.\start.bat                      # Windows CMD
 ```
 
 ## Architecture
@@ -108,22 +112,12 @@ cd frontend && npx tsc --noEmit  # TypeScript 类型检查
 
 **后端** (`server/`):
 - FastAPI 应用，通过 uvicorn 启动（推荐端口 8711）
-- 原有路由 (`/api/analyze`, `/api/status/{id}`, `/api/result/{id}`) 使用 WebSocket 推送
-- 新路由 (`/api/v2/*`) 使用 SSE 流式 + SQLite 持久化
-- `POST /api/v2/analyze` 支持 `school` 参数（ziping/mangpai/xinpai/all）
-- `POST /api/v2/analyze/compare` 返回三流派对比分析
-- `server/db.py`: aiosqlite 存储层，`BAZI_DB_PATH` 环境变量配置路径
-- `server/nayin.py`: 60甲子纳音查表
-- `server/gongwei.py`: 宫位计算（胎元/命宫/身宫）
-- `server/shensha.py`: 神煞查表（25+ 种）
-- `server/true_solar_time.py`: 真太阳时修正（Jean Meeus 时差方程 + 38 城市经纬度）
-- `server/daily_fortune.py`: 每日/每月运势（6 维度评分）
-- `server/kline_ohlc.py`: 百年人生 K 线 OHLC 模型（4 维度）
-- `server/dayun_score.py`: 大运流年评分
-- 新增端点：`POST /api/v2/hehun`（合婚）、`GET /api/v2/fortune/daily/{id}`、`GET /api/v2/fortune/monthly/{id}`、`POST /api/v2/reverse-lookup`、`GET /api/v2/cities`
-- `server/chart_quality.py`: 命局层次评分（格局清纯度/用神状态/冲突/五行流通/大运配合，5 维度 100 分，确定性无 LLM），结果挂载到 `result['chart_quality']`
+- 双版本 API：v1（WebSocket 推送，遗留）和 v2（SSE 流式 + SQLite 持久化）
+- `POST /api/v2/analyze` 支持 `school` 参数（ziping/mangpai/xinpai/all），`POST /api/v2/analyze/compare` 返回三流派对比
+- 其他端点：合婚（`/api/v2/hehun`）、每日运势、日柱反查、城市列表
 - LLM 配置：`LLM_API_KEY` / `LLM_API_BASE` / `LLM_MODEL` / `LLM_TIMEOUT`（默认 300s）环境变量（见 `.env.example`）
 - CORS 默认允许 `localhost:3000`
+- 详细模块列表见下方 "Key modules > Web 服务" 表
 
 **前端** (`frontend/`):
 - Next.js 16 App Router + TypeScript + Tailwind CSS v4 (PostCSS) + Zustand + ECharts
@@ -135,16 +129,7 @@ cd frontend && npx tsc --noEmit  # TypeScript 类型检查
 - **CSS 工具类**：`.card`（卡片容器）、`.form-input`/`.form-label`（表单）、`.hover-scale`/`.hover-lift`/`.hover-row`/`.hover-card`（hover 交互）、`.focus-ring`（焦点态）、`.gold-divider`/`.cinnabar-bar`（装饰线）
 - **prefers-reduced-motion**：JS 动画使用 `usePrefersReducedMotion` hook（`lib/usePrefersReducedMotion.ts`），CSS 动画由 `@media (prefers-reduced-motion: reduce)` 兜底
 - **Navbar 滚动态**：`color-mix(in srgb, var(--bg) 92%, transparent)` + `backdrop-filter`，仅在 `scrollY > 10` 时生效
-- 流派选择下拉框 + SchoolComparePanel 三列对比
-- BaziChartCard: 纵向四柱卡片（含纳音/长生/藏干）
-- StrengthSlider: 日主强弱滑块（得令/得地/得势）
-- DayunTimeline: 大运 Accordion（展开显示流年）
-- ShishenEnergyChart: 十神能量分布
-- RelationGraph: ECharts 力导向关系图谱
-- GongweiPanel / ShenShaPanel: 宫位和神煞面板
-- DailyFortuneCard: 今日运势（6 维度）
-- LifeKlineChart: 百年人生 K 线图
-- ShareCard: 分享图片生成（html2pdf.js）
+- 核心组件：BaziChartCard（四柱卡片）、SchoolPanel/SchoolComparePanel（流派分析）、DayunTimeline（大运）、ShishenEnergyChart（十神能量）、RelationGraph（关系图谱）、ShenShaPanel/GongweiPanel（神煞宫位）、DailyFortuneCard（每日运势）、LifeKlineChart（人生 K 线）、ChatPanel（LLM 对话）
 
 **叙述器** (`bazi_pro/narrator.py`):
 - 从计算结果直接生成 9 维度专业中文文本（旺衰/格局/用神/调候/五行/刑冲/性格/事业）
@@ -232,7 +217,7 @@ cd frontend && npx tsc --noEmit  # TypeScript 类型检查
 1. **No LLM logic in `bazi_pro/core/`** — 纯确定性计算。
 2. **No fabricated citations** — 每条古籍引用必须可追溯到 `retrieve_classical.py` 输出。
 3. **UI data contract** — 所有 UI 组件只接受 `DashboardVM` dataclass，不做正则提取。
-4. **Golden case count can never decrease** — 当前 507。
+4. **Golden case count can never decrease** — 当前 120 个 golden case JSON 文件（`tests/golden_cases/`）。
 5. **推导 vs 推算** — 确定性映射（干→五行、干→十神）是推导（允许）；脆弱数学链是推算（禁止）。
 6. **Linear execution** — SKILL.md 10 步流程顺序执行，不回填。
 7. **`server/analysis.py` 只追加，不重写** — 可添加新字段和 import，不改变现有函数签名和返回结构。
@@ -240,6 +225,44 @@ cd frontend && npx tsc --noEmit  # TypeScript 类型检查
 9. **SchoolAnalyzer 注册** — 新流派必须继承 `SchoolAnalyzer` 基类，调用 `register_school()` 注册，并在 `schools/__init__.py` 的 `_ensure_schools_loaded()` 中添加 lazy import。
 10. **破格检测必须有古籍依据** — 每个破格类型必须引用子平真诠/渊海子平/滴天髓/神峰通考原文。
 11. **盲派/新派方法论必须有典籍依据** — 盲派核心概念（宾主/体用/做功/贼神捕神/势）须对照段建业《盲派初级命理学》《命理珍宝瑰宝50期》；新派核心概念（百神/空亡/反断/格局分类）须对照李涵辰《八字预测真踪》。
+12. **每个新规则必须有测试** — 向 `bazi_pro/core/` 添加新函数时，必须在 `tests/test_core.py` 或 `tests/test_full_analysis.py` 中添加对应测试。
+13. **公开 API 变更需兼容测试** — 修改 `AnalysisEngine.analyze()` 或 `full_analysis()` 返回的 key 时，需在 `TestAnalysisEngineReturnContract` 中添加测试并更新 `EXPECTED_TOP_LEVEL_KEYS`。
+14. **脚本包装器必须传播退出码** — 所有 `scripts/*.py` 包装器必须使用 `sys.exit(main())`，不能裸调 `main()`。
+15. **Doctor 必须在关键问题时失败** — `bazi_pro/doctor.py` 发现 `FAIL` 状态时必须返回退出码 1。
+16. **极端标记必须先于通用标记检查** — `judge_wangshuai()` 中"极旺"/"极弱"必须在"身旺"/"身弱"之前检查，防止被遮蔽。
+17. **检索错误必须可见** — `AnalysisEngine.retrieve()` 不得静默吞异常，错误必须出现在 `result["retrieval"]["warnings"]` 中。
+
+## 变更后验证命令
+
+每次修改后执行完整验证链（与 CI 一致）：
+
+```bash
+# Lint
+ruff check server/ bazi_pro/ tests/
+
+# 编译检查（捕获语法错误）
+python -m compileall bazi_pro server scripts tests -q
+
+# 核心 + golden 测试
+python -m pytest tests/test_core.py tests/test_full_analysis.py -v
+python tests/run_golden.py
+
+# 环境诊断（两条路径均须通过）
+python scripts/doctor.py
+python -m bazi_pro.doctor
+```
+
+所有命令必须以退出码 0 完成。
+
+## 审计脚本
+
+```bash
+python scripts/audit_all.py          # 一键运行全部 4 项审计
+python scripts/audit_data_tables.py  # 数据表一致性审计
+python scripts/audit_logic_chain.py  # 逻辑链审计
+python scripts/audit_golden_cases.py # Golden case 审计
+python scripts/audit_skill_consistency.py  # SKILL.md 一致性审计
+```
 
 ## 古籍对齐规则 (v5.1)
 
