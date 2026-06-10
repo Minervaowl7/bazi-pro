@@ -24,7 +24,9 @@ export default function ReportChapter({
   id,
 }: ReportChapterProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const [showCitation, setShowCitation] = useState(false);
   const num = CHAPTER_NUMBERS[index] || String(index + 1);
+  const hasCitation = citation && citation.trim().length > 0;
 
   return (
     <section
@@ -47,19 +49,21 @@ export default function ReportChapter({
           background: open ? "var(--surface-2)" : "transparent",
         }}
       >
-        {/* 章节编号 - 印章风格 */}
+        {/* 章节编号 - 金边印章 */}
         <div
           className="flex-shrink-0 flex items-center justify-center"
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 4,
-            border: "2px solid var(--cinnabar)",
+            width: 38,
+            height: 38,
+            borderRadius: 6,
+            border: "1.5px solid var(--gold)",
             color: "var(--cinnabar)",
             fontFamily: "var(--font-display)",
             fontSize: 15,
             fontWeight: 700,
             letterSpacing: "0.05em",
+            background: open ? "rgba(180,154,92,0.06)" : "transparent",
+            transition: "background 0.2s",
           }}
         >
           {num}
@@ -67,34 +71,49 @@ export default function ReportChapter({
 
         {/* 章节标题 */}
         <span
-          className="flex-1 text-base font-semibold"
+          className="flex-1 font-semibold"
           style={{
             color: "var(--ink)",
             fontFamily: "var(--font-display)",
             letterSpacing: "0.02em",
+            fontSize: 16,
           }}
         >
           {title}
         </span>
 
-        {/* 展开/收起图标 */}
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            color: "var(--text-3)",
-            transform: open ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 0.2s",
-          }}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        {/* 引证标记 + 展开图标 */}
+        <div className="flex items-center gap-2">
+          {hasCitation && (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded"
+              style={{
+                background: "rgba(180,154,92,0.08)",
+                color: "var(--gold)",
+                letterSpacing: "0.04em",
+              }}
+            >
+              引
+            </span>
+          )}
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              color: "var(--text-4)",
+              transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.2s",
+            }}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
       </button>
 
       {/* 章节内容 */}
@@ -131,27 +150,48 @@ export default function ReportChapter({
                 </ReactMarkdown>
               </div>
 
-              {/* 古籍引用 */}
-              {citation && citation.trim().length > 0 && (
-                <div
-                  className="mt-6 px-4 py-3 rounded-lg"
-                  style={{
-                    background: "rgba(180,154,92,0.06)",
-                    borderLeft: "3px solid var(--gold)",
-                  }}
-                >
-                  <div
-                    className="text-[11px] font-medium mb-1.5 tracking-wide"
-                    style={{ color: "var(--gold)" }}
+              {/* 典籍引证 — 折叠式，节省空间 */}
+              {hasCitation && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => setShowCitation(!showCitation)}
+                    className="flex items-center gap-1.5 text-[12px] transition-colors duration-150"
+                    style={{
+                      color: "var(--gold)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "4px 0",
+                      fontFamily: "var(--font-display)",
+                    }}
                   >
-                    典籍引证
-                  </div>
-                  <div
-                    className="text-xs leading-relaxed"
-                    style={{ color: "var(--text-3)" }}
-                  >
-                    {citation}
-                  </div>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                    参考典籍
+                    <svg
+                      width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                      style={{
+                        transform: showCitation ? "rotate(90deg)" : "rotate(0deg)",
+                        transition: "transform 0.15s",
+                      }}
+                    >
+                      <polyline points="9 6 15 12 9 18" />
+                    </svg>
+                  </button>
+                  {showCitation && (
+                    <div
+                      className="mt-2 px-3 py-2.5 rounded text-[12px] leading-relaxed animate-fade-in"
+                      style={{
+                        background: "rgba(180,154,92,0.04)",
+                        color: "var(--text-3)",
+                        borderLeft: "2px solid rgba(180,154,92,0.2)",
+                      }}
+                    >
+                      {citation}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
