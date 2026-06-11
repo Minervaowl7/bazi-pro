@@ -212,7 +212,7 @@ class TestChatCompletion:
         import server.llm as llm_mod
         llm_mod._LLM_API_KEY = self._orig_key
 
-    @pytest.mark.asyncio
+    
     async def test_normal_call(self):
         """正常调用：返回 content"""
         from server.llm import chat_completion
@@ -231,7 +231,7 @@ class TestChatCompletion:
 
         assert result == "你好，我是命理师"
 
-    @pytest.mark.asyncio
+    
     async def test_no_api_key_raises(self):
         """未配置 API key 时抛出 RuntimeError"""
         import server.llm as llm_mod
@@ -240,7 +240,7 @@ class TestChatCompletion:
         with pytest.raises(RuntimeError, match="LLM API key 未配置"):
             await llm_mod.chat_completion([{"role": "user", "content": "测试"}])
 
-    @pytest.mark.asyncio
+    
     async def test_429_retry_then_success(self):
         """429 限流后重试成功"""
         from server.llm import chat_completion
@@ -261,7 +261,7 @@ class TestChatCompletion:
         assert result == "重试成功"
         mock_sleep.assert_called_once()  # 确认 sleep 被调用一次
 
-    @pytest.mark.asyncio
+    
     async def test_429_exhausted_retries(self):
         """429 连续超过最大重试次数后仍失败"""
         from server.llm import chat_completion
@@ -283,7 +283,7 @@ class TestChatCompletion:
             with pytest.raises(RuntimeError, match="unreachable"):
                 await chat_completion([{"role": "user", "content": "测试"}])
 
-    @pytest.mark.asyncio
+    
     async def test_empty_content_with_reasoning_fallback(self):
         """content 为空但有 reasoning_content 时降级返回 reasoning"""
         from server.llm import chat_completion
@@ -305,7 +305,7 @@ class TestChatCompletion:
 
         assert result == "这是推理过程"
 
-    @pytest.mark.asyncio
+    
     async def test_empty_content_no_reasoning_raises(self):
         """content 和 reasoning_content 都为空时，bump max_tokens 后仍然为空则抛异常"""
         from server.llm import chat_completion
@@ -323,7 +323,7 @@ class TestChatCompletion:
             with pytest.raises(RuntimeError, match="LLM 返回空 content"):
                 await chat_completion([{"role": "user", "content": "测试"}])
 
-    @pytest.mark.asyncio
+    
     async def test_empty_choices_raises(self):
         """返回空 choices 时抛异常"""
         from server.llm import chat_completion
@@ -339,7 +339,7 @@ class TestChatCompletion:
             with pytest.raises(RuntimeError, match="LLM 返回空 choices"):
                 await chat_completion([{"role": "user", "content": "测试"}])
 
-    @pytest.mark.asyncio
+    
     async def test_401_raises_auth_error(self):
         """401 认证失败"""
         from server.llm import chat_completion
@@ -354,7 +354,7 @@ class TestChatCompletion:
             with pytest.raises(RuntimeError, match="认证失败"):
                 await chat_completion([{"role": "user", "content": "测试"}])
 
-    @pytest.mark.asyncio
+    
     async def test_500_retry_then_success(self):
         """500 服务端错误后重试成功"""
         from server.llm import chat_completion
@@ -390,7 +390,7 @@ class TestChatCompletionStreamTyped:
         import server.llm as llm_mod
         llm_mod._LLM_API_KEY = self._orig_key
 
-    @pytest.mark.asyncio
+    
     async def test_normal_stream(self):
         """正常流式输出：区分 reasoning 和 token"""
         from server.llm import chat_completion_stream_typed
@@ -419,7 +419,7 @@ class TestChatCompletionStreamTyped:
         assert reasoning_chunks[0]["content"] == "让我想想"
         assert len(token_chunks) == 3  # 2个原始 + 1个降级汇总
 
-    @pytest.mark.asyncio
+    
     async def test_reasoning_only_fallback(self):
         """只有 reasoning_content 没有 content 时，降级为 token 输出"""
         from server.llm import chat_completion_stream_typed
@@ -447,7 +447,7 @@ class TestChatCompletionStreamTyped:
         assert len(tokens) == 1
         assert tokens[0]["content"] == "推理结果"
 
-    @pytest.mark.asyncio
+    
     async def test_no_content_raises(self):
         """流式返回无任何内容时抛异常"""
         from server.llm import chat_completion_stream_typed
@@ -467,7 +467,7 @@ class TestChatCompletionStreamTyped:
                 ):
                     results.append(chunk)
 
-    @pytest.mark.asyncio
+    
     async def test_no_api_key_raises(self):
         """未配置 key 时抛异常"""
         import server.llm as llm_mod
@@ -479,7 +479,7 @@ class TestChatCompletionStreamTyped:
             ):
                 pass
 
-    @pytest.mark.asyncio
+    
     async def test_malformed_lines_skipped(self):
         """畸形 JSON 行被跳过"""
         from server.llm import chat_completion_stream_typed
@@ -519,7 +519,7 @@ class TestChatCompletionStream:
         import server.llm as llm_mod
         llm_mod._LLM_API_KEY = self._orig_key
 
-    @pytest.mark.asyncio
+    
     async def test_normal_stream_yields_content(self):
         """正常流式输出 yield content 字符串"""
         from server.llm import chat_completion_stream
@@ -541,7 +541,7 @@ class TestChatCompletionStream:
 
         assert results == ["你", "好"]
 
-    @pytest.mark.asyncio
+    
     async def test_reasoning_content_also_yielded(self):
         """reasoning_content 也被 yield"""
         from server.llm import chat_completion_stream
