@@ -453,6 +453,7 @@ async def api_v2_chat_stream(payload: ChatRequest):
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         },
     )

@@ -228,6 +228,7 @@ async def chat_completion_stream_typed(messages: list[dict], temperature: float 
     }
 
     has_content = False
+    reasoning_buffer = ""
     async with httpx.AsyncClient(timeout=httpx.Timeout(_LLM_TIMEOUT, connect=5.0)) as client:
         async with client.stream("POST", url, headers=headers, json=payload) as resp:
             resp.raise_for_status()
@@ -244,12 +245,16 @@ async def chat_completion_stream_typed(messages: list[dict], temperature: float 
                     content = delta.get("content") or ""
                     if reasoning:
                         has_content = True
+                        reasoning_buffer += reasoning
                         yield {"type": "reasoning", "content": reasoning}
                     if content:
                         has_content = True
                         yield {"type": "token", "content": content}
                 except (json.JSONDecodeError, IndexError, KeyError):
                     continue
+    # 推理模型降级：只有 reasoning_content 没有 content 时，将 reasoning 作为 token 输出
+    if has_content and reasoning_buffer:
+        yield {"type": "token", "content": reasoning_buffer}
     if not has_content:
         raise RuntimeError("LLM 流式返回无 content。推理模型 token 不足，请增大 max_tokens。")
 

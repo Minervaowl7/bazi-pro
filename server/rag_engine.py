@@ -353,7 +353,6 @@ def _resolve_corpus_path() -> str:
 # 语料库条目缓存（进程级，避免每次检索都重新解析 corpus 文件）
 _corpus_entries_cache: dict[str, tuple[float, list[dict]]] = {}
 _corpus_cache_lock = threading.Lock()
-_CORPUS_CACHE_TTL = 600  # 10 分钟
 
 
 def _load_corpus_cached(corpus_path: str) -> list[dict]:
