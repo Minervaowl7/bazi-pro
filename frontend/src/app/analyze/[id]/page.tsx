@@ -940,7 +940,7 @@ export default function AnalyzePage() {
                         <div className="border-b border-[var(--border)] pb-3 mb-4">
                           <h3 className="font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>紫微斗数命盘</h3>
                         </div>
-                        <ZiweiPanel data={analysisResult.ziwei as Record<string, unknown>} />
+                        <ZiweiPanel data={(analysisResult.ziwei as Record<string, unknown>)?.chart as Record<string, unknown> ?? analysisResult.ziwei as Record<string, unknown>} />
                       </section>
                     ) : (
                       <section className="card p-6">
@@ -952,7 +952,7 @@ export default function AnalyzePage() {
                     {analysisResult?.ziwei ? (
                       <Accordion>
                         <AccordionItem title="紫微斗数命盘" defaultOpen>
-                          <ZiweiPanel data={analysisResult.ziwei as Record<string, unknown>} />
+                        <ZiweiPanel data={(analysisResult.ziwei as Record<string, unknown>)?.chart as Record<string, unknown> ?? analysisResult.ziwei as Record<string, unknown>} />
                         </AccordionItem>
                       </Accordion>
                     ) : (
