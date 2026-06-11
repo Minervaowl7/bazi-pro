@@ -172,7 +172,7 @@ export default function RelationGraph({ result }: Props): JSX.Element | null {
           option={option}
           style={{ height: 260, width: "100%" }}
           opts={{ renderer: "svg" }}
-          autoresize
+          autoresize={true}
         />
       </div>
       <div className="px-7 pb-5 flex items-center gap-4 flex-wrap">
