@@ -381,7 +381,7 @@ async def run_analysis(mcp_json: dict, run_id: str,
                     hour=_hour,
                     gender=_gender_num,
                 )
-                if "error" not in ziwei:
+                if isinstance(ziwei, dict) and "error" not in ziwei:
                     result['ziwei'] = ziwei
             except Exception:
                 pass  # 紫微斗数为可选功能，失败不影响主流程

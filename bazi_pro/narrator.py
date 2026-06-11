@@ -913,7 +913,7 @@ def _narrate_family(result, gender):
     return "\n".join(lines) if lines else "六亲分析数据暂未生成。"
 
 
-def _narrate_ziwei(result):
+def _narrate_ziwei(result: dict) -> str:
     """生成紫微斗数分析段落，从 result['ziwei'] 提取格局/四化/命宫信息。
 
     紫微斗数数据由 server/analysis.py 调用 get_ziwei_analysis() 生成，
@@ -933,10 +933,10 @@ def _narrate_ziwei(result):
     if soul or body or five_elements_class:
         lines.append(f"命主：{soul}，身主：{body}，五行局：{five_elements_class}\n")
 
-    # 从叙述中提取格局信息
+    # 从叙述中提取格局信息（排除"未检测到"的情况）
     narration = ziwei.get("narration", {})
     pattern_text = narration.get("pattern", "")
-    if pattern_text and "未检测到特殊格局" not in pattern_text:
+    if pattern_text and "格局分析" in pattern_text and "未检测到" not in pattern_text:
         lines.append(pattern_text)
 
     # 从叙述中提取命宫分析
