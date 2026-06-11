@@ -1,3 +1,4 @@
+
 """API authentication coverage tests for verify_api_key() in server/deps.py.
 
 Covers:
@@ -13,6 +14,7 @@ Covers:
 
 from __future__ import annotations
 
+import asyncio
 import os
 from unittest.mock import MagicMock, patch
 
@@ -34,7 +36,10 @@ class TestNoAPIKeyConfigured:
     """When BAZI_API_KEY is not set."""
 
     @pytest.mark.asyncio
-    async def test_no_key_returns_true_non_production(self):
+    def test_no_key_returns_true_non_production(self):
+        asyncio.run(self._async_test_no_key_returns_true_non_production())
+
+    async def _async_test_no_key_returns_true_non_production(self):
         """No API key configured in non-prod → allow all requests."""
         request = _make_request()
         with patch.dict(os.environ, {"BAZI_API_KEY": "", "ENV": "development"}, clear=False):
@@ -43,7 +48,10 @@ class TestNoAPIKeyConfigured:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_no_key_raises_in_production(self):
+    def test_no_key_raises_in_production(self):
+        asyncio.run(self._async_test_no_key_raises_in_production())
+
+    async def _async_test_no_key_raises_in_production(self):
         """No API key configured in production → raise APIKeyError."""
         request = _make_request()
         with patch.dict(os.environ, {"BAZI_API_KEY": "", "ENV": "production"}, clear=False):
@@ -52,7 +60,10 @@ class TestNoAPIKeyConfigured:
                     await verify_api_key(request, api_key=None)
 
     @pytest.mark.asyncio
-    async def test_no_key_raises_in_prod_uppercase(self):
+    def test_no_key_raises_in_prod_uppercase(self):
+        asyncio.run(self._async_test_no_key_raises_in_prod_uppercase())
+
+    async def _async_test_no_key_raises_in_prod_uppercase(self):
         """ENV=PRODUCTION should also trigger the production check."""
         request = _make_request()
         with patch.dict(os.environ, {"BAZI_API_KEY": "", "ENV": "PRODUCTION"}, clear=False):
@@ -65,7 +76,10 @@ class TestAPIKeyViaHeader:
     """Authentication via X-API-Key header."""
 
     @pytest.mark.asyncio
-    async def test_valid_key_returns_true(self):
+    def test_valid_key_returns_true(self):
+        asyncio.run(self._async_test_valid_key_returns_true())
+
+    async def _async_test_valid_key_returns_true(self):
         """Correct API key in header → allow."""
         request = _make_request()
         with patch("server.deps.API_KEY", "test-secret-key"):
@@ -73,7 +87,10 @@ class TestAPIKeyViaHeader:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_wrong_key_raises(self):
+    def test_wrong_key_raises(self):
+        asyncio.run(self._async_test_wrong_key_raises())
+
+    async def _async_test_wrong_key_raises(self):
         """Wrong API key in header → raise APIKeyError."""
         request = _make_request()
         with patch("server.deps.API_KEY", "correct-key"):
@@ -81,7 +98,10 @@ class TestAPIKeyViaHeader:
                 await verify_api_key(request, api_key="wrong-key")
 
     @pytest.mark.asyncio
-    async def test_empty_key_raises_when_key_required(self):
+    def test_empty_key_raises_when_key_required(self):
+        asyncio.run(self._async_test_empty_key_raises_when_key_required())
+
+    async def _async_test_empty_key_raises_when_key_required(self):
         """Empty string API key treated as missing → raise APIKeyError."""
         request = _make_request()
         with patch("server.deps.API_KEY", "required-key"):
@@ -89,7 +109,10 @@ class TestAPIKeyViaHeader:
                 await verify_api_key(request, api_key="")
 
     @pytest.mark.asyncio
-    async def test_none_key_raises_when_key_required(self):
+    def test_none_key_raises_when_key_required(self):
+        asyncio.run(self._async_test_none_key_raises_when_key_required())
+
+    async def _async_test_none_key_raises_when_key_required(self):
         """None API key (header missing) → raise APIKeyError."""
         request = _make_request()
         with patch("server.deps.API_KEY", "required-key"):
@@ -101,7 +124,10 @@ class TestAPIKeyViaQueryParam:
     """Authentication via ?token= query parameter."""
 
     @pytest.mark.asyncio
-    async def test_valid_token_in_query(self):
+    def test_valid_token_in_query(self):
+        asyncio.run(self._async_test_valid_token_in_query())
+
+    async def _async_test_valid_token_in_query(self):
         """Correct token in query params → allow."""
         request = _make_request({"token": "query-secret"})
         with patch("server.deps.API_KEY", "query-secret"):
@@ -109,7 +135,10 @@ class TestAPIKeyViaQueryParam:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_invalid_token_in_query(self):
+    def test_invalid_token_in_query(self):
+        asyncio.run(self._async_test_invalid_token_in_query())
+
+    async def _async_test_invalid_token_in_query(self):
         """Wrong token in query params → raise APIKeyError."""
         request = _make_request({"token": "wrong-token"})
         with patch("server.deps.API_KEY", "correct-token"):
@@ -117,7 +146,10 @@ class TestAPIKeyViaQueryParam:
                 await verify_api_key(request, api_key=None)
 
     @pytest.mark.asyncio
-    async def test_empty_token_in_query_falls_through(self):
+    def test_empty_token_in_query_falls_through(self):
+        asyncio.run(self._async_test_empty_token_in_query_falls_through())
+
+    async def _async_test_empty_token_in_query_falls_through(self):
         """Empty token in query params → falls through to raise APIKeyError."""
         request = _make_request({"token": ""})
         with patch("server.deps.API_KEY", "required-key"):
@@ -125,7 +157,10 @@ class TestAPIKeyViaQueryParam:
                 await verify_api_key(request, api_key=None)
 
     @pytest.mark.asyncio
-    async def test_no_token_no_header_raises(self):
+    def test_no_token_no_header_raises(self):
+        asyncio.run(self._async_test_no_token_no_header_raises())
+
+    async def _async_test_no_token_no_header_raises(self):
         """No token in query, no header → raise APIKeyError."""
         request = _make_request({})
         with patch("server.deps.API_KEY", "required-key"):
@@ -137,7 +172,10 @@ class TestHeaderPriorityOverQuery:
     """Header should be checked before query param."""
 
     @pytest.mark.asyncio
-    async def test_valid_header_ignores_query(self):
+    def test_valid_header_ignores_query(self):
+        asyncio.run(self._async_test_valid_header_ignores_query())
+
+    async def _async_test_valid_header_ignores_query(self):
         """Valid header → allow, even if query has wrong token."""
         request = _make_request({"token": "wrong"})
         with patch("server.deps.API_KEY", "correct-key"):
@@ -145,7 +183,10 @@ class TestHeaderPriorityOverQuery:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_invalid_header_falls_to_query(self):
+    def test_invalid_header_falls_to_query(self):
+        asyncio.run(self._async_test_invalid_header_falls_to_query())
+
+    async def _async_test_invalid_header_falls_to_query(self):
         """Invalid header → falls through to query param → allow if valid."""
         request = _make_request({"token": "fallback-key"})
         with patch("server.deps.API_KEY", "fallback-key"):
@@ -159,7 +200,10 @@ class TestTimingSafeComparison:
     """Verify hmac.compare_digest is used (timing-safe)."""
 
     @pytest.mark.asyncio
-    async def test_uses_hmac_compare_digest(self):
+    def test_uses_hmac_compare_digest(self):
+        asyncio.run(self._async_test_uses_hmac_compare_digest())
+
+    async def _async_test_uses_hmac_compare_digest(self):
         """Verify that hmac.compare_digest is used for comparison."""
         request = _make_request()
         with patch("server.deps.API_KEY", "test-key"):

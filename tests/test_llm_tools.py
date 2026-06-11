@@ -1,3 +1,4 @@
+
 """server/llm_client.py Function Calling 路径测试
 
 覆盖：
@@ -7,6 +8,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from unittest.mock import AsyncMock, patch
 
@@ -81,7 +83,10 @@ class TestChatCompletionWithTools:
         mod._LLM_API_KEY = orig
 
     @pytest.mark.asyncio
-    async def test_no_tool_calls_returns_content(self):
+    def test_no_tool_calls_returns_content(self):
+        asyncio.run(self._async_test_no_tool_calls_returns_content())
+
+    async def _async_test_no_tool_calls_returns_content(self):
         """LLM 直接返回文本（无工具调用）时，直接返回 content。"""
         llm_data = _make_llm_response(content="你好，我是命理师")
         with patch(_PATCH_POST_WITH_RETRY, new_callable=AsyncMock, return_value=llm_data):
@@ -95,7 +100,10 @@ class TestChatCompletionWithTools:
         assert len(result["messages"]) == 1  # 原始 messages
 
     @pytest.mark.asyncio
-    async def test_single_tool_call_round(self):
+    def test_single_tool_call_round(self):
+        asyncio.run(self._async_test_single_tool_call_round())
+
+    async def _async_test_single_tool_call_round(self):
         """单轮工具调用后返回最终内容。"""
         # 第 1 轮：LLM 返回 tool_call
         tool_call = _make_tool_call("paipan", {"solar_datetime": "1990-05-15 08:30", "gender": "男"}, "call_1")
@@ -123,7 +131,10 @@ class TestChatCompletionWithTools:
         assert len(result["messages"]) == 3
 
     @pytest.mark.asyncio
-    async def test_multi_round_tool_calls(self):
+    def test_multi_round_tool_calls(self):
+        asyncio.run(self._async_test_multi_round_tool_calls())
+
+    async def _async_test_multi_round_tool_calls(self):
         """多轮工具调用（2 轮）后返回最终内容。"""
         tc1 = _make_tool_call("paipan", {"solar_datetime": "1990-05-15 08:30", "gender": "男"}, "call_1")
         tc2 = _make_tool_call("query_geju", {"bazi": "庚午 辛巳 丙寅 壬辰", "day_master": "丙"}, "call_2")
@@ -150,7 +161,10 @@ class TestChatCompletionWithTools:
         assert result["tool_calls_log"][1]["name"] == "query_geju"
 
     @pytest.mark.asyncio
-    async def test_max_tool_rounds_exceeded(self):
+    def test_max_tool_rounds_exceeded(self):
+        asyncio.run(self._async_test_max_tool_rounds_exceeded())
+
+    async def _async_test_max_tool_rounds_exceeded(self):
         """达到最大工具调用轮次时强制返回。"""
         tc = _make_tool_call("paipan", {"solar_datetime": "1990-05-15 08:30", "gender": "男"}, "call_1")
         # 每轮都返回 tool_call，永不返回纯文本
@@ -173,7 +187,10 @@ class TestChatCompletionWithTools:
         assert len(result["tool_calls_log"]) >= 2
 
     @pytest.mark.asyncio
-    async def test_reasoning_fallback(self):
+    def test_reasoning_fallback(self):
+        asyncio.run(self._async_test_reasoning_fallback())
+
+    async def _async_test_reasoning_fallback(self):
         """content 为空但有 reasoning_content 时降级。"""
         llm_data = _make_llm_response(content="", reasoning_content="这是推理过程")
         with patch(_PATCH_POST_WITH_RETRY, new_callable=AsyncMock, return_value=llm_data):
@@ -185,7 +202,10 @@ class TestChatCompletionWithTools:
         assert result["content"] == "这是推理过程"
 
     @pytest.mark.asyncio
-    async def test_empty_choices_raises(self):
+    def test_empty_choices_raises(self):
+        asyncio.run(self._async_test_empty_choices_raises())
+
+    async def _async_test_empty_choices_raises(self):
         """LLM 返回空 choices 时抛异常。"""
         llm_data = {"choices": []}
         with patch(_PATCH_POST_WITH_RETRY, new_callable=AsyncMock, return_value=llm_data):
@@ -196,7 +216,10 @@ class TestChatCompletionWithTools:
                 )
 
     @pytest.mark.asyncio
-    async def test_no_api_key_raises(self):
+    def test_no_api_key_raises(self):
+        asyncio.run(self._async_test_no_api_key_raises())
+
+    async def _async_test_no_api_key_raises(self):
         """未配置 API key 时抛异常。"""
         import server.llm_client as mod
         mod._LLM_API_KEY = ""
@@ -207,7 +230,10 @@ class TestChatCompletionWithTools:
             )
 
     @pytest.mark.asyncio
-    async def test_tool_calls_log_records_result(self):
+    def test_tool_calls_log_records_result(self):
+        asyncio.run(self._async_test_tool_calls_log_records_result())
+
+    async def _async_test_tool_calls_log_records_result(self):
         """工具调用日志应记录工具执行结果。"""
         tc = _make_tool_call("query_geju", {"bazi": "test", "day_master": "丙"}, "call_log")
         round1 = _make_llm_response(tool_calls=[tc])
@@ -231,7 +257,10 @@ class TestChatCompletionWithTools:
         assert log_entry["result"] == tool_result_content
 
     @pytest.mark.asyncio
-    async def test_multiple_tool_calls_in_one_round(self):
+    def test_multiple_tool_calls_in_one_round(self):
+        asyncio.run(self._async_test_multiple_tool_calls_in_one_round())
+
+    async def _async_test_multiple_tool_calls_in_one_round(self):
         """一轮中返回多个 tool_calls 时全部执行。"""
         tc1 = _make_tool_call("paipan", {"solar_datetime": "1990-05-15 08:30", "gender": "男"}, "call_a")
         tc2 = _make_tool_call("query_shensha", {"bazi": "test", "gender": "男"}, "call_b")
@@ -273,7 +302,10 @@ class TestChatCompletionStreamWithTools:
         mod._LLM_API_KEY = orig
 
     @pytest.mark.asyncio
-    async def test_no_tool_calls_yields_tokens(self):
+    def test_no_tool_calls_yields_tokens(self):
+        asyncio.run(self._async_test_no_tool_calls_yields_tokens())
+
+    async def _async_test_no_tool_calls_yields_tokens(self):
         """无工具调用时，直接流式输出 token。"""
         llm_data = _make_llm_response(content="你好世界")
         with patch(_PATCH_POST_WITH_RETRY, new_callable=AsyncMock, return_value=llm_data):
@@ -295,7 +327,10 @@ class TestChatCompletionStreamWithTools:
         assert "你好世界" in token_content
 
     @pytest.mark.asyncio
-    async def test_heartbeat_events(self):
+    def test_heartbeat_events(self):
+        asyncio.run(self._async_test_heartbeat_events())
+
+    async def _async_test_heartbeat_events(self):
         """每轮工具调用都应发出 heartbeat 事件。"""
         tc = _make_tool_call("paipan", {"solar_datetime": "1990-05-15 08:30", "gender": "男"}, "call_hb")
         round1 = _make_llm_response(tool_calls=[tc])
@@ -318,7 +353,10 @@ class TestChatCompletionStreamWithTools:
         assert len(heartbeats) >= 2  # 至少 2 个：一轮开始 + 工具执行前
 
     @pytest.mark.asyncio
-    async def test_tool_call_and_result_events(self):
+    def test_tool_call_and_result_events(self):
+        asyncio.run(self._async_test_tool_call_and_result_events())
+
+    async def _async_test_tool_call_and_result_events(self):
         """工具调用应产生 tool_call 和 tool_result 事件。"""
         tc = _make_tool_call("query_geju", {"bazi": "test", "day_master": "丙"}, "call_tc")
         round1 = _make_llm_response(tool_calls=[tc])
@@ -349,7 +387,10 @@ class TestChatCompletionStreamWithTools:
         assert "正官格" in tool_result_events[0]["content"]
 
     @pytest.mark.asyncio
-    async def test_max_rounds_exceeded(self):
+    def test_max_rounds_exceeded(self):
+        asyncio.run(self._async_test_max_rounds_exceeded())
+
+    async def _async_test_max_rounds_exceeded(self):
         """达到最大轮次时输出提示并结束。"""
         tc = _make_tool_call("paipan", {"solar_datetime": "test", "gender": "男"}, "call_mr")
         always_tool = _make_llm_response(tool_calls=[tc])
@@ -375,7 +416,10 @@ class TestChatCompletionStreamWithTools:
         assert len(done_events) == 1
 
     @pytest.mark.asyncio
-    async def test_reasoning_fallback_in_stream(self):
+    def test_reasoning_fallback_in_stream(self):
+        asyncio.run(self._async_test_reasoning_fallback_in_stream())
+
+    async def _async_test_reasoning_fallback_in_stream(self):
         """stream 中 content 为空但有 reasoning_content 时降级。"""
         llm_data = _make_llm_response(content="", reasoning_content="推理结果")
         with patch(_PATCH_POST_WITH_RETRY, new_callable=AsyncMock, return_value=llm_data):
@@ -391,7 +435,10 @@ class TestChatCompletionStreamWithTools:
         assert "推理结果" in token_content
 
     @pytest.mark.asyncio
-    async def test_no_api_key_raises(self):
+    def test_no_api_key_raises(self):
+        asyncio.run(self._async_test_no_api_key_raises())
+
+    async def _async_test_no_api_key_raises(self):
         """未配置 API key 时抛异常。"""
         import server.llm_client as mod
         mod._LLM_API_KEY = ""
@@ -404,7 +451,10 @@ class TestChatCompletionStreamWithTools:
                 pass
 
     @pytest.mark.asyncio
-    async def test_empty_choices_raises(self):
+    def test_empty_choices_raises(self):
+        asyncio.run(self._async_test_empty_choices_raises())
+
+    async def _async_test_empty_choices_raises(self):
         """LLM 返回空 choices 时抛异常。"""
         llm_data = {"choices": []}
         with patch(_PATCH_POST_WITH_RETRY, new_callable=AsyncMock, return_value=llm_data):
@@ -416,7 +466,10 @@ class TestChatCompletionStreamWithTools:
                     pass
 
     @pytest.mark.asyncio
-    async def test_final_reply_chunked_output(self):
+    def test_final_reply_chunked_output(self):
+        asyncio.run(self._async_test_final_reply_chunked_output())
+
+    async def _async_test_final_reply_chunked_output(self):
         """最终回复应按 20 字符分块输出。"""
         long_content = "这是一段较长的命理分析文本，用于测试分块输出效果。" * 3  # > 60 chars
         llm_data = _make_llm_response(content=long_content)
@@ -437,7 +490,10 @@ class TestChatCompletionStreamWithTools:
         assert reconstructed == long_content
 
     @pytest.mark.asyncio
-    async def test_multi_round_with_events(self):
+    def test_multi_round_with_events(self):
+        asyncio.run(self._async_test_multi_round_with_events())
+
+    async def _async_test_multi_round_with_events(self):
         """多轮工具调用的完整事件序列。"""
         tc = _make_tool_call("paipan", {"solar_datetime": "test", "gender": "男"}, "call_multi")
         round1 = _make_llm_response(tool_calls=[tc])

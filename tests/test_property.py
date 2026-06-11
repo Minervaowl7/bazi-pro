@@ -8,8 +8,13 @@ Covers 5 core functions with 13 property tests total:
   - screen_pattern: 2 properties (pattern non-empty, confidence range)
 """
 
-from hypothesis import assume, given, settings
-from hypothesis import strategies as st
+import pytest
+
+try:
+    from hypothesis import assume, given, settings
+    from hypothesis import strategies as st
+except ImportError:
+    pytest.skip("hypothesis not installed", allow_module_level=True)
 
 from bazi_pro.core.elements import calc_element_forces
 from bazi_pro.core.patterns import screen_pattern

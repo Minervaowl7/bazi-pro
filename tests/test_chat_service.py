@@ -1,3 +1,4 @@
+
 """server/chat_service.py 单元测试
 
 覆盖：
@@ -11,6 +12,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from unittest.mock import AsyncMock, patch
 
@@ -212,7 +214,10 @@ class TestLoadAndParseAnalysis:
     """_load_and_parse_analysis 测试。"""
 
     @pytest.mark.asyncio
-    async def test_record_not_found(self):
+    def test_record_not_found(self):
+        asyncio.run(self._async_test_record_not_found())
+
+    async def _async_test_record_not_found(self):
         """记录不存在时返回 (None, None)。"""
         with patch(_PATCH_GET_ANALYSIS, new_callable=AsyncMock, return_value=None):
             record, result = await _load_and_parse_analysis("nonexistent_id")
@@ -220,7 +225,10 @@ class TestLoadAndParseAnalysis:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_full_result_is_dict(self):
+    def test_full_result_is_dict(self):
+        asyncio.run(self._async_test_full_result_is_dict())
+
+    async def _async_test_full_result_is_dict(self):
         """full_result 已经是 dict 时直接返回。"""
         mock_record = {
             "id": "abc123",
@@ -233,7 +241,10 @@ class TestLoadAndParseAnalysis:
         assert result["day_master"] == "丙"
 
     @pytest.mark.asyncio
-    async def test_full_result_is_json_string(self):
+    def test_full_result_is_json_string(self):
+        asyncio.run(self._async_test_full_result_is_json_string())
+
+    async def _async_test_full_result_is_json_string(self):
         """full_result 为 JSON 字符串时自动解析。"""
         inner = {"status": "completed", "day_master": "甲"}
         mock_record = {
@@ -246,7 +257,10 @@ class TestLoadAndParseAnalysis:
         assert result["day_master"] == "甲"
 
     @pytest.mark.asyncio
-    async def test_full_result_is_invalid_json_string(self):
+    def test_full_result_is_invalid_json_string(self):
+        asyncio.run(self._async_test_full_result_is_invalid_json_string())
+
+    async def _async_test_full_result_is_invalid_json_string(self):
         """full_result 为非法 JSON 字符串时降级为空 dict。"""
         mock_record = {
             "id": "ghi789",
@@ -320,14 +334,20 @@ class TestPrepareChatContext:
     """prepare_chat_context 集成测试（全部 mock）。"""
 
     @pytest.mark.asyncio
-    async def test_analysis_not_found_returns_none(self):
+    def test_analysis_not_found_returns_none(self):
+        asyncio.run(self._async_test_analysis_not_found_returns_none())
+
+    async def _async_test_analysis_not_found_returns_none(self):
         """分析记录不存在时返回 None。"""
         with patch(_PATCH_GET_ANALYSIS, new_callable=AsyncMock, return_value=None):
             result = await prepare_chat_context("bad_id", "你好", "ziping", "full")
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_success_path(self):
+    def test_success_path(self):
+        asyncio.run(self._async_test_success_path())
+
+    async def _async_test_success_path(self):
         """正常路径：加载分析 + 构建上下文。"""
         mock_record = {
             "id": "test123",
@@ -374,7 +394,10 @@ class TestPrepareChatContext:
         assert ctx.messages[-1]["content"] == "我的格局如何？"
 
     @pytest.mark.asyncio
-    async def test_with_basic_retrieval_depth_skips_rag(self):
+    def test_with_basic_retrieval_depth_skips_rag(self):
+        asyncio.run(self._async_test_with_basic_retrieval_depth_skips_rag())
+
+    async def _async_test_with_basic_retrieval_depth_skips_rag(self):
         """retrieval_depth='basic' 时跳过 RAG 检索。"""
         mock_record = {
             "id": "test456",
@@ -410,7 +433,10 @@ class TestBuildReportContext:
     """build_report_context 错误路径测试。"""
 
     @pytest.mark.asyncio
-    async def test_not_found(self):
+    def test_not_found(self):
+        asyncio.run(self._async_test_not_found())
+
+    async def _async_test_not_found(self):
         """记录不存在时返回 (None, 'NOT_FOUND')。"""
         with patch(_PATCH_GET_ANALYSIS, new_callable=AsyncMock, return_value=None):
             ctx, error = await build_report_context("bad_id", "ziping", "full")
@@ -418,7 +444,10 @@ class TestBuildReportContext:
         assert error == "NOT_FOUND"
 
     @pytest.mark.asyncio
-    async def test_analysis_not_completed(self):
+    def test_analysis_not_completed(self):
+        asyncio.run(self._async_test_analysis_not_completed())
+
+    async def _async_test_analysis_not_completed(self):
         """分析未完成时返回 (None, 'ANALYSIS_NOT_COMPLETED')。"""
         mock_record = {
             "id": "test789",
@@ -431,7 +460,10 @@ class TestBuildReportContext:
         assert error == "ANALYSIS_NOT_COMPLETED"
 
     @pytest.mark.asyncio
-    async def test_invalid_result(self):
+    def test_invalid_result(self):
+        asyncio.run(self._async_test_invalid_result())
+
+    async def _async_test_invalid_result(self):
         """结果无效时返回 (None, 'INVALID_RESULT')。"""
         mock_record = {
             "id": "test_invalid",
@@ -444,7 +476,10 @@ class TestBuildReportContext:
         assert error == "INVALID_RESULT"
 
     @pytest.mark.asyncio
-    async def test_success_path(self):
+    def test_success_path(self):
+        asyncio.run(self._async_test_success_path())
+
+    async def _async_test_success_path(self):
         """正常路径返回 ReportContext。"""
         mock_record = {
             "id": "test_ok",
@@ -472,7 +507,10 @@ class TestBuildReportContext:
         assert ctx.result["day_master"] == "丙"
 
     @pytest.mark.asyncio
-    async def test_full_result_is_json_string(self):
+    def test_full_result_is_json_string(self):
+        asyncio.run(self._async_test_full_result_is_json_string())
+
+    async def _async_test_full_result_is_json_string(self):
         """full_result 为 JSON 字符串时自动解析。"""
         inner = {
             "status": "completed",
@@ -499,7 +537,10 @@ class TestBuildReportContext:
         assert ctx.result["day_master"] == "甲"
 
     @pytest.mark.asyncio
-    async def test_birth_json_is_string(self):
+    def test_birth_json_is_string(self):
+        asyncio.run(self._async_test_birth_json_is_string())
+
+    async def _async_test_birth_json_is_string(self):
         """birth_json 为 JSON 字符串时自动解析。"""
         mock_record = {
             "id": "test_birth_str",
