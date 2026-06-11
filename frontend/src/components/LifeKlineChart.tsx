@@ -264,7 +264,6 @@ export default function LifeKlineChart({ analysisId }: Props) {
           style={{ height: "min(420px, 60vw)" }}
           notMerge={true}
           lazyUpdate={true}
-          autoresize={true}
         />
       </div>
     </section>

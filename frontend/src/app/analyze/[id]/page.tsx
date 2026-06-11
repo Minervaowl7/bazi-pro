@@ -796,7 +796,7 @@ export default function AnalyzePage() {
             {/* Tab 内容区（桌面端直接展示，移动端用 AccordionItem 包裹实现可折叠） */}
             <div ref={tabContentRef} className="space-y-6 sm:space-y-10">
               {/* Tab 1: 四柱命盘 */}
-              <div role="tabpanel" aria-labelledby="tab-bazi" style={{ display: activeTab === "bazi" ? "block" : "none" }}>
+              <div role="tabpanel" aria-labelledby="tab-bazi" style={activeTab === "bazi" ? undefined : { visibility: "hidden", height: 0, overflow: "hidden", position: "absolute" }}>
                 <>
                   {/* 桌面端：直接渲染 */}
                   <div className="hidden sm:block">
@@ -912,7 +912,7 @@ export default function AnalyzePage() {
               </div>
 
               {/* Tab 3: 宫位神煞 */}
-              <div role="tabpanel" aria-labelledby="tab-detail" style={{ display: activeTab === "detail" ? "block" : "none" }}>
+              <div role="tabpanel" aria-labelledby="tab-detail" style={activeTab === "detail" ? undefined : { visibility: "hidden", height: 0, overflow: "hidden", position: "absolute" }}>
                 <>
                   <div className="hidden sm:block">
                     <GongweiPanel result={analysisResult} />
