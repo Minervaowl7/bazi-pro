@@ -409,6 +409,7 @@ async def chat_completion_stream_with_tools(
 
     for round_idx in range(max_tool_rounds):
         # 非流式请求（工具调用必须同步处理）
+        yield {"type": "heartbeat", "content": f"正在调用 LLM（第{round_idx + 1}轮）..."}
         payload: dict = {
             "model": _LLM_MODEL,
             "messages": working_messages,
@@ -467,7 +468,8 @@ async def chat_completion_stream_with_tools(
                 "arguments": func.get("arguments", ""),
             }, ensure_ascii=False)}
 
-        # 执行工具
+        # 执行工具（发送心跳防止前端 stall timer 触发）
+        yield {"type": "heartbeat", "content": "正在执行命理工具..."}
         tool_messages = await execute_tools(tool_calls)
         working_messages.extend(tool_messages)
 

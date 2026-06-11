@@ -380,6 +380,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
         } else if (evt.type === "reasoning") {
           setStreamingReasoning(prev => prev + evt.content);
         }
+        // heartbeat/tool_call/tool_result 只重置 stall timer，不显示内容
       },
       /* onError */
       (err: Error) => {

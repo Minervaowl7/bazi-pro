@@ -118,7 +118,11 @@ const DimensionAnalysisPanel = dynamic(() => import("@/components/DimensionAnaly
 
 const ZiweiPanel = dynamic(() => import("@/components/ZiweiPanel"), {
   ssr: false,
-  loading: () => <PanelSkeleton title="紫微斗数" lines={6} />,
+  loading: () => <div className="p-12 text-center text-sm" style={{ color: "var(--text-3)" }}>紫微命盘加载中…</div>,
+});
+const ZiweiNarrationPanel = dynamic(() => import("@/components/ZiweiNarrationPanel"), {
+  ssr: false,
+  loading: () => <div className="p-8 text-center text-sm" style={{ color: "var(--text-3)" }}>紫微简批加载中…</div>,
 });
 
 const ChatPanel = dynamic(() => import("@/components/ChatPanel"), {
@@ -936,12 +940,18 @@ export default function AnalyzePage() {
                 <>
                   <div className="hidden sm:block">
                     {analysisResult?.ziwei ? (
+                      <>
                       <section className="card p-6">
                         <div className="border-b border-[var(--border)] pb-3 mb-4">
                           <h3 className="font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>紫微斗数命盘</h3>
                         </div>
                         <ZiweiPanel data={(analysisResult.ziwei as Record<string, unknown>)?.chart as Record<string, unknown> ?? analysisResult.ziwei as Record<string, unknown>} />
                       </section>
+                      {/* 紫微简批 */}
+                      <ZiweiNarrationPanel narration={
+                        (analysisResult.ziwei as Record<string, unknown>)?.narration as Record<string, string> ?? {}
+                      } />
+                      </>
                     ) : (
                       <section className="card p-6">
                         <p className="text-[15px]" style={{ color: "var(--text-3)" }}>紫微斗数数据不可用（需安装 iztro-py 依赖）</p>
@@ -953,6 +963,11 @@ export default function AnalyzePage() {
                       <Accordion>
                         <AccordionItem title="紫微斗数命盘" defaultOpen>
                         <ZiweiPanel data={(analysisResult.ziwei as Record<string, unknown>)?.chart as Record<string, unknown> ?? analysisResult.ziwei as Record<string, unknown>} />
+                        </AccordionItem>
+                        <AccordionItem title="紫微斗数简批">
+                          <ZiweiNarrationPanel narration={
+                            (analysisResult.ziwei as Record<string, unknown>)?.narration as Record<string, string> ?? {}
+                          } />
                         </AccordionItem>
                       </Accordion>
                     ) : (

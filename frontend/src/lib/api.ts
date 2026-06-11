@@ -195,7 +195,7 @@ export async function sendChatMessage(analysisId: string, message: string, schoo
 
 /** SSE 流式 Chat 事件类型 */
 export interface ChatStreamEvent {
-  type: "token" | "reasoning" | "done" | "error" | "tool_call" | "tool_result";
+  type: "token" | "reasoning" | "done" | "error" | "tool_call" | "tool_result" | "heartbeat";
   content: string;
   /** 工具调用名称（仅 tool_call 事件） */
   tool_name?: string;
