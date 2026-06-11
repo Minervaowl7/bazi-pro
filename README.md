@@ -233,7 +233,7 @@ POST /api/v2/analyze/compare                # 三流派对比分析
 
 ## Web 应用
 
-bazi-pro 提供完整的交互式 Web 应用（暗色主题，DeepOracle 风格）：
+bazi-pro 提供完整的交互式 Web 应用（暗色主题）：
 
 **前端** (`frontend/`): Next.js 16 + TypeScript + Tailwind CSS 4 + Zustand + ECharts + GSAP
 - 命盘输入表单（八字 + 日主自动推导 + 性别 + 城市搜索）
