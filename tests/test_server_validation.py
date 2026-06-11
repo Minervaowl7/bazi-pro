@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+import pytest
+
+pytest.importorskip("aiosqlite")
+pytest.importorskip("fastapi")
+
 from server.analysis import _make_cache_key, _validate_input
 
 

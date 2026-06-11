@@ -7,6 +7,10 @@ except ImportError:
     import sys
     print("pytest not installed. Skipping tests.", file=sys.stderr)
     sys.exit(0)
+
+pytest.importorskip("fastapi")
+pytest.importorskip("pydantic")
+
 from pydantic import ValidationError
 
 from server.schemas import BaziAnalysisRequest, BaziPillars, DayunItem

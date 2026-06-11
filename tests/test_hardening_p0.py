@@ -17,6 +17,10 @@ except ImportError:
     import sys
     print("pytest not installed. Skipping tests.", file=sys.stderr)
     sys.exit(0)
+
+pytest.importorskip("aiosqlite")
+pytest.importorskip("fastapi")
+
 from fastapi.testclient import TestClient
 
 
