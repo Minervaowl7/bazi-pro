@@ -494,6 +494,270 @@ class TestEdgeCases:
         assert _find_star(palace, "紫微") is not None
 
 
+class TestSihuaApi:
+    """四化 API 端点测试"""
+
+    @pytest.fixture
+    def client(self):
+        from fastapi.testclient import TestClient
+
+        from server.app import app
+        return TestClient(app)
+
+    def test_sihua_basic(self, client):
+        """测试基本四化查询（不带 query_year）"""
+        resp = client.post("/api/v2/ziwei/sihua", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "benming" in data
+        assert "daxian" in data
+        # 大限四化正常返回
+        assert len(data["daxian"]) == 12
+        assert "sihua" in data["daxian"][0]
+        # 不带 query_year 时不应有 liunian
+        assert "liunian" not in data
+
+    def test_sihua_with_query_year(self, client):
+        """测试带 query_year 的四化查询"""
+        resp = client.post("/api/v2/ziwei/sihua", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+            "query_year": 2026,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "benming" in data
+        assert "daxian" in data
+        assert "liunian" in data
+        # 2026 年干为丙
+        assert data["liunian"]["stem"] == "丙"
+        assert "sihua" in data["liunian"]
+
+    def test_sihua_daxian_count(self, client):
+        """测试大限四化返回 12 个"""
+        resp = client.post("/api/v2/ziwei/sihua", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["daxian"]) == 12
+
+    def test_sihua_missing_required_field(self, client):
+        """测试缺少必填字段"""
+        resp = client.post("/api/v2/ziwei/sihua", json={
+            "hour": 8,
+        })
+        assert resp.status_code == 422
+
+    def test_sihua_invalid_hour(self, client):
+        """测试无效小时值"""
+        resp = client.post("/api/v2/ziwei/sihua", json={
+            "solar_date": "1990-01-01",
+            "hour": 25,
+            "gender": 1,
+        })
+        assert resp.status_code == 422
+
+
+class TestDayunApi:
+    """大限（大运）API 端点测试"""
+
+    @pytest.fixture
+    def client(self):
+        from fastapi.testclient import TestClient
+
+        from server.app import app
+        return TestClient(app)
+
+    def test_dayun_basic(self, client):
+        """测试基本大限查询"""
+        resp = client.post("/api/v2/ziwei/dayun", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "dayun" in data
+        assert isinstance(data["dayun"], list)
+        assert len(data["dayun"]) > 0
+
+    def test_dayun_structure(self, client):
+        """测试大限返回结构"""
+        resp = client.post("/api/v2/ziwei/dayun", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        first = data["dayun"][0]
+        # 必须包含的字段
+        assert "age_range" in first
+        assert "palace" in first
+        assert "major_stars" in first
+        assert "sihua_flow" in first
+        assert "heavenly_stem" in first
+        assert "earthly_branch" in first
+
+    def test_dayun_sorted_by_age(self, client):
+        """测试大限按年龄排序"""
+        resp = client.post("/api/v2/ziwei/dayun", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        ages = [d["age_start"] for d in data["dayun"]]
+        assert ages == sorted(ages)
+
+    def test_dayun_chart_summary(self, client):
+        """测试大限包含命盘摘要"""
+        resp = client.post("/api/v2/ziwei/dayun", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "chart_summary" in data
+        summary = data["chart_summary"]
+        assert "soul" in summary
+        assert "body" in summary
+        assert "fiveElementsClass" in summary
+
+    def test_dayun_female(self, client):
+        """测试女性大限查询"""
+        resp = client.post("/api/v2/ziwei/dayun", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 0,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["dayun"]) > 0
+
+    def test_dayun_missing_required_field(self, client):
+        """测试缺少必填字段"""
+        resp = client.post("/api/v2/ziwei/dayun", json={
+            "hour": 8,
+        })
+        assert resp.status_code == 422
+
+    def test_dayun_invalid_hour(self, client):
+        """测试无效小时值"""
+        resp = client.post("/api/v2/ziwei/dayun", json={
+            "solar_date": "1990-01-01",
+            "hour": 25,
+            "gender": 1,
+        })
+        assert resp.status_code == 422
+
+
+class TestLiunianApi:
+    """流年 API 端点测试"""
+
+    @pytest.fixture
+    def client(self):
+        from fastapi.testclient import TestClient
+
+        from server.app import app
+        return TestClient(app)
+
+    def test_liunian_basic(self, client):
+        """测试基本流年查询"""
+        resp = client.post("/api/v2/ziwei/liunian", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+            "query_year": 2026,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "year" in data
+        assert data["year"] == 2026
+
+    def test_liunian_structure(self, client):
+        """测试流年返回结构"""
+        resp = client.post("/api/v2/ziwei/liunian", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+            "query_year": 2026,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        # 流年基本信息
+        assert "nominal_age" in data
+        assert "lunar_date" in data
+        # 流年干支
+        assert "yearly" in data
+        yearly = data["yearly"]
+        assert "heavenly_stem" in yearly
+        assert "earthly_branch" in yearly
+        assert "ganzhi" in yearly
+        assert "sihua" in yearly
+        # 大限信息
+        assert "decadal" in data
+        decadal = data["decadal"]
+        assert "heavenly_stem" in decadal
+        assert "earthly_branch" in decadal
+        assert "ganzhi" in decadal
+
+    def test_liunian_sihua_keys(self, client):
+        """测试流年四化包含标准四化键"""
+        resp = client.post("/api/v2/ziwei/liunian", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+            "query_year": 2026,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        sihua = data["yearly"]["sihua"]
+        # 四化应包含化禄、化权、化科、化忌
+        assert "化禄" in sihua
+        assert "化权" in sihua
+        assert "化科" in sihua
+        assert "化忌" in sihua
+
+    def test_liunian_default_year(self, client):
+        """测试不指定年份时使用当年"""
+        resp = client.post("/api/v2/ziwei/liunian", json={
+            "solar_date": "1990-01-01",
+            "hour": 8,
+            "gender": 1,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        from datetime import date
+        assert data["year"] == date.today().year
+
+    def test_liunian_missing_required_field(self, client):
+        """测试缺少必填字段"""
+        resp = client.post("/api/v2/ziwei/liunian", json={
+            "hour": 8,
+        })
+        assert resp.status_code == 422
+
+    def test_liunian_invalid_hour(self, client):
+        """测试无效小时值"""
+        resp = client.post("/api/v2/ziwei/liunian", json={
+            "solar_date": "1990-01-01",
+            "hour": 25,
+            "gender": 1,
+        })
+        assert resp.status_code == 422
+
+
 class TestIntegration:
     """集成测试"""
 

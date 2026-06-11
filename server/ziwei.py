@@ -360,6 +360,218 @@ def get_ziwei_sihua(
         return {"error": f"四化分析失败: {e}"}
 
 
+def get_ziwei_dayun(
+    solar_date: str,
+    hour: int,
+    gender: int | str = 1,
+) -> dict[str, Any]:
+    """获取紫微斗数大限（大运）数据。
+
+    遍历十二宫，提取每步大限的年龄区间、宫位、主星和四化信息。
+
+    Args:
+        solar_date: 阳历日期，格式 YYYY-MM-DD
+        hour: 出生小时(0-23)
+        gender: 性别，1=男/0=女 或 "男"/"女"
+
+    Returns:
+        大限数据字典，包含 dayun 列表（按年龄排序）。
+        每步大限包含 age_range, palace, major_stars, sihua_flow。
+    """
+    if by_solar is None:
+        return {"error": "iztro-py 未安装，请运行 pip install iztro-py"}
+
+    time_index = hour_to_time_index(hour)
+    gender_cn = gender_to_chinese(gender)
+
+    try:
+        astrolabe = by_solar(
+            solar_date=solar_date,
+            time_index=time_index,
+            gender=gender_cn,
+            language="zh-CN",
+        )
+        chart = astrolabe.to_iztro_dict()
+
+        # 构建宫位名到命盘宫位的映射（中文名）
+        palace_map: dict[str, dict] = {}
+        for p in chart.get("palaces", []):
+            palace_map[p["name"]] = p
+
+        # 遍历原始宫位对象，提取大限数据
+        dayun_list: list[dict[str, Any]] = []
+        for palace in astrolabe.palaces:
+            decadal = palace.decadal
+            if decadal is None:
+                continue
+
+            age_start, age_end = decadal.range
+            palace_cn = palace.translate_name()
+
+            # 主星列表
+            major_stars = [
+                {
+                    "name": s.translate_name(),
+                    "brightness": s.translate_brightness(),
+                }
+                for s in palace.major_stars
+            ]
+
+            # 四化（mutagen）：顺序为 [化禄, 化权, 化科, 化忌]
+            sihua_flow: dict[str, str] = {}
+            chart_palace = palace_map.get(palace_cn, {})
+            for star in chart_palace.get("majorStars", []):
+                if star.get("mutagen"):
+                    sihua_flow[star["mutagen"]] = star["name"]
+            for star in chart_palace.get("minorStars", []):
+                if star.get("mutagen"):
+                    sihua_flow[star["mutagen"]] = star["name"]
+
+            dayun_list.append({
+                "age_range": f"{age_start}-{age_end}",
+                "age_start": age_start,
+                "age_end": age_end,
+                "palace": palace_cn,
+                "heavenly_stem": palace.translate_heavenly_stem(),
+                "earthly_branch": palace.translate_earthly_branch(),
+                "major_stars": major_stars,
+                "sihua_flow": sihua_flow,
+            })
+
+        # 按起始年龄排序
+        dayun_list.sort(key=lambda x: x["age_start"])
+
+        return {
+            "dayun": dayun_list,
+            "chart_summary": {
+                "soul": chart.get("soul", ""),
+                "body": chart.get("body", ""),
+                "fiveElementsClass": chart.get("fiveElementsClass", ""),
+            },
+        }
+    except Exception as e:
+        return {"error": f"紫微斗数大限查询失败: {e}"}
+
+
+def get_ziwei_liunian(
+    solar_date: str,
+    hour: int,
+    gender: int | str = 1,
+    query_year: int | None = None,
+) -> dict[str, Any]:
+    """获取紫微斗数流年运势数据。
+
+    Args:
+        solar_date: 阳历日期，格式 YYYY-MM-DD
+        hour: 出生小时(0-23)
+        gender: 性别，1=男/0=女 或 "男"/"女"
+        query_year: 查询年份，默认当年
+
+    Returns:
+        流年数据字典，包含 year, palace, stars, sihua 等信息。
+    """
+    if by_solar is None:
+        return {"error": "iztro-py 未安装，请运行 pip install iztro-py"}
+
+    time_index = hour_to_time_index(hour)
+    gender_cn = gender_to_chinese(gender)
+
+    # 确定查询日期
+    if query_year is None:
+        from datetime import date
+        query_year = date.today().year
+    query_date = f"{query_year}-06-15"  # 取年中日期代表该年
+
+    SIHUA_LABELS = ["化禄", "化权", "化科", "化忌"]
+
+    try:
+        astrolabe = by_solar(
+            solar_date=solar_date,
+            time_index=time_index,
+            gender=gender_cn,
+            language="zh-CN",
+        )
+        chart = astrolabe.to_iztro_dict()
+        horoscope = astrolabe.horoscope(
+            solar_date=query_date,
+            time_index=time_index,
+        )
+        h_data = horoscope.model_dump()
+
+        # 流年基本信息
+        yearly = h_data.get("yearly", {})
+        yearly_stem_en = yearly.get("heavenly_stem", "")
+        yearly_branch_en = yearly.get("earthly_branch", "")
+
+        # 从命盘宫位映射中翻译流年天干地支
+        stem_map: dict[str, str] = {}
+        branch_map: dict[str, str] = {}
+        for palace in astrolabe.palaces:
+            stem_map[palace.heavenly_stem] = palace.translate_heavenly_stem()
+            branch_map[palace.earthly_branch] = palace.translate_earthly_branch()
+
+        yearly_stem = stem_map.get(yearly_stem_en, yearly_stem_en)
+        yearly_branch = branch_map.get(yearly_branch_en, yearly_branch_en)
+
+        # 构建星曜名翻译辅助函数
+        star_name_cache: dict[str, str] = {}
+        for pal in astrolabe.palaces:
+            for s in pal.major_stars + pal.minor_stars:
+                star_name_cache[s.name] = s.translate_name()
+
+        def _translate_star(en_name: str) -> str:
+            """将英文星曜名翻译为中文"""
+            return star_name_cache.get(en_name, en_name)
+
+        # 流年四化（mutagen 顺序：化禄、化权、化科、化忌）
+        mutagen_list = yearly.get("mutagen", [])
+        sihua: dict[str, str] = {}
+        for i, star_en in enumerate(mutagen_list):
+            if i < len(SIHUA_LABELS):
+                sihua[SIHUA_LABELS[i]] = _translate_star(star_en)
+
+        # 流年宫位信息（palace_names 顺序对应十二宫）
+        palace_names_en = yearly.get("palace_names", [])
+        palace_name_map: dict[str, str] = {}
+        for palace in astrolabe.palaces:
+            palace_name_map[palace.name] = palace.translate_name()
+
+        liunian_palaces = []
+        for p_en in palace_names_en:
+            liunian_palaces.append(palace_name_map.get(p_en, p_en))
+
+        # 当前大限信息
+        decadal = h_data.get("decadal", {})
+        decadal_stem = stem_map.get(decadal.get("heavenly_stem", ""), decadal.get("heavenly_stem", ""))
+        decadal_branch = branch_map.get(decadal.get("earthly_branch", ""), decadal.get("earthly_branch", ""))
+
+        return {
+            "year": query_year,
+            "nominal_age": h_data.get("nominal_age"),
+            "lunar_date": h_data.get("lunar_date", ""),
+            "yearly": {
+                "heavenly_stem": yearly_stem,
+                "earthly_branch": yearly_branch,
+                "ganzhi": f"{yearly_stem}{yearly_branch}",
+                "sihua": sihua,
+                "palace_names": liunian_palaces,
+            },
+            "decadal": {
+                "heavenly_stem": decadal_stem,
+                "earthly_branch": decadal_branch,
+                "ganzhi": f"{decadal_stem}{decadal_branch}",
+                "mutagen": [_translate_star(m) for m in decadal.get("mutagen", [])],
+            },
+            "chart_summary": {
+                "soul": chart.get("soul", ""),
+                "body": chart.get("body", ""),
+                "fiveElementsClass": chart.get("fiveElementsClass", ""),
+            },
+        }
+    except Exception as e:
+        return {"error": f"紫微斗数流年查询失败: {e}"}
+
+
 def get_ziwei_analysis(
     solar_date: str,
     hour: int,

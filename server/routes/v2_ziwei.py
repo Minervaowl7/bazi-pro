@@ -30,6 +30,26 @@ class ZiweiPalaceRequest(BaseModel):
     palace_name: str = Field(default="命宫", description="宫位名称")
 
 
+class ZiweiDayunRequest(BaseModel):
+    solar_date: str = Field(..., description="阳历出生日期，格式 YYYY-MM-DD")
+    hour: int = Field(..., ge=0, le=23, description="出生小时(0-23)")
+    gender: int = Field(default=1, description="性别：1=男，0=女")
+
+
+class ZiweiLiunianRequest(BaseModel):
+    solar_date: str = Field(..., description="阳历出生日期，格式 YYYY-MM-DD")
+    hour: int = Field(..., ge=0, le=23, description="出生小时(0-23)")
+    gender: int = Field(default=1, description="性别：1=男，0=女")
+    query_year: Optional[int] = Field(default=None, description="查询年份，默认当年")
+
+
+class ZiweiSihuaRequest(BaseModel):
+    solar_date: str = Field(..., description="阳历出生日期，格式 YYYY-MM-DD")
+    hour: int = Field(..., ge=0, le=23, description="出生小时(0-23)")
+    gender: int = Field(default=1, description="性别：1=男，0=女")
+    query_year: Optional[int] = Field(default=None, description="查询年份（可选），用于流年四化")
+
+
 @router.post("/api/v2/ziwei/chart")
 async def api_v2_ziwei_chart(payload: ZiweiChartRequest):
     from server.ziwei import get_ziwei_chart
@@ -71,6 +91,53 @@ async def api_v2_ziwei_palace(payload: ZiweiPalaceRequest):
         hour=payload.hour,
         gender=payload.gender,
         palace_name=payload.palace_name,
+    )
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
+
+
+@router.post("/api/v2/ziwei/sihua")
+async def api_v2_ziwei_sihua(payload: ZiweiSihuaRequest):
+    from server.ziwei import get_ziwei_sihua
+
+    result = await asyncio.to_thread(
+        get_ziwei_sihua,
+        solar_date=payload.solar_date,
+        hour=payload.hour,
+        gender=payload.gender,
+        query_year=payload.query_year,
+    )
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
+
+
+@router.post("/api/v2/ziwei/dayun")
+async def api_v2_ziwei_dayun(payload: ZiweiDayunRequest):
+    from server.ziwei import get_ziwei_dayun
+
+    result = await asyncio.to_thread(
+        get_ziwei_dayun,
+        solar_date=payload.solar_date,
+        hour=payload.hour,
+        gender=payload.gender,
+    )
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
+
+
+@router.post("/api/v2/ziwei/liunian")
+async def api_v2_ziwei_liunian(payload: ZiweiLiunianRequest):
+    from server.ziwei import get_ziwei_liunian
+
+    result = await asyncio.to_thread(
+        get_ziwei_liunian,
+        solar_date=payload.solar_date,
+        hour=payload.hour,
+        gender=payload.gender,
+        query_year=payload.query_year,
     )
     if "error" in result:
         return JSONResponse(result, status_code=400)

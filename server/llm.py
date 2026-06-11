@@ -75,6 +75,10 @@ _LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
 _LLM_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "300"))
 
 
+_MAX_TOOL_ROUNDS = 5
+"""工具调用最大轮次，防止无限循环"""
+
+
 def get_llm_config() -> dict:
     return {
         "api_base": _LLM_API_BASE,
@@ -198,6 +202,278 @@ async def chat_completion_stream(messages: list[dict], temperature: float = 0.7,
                     continue
     if not has_content:
         raise RuntimeError("LLM 流式返回无 content。推理模型 token 不足，请增大 max_tokens。")
+
+
+async def chat_completion_stream_typed(messages: list[dict], temperature: float = 0.7, max_tokens: int = 4096):
+    """流式 LLM 调用，区分 reasoning_content 和 content，逐块 yield {"type": ..., "content": ...} 字典。
+
+    type 取值：
+    - "reasoning" — 推理/思考过程（reasoning_content）
+    - "token"     — 正文内容（content）
+    """
+    if not _LLM_API_KEY:
+        raise RuntimeError("LLM API key 未配置。请设置 LLM_API_KEY 环境变量。")
+
+    url = f"{_LLM_API_BASE.rstrip('/')}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {_LLM_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": _LLM_MODEL,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "stream": True,
+    }
+
+    has_content = False
+    async with httpx.AsyncClient(timeout=httpx.Timeout(_LLM_TIMEOUT, connect=5.0)) as client:
+        async with client.stream("POST", url, headers=headers, json=payload) as resp:
+            resp.raise_for_status()
+            async for line in resp.aiter_lines():
+                if not line.startswith("data: "):
+                    continue
+                data_str = line[6:]
+                if data_str.strip() == "[DONE]":
+                    break
+                try:
+                    chunk = json.loads(data_str)
+                    delta = chunk.get("choices", [{}])[0].get("delta") or {}
+                    reasoning = delta.get("reasoning_content") or ""
+                    content = delta.get("content") or ""
+                    if reasoning:
+                        has_content = True
+                        yield {"type": "reasoning", "content": reasoning}
+                    if content:
+                        has_content = True
+                        yield {"type": "token", "content": content}
+                except (json.JSONDecodeError, IndexError, KeyError):
+                    continue
+    if not has_content:
+        raise RuntimeError("LLM 流式返回无 content。推理模型 token 不足，请增大 max_tokens。")
+
+
+# ============ Function Calling 支持 ============
+
+
+async def chat_completion_with_tools(
+    messages: list[dict],
+    tools: list[dict] | None = None,
+    temperature: float = 0.7,
+    max_tokens: int = 4096,
+    max_tool_rounds: int = _MAX_TOOL_ROUNDS,
+) -> dict:
+    """支持 function calling 的 LLM 调用。
+
+    自动处理工具调用循环：
+    1. 发送带 tools 的请求给 LLM
+    2. 若 LLM 返回 tool_calls，执行工具并将结果注入消息
+    3. 重复直到 LLM 返回纯文本或达到最大轮次
+
+    Args:
+        messages: 消息列表
+        tools: OpenAI function calling 工具定义列表
+        temperature: 温度
+        max_tokens: 最大 token 数
+        max_tool_rounds: 最大工具调用轮次
+
+    Returns:
+        dict: {
+            "content": str,           # LLM 最终文本回复
+            "tool_calls_log": list,   # 工具调用日志（含输入输出，可追溯）
+            "messages": list,         # 完整的消息历史（含工具调用和结果）
+        }
+    """
+    if not _LLM_API_KEY:
+        raise RuntimeError("LLM API key 未配置。请设置 LLM_API_KEY 环境变量。")
+
+    from server.agents.tools import execute_tools
+
+    url = f"{_LLM_API_BASE.rstrip('/')}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {_LLM_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    working_messages = list(messages)
+    tool_calls_log: list[dict] = []
+
+    for round_idx in range(max_tool_rounds):
+        payload: dict = {
+            "model": _LLM_MODEL,
+            "messages": working_messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+
+        async with httpx.AsyncClient(timeout=httpx.Timeout(_LLM_TIMEOUT, connect=5.0)) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+            if resp.status_code in (401, 403):
+                raise RuntimeError(f"LLM API 认证失败 (HTTP {resp.status_code})，请检查 LLM_API_KEY")
+            resp.raise_for_status()
+            data = resp.json()
+
+        choices = data.get("choices", [])
+        if not choices:
+            raise RuntimeError("LLM 返回空 choices")
+
+        message = choices[0].get("message", {})
+        content = message.get("content") or ""
+        tool_calls = message.get("tool_calls") or []
+
+        # 无工具调用 → 返回最终结果
+        if not tool_calls:
+            # 推理模型可能 content 为空但有 reasoning_content
+            if not content:
+                reasoning = message.get("reasoning_content", "")
+                if reasoning:
+                    content = reasoning
+
+            return {
+                "content": content,
+                "tool_calls_log": tool_calls_log,
+                "messages": working_messages,
+            }
+
+        # 有工具调用 → 将 assistant 消息（含 tool_calls）加入历史
+        assistant_msg: dict = {"role": "assistant", "content": content or ""}
+        assistant_msg["tool_calls"] = tool_calls
+        working_messages.append(assistant_msg)
+
+        # 记录工具调用日志
+        for tc in tool_calls:
+            func = tc.get("function", {})
+            tool_calls_log.append({
+                "id": tc.get("id", ""),
+                "name": func.get("name", ""),
+                "arguments": func.get("arguments", ""),
+                "round": round_idx + 1,
+            })
+
+        # 执行工具并注入结果
+        tool_messages = await execute_tools(tool_calls)
+        working_messages.extend(tool_messages)
+
+        # 记录工具结果到日志
+        for tm in tool_messages:
+            for log_entry in tool_calls_log:
+                if log_entry["id"] == tm.get("tool_call_id"):
+                    log_entry["result"] = tm.get("content", "")
+                    break
+
+    # 达到最大轮次 → 强制返回
+    logger.warning("[llm] 达到最大工具调用轮次 %d，强制返回", max_tool_rounds)
+    return {
+        "content": content or "（工具调用轮次已达上限）",
+        "tool_calls_log": tool_calls_log,
+        "messages": working_messages,
+    }
+
+
+async def chat_completion_stream_with_tools(
+    messages: list[dict],
+    tools: list[dict] | None = None,
+    temperature: float = 0.7,
+    max_tokens: int = 4096,
+    max_tool_rounds: int = _MAX_TOOL_ROUNDS,
+):
+    """支持 function calling 的流式 LLM 调用。
+
+    工具调用期间为非流式（等待工具执行完成），最终回复为流式输出。
+
+    Yields:
+        dict: {"type": "token"|"reasoning"|"tool_call"|"tool_result"|"done", "content": ...}
+    """
+    if not _LLM_API_KEY:
+        raise RuntimeError("LLM API key 未配置。请设置 LLM_API_KEY 环境变量。")
+
+    from server.agents.tools import execute_tools
+
+    url = f"{_LLM_API_BASE.rstrip('/')}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {_LLM_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    working_messages = list(messages)
+    tool_calls_log: list[dict] = []
+
+    for round_idx in range(max_tool_rounds):
+        # 非流式请求（工具调用必须同步处理）
+        payload: dict = {
+            "model": _LLM_MODEL,
+            "messages": working_messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+
+        async with httpx.AsyncClient(timeout=httpx.Timeout(_LLM_TIMEOUT, connect=5.0)) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+            if resp.status_code in (401, 403):
+                raise RuntimeError(f"LLM API 认证失败 (HTTP {resp.status_code})，请检查 LLM_API_KEY")
+            resp.raise_for_status()
+            data = resp.json()
+
+        choices = data.get("choices", [])
+        if not choices:
+            raise RuntimeError("LLM 返回空 choices")
+
+        message = choices[0].get("message", {})
+        content = message.get("content") or ""
+        tool_calls = message.get("tool_calls") or []
+
+        # 无工具调用 → 流式输出最终回复
+        if not tool_calls:
+            if not content:
+                reasoning = message.get("reasoning_content", "")
+                if reasoning:
+                    content = reasoning
+            if content:
+                # 将最终回复分块流式输出
+                chunk_size = 20
+                for i in range(0, len(content), chunk_size):
+                    yield {"type": "token", "content": content[i:i + chunk_size]}
+            yield {"type": "done", "content": ""}
+            return
+
+        # 有工具调用 → 通知前端正在调用工具
+        assistant_msg: dict = {"role": "assistant", "content": content or ""}
+        assistant_msg["tool_calls"] = tool_calls
+        working_messages.append(assistant_msg)
+
+        for tc in tool_calls:
+            func = tc.get("function", {})
+            tool_name = func.get("name", "")
+            tool_calls_log.append({
+                "id": tc.get("id", ""),
+                "name": tool_name,
+                "arguments": func.get("arguments", ""),
+                "round": round_idx + 1,
+            })
+            yield {"type": "tool_call", "content": json.dumps({
+                "name": tool_name,
+                "arguments": func.get("arguments", ""),
+            }, ensure_ascii=False)}
+
+        # 执行工具
+        tool_messages = await execute_tools(tool_calls)
+        working_messages.extend(tool_messages)
+
+        # 通知前端工具结果
+        for tm in tool_messages:
+            yield {"type": "tool_result", "content": tm.get("content", "")}
+
+    # 达到最大轮次
+    logger.warning("[llm] 达到最大工具调用轮次 %d，强制返回", max_tool_rounds)
+    yield {"type": "token", "content": "（工具调用轮次已达上限）"}
+    yield {"type": "done", "content": ""}
 
 
 def _format_analysis_context(analysis_result: dict, narration: dict, school: str = "ziping") -> str:
@@ -426,6 +702,70 @@ def _format_analysis_context(analysis_result: dict, narration: dict, school: str
         "## 确定性叙述",
         narration_str,
     ]
+
+    # 紫微斗数数据
+    ziwei = analysis_result.get("ziwei", {}) if isinstance(analysis_result.get("ziwei"), dict) else {}
+    if ziwei:
+        ziwei_parts = []
+        # 命盘基本信息
+        soul = ziwei.get("soul", "")
+        body = ziwei.get("body", "")
+        five_class = ziwei.get("fiveElementsClass", "")
+        if soul or body or five_class:
+            ziwei_parts.append(f"- 命主: {soul}, 身主: {body}, 五行局: {five_class}")
+
+        # 宫位主星
+        palaces = ziwei.get("palaces", []) if isinstance(ziwei.get("palaces"), list) else []
+        if palaces:
+            palace_lines = []
+            for p in palaces:
+                if not isinstance(p, dict):
+                    continue
+                name = p.get("name", "")
+                stars = [s.get("name", "") for s in p.get("majorStars", []) if isinstance(s, dict) and s.get("name")]
+                brightness = [s.get("brightness", "") for s in p.get("majorStars", []) if isinstance(s, dict) and s.get("brightness")]
+                if stars:
+                    star_str = "、".join(stars)
+                    bright_str = "、".join(brightness) if brightness else ""
+                    palace_lines.append(f"  {name}: {star_str} ({bright_str})" if bright_str else f"  {name}: {star_str}")
+            if palace_lines:
+                ziwei_parts.append("- 宫位主星:\n" + "\n".join(palace_lines))
+
+        # 四化信息
+        sihua = ziwei.get("sihua", {}) if isinstance(ziwei.get("sihua"), dict) else {}
+        if sihua:
+            sihua_lines = []
+            for key, val in sihua.items():
+                if val:
+                    sihua_lines.append(f"  {key}: {val}")
+            if sihua_lines:
+                ziwei_parts.append("- 四化:\n" + "\n".join(sihua_lines))
+
+        # 格局
+        ziwei_patterns = ziwei.get("patterns", []) if isinstance(ziwei.get("patterns"), list) else []
+        if ziwei_patterns:
+            pattern_lines = [f"  - {p}" for p in ziwei_patterns if isinstance(p, str)]
+            if pattern_lines:
+                ziwei_parts.append("- 紫微格局:\n" + "\n".join(pattern_lines))
+
+        # 大限
+        dayun_ziwei = ziwei.get("dayun", []) if isinstance(ziwei.get("dayun"), list) else []
+        if dayun_ziwei:
+            dayun_lines = []
+            for d in dayun_ziwei[:8]:
+                if isinstance(d, dict):
+                    age = d.get("age_range", "")
+                    palace = d.get("palace", "")
+                    stars = d.get("stars", "")
+                    dayun_lines.append(f"  {age}: {palace} {stars}")
+            if dayun_lines:
+                ziwei_parts.append("- 大限:\n" + "\n".join(dayun_lines))
+
+        if ziwei_parts:
+            parts.append("")
+            parts.append("## 紫微斗数命盘")
+            parts.extend(ziwei_parts)
+
     if school_str:
         parts.append(school_str)
     # 过滤空字符串
@@ -950,7 +1290,7 @@ def build_report_system_prompt(analysis_result: dict, narration: dict, dayun_dat
 
 【报告结构要求】
 
-你必须严格按照以下 JSON 格式输出，共8个章节。每个章节内容使用 Markdown 格式编写，支持标题、列表、引用等。
+你必须严格按照以下 JSON 格式输出，共9个章节。每个章节内容使用 Markdown 格式编写，支持标题、列表、引用等。
 
 ```json
 {{
@@ -961,7 +1301,8 @@ def build_report_system_prompt(analysis_result: dict, narration: dict, dayun_dat
   "marriage_love": "婚恋感情 - 正缘出现时间（必须给出具体干支年份）、配偶特征、感情建议，300-500字。必须基于：夫妻宫地支、配偶星十神、桃花年份。",
   "family": "家庭六亲 - 父母、子女、兄弟姐妹关系，200-400字。基于十神和宫位分析。必须指出：父母星状态、子女缘深浅、兄弟姐妹数量趋势。",
   "health": "健康提示 - 五行偏枯、健康隐患、养生建议，200-300字。必须基于：五行力量分布、过旺/过弱五行对应脏腑、调候建议。",
-  "guidance": "趋吉避凶 - 有利方位、颜色、数字、行业、贵人属相，200-300字。必须基于用神喜忌给出具体建议，忌泛泛而谈。"
+  "guidance": "趋吉避凶 - 有利方位、颜色、数字、行业、贵人属相，200-300字。必须基于用神喜忌给出具体建议，忌泛泛而谈。",
+  "ziwei": "紫微斗数 - 命盘总览、主星分析、四化解读、大运流年、与八字交叉验证，500-800字。必须包含：(1)命盘总览：命主身主、五行局、命宫主星及亮度；(2)主星分析：命宫、财帛宫、官禄宫、夫妻宫的主星组合及影响；(3)四化解读：本命四化（化禄化权化科化忌）落入宫位及意义；(4)大限流年：当前大限和未来大限的运势走向；(5)八字交叉验证：紫微命盘与八字格局的呼应关系，如命宫主星与日主十神的对应、四化与用神喜忌的印证。若紫微数据不可用，在此章节说明。"
 }}
 ```
 

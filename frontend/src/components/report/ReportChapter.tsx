@@ -4,7 +4,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-const CHAPTER_NUMBERS = ["壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌"];
+const CHAPTER_NUMBERS = ["壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"];
 
 interface ReportChapterProps {
   index: number;

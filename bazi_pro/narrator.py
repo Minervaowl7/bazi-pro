@@ -914,39 +914,145 @@ def _narrate_family(result, gender):
 
 
 def _narrate_ziwei(result: dict) -> str:
-    """生成紫微斗数分析段落，从 result['ziwei'] 提取格局/四化/命宫信息。
+    """生成紫微斗数分析段落，从 result['ziwei'] 提取完整命盘信息。
 
     紫微斗数数据由 server/analysis.py 调用 get_ziwei_analysis() 生成，
-    包含 chart（原始排盘）和 narration（确定性叙述）。
+    包含 chart（原始排盘）和 narration（确定性叙述，9 维度）。
+
+    输出结构：
+    1. 命盘总览（命主/身主/五行局/命宫主星）
+    2. 主星分析（命宫/财帛宫/官禄宫/夫妻宫）
+    3. 格局分析（上格/中格/警示格）
+    4. 四化解读（本命四化）
+    5. 大限流年（从宫位 decadal 数据提取）
+    6. 综合评述
     """
     ziwei = result.get("ziwei")
     if not ziwei or "error" in ziwei:
         return ""
 
+    chart = ziwei.get("chart", {})
+    narration = ziwei.get("narration", {})
+
     lines = ["【紫微斗数命盘】\n"]
 
-    # 基本信息
-    chart = ziwei.get("chart", {})
-    soul = chart.get("soul", "")
-    body = chart.get("body", "")
-    five_elements_class = chart.get("fiveElementsClass", "")
-    if soul or body or five_elements_class:
-        lines.append(f"命主：{soul}，身主：{body}，五行局：{five_elements_class}\n")
+    # ── 1. 命盘总览 ──
+    overview_text = narration.get("overview", "")
+    if overview_text:
+        lines.append(overview_text)
+    else:
+        # 回退：手动组装基本信息
+        soul = chart.get("soul", "")
+        body = chart.get("body", "")
+        five_elements_class = chart.get("fiveElementsClass", "")
+        if soul or body or five_elements_class:
+            lines.append(f"命主：{soul}，身主：{body}，五行局：{five_elements_class}\n")
 
-    # 从叙述中提取格局信息（排除"未检测到"的情况）
-    narration = ziwei.get("narration", {})
-    pattern_text = narration.get("pattern", "")
-    if pattern_text and "格局分析" in pattern_text and "未检测到" not in pattern_text:
-        lines.append(pattern_text)
-
-    # 从叙述中提取命宫分析
+    # ── 2. 主星分析（命宫 + 三方四正） ──
     ming_text = narration.get("ming_palace", "")
     if ming_text:
         lines.append(ming_text)
 
-    # 从叙述中提取四化分析
+    # 财帛宫/官禄宫/夫妻宫分析
+    for palace_key, palace_label in [
+        ("wealth", "财帛宫"),
+        ("career", "官禄宫"),
+        ("marriage", "夫妻宫"),
+    ]:
+        palace_text = narration.get(palace_key, "")
+        if palace_text and palace_label in palace_text:
+            lines.append(palace_text)
+
+    # ── 3. 格局分析 ──
+    pattern_text = narration.get("pattern", "")
+    if pattern_text and "格局分析" in pattern_text and "未检测到" not in pattern_text:
+        lines.append(pattern_text)
+
+    # ── 4. 四化解读 ──
     sihua_text = narration.get("sihua", "")
     if sihua_text:
         lines.append(sihua_text)
 
+    # ── 5. 大限流年 ──
+    dayun_lines = _extract_ziwei_dayun(chart)
+    if dayun_lines:
+        lines.append("【大限流年】\n")
+        lines.extend(dayun_lines)
+
+    # ── 6. 综合评述 ──
+    summary_text = narration.get("summary", "")
+    if summary_text:
+        lines.append(summary_text)
+
     return "\n".join(lines) if len(lines) > 1 else ""
+
+
+def _extract_ziwei_dayun(chart: dict) -> list[str]:
+    """从紫微命盘宫位数据中提取大限信息。
+
+    iztro-py 的 to_iztro_dict() 输出中，每个宫位可能包含 decadal 字段，
+    记录该宫位对应的大限年龄区间和干支。
+    """
+    palaces = chart.get("palaces", [])
+    if not palaces:
+        return []
+
+    dayun_items: list[dict] = []
+    for palace in palaces:
+        if not isinstance(palace, dict):
+            continue
+        decadal = palace.get("decadal")
+        if not decadal or not isinstance(decadal, dict):
+            continue
+        age_range = decadal.get("range", "")
+        if isinstance(age_range, (list, tuple)) and len(age_range) == 2:
+            age_str = f"{age_range[0]}-{age_range[1]}岁"
+        elif isinstance(age_range, str):
+            age_str = age_range
+        else:
+            age_str = ""
+        stem = decadal.get("heavenly_stem", "")
+        branch = decadal.get("earthly_branch", "")
+        ganzhi = f"{stem}{branch}" if stem and branch else ""
+        palace_name = palace.get("name", "")
+        stars = [
+            s.get("name", "")
+            for s in palace.get("majorStars", [])
+            if isinstance(s, dict) and s.get("name")
+        ]
+        star_str = "、".join(stars) if stars else "无主星"
+
+        if age_str or ganzhi:
+            dayun_items.append({
+                "age": age_str,
+                "ganzhi": ganzhi,
+                "palace": palace_name,
+                "stars": star_str,
+            })
+
+    if not dayun_items:
+        return []
+
+    # 按年龄排序
+    def _sort_key(item: dict) -> int:
+        age = item.get("age", "")
+        if "-" in str(age):
+            try:
+                return int(str(age).split("-")[0])
+            except (ValueError, IndexError):
+                return 999
+        return 999
+
+    dayun_items.sort(key=_sort_key)
+
+    lines = ["当前大限与未来大限走势："]
+    for item in dayun_items:
+        age = item.get("age", "")
+        ganzhi = item.get("ganzhi", "")
+        palace = item.get("palace", "")
+        stars = item.get("stars", "")
+        parts = [p for p in [age, ganzhi, palace, stars] if p]
+        if parts:
+            lines.append(f"  {'｜'.join(parts)}")
+
+    return lines

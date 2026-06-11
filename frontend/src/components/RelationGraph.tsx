@@ -3,7 +3,8 @@
 "use client";
 
 import { useMemo } from "react";
-import ReactECharts from "echarts-for-react";
+import dynamic from "next/dynamic";
+const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 import { WUXING_COLORS, GAN_WUXING, ZHI_WUXING, RELATION_COLORS } from "@/lib/constants";
 import { useTheme } from "./ThemeProvider";
 
@@ -171,6 +172,7 @@ export default function RelationGraph({ result }: Props): JSX.Element | null {
           option={option}
           style={{ height: 260, width: "100%" }}
           opts={{ renderer: "svg" }}
+          autoresize
         />
       </div>
       <div className="px-7 pb-5 flex items-center gap-4 flex-wrap">

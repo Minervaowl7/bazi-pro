@@ -137,7 +137,7 @@ export default function BirthForm() {
         </div>
 
         {/* 出生日期 + 出生时辰 */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="form-label">出生日期 <span style={{ color: "var(--danger)" }}>*</span></label>
             <input type="date" value={form.solarDate} autoComplete="bday" className="form-input mt-1.5"
@@ -166,7 +166,7 @@ export default function BirthForm() {
                 {filteredCities.length === 0 && <div className="px-3 py-2 text-[13px]" style={{ color: "var(--text-3)" }}>无匹配城市</div>}
                 {filteredCities.map(c => (
                   <div key={c.name} role="option" aria-selected={form.city === c.name} onClick={() => handleCitySelect(c.name, c.lng)}
-                    className="flex items-center justify-between px-3 py-2 cursor-pointer text-[13px] hover-row"
+                    className="flex items-center justify-between px-3 py-2.5 sm:py-2 cursor-pointer text-[13px] hover-row"
                     style={{ color: "var(--ink)", background: form.city === c.name ? "var(--cinnabar-light)" : "transparent" }}>
                     <span>{c.name}</span>
                     <span className="text-[11px]" style={{ color: "var(--text-3)" }}>东经{c.lng.toFixed(1)}°</span>
@@ -184,8 +184,13 @@ export default function BirthForm() {
 
         {/* 提交按钮 */}
         <button type="submit" disabled={isSubmitting}
-          className="form-input text-center font-semibold tracking-[0.1em] hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ height: 42, background: "linear-gradient(135deg, var(--cinnabar), #a8503a)", color: "#fff", boxShadow: "0 2px 12px rgba(201,100,66,0.2)" }}>
+          className="form-input text-center font-semibold tracking-[0.1em] hover-lift disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          style={{ minHeight: 44, background: "linear-gradient(135deg, var(--cinnabar), #a8503a)", color: "#fff", boxShadow: "0 2px 12px rgba(201,100,66,0.2)" }}>
+          {isSubmitting && (
+            <svg className="animate-spin shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+            </svg>
+          )}
           {paipanLoading ? "排盘中…" : "排盘"}
         </button>
       </form>
@@ -215,7 +220,7 @@ export default function BirthForm() {
           </div>
           <div className="mb-5">
             <label className="form-label">选择解读流派</label>
-            <div className="grid grid-cols-3 gap-2 mt-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1.5">
               {SCHOOL_OPTIONS.map(s => (
                 <button key={s.value} type="button" onClick={() => handleChange("school", s.value)}
                   className="p-3 rounded-xl text-left transition-all duration-200"
@@ -227,10 +232,17 @@ export default function BirthForm() {
             </div>
           </div>
           <button type="button" onClick={handleDeepAnalysis} disabled={status === "submitting" || status === "streaming"}
-            className="w-full py-3.5 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] flex items-center justify-center gap-2 min-h-[44px]"
             style={{ background: "var(--ink)", color: "var(--bg)", boxShadow: "0 6px 20px rgba(0,0,0,0.3)" }}>
+            {status === "submitting" && (
+              <svg className="animate-spin shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+              </svg>
+            )}
             {status === "submitting" ? "提交中…" : "深度解读"}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            {status !== "submitting" && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            )}
           </button>
           <p className="text-center text-[11px] mt-3" style={{ color: "var(--text-3)", opacity: 0.6 }}>旺衰判定 · 格局筛查 · 喜用神推导 · 古籍引证</p>
         </div>

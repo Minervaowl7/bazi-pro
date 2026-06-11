@@ -13,14 +13,27 @@ const notoSerifSC = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "八字排盘 · 确定性命理引擎",
-  description: "算析分离架构，核心计算零 LLM 依赖。十神推导、格局筛查、喜用神判定，每一步均可追溯到确定性规则与古籍原文。",
-  keywords: ["八字", "命理", "排盘", "四柱", "子平", "盲派", "新派"],
+  title: "八字排盘 · 确定性命理引擎 | 古法排盘 · 智能解读",
+  description:
+    "2964 条古籍条文驱动的八字排盘引擎。子平、盲派、新派三大流派并行分析，六层格局筛查，喜用神推导，每一步均可追溯至古籍原文。零 LLM 依赖的确定性计算核心。",
+  keywords: [
+    "八字排盘", "命理分析", "四柱推命", "子平真诠", "盲派命理", "新派八字",
+    "格局筛查", "喜用神", "古籍检索", "旺衰判定", "十神推导", "紫微斗数",
+  ],
   icons: { icon: "/favicon.svg" },
   openGraph: {
     title: "八字排盘 · 确定性命理引擎",
-    description: "算析分离架构，核心计算零 LLM 依赖。三大流派对比分析。",
+    description:
+      "算析分离架构，核心计算零 LLM 依赖。三大流派对比分析，2964 条古籍条文驱动，每一步推导皆可追溯至古籍原文。",
     type: "website",
+    locale: "zh_CN",
+    siteName: "八字排盘 · 确定性命理引擎",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "八字排盘 · 确定性命理引擎",
+    description:
+      "子平、盲派、新派三大流派并行分析。六层格局筛查，喜用神推导，古籍条文驱动。",
   },
   other: { "theme-color": "#f5f2eb" },
 };

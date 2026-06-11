@@ -15,6 +15,7 @@ const SECTION_META: Array<{ key: string; title: string }> = [
   { key: "family", title: "家庭六亲" },
   { key: "health", title: "健康提示" },
   { key: "guidance", title: "趋吉避凶" },
+  { key: "ziwei", title: "紫微斗数" },
 ];
 
 interface ReportPreviewModalProps {
