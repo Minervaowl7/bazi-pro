@@ -1,4 +1,5 @@
 """server/llm.py 单元测试 — 覆盖 chat_completion、流式输出、配置管理"""
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -213,7 +214,11 @@ class TestChatCompletion:
         llm_mod._LLM_API_KEY = self._orig_key
 
 
-    async def test_normal_call(self):
+    def test_normal_call(self):
+        """正常调用：返回 content"""
+        asyncio.run(self._async_test_normal_call())
+
+    async def _async_test_normal_call(self):
         """正常调用：返回 content"""
         from server.llm import chat_completion
 
@@ -232,7 +237,11 @@ class TestChatCompletion:
         assert result == "你好，我是命理师"
 
 
-    async def test_no_api_key_raises(self):
+    def test_no_api_key_raises(self):
+        """未配置 API key 时抛出 RuntimeError"""
+        asyncio.run(self._async_test_no_api_key_raises())
+
+    async def _async_test_no_api_key_raises(self):
         """未配置 API key 时抛出 RuntimeError"""
         import server.llm as llm_mod
         llm_mod._LLM_API_KEY = ""
@@ -241,7 +250,11 @@ class TestChatCompletion:
             await llm_mod.chat_completion([{"role": "user", "content": "测试"}])
 
 
-    async def test_429_retry_then_success(self):
+    def test_429_retry_then_success(self):
+        """429 限流后重试成功"""
+        asyncio.run(self._async_test_429_retry_then_success())
+
+    async def _async_test_429_retry_then_success(self):
         """429 限流后重试成功"""
         from server.llm import chat_completion
 
@@ -262,7 +275,11 @@ class TestChatCompletion:
         mock_sleep.assert_called_once()  # 确认 sleep 被调用一次
 
 
-    async def test_429_exhausted_retries(self):
+    def test_429_exhausted_retries(self):
+        """429 连续超过最大重试次数后仍失败"""
+        asyncio.run(self._async_test_429_exhausted_retries())
+
+    async def _async_test_429_exhausted_retries(self):
         """429 连续超过最大重试次数后仍失败"""
         from server.llm import chat_completion
 
@@ -284,7 +301,11 @@ class TestChatCompletion:
                 await chat_completion([{"role": "user", "content": "测试"}])
 
 
-    async def test_empty_content_with_reasoning_fallback(self):
+    def test_empty_content_with_reasoning_fallback(self):
+        """content 为空但有 reasoning_content 时降级返回 reasoning"""
+        asyncio.run(self._async_test_empty_content_with_reasoning_fallback())
+
+    async def _async_test_empty_content_with_reasoning_fallback(self):
         """content 为空但有 reasoning_content 时降级返回 reasoning"""
         from server.llm import chat_completion
 
@@ -306,7 +327,11 @@ class TestChatCompletion:
         assert result == "这是推理过程"
 
 
-    async def test_empty_content_no_reasoning_raises(self):
+    def test_empty_content_no_reasoning_raises(self):
+        """content 和 reasoning_content 都为空时，bump max_tokens 后仍然为空则抛异常"""
+        asyncio.run(self._async_test_empty_content_no_reasoning_raises())
+
+    async def _async_test_empty_content_no_reasoning_raises(self):
         """content 和 reasoning_content 都为空时，bump max_tokens 后仍然为空则抛异常"""
         from server.llm import chat_completion
 
@@ -324,7 +349,11 @@ class TestChatCompletion:
                 await chat_completion([{"role": "user", "content": "测试"}])
 
 
-    async def test_empty_choices_raises(self):
+    def test_empty_choices_raises(self):
+        """返回空 choices 时抛异常"""
+        asyncio.run(self._async_test_empty_choices_raises())
+
+    async def _async_test_empty_choices_raises(self):
         """返回空 choices 时抛异常"""
         from server.llm import chat_completion
 
@@ -340,7 +369,11 @@ class TestChatCompletion:
                 await chat_completion([{"role": "user", "content": "测试"}])
 
 
-    async def test_401_raises_auth_error(self):
+    def test_401_raises_auth_error(self):
+        """401 认证失败"""
+        asyncio.run(self._async_test_401_raises_auth_error())
+
+    async def _async_test_401_raises_auth_error(self):
         """401 认证失败"""
         from server.llm import chat_completion
 
@@ -355,7 +388,11 @@ class TestChatCompletion:
                 await chat_completion([{"role": "user", "content": "测试"}])
 
 
-    async def test_500_retry_then_success(self):
+    def test_500_retry_then_success(self):
+        """500 服务端错误后重试成功"""
+        asyncio.run(self._async_test_500_retry_then_success())
+
+    async def _async_test_500_retry_then_success(self):
         """500 服务端错误后重试成功"""
         from server.llm import chat_completion
 
@@ -391,7 +428,11 @@ class TestChatCompletionStreamTyped:
         llm_mod._LLM_API_KEY = self._orig_key
 
 
-    async def test_normal_stream(self):
+    def test_normal_stream(self):
+        """正常流式输出：区分 reasoning 和 token"""
+        asyncio.run(self._async_test_normal_stream())
+
+    async def _async_test_normal_stream(self):
         """正常流式输出：区分 reasoning 和 token"""
         from server.llm import chat_completion_stream_typed
 
@@ -420,7 +461,11 @@ class TestChatCompletionStreamTyped:
         assert len(token_chunks) == 3  # 2个原始 + 1个降级汇总
 
 
-    async def test_reasoning_only_fallback(self):
+    def test_reasoning_only_fallback(self):
+        """只有 reasoning_content 没有 content 时，降级为 token 输出"""
+        asyncio.run(self._async_test_reasoning_only_fallback())
+
+    async def _async_test_reasoning_only_fallback(self):
         """只有 reasoning_content 没有 content 时，降级为 token 输出"""
         from server.llm import chat_completion_stream_typed
 
@@ -448,7 +493,11 @@ class TestChatCompletionStreamTyped:
         assert tokens[0]["content"] == "推理结果"
 
 
-    async def test_no_content_raises(self):
+    def test_no_content_raises(self):
+        """流式返回无任何内容时抛异常"""
+        asyncio.run(self._async_test_no_content_raises())
+
+    async def _async_test_no_content_raises(self):
         """流式返回无任何内容时抛异常"""
         from server.llm import chat_completion_stream_typed
 
@@ -468,7 +517,11 @@ class TestChatCompletionStreamTyped:
                     results.append(chunk)
 
 
-    async def test_no_api_key_raises(self):
+    def test_no_api_key_raises(self):
+        """未配置 key 时抛异常"""
+        asyncio.run(self._async_test_no_api_key_raises())
+
+    async def _async_test_no_api_key_raises(self):
         """未配置 key 时抛异常"""
         import server.llm as llm_mod
         llm_mod._LLM_API_KEY = ""
@@ -480,7 +533,11 @@ class TestChatCompletionStreamTyped:
                 pass
 
 
-    async def test_malformed_lines_skipped(self):
+    def test_malformed_lines_skipped(self):
+        """畸形 JSON 行被跳过"""
+        asyncio.run(self._async_test_malformed_lines_skipped())
+
+    async def _async_test_malformed_lines_skipped(self):
         """畸形 JSON 行被跳过"""
         from server.llm import chat_completion_stream_typed
 
@@ -520,7 +577,11 @@ class TestChatCompletionStream:
         llm_mod._LLM_API_KEY = self._orig_key
 
 
-    async def test_normal_stream_yields_content(self):
+    def test_normal_stream_yields_content(self):
+        """正常流式输出 yield content 字符串"""
+        asyncio.run(self._async_test_normal_stream_yields_content())
+
+    async def _async_test_normal_stream_yields_content(self):
         """正常流式输出 yield content 字符串"""
         from server.llm import chat_completion_stream
 
@@ -542,7 +603,11 @@ class TestChatCompletionStream:
         assert results == ["你", "好"]
 
 
-    async def test_reasoning_content_also_yielded(self):
+    def test_reasoning_content_also_yielded(self):
+        """reasoning_content 也被 yield"""
+        asyncio.run(self._async_test_reasoning_content_also_yielded())
+
+    async def _async_test_reasoning_content_also_yielded(self):
         """reasoning_content 也被 yield"""
         from server.llm import chat_completion_stream
 

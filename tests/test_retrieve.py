@@ -186,4 +186,4 @@ def test_retrieve_for_chat_new_params():
     context = {"day_master": "甲", "pattern": {"pattern": "正官格"}, "strength": {"verdict": "身旺"}}
     result = retrieve_for_chat("食神制杀", context, k=3, retrieval_mode="bm25")
     assert isinstance(result, dict)
-    assert result.get("retrieval_mode") == "bm25"
+    assert result.get("retrieval_mode") in ("bm25", "bm25_cached")

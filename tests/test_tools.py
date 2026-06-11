@@ -7,9 +7,9 @@
 4. execute_tool 异常传播
 5. execute_tools 批量并行执行
 """
-
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -171,7 +171,11 @@ class TestExecuteToolUnknown:
     """测试 execute_tool 对未知工具的处理。"""
 
 
-    async def test_unknown_tool_returns_error_json(self):
+    def test_unknown_tool_returns_error_json(self):
+        """传入未知工具名应返回含 error 字段的 JSON。"""
+        asyncio.run(self._async_test_unknown_tool_returns_error_json())
+
+    async def _async_test_unknown_tool_returns_error_json(self):
         """传入未知工具名应返回含 error 字段的 JSON。"""
         result_str = await execute_tool("nonexistent_tool", {})
         result = json.loads(result_str)
@@ -180,7 +184,11 @@ class TestExecuteToolUnknown:
         assert "nonexistent_tool" in result["error"]
 
 
-    async def test_unknown_tool_returns_valid_json(self):
+    def test_unknown_tool_returns_valid_json(self):
+        """返回值应为合法 JSON 字符串。"""
+        asyncio.run(self._async_test_unknown_tool_returns_valid_json())
+
+    async def _async_test_unknown_tool_returns_valid_json(self):
         """返回值应为合法 JSON 字符串。"""
         result_str = await execute_tool("fake", {"a": 1})
         parsed = json.loads(result_str)
@@ -196,7 +204,11 @@ class TestExecuteToolPaipan:
     """测试 paipan 工具正常调用。"""
 
 
-    async def test_paipan_success(self):
+    def test_paipan_success(self):
+        """paipan 正常排盘应返回结构化结果。"""
+        asyncio.run(self._async_test_paipan_success())
+
+    async def _async_test_paipan_success(self):
         """paipan 正常排盘应返回结构化结果。"""
         mock_result = {
             "status": "completed",
@@ -229,7 +241,11 @@ class TestExecuteToolPaipan:
         assert isinstance(result["大运"], list)
 
 
-    async def test_paipan_failure_status(self):
+    def test_paipan_failure_status(self):
+        """paipan 排盘失败应返回 error。"""
+        asyncio.run(self._async_test_paipan_failure_status())
+
+    async def _async_test_paipan_failure_status(self):
         """paipan 排盘失败应返回 error。"""
         mock_result = {"status": "error", "message": "日期无效"}
         with patch(_PATCH_PAIPAN, return_value=mock_result):
@@ -243,7 +259,11 @@ class TestExecuteToolPaipan:
         assert "日期无效" in result["error"]
 
 
-    async def test_paipan_failure_no_message(self):
+    def test_paipan_failure_no_message(self):
+        """paipan 排盘失败且无 message 时应返回默认错误信息。"""
+        asyncio.run(self._async_test_paipan_failure_no_message())
+
+    async def _async_test_paipan_failure_no_message(self):
         """paipan 排盘失败且无 message 时应返回默认错误信息。"""
         mock_result = {"status": "failed"}
         with patch(_PATCH_PAIPAN, return_value=mock_result):
@@ -260,7 +280,11 @@ class TestExecuteToolQueryGeju:
     """测试 query_geju 工具正常调用。"""
 
 
-    async def test_query_geju_success(self):
+    def test_query_geju_success(self):
+        """query_geju 正常调用应返回格局信息。"""
+        asyncio.run(self._async_test_query_geju_success())
+
+    async def _async_test_query_geju_success(self):
         """query_geju 正常调用应返回格局信息。"""
         mock_result = {
             "status": "completed",
@@ -292,7 +316,11 @@ class TestExecuteToolQueryGeju:
         assert result["旺衰判定"] == "身弱"
 
 
-    async def test_query_geju_failure(self):
+    def test_query_geju_failure(self):
+        """query_geju 分析失败应返回 error。"""
+        asyncio.run(self._async_test_query_geju_failure())
+
+    async def _async_test_query_geju_failure(self):
         """query_geju 分析失败应返回 error。"""
         mock_result = {"status": "error", "errors": "数据格式错误"}
         with patch(_PATCH_CORE, return_value=mock_result):
@@ -309,7 +337,11 @@ class TestExecuteToolQueryYongshen:
     """测试 query_yongshen 工具正常调用。"""
 
 
-    async def test_query_yongshen_success(self):
+    def test_query_yongshen_success(self):
+        """query_yongshen 正常调用应返回用神信息。"""
+        asyncio.run(self._async_test_query_yongshen_success())
+
+    async def _async_test_query_yongshen_success(self):
         """query_yongshen 正常调用应返回用神信息。"""
         mock_result = {
             "status": "completed",
@@ -340,7 +372,11 @@ class TestExecuteToolQueryYongshen:
         assert isinstance(result["忌神"], list)
 
 
-    async def test_query_yongshen_failure(self):
+    def test_query_yongshen_failure(self):
+        """query_yongshen 分析失败应返回 error。"""
+        asyncio.run(self._async_test_query_yongshen_failure())
+
+    async def _async_test_query_yongshen_failure(self):
         """query_yongshen 分析失败应返回 error。"""
         mock_result = {"status": "error", "errors": "参数错误"}
         with patch(_PATCH_CORE, return_value=mock_result):
@@ -357,7 +393,11 @@ class TestExecuteToolQueryShensha:
     """测试 query_shensha 工具正常调用。"""
 
 
-    async def test_query_shensha_success(self):
+    def test_query_shensha_success(self):
+        """query_shensha 正常调用应返回神煞列表。"""
+        asyncio.run(self._async_test_query_shensha_success())
+
+    async def _async_test_query_shensha_success(self):
         """query_shensha 正常调用应返回神煞列表。"""
         mock_shensha_list = [
             {"name": "天乙贵人", "category": "吉神", "description": "贵人相助", "position": "年支"},
@@ -375,7 +415,11 @@ class TestExecuteToolQueryShensha:
         assert len(result["神煞"]["吉神"]) == 2
 
 
-    async def test_query_shensha_invalid_bazi_format(self):
+    def test_query_shensha_invalid_bazi_format(self):
+        """query_shensha 传入非四柱八字应返回格式错误。"""
+        asyncio.run(self._async_test_query_shensha_invalid_bazi_format())
+
+    async def _async_test_query_shensha_invalid_bazi_format(self):
         """query_shensha 传入非四柱八字应返回格式错误。"""
         result_str = await execute_tool("query_shensha", {
             "bazi": "甲子 乙丑 丙寅",
@@ -386,7 +430,11 @@ class TestExecuteToolQueryShensha:
         assert "格式错误" in result["error"]
 
 
-    async def test_query_shensha_gender_mapping(self):
+    def test_query_shensha_gender_mapping(self):
+        """query_shensha 应正确将性别映射为 1/0。"""
+        asyncio.run(self._async_test_query_shensha_gender_mapping())
+
+    async def _async_test_query_shensha_gender_mapping(self):
         """query_shensha 应正确将性别映射为 1/0。"""
         mock_shensha_list: list[dict[str, Any]] = []
         with patch(_PATCH_SHENSHA, return_value=mock_shensha_list) as mock_calc:
@@ -402,7 +450,11 @@ class TestExecuteToolQueryClassical:
     """测试 query_classical 工具正常调用。"""
 
 
-    async def test_query_classical_success(self):
+    def test_query_classical_success(self):
+        """query_classical 正常检索应返回条文列表。"""
+        asyncio.run(self._async_test_query_classical_success())
+
+    async def _async_test_query_classical_success(self):
         """query_classical 正常检索应返回条文列表。"""
         mock_raw = {
             "results": [
@@ -424,7 +476,11 @@ class TestExecuteToolQueryClassical:
         assert result["条文"][0]["相关度"] == 0.95
 
 
-    async def test_query_classical_no_corpus(self):
+    def test_query_classical_no_corpus(self):
+        """语料库未找到应返回 error。"""
+        asyncio.run(self._async_test_query_classical_no_corpus())
+
+    async def _async_test_query_classical_no_corpus(self):
         """语料库未找到应返回 error。"""
         with patch("server.agents.tools._resolve_corpus_path", return_value=""):
             result_str = await execute_tool("query_classical", {"query": "测试"})
@@ -443,7 +499,11 @@ class TestExecuteToolException:
     """测试 execute_tool 对底层异常的处理。"""
 
 
-    async def test_executor_raises_returns_error_json(self):
+    def test_executor_raises_returns_error_json(self):
+        """底层执行函数抛异常应返回含 error 的 JSON，而非传播异常。"""
+        asyncio.run(self._async_test_executor_raises_returns_error_json())
+
+    async def _async_test_executor_raises_returns_error_json(self):
         """底层执行函数抛异常应返回含 error 的 JSON，而非传播异常。"""
         with patch.dict(
             "server.agents.tools._TOOL_EXECUTORS",
@@ -465,7 +525,11 @@ class TestExecuteTools:
     """测试 execute_tools 批量执行。"""
 
 
-    async def test_execute_tools_single_call(self):
+    def test_execute_tools_single_call(self):
+        """单个 tool_call 应返回一条 tool message。"""
+        asyncio.run(self._async_test_execute_tools_single_call())
+
+    async def _async_test_execute_tools_single_call(self):
         """单个 tool_call 应返回一条 tool message。"""
         mock_result = {"status": "completed", "pillars": [], "day_master": "甲", "shengxiao": "鼠", "dayun": [], "qiyun_age": 1}
         with patch(_PATCH_PAIPAN, return_value=mock_result):
@@ -481,7 +545,11 @@ class TestExecuteTools:
         assert isinstance(parsed, dict)
 
 
-    async def test_execute_tools_multiple_calls_parallel(self):
+    def test_execute_tools_multiple_calls_parallel(self):
+        """多个 tool_calls 应并行执行并返回对应数量的 messages。"""
+        asyncio.run(self._async_test_execute_tools_multiple_calls_parallel())
+
+    async def _async_test_execute_tools_multiple_calls_parallel(self):
         """多个 tool_calls 应并行执行并返回对应数量的 messages。"""
         mock_paipan = {
             "status": "completed", "pillars": [], "day_master": "丙",
@@ -511,13 +579,21 @@ class TestExecuteTools:
             json.loads(msg["content"])
 
 
-    async def test_execute_tools_empty_list(self):
+    def test_execute_tools_empty_list(self):
+        """空 tool_calls 应返回空列表。"""
+        asyncio.run(self._async_test_execute_tools_empty_list())
+
+    async def _async_test_execute_tools_empty_list(self):
         """空 tool_calls 应返回空列表。"""
         messages = await execute_tools([])
         assert messages == []
 
 
-    async def test_execute_tools_unknown_tool_in_batch(self):
+    def test_execute_tools_unknown_tool_in_batch(self):
+        """批量中包含未知工具应返回 error JSON 而不中断其他工具。"""
+        asyncio.run(self._async_test_execute_tools_unknown_tool_in_batch())
+
+    async def _async_test_execute_tools_unknown_tool_in_batch(self):
         """批量中包含未知工具应返回 error JSON 而不中断其他工具。"""
         mock_paipan = {
             "status": "completed", "pillars": [], "day_master": "甲",
@@ -539,7 +615,11 @@ class TestExecuteTools:
         assert "error" in bad_result
 
 
-    async def test_execute_tools_malformed_arguments_json(self):
+    def test_execute_tools_malformed_arguments_json(self):
+        """arguments 为非法 JSON 字符串时应降级为空 dict。"""
+        asyncio.run(self._async_test_execute_tools_malformed_arguments_json())
+
+    async def _async_test_execute_tools_malformed_arguments_json(self):
         """arguments 为非法 JSON 字符串时应降级为空 dict。"""
         tool_calls = [{
             "id": "call_malformed",
@@ -557,7 +637,11 @@ class TestExecuteTools:
         assert "error" in result
 
 
-    async def test_execute_tools_preserves_call_id_order(self):
+    def test_execute_tools_preserves_call_id_order(self):
+        """返回的 messages 应与输入 tool_calls 的 call_id 顺序一致。"""
+        asyncio.run(self._async_test_execute_tools_preserves_call_id_order())
+
+    async def _async_test_execute_tools_preserves_call_id_order(self):
         """返回的 messages 应与输入 tool_calls 的 call_id 顺序一致。"""
         mock_shensha: list[dict[str, Any]] = []
         mock_raw: dict[str, Any] = {"results": []}
