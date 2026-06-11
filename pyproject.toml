@@ -1,7 +1,7 @@
 [project]
 name = "bazi-pro"
-version = "5.3.0"
-description = "专业八字命理分析引擎 — BM25+jieba 古籍检索 · 动态SVG命盘 · 命运河流时间轴 · 推理图谱 · Web服务 · 插件机制"
+version = "6.0.0"
+description = "专业八字+紫微斗数联合分析引擎 — BM25+Hybrid 古籍检索 · 六层格局筛查 · 三流派分析 · Function Calling · 流式 AI 对话 · Next.js 暗色主题前端"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
