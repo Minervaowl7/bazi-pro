@@ -8,8 +8,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
-
+from typing import Literal
 
 # ── 格局等级类型 ──────────────────────────────────────────────────────────────
 PatternLevel = Literal["excellent", "good", "neutral", "caution"]

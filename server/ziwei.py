@@ -30,9 +30,9 @@ def _get_ziwei_modules():
     """延迟导入紫微斗数模块"""
     global _ziwei_patterns, _ziwei_sihua, _ziwei_narrator
     if _ziwei_patterns is None:
+        from bazi_pro.core.ziwei.narrator import narrate_ziwei
         from bazi_pro.core.ziwei.patterns import detect_patterns
         from bazi_pro.core.ziwei.sihua import analyze_sihua
-        from bazi_pro.core.ziwei.narrator import narrate_ziwei
         _ziwei_patterns = detect_patterns
         _ziwei_sihua = analyze_sihua
         _ziwei_narrator = narrate_ziwei

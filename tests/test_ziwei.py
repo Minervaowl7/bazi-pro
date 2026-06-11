@@ -3,26 +3,22 @@
 """
 
 import pytest
-from bazi_pro.core.ziwei.constants import SI_HUA_TABLE, STAR_NATURE, Pattern, PatternCondition
-from bazi_pro.core.ziwei.patterns import detect_patterns, detect_zi_fu
-from bazi_pro.core.ziwei.sihua import analyze_sihua, get_sihua_by_stem, get_year_stem, get_year_branch
-from bazi_pro.core.ziwei.stars import analyze_star_in_palace, analyze_ming_palace
+
+from bazi_pro.core.ziwei.constants import SI_HUA_TABLE, STAR_NATURE
 from bazi_pro.core.ziwei.narrator import narrate_ziwei
+from bazi_pro.core.ziwei.patterns import detect_patterns, detect_zi_fu
+from bazi_pro.core.ziwei.sihua import analyze_sihua, get_sihua_by_stem, get_year_branch, get_year_stem
+from bazi_pro.core.ziwei.stars import analyze_ming_palace, analyze_star_in_palace
 from bazi_pro.core.ziwei.utils import (
-    get_palace_by_name,
-    get_palace_by_branch,
-    get_san_fang_palaces,
-    get_san_fang_stars,
-    get_jia_palaces,
-    get_jia_stars,
-    is_bright,
-    is_dim,
-    has_star,
-    get_star_brightness,
     get_ming_branch,
+    get_palace_by_branch,
+    get_palace_by_name,
     get_palace_major_stars,
     get_palace_minor_stars,
-    get_palace_all_stars,
+    get_star_brightness,
+    has_star,
+    is_bright,
+    is_dim,
 )
 
 
@@ -506,13 +502,11 @@ class TestIntegration:
         from bazi_pro.core.ziwei import (
             SI_HUA_TABLE,
             STAR_NATURE,
-            Pattern,
-            PatternCondition,
-            detect_patterns,
-            analyze_sihua,
-            get_sihua_by_stem,
-            analyze_star_in_palace,
             analyze_ming_palace,
+            analyze_sihua,
+            analyze_star_in_palace,
+            detect_patterns,
+            get_sihua_by_stem,
             narrate_ziwei,
         )
 

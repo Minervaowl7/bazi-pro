@@ -9,23 +9,19 @@ from __future__ import annotations
 
 from typing import Any
 
-from bazi_pro.core.ziwei.constants import Pattern, PatternCondition, BRANCH_INDEX, BRANCH_ORDER
+from bazi_pro.core.ziwei.constants import BRANCH_INDEX, BRANCH_ORDER, Pattern, PatternCondition
 from bazi_pro.core.ziwei.sihua import get_sihua_by_stem
 from bazi_pro.core.ziwei.utils import (
+    get_jia_palaces,
+    get_ming_branch,
+    get_palace_all_stars,
+    get_palace_by_branch,
+    get_palace_by_name,
+    get_palace_major_stars,
     get_san_fang_palaces,
     get_san_fang_stars,
-    get_jia_palaces,
-    get_jia_stars,
-    is_bright,
-    is_dim,
     has_star,
-    get_palace_by_name,
-    get_palace_by_branch,
-    get_ming_branch,
-    get_palace_major_stars,
-    get_palace_all_stars,
 )
-
 
 # ── 上格检测函数 ──────────────────────────────────────────────────────────────
 

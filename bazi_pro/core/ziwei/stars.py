@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from bazi_pro.core.ziwei.constants import STAR_NATURE, StarNature
-from bazi_pro.core.ziwei.utils import get_palace_by_name, get_palace_major_stars
+from bazi_pro.core.ziwei.utils import get_palace_by_name
 
 
 def get_star_nature(star_name: str) -> StarNature | None:
