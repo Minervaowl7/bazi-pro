@@ -108,7 +108,7 @@ async def chat_completion(messages: list[dict], temperature: float = 0.7, max_to
                     continue
                 raise RuntimeError("LLM 返回空 content。推理模型 token 不足，请增大 max_tokens。")
             return content
-    raise RuntimeError("unreachable")
+    raise RuntimeError(f"LLM API 请求失败（429 限流），已重试 {max_retries} 次")
 
 
 async def _post_with_retry(
@@ -127,23 +127,31 @@ async def _post_with_retry(
     """
     last_exc: Exception | None = None
     for attempt in range(max_retries + 1):
-        async with httpx.AsyncClient(timeout=httpx.Timeout(_LLM_TIMEOUT, connect=5.0)) as client:
-            resp = await client.post(url, headers=headers, json=payload)
-            if resp.status_code in (401, 403):
-                raise RuntimeError(f"LLM API 认证失败 (HTTP {resp.status_code})，请检查 LLM_API_KEY")
-            if resp.status_code == 429:
-                wait = min(5 * (attempt + 1), 30)
-                logger.warning("[llm] rate limited (429), retry %d/%d after %ds", attempt + 1, max_retries, wait)
-                await asyncio.sleep(wait)
-                continue
-            if resp.status_code >= 500:
-                if attempt < max_retries:
-                    logger.warning("[llm] server error %d, retry %d/%d", resp.status_code, attempt + 1, max_retries)
-                    await asyncio.sleep(1 * (attempt + 1))
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(_LLM_TIMEOUT, connect=5.0)) as client:
+                resp = await client.post(url, headers=headers, json=payload)
+                if resp.status_code in (401, 403):
+                    raise RuntimeError(f"LLM API 认证失败 (HTTP {resp.status_code})，请检查 LLM_API_KEY")
+                if resp.status_code == 429:
+                    wait = min(5 * (attempt + 1), 30)
+                    logger.warning("[llm] rate limited (429), retry %d/%d after %ds", attempt + 1, max_retries, wait)
+                    await asyncio.sleep(wait)
                     continue
+                if resp.status_code >= 500:
+                    if attempt < max_retries:
+                        logger.warning("[llm] server error %d, retry %d/%d", resp.status_code, attempt + 1, max_retries)
+                        await asyncio.sleep(1 * (attempt + 1))
+                        continue
+                    resp.raise_for_status()
                 resp.raise_for_status()
-            resp.raise_for_status()
-            return resp.json()
+                return resp.json()
+        except (RuntimeError, httpx.HTTPStatusError) as exc:
+            last_exc = exc
+            if isinstance(exc, RuntimeError) and "认证失败" in str(exc):
+                raise
+            if attempt < max_retries:
+                continue
+            raise
     raise RuntimeError(f"LLM API 请求失败，已重试 {max_retries} 次") from last_exc
 
 
@@ -211,6 +219,7 @@ async def chat_completion_stream_typed(messages: list[dict], temperature: float 
     }
 
     has_content = False
+    content_yielded = False
     reasoning_buffer = ""
     async with httpx.AsyncClient(timeout=httpx.Timeout(_LLM_TIMEOUT, connect=5.0)) as client:
         async with client.stream("POST", url, headers=headers, json=payload) as resp:
@@ -232,11 +241,12 @@ async def chat_completion_stream_typed(messages: list[dict], temperature: float 
                         yield {"type": "reasoning", "content": reasoning}
                     if content:
                         has_content = True
+                        content_yielded = True
                         yield {"type": "token", "content": content}
                 except (json.JSONDecodeError, IndexError, KeyError):
                     continue
     # 推理模型降级：只有 reasoning_content 没有 content 时，将 reasoning 作为 token 输出
-    if has_content and reasoning_buffer:
+    if has_content and reasoning_buffer and not content_yielded:
         yield {"type": "token", "content": reasoning_buffer}
     if not has_content:
         raise RuntimeError("LLM 流式返回无 content。推理模型 token 不足，请增大 max_tokens。")

@@ -18,6 +18,7 @@ router = APIRouter()
 
 # 私有/保留 IP 段黑名单，防止 SSRF
 _PRIVATE_NETWORKS = [
+    ipaddress.ip_network("0.0.0.0/8"),
     ipaddress.ip_network("127.0.0.0/8"),
     ipaddress.ip_network("10.0.0.0/8"),
     ipaddress.ip_network("172.16.0.0/12"),
