@@ -157,8 +157,20 @@ async def api_v2_dayun_liunian(analysis_id: str):
         birth_year, qiyun_age,
     )
 
+    # OHLC 四维度评分（事业/财运/感情/健康）
+    ohlc_scores = []
+    try:
+        from server.kline_ohlc import score_liunian_ohlc
+        ohlc_scores = score_liunian_ohlc(
+            dayun_list, yongshen_wx, jishen_wx, xishen_wx, day_master,
+            birth_year, qiyun_age,
+        )
+    except Exception as exc:
+        logger.warning("OHLC scoring failed: %s", exc)
+
     return JSONResponse({
         "analysis_id": analysis_id,
         "dayun_scores": dayun_scores,
         "liunian_scores": liunian_scores,
+        "ohlc_scores": ohlc_scores,
     })
