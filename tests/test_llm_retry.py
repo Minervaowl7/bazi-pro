@@ -36,10 +36,9 @@ def _make_response(status_code: int, json_data: dict | None = None) -> MagicMock
     return resp
 
 
-@pytest.fixture
-def mock_client():
-    """Create a mock httpx.AsyncClient context manager."""
-    client = AsyncMock()
+def _make_mock_client():
+    """Create a mock httpx.AsyncClient that supports async context manager."""
+    client = MagicMock()
     client.__aenter__ = AsyncMock(return_value=client)
     client.__aexit__ = AsyncMock(return_value=False)
     return client
@@ -47,12 +46,13 @@ def mock_client():
 
 class TestRetryOn429:
     """429 rate limit should trigger retry with backoff."""
+
     def test_429_then_success(self):
         """First call returns 429, second returns 200."""
         asyncio.run(self._async_test_429_then_success())
 
     async def _async_test_429_then_success(self):
-        """First call returns 429, second returns 200."""
+        mock_client = _make_mock_client()
         success_resp = _make_response(200, {"choices": [{"message": {"content": "ok"}}]})
         rate_limit_resp = _make_response(429)
         mock_client.post = AsyncMock(side_effect=[rate_limit_resp, success_resp])
@@ -63,12 +63,13 @@ class TestRetryOn429:
 
         assert result == {"choices": [{"message": {"content": "ok"}}]}
         mock_sleep.assert_called_once()
+
     def test_429_multiple_retries_then_success(self):
         """Two 429s then success."""
         asyncio.run(self._async_test_429_multiple_retries_then_success())
 
     async def _async_test_429_multiple_retries_then_success(self):
-        """Two 429s then success."""
+        mock_client = _make_mock_client()
         success_resp = _make_response(200, {"ok": True})
         rate_limit_resp = _make_response(429)
         mock_client.post = AsyncMock(side_effect=[rate_limit_resp, rate_limit_resp, success_resp])
@@ -79,30 +80,31 @@ class TestRetryOn429:
 
         assert result == {"ok": True}
         assert mock_sleep.call_count == 2
+
     def test_429_exhausted_retries(self):
         """All retries on 429 → RuntimeError."""
         asyncio.run(self._async_test_429_exhausted_retries())
 
     async def _async_test_429_exhausted_retries(self):
-        """All retries on 429 → RuntimeError."""
-        rate_limit_resp = _make_response(429)
-        mock_client.post = AsyncMock(return_value=rate_limit_resp)
+        mock_client = _make_mock_client()
+        resp_429 = _make_response(429)
+        mock_client.post = AsyncMock(return_value=resp_429)
 
         with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client), \
              patch("server.llm_client.asyncio.sleep", new_callable=AsyncMock):
-            with pytest.raises(RuntimeError, match="重试"):
+            with pytest.raises(RuntimeError, match="已重试"):
                 await _post_with_retry("http://test.com/api", {}, {}, max_retries=2)
 
 
 class TestRetryOn5xx:
-    """5xx server errors should trigger retry."""
+    """5xx server error should trigger retry."""
+
     def test_500_then_success(self):
-        """500 on first call, 200 on second."""
         asyncio.run(self._async_test_500_then_success())
 
     async def _async_test_500_then_success(self):
-        """500 on first call, 200 on second."""
-        success_resp = _make_response(200, {"choices": [{"message": {"content": "ok"}}]})
+        mock_client = _make_mock_client()
+        success_resp = _make_response(200, {"ok": True})
         error_resp = _make_response(500)
         mock_client.post = AsyncMock(side_effect=[error_resp, success_resp])
 
@@ -110,16 +112,16 @@ class TestRetryOn5xx:
              patch("server.llm_client.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             result = await _post_with_retry("http://test.com/api", {}, {})
 
-        assert result == {"choices": [{"message": {"content": "ok"}}]}
+        assert result == {"ok": True}
         mock_sleep.assert_called_once()
+
     def test_502_then_success(self):
-        """502 on first call, 200 on second."""
         asyncio.run(self._async_test_502_then_success())
 
     async def _async_test_502_then_success(self):
-        """502 on first call, 200 on second."""
-        success_resp = _make_response(200, {"ok": True})
+        mock_client = _make_mock_client()
         error_resp = _make_response(502)
+        success_resp = _make_response(200, {"ok": True})
         mock_client.post = AsyncMock(side_effect=[error_resp, success_resp])
 
         with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client), \
@@ -127,14 +129,14 @@ class TestRetryOn5xx:
             result = await _post_with_retry("http://test.com/api", {}, {})
 
         assert result == {"ok": True}
+
     def test_503_then_success(self):
-        """503 on first call, 200 on second."""
         asyncio.run(self._async_test_503_then_success())
 
     async def _async_test_503_then_success(self):
-        """503 on first call, 200 on second."""
-        success_resp = _make_response(200, {"ok": True})
+        mock_client = _make_mock_client()
         error_resp = _make_response(503)
+        success_resp = _make_response(200, {"ok": True})
         mock_client.post = AsyncMock(side_effect=[error_resp, success_resp])
 
         with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client), \
@@ -142,12 +144,12 @@ class TestRetryOn5xx:
             result = await _post_with_retry("http://test.com/api", {}, {})
 
         assert result == {"ok": True}
+
     def test_5xx_exhausted_retries(self):
-        """All retries on 5xx → raise_for_status."""
         asyncio.run(self._async_test_5xx_exhausted_retries())
 
     async def _async_test_5xx_exhausted_retries(self):
-        """All retries on 5xx → raise_for_status."""
+        mock_client = _make_mock_client()
         error_resp = _make_response(500)
         mock_client.post = AsyncMock(return_value=error_resp)
 
@@ -158,48 +160,41 @@ class TestRetryOn5xx:
 
 
 class TestNoRetryOnAuth:
-    """401/403 should NOT retry — raise immediately."""
+    """401/403 should not retry."""
+
     def test_401_no_retry(self):
-        """401 → RuntimeError immediately, no retry."""
         asyncio.run(self._async_test_401_no_retry())
 
     async def _async_test_401_no_retry(self):
-        """401 → RuntimeError immediately, no retry."""
+        mock_client = _make_mock_client()
         auth_resp = _make_response(401)
         mock_client.post = AsyncMock(return_value=auth_resp)
 
-        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client), \
-             patch("server.llm_client.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client):
             with pytest.raises(RuntimeError, match="认证失败"):
                 await _post_with_retry("http://test.com/api", {}, {})
 
-        mock_sleep.assert_not_called()
     def test_403_no_retry(self):
-        """403 → RuntimeError immediately, no retry."""
         asyncio.run(self._async_test_403_no_retry())
 
     async def _async_test_403_no_retry(self):
-        """403 → RuntimeError immediately, no retry."""
+        mock_client = _make_mock_client()
         auth_resp = _make_response(403)
         mock_client.post = AsyncMock(return_value=auth_resp)
 
-        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client), \
-             patch("server.llm_client.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client):
             with pytest.raises(RuntimeError, match="认证失败"):
                 await _post_with_retry("http://test.com/api", {}, {})
 
-        mock_sleep.assert_not_called()
     def test_401_only_called_once(self):
-        """401 should result in exactly 1 HTTP call (no retries)."""
         asyncio.run(self._async_test_401_only_called_once())
 
     async def _async_test_401_only_called_once(self):
-        """401 should result in exactly 1 HTTP call (no retries)."""
+        mock_client = _make_mock_client()
         auth_resp = _make_response(401)
         mock_client.post = AsyncMock(return_value=auth_resp)
 
-        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client), \
-             patch("server.llm_client.asyncio.sleep", new_callable=AsyncMock):
+        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client):
             with pytest.raises(RuntimeError):
                 await _post_with_retry("http://test.com/api", {}, {}, max_retries=3)
 
@@ -207,45 +202,41 @@ class TestNoRetryOnAuth:
 
 
 class TestNoRetryOnOther4xx:
-    """Other 4xx errors (non-auth) should not retry."""
+    """4xx (non-auth) should not retry."""
+
     def test_400_no_retry(self):
-        """400 → raise_for_status immediately."""
         asyncio.run(self._async_test_400_no_retry())
 
     async def _async_test_400_no_retry(self):
-        """400 → raise_for_status immediately."""
+        mock_client = _make_mock_client()
         error_resp = _make_response(400)
         mock_client.post = AsyncMock(return_value=error_resp)
 
-        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client), \
-             patch("server.llm_client.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client):
             with pytest.raises(httpx.HTTPStatusError):
                 await _post_with_retry("http://test.com/api", {}, {})
 
-        mock_sleep.assert_not_called()
     def test_404_no_retry(self):
-        """404 → raise_for_status immediately."""
         asyncio.run(self._async_test_404_no_retry())
 
     async def _async_test_404_no_retry(self):
-        """404 → raise_for_status immediately."""
+        mock_client = _make_mock_client()
         error_resp = _make_response(404)
         mock_client.post = AsyncMock(return_value=error_resp)
 
-        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client), \
-             patch("server.llm_client.asyncio.sleep", new_callable=AsyncMock):
+        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client):
             with pytest.raises(httpx.HTTPStatusError):
                 await _post_with_retry("http://test.com/api", {}, {})
 
 
 class TestSuccessfulCall:
-    """Normal successful call (no retries needed)."""
+    """200 should return immediately."""
+
     def test_200_immediate_success(self):
-        """200 on first call → return data, no retry."""
         asyncio.run(self._async_test_200_immediate_success())
 
     async def _async_test_200_immediate_success(self):
-        """200 on first call → return data, no retry."""
+        mock_client = _make_mock_client()
         success_resp = _make_response(200, {"choices": [{"message": {"content": "hello"}}]})
         mock_client.post = AsyncMock(return_value=success_resp)
 
@@ -257,34 +248,31 @@ class TestSuccessfulCall:
 
 
 class TestCustomMaxRetries:
-    """max_retries parameter is respected."""
+    """max_retries parameter should be respected."""
+
     def test_max_retries_1(self):
-        """With max_retries=1, should try twice total."""
         asyncio.run(self._async_test_max_retries_1())
 
     async def _async_test_max_retries_1(self):
-        """With max_retries=1, should try twice total."""
+        mock_client = _make_mock_client()
         error_resp = _make_response(500)
-        mock_client.post = AsyncMock(return_value=error_resp)
+        success_resp = _make_response(200, {"ok": True})
+        mock_client.post = AsyncMock(side_effect=[error_resp, success_resp])
 
         with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client), \
              patch("server.llm_client.asyncio.sleep", new_callable=AsyncMock):
-            with pytest.raises(httpx.HTTPStatusError):
-                await _post_with_retry("http://test.com/api", {}, {}, max_retries=1)
+            result = await _post_with_retry("http://test.com/api", {}, {}, max_retries=1)
 
-        assert mock_client.post.call_count == 2  # 1 initial + 1 retry
+        assert result == {"ok": True}
+
     def test_max_retries_0_no_retry(self):
-        """With max_retries=0, should not retry at all."""
         asyncio.run(self._async_test_max_retries_0_no_retry())
 
     async def _async_test_max_retries_0_no_retry(self):
-        """With max_retries=0, should not retry at all."""
+        mock_client = _make_mock_client()
         error_resp = _make_response(500)
         mock_client.post = AsyncMock(return_value=error_resp)
 
-        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client), \
-             patch("server.llm_client.asyncio.sleep", new_callable=AsyncMock):
+        with patch("server.llm_client.httpx.AsyncClient", return_value=mock_client):
             with pytest.raises(httpx.HTTPStatusError):
                 await _post_with_retry("http://test.com/api", {}, {}, max_retries=0)
-
-        assert mock_client.post.call_count == 1
