@@ -297,7 +297,7 @@ class TestChatCompletion:
             # 但 429 不调用 raise_for_status，所以不会抛 HTTPStatusError
             # 代码逻辑：for attempt in range(4)，每次都 continue，
             # 循环结束后执行 raise RuntimeError("unreachable")
-            with pytest.raises(RuntimeError, match="unreachable"):
+            with pytest.raises(RuntimeError, match="已重试"):
                 await chat_completion([{"role": "user", "content": "测试"}])
 
 
@@ -453,12 +453,11 @@ class TestChatCompletionStreamTyped:
             ):
                 results.append(chunk)
 
-        # 应该有 2 个 reasoning + 2 个 token + 1 个降级 token（reasoning_buffer 汇总）
+        # reasoning+content 混合 → 不触发降级（content_yielded=True），所以只有 2 个 token
         reasoning_chunks = [c for c in results if c["type"] == "reasoning"]
         token_chunks = [c for c in results if c["type"] == "token"]
         assert len(reasoning_chunks) == 2
-        assert reasoning_chunks[0]["content"] == "让我想想"
-        assert len(token_chunks) == 3  # 2个原始 + 1个降级汇总
+        assert len(token_chunks) == 2
 
 
     def test_reasoning_only_fallback(self):

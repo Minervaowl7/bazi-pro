@@ -34,8 +34,6 @@ def _make_request(query_params: dict | None = None) -> MagicMock:
 
 class TestNoAPIKeyConfigured:
     """When BAZI_API_KEY is not set."""
-
-    @pytest.mark.asyncio
     def test_no_key_returns_true_non_production(self):
         asyncio.run(self._async_test_no_key_returns_true_non_production())
 
@@ -46,8 +44,6 @@ class TestNoAPIKeyConfigured:
             with patch("server.deps.API_KEY", ""):
                 result = await verify_api_key(request, api_key=None)
         assert result is True
-
-    @pytest.mark.asyncio
     def test_no_key_raises_in_production(self):
         asyncio.run(self._async_test_no_key_raises_in_production())
 
@@ -58,8 +54,6 @@ class TestNoAPIKeyConfigured:
             with patch("server.deps.API_KEY", ""):
                 with pytest.raises(APIKeyError):
                     await verify_api_key(request, api_key=None)
-
-    @pytest.mark.asyncio
     def test_no_key_raises_in_prod_uppercase(self):
         asyncio.run(self._async_test_no_key_raises_in_prod_uppercase())
 
@@ -74,8 +68,6 @@ class TestNoAPIKeyConfigured:
 
 class TestAPIKeyViaHeader:
     """Authentication via X-API-Key header."""
-
-    @pytest.mark.asyncio
     def test_valid_key_returns_true(self):
         asyncio.run(self._async_test_valid_key_returns_true())
 
@@ -85,8 +77,6 @@ class TestAPIKeyViaHeader:
         with patch("server.deps.API_KEY", "test-secret-key"):
             result = await verify_api_key(request, api_key="test-secret-key")
         assert result is True
-
-    @pytest.mark.asyncio
     def test_wrong_key_raises(self):
         asyncio.run(self._async_test_wrong_key_raises())
 
@@ -96,8 +86,6 @@ class TestAPIKeyViaHeader:
         with patch("server.deps.API_KEY", "correct-key"):
             with pytest.raises(APIKeyError):
                 await verify_api_key(request, api_key="wrong-key")
-
-    @pytest.mark.asyncio
     def test_empty_key_raises_when_key_required(self):
         asyncio.run(self._async_test_empty_key_raises_when_key_required())
 
@@ -107,8 +95,6 @@ class TestAPIKeyViaHeader:
         with patch("server.deps.API_KEY", "required-key"):
             with pytest.raises(APIKeyError):
                 await verify_api_key(request, api_key="")
-
-    @pytest.mark.asyncio
     def test_none_key_raises_when_key_required(self):
         asyncio.run(self._async_test_none_key_raises_when_key_required())
 
@@ -122,8 +108,6 @@ class TestAPIKeyViaHeader:
 
 class TestAPIKeyViaQueryParam:
     """Authentication via ?token= query parameter."""
-
-    @pytest.mark.asyncio
     def test_valid_token_in_query(self):
         asyncio.run(self._async_test_valid_token_in_query())
 
@@ -133,8 +117,6 @@ class TestAPIKeyViaQueryParam:
         with patch("server.deps.API_KEY", "query-secret"):
             result = await verify_api_key(request, api_key=None)
         assert result is True
-
-    @pytest.mark.asyncio
     def test_invalid_token_in_query(self):
         asyncio.run(self._async_test_invalid_token_in_query())
 
@@ -144,8 +126,6 @@ class TestAPIKeyViaQueryParam:
         with patch("server.deps.API_KEY", "correct-token"):
             with pytest.raises(APIKeyError):
                 await verify_api_key(request, api_key=None)
-
-    @pytest.mark.asyncio
     def test_empty_token_in_query_falls_through(self):
         asyncio.run(self._async_test_empty_token_in_query_falls_through())
 
@@ -155,8 +135,6 @@ class TestAPIKeyViaQueryParam:
         with patch("server.deps.API_KEY", "required-key"):
             with pytest.raises(APIKeyError):
                 await verify_api_key(request, api_key=None)
-
-    @pytest.mark.asyncio
     def test_no_token_no_header_raises(self):
         asyncio.run(self._async_test_no_token_no_header_raises())
 
@@ -170,8 +148,6 @@ class TestAPIKeyViaQueryParam:
 
 class TestHeaderPriorityOverQuery:
     """Header should be checked before query param."""
-
-    @pytest.mark.asyncio
     def test_valid_header_ignores_query(self):
         asyncio.run(self._async_test_valid_header_ignores_query())
 
@@ -181,8 +157,6 @@ class TestHeaderPriorityOverQuery:
         with patch("server.deps.API_KEY", "correct-key"):
             result = await verify_api_key(request, api_key="correct-key")
         assert result is True
-
-    @pytest.mark.asyncio
     def test_invalid_header_falls_to_query(self):
         asyncio.run(self._async_test_invalid_header_falls_to_query())
 
@@ -198,8 +172,6 @@ class TestHeaderPriorityOverQuery:
 
 class TestTimingSafeComparison:
     """Verify hmac.compare_digest is used (timing-safe)."""
-
-    @pytest.mark.asyncio
     def test_uses_hmac_compare_digest(self):
         asyncio.run(self._async_test_uses_hmac_compare_digest())
 

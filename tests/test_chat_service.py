@@ -212,8 +212,6 @@ class TestExtractAnalysisContext:
 
 class TestLoadAndParseAnalysis:
     """_load_and_parse_analysis 测试。"""
-
-    @pytest.mark.asyncio
     def test_record_not_found(self):
         asyncio.run(self._async_test_record_not_found())
 
@@ -223,8 +221,6 @@ class TestLoadAndParseAnalysis:
             record, result = await _load_and_parse_analysis("nonexistent_id")
         assert record is None
         assert result is None
-
-    @pytest.mark.asyncio
     def test_full_result_is_dict(self):
         asyncio.run(self._async_test_full_result_is_dict())
 
@@ -239,8 +235,6 @@ class TestLoadAndParseAnalysis:
         assert record == mock_record
         assert isinstance(result, dict)
         assert result["day_master"] == "丙"
-
-    @pytest.mark.asyncio
     def test_full_result_is_json_string(self):
         asyncio.run(self._async_test_full_result_is_json_string())
 
@@ -255,8 +249,6 @@ class TestLoadAndParseAnalysis:
             record, result = await _load_and_parse_analysis("def456")
         assert isinstance(result, dict)
         assert result["day_master"] == "甲"
-
-    @pytest.mark.asyncio
     def test_full_result_is_invalid_json_string(self):
         asyncio.run(self._async_test_full_result_is_invalid_json_string())
 
@@ -332,8 +324,6 @@ class TestBuildMessagesList:
 
 class TestPrepareChatContext:
     """prepare_chat_context 集成测试（全部 mock）。"""
-
-    @pytest.mark.asyncio
     def test_analysis_not_found_returns_none(self):
         asyncio.run(self._async_test_analysis_not_found_returns_none())
 
@@ -342,8 +332,6 @@ class TestPrepareChatContext:
         with patch(_PATCH_GET_ANALYSIS, new_callable=AsyncMock, return_value=None):
             result = await prepare_chat_context("bad_id", "你好", "ziping", "full")
         assert result is None
-
-    @pytest.mark.asyncio
     def test_success_path(self):
         asyncio.run(self._async_test_success_path())
 
@@ -392,8 +380,6 @@ class TestPrepareChatContext:
         assert ctx.messages[0]["role"] == "system"
         assert ctx.messages[-1]["role"] == "user"
         assert ctx.messages[-1]["content"] == "我的格局如何？"
-
-    @pytest.mark.asyncio
     def test_with_basic_retrieval_depth_skips_rag(self):
         asyncio.run(self._async_test_with_basic_retrieval_depth_skips_rag())
 
@@ -431,8 +417,6 @@ class TestPrepareChatContext:
 
 class TestBuildReportContext:
     """build_report_context 错误路径测试。"""
-
-    @pytest.mark.asyncio
     def test_not_found(self):
         asyncio.run(self._async_test_not_found())
 
@@ -442,8 +426,6 @@ class TestBuildReportContext:
             ctx, error = await build_report_context("bad_id", "ziping", "full")
         assert ctx is None
         assert error == "NOT_FOUND"
-
-    @pytest.mark.asyncio
     def test_analysis_not_completed(self):
         asyncio.run(self._async_test_analysis_not_completed())
 
@@ -458,8 +440,6 @@ class TestBuildReportContext:
             ctx, error = await build_report_context("test789", "ziping", "full")
         assert ctx is None
         assert error == "ANALYSIS_NOT_COMPLETED"
-
-    @pytest.mark.asyncio
     def test_invalid_result(self):
         asyncio.run(self._async_test_invalid_result())
 
@@ -474,8 +454,6 @@ class TestBuildReportContext:
             ctx, error = await build_report_context("test_invalid", "ziping", "full")
         assert ctx is None
         assert error == "INVALID_RESULT"
-
-    @pytest.mark.asyncio
     def test_success_path(self):
         asyncio.run(self._async_test_success_path())
 
@@ -505,8 +483,6 @@ class TestBuildReportContext:
         assert isinstance(ctx, ReportContext)
         assert ctx.system_prompt == "report prompt"
         assert ctx.result["day_master"] == "丙"
-
-    @pytest.mark.asyncio
     def test_full_result_is_json_string(self):
         asyncio.run(self._async_test_full_result_is_json_string())
 
@@ -535,8 +511,6 @@ class TestBuildReportContext:
 
         assert error is None
         assert ctx.result["day_master"] == "甲"
-
-    @pytest.mark.asyncio
     def test_birth_json_is_string(self):
         asyncio.run(self._async_test_birth_json_is_string())
 

@@ -81,8 +81,6 @@ class TestChatCompletionWithTools:
         mod._LLM_API_KEY = "sk-test-key"
         yield
         mod._LLM_API_KEY = orig
-
-    @pytest.mark.asyncio
     def test_no_tool_calls_returns_content(self):
         asyncio.run(self._async_test_no_tool_calls_returns_content())
 
@@ -98,8 +96,6 @@ class TestChatCompletionWithTools:
         assert result["content"] == "你好，我是命理师"
         assert result["tool_calls_log"] == []
         assert len(result["messages"]) == 1  # 原始 messages
-
-    @pytest.mark.asyncio
     def test_single_tool_call_round(self):
         asyncio.run(self._async_test_single_tool_call_round())
 
@@ -129,8 +125,6 @@ class TestChatCompletionWithTools:
         assert result["tool_calls_log"][0]["id"] == "call_1"
         # messages 应包含：original + assistant(tool_call) + tool result
         assert len(result["messages"]) == 3
-
-    @pytest.mark.asyncio
     def test_multi_round_tool_calls(self):
         asyncio.run(self._async_test_multi_round_tool_calls())
 
@@ -159,8 +153,6 @@ class TestChatCompletionWithTools:
         assert len(result["tool_calls_log"]) == 2
         assert result["tool_calls_log"][0]["name"] == "paipan"
         assert result["tool_calls_log"][1]["name"] == "query_geju"
-
-    @pytest.mark.asyncio
     def test_max_tool_rounds_exceeded(self):
         asyncio.run(self._async_test_max_tool_rounds_exceeded())
 
@@ -185,8 +177,6 @@ class TestChatCompletionWithTools:
         # 应该达到 max_tool_rounds=2 后强制返回
         assert "轮次已达上限" in result["content"] or result["content"] != ""
         assert len(result["tool_calls_log"]) >= 2
-
-    @pytest.mark.asyncio
     def test_reasoning_fallback(self):
         asyncio.run(self._async_test_reasoning_fallback())
 
@@ -200,8 +190,6 @@ class TestChatCompletionWithTools:
             )
 
         assert result["content"] == "这是推理过程"
-
-    @pytest.mark.asyncio
     def test_empty_choices_raises(self):
         asyncio.run(self._async_test_empty_choices_raises())
 
@@ -214,8 +202,6 @@ class TestChatCompletionWithTools:
                     messages=[{"role": "user", "content": "test"}],
                     tools=[],
                 )
-
-    @pytest.mark.asyncio
     def test_no_api_key_raises(self):
         asyncio.run(self._async_test_no_api_key_raises())
 
@@ -228,8 +214,6 @@ class TestChatCompletionWithTools:
                 messages=[{"role": "user", "content": "test"}],
                 tools=[],
             )
-
-    @pytest.mark.asyncio
     def test_tool_calls_log_records_result(self):
         asyncio.run(self._async_test_tool_calls_log_records_result())
 
@@ -255,8 +239,6 @@ class TestChatCompletionWithTools:
         assert log_entry["name"] == "query_geju"
         assert log_entry["round"] == 1
         assert log_entry["result"] == tool_result_content
-
-    @pytest.mark.asyncio
     def test_multiple_tool_calls_in_one_round(self):
         asyncio.run(self._async_test_multiple_tool_calls_in_one_round())
 
@@ -300,8 +282,6 @@ class TestChatCompletionStreamWithTools:
         mod._LLM_API_KEY = "sk-test-key"
         yield
         mod._LLM_API_KEY = orig
-
-    @pytest.mark.asyncio
     def test_no_tool_calls_yields_tokens(self):
         asyncio.run(self._async_test_no_tool_calls_yields_tokens())
 
@@ -325,8 +305,6 @@ class TestChatCompletionStreamWithTools:
         # token 内容应包含 "你好世界"
         token_content = "".join(e["content"] for e in events if e["type"] == "token")
         assert "你好世界" in token_content
-
-    @pytest.mark.asyncio
     def test_heartbeat_events(self):
         asyncio.run(self._async_test_heartbeat_events())
 
@@ -351,8 +329,6 @@ class TestChatCompletionStreamWithTools:
 
         heartbeats = [e for e in events if e["type"] == "heartbeat"]
         assert len(heartbeats) >= 2  # 至少 2 个：一轮开始 + 工具执行前
-
-    @pytest.mark.asyncio
     def test_tool_call_and_result_events(self):
         asyncio.run(self._async_test_tool_call_and_result_events())
 
@@ -385,8 +361,6 @@ class TestChatCompletionStreamWithTools:
 
         assert len(tool_result_events) == 1
         assert "正官格" in tool_result_events[0]["content"]
-
-    @pytest.mark.asyncio
     def test_max_rounds_exceeded(self):
         asyncio.run(self._async_test_max_rounds_exceeded())
 
@@ -414,8 +388,6 @@ class TestChatCompletionStreamWithTools:
         assert len(token_events) >= 1
         assert "轮次已达上限" in token_events[-1]["content"]
         assert len(done_events) == 1
-
-    @pytest.mark.asyncio
     def test_reasoning_fallback_in_stream(self):
         asyncio.run(self._async_test_reasoning_fallback_in_stream())
 
@@ -433,8 +405,6 @@ class TestChatCompletionStreamWithTools:
         token_events = [e for e in events if e["type"] == "token"]
         token_content = "".join(e["content"] for e in token_events)
         assert "推理结果" in token_content
-
-    @pytest.mark.asyncio
     def test_no_api_key_raises(self):
         asyncio.run(self._async_test_no_api_key_raises())
 
@@ -449,8 +419,6 @@ class TestChatCompletionStreamWithTools:
                 tools=[],
             ):
                 pass
-
-    @pytest.mark.asyncio
     def test_empty_choices_raises(self):
         asyncio.run(self._async_test_empty_choices_raises())
 
@@ -464,8 +432,6 @@ class TestChatCompletionStreamWithTools:
                     tools=[],
                 ):
                     pass
-
-    @pytest.mark.asyncio
     def test_final_reply_chunked_output(self):
         asyncio.run(self._async_test_final_reply_chunked_output())
 
@@ -488,8 +454,6 @@ class TestChatCompletionStreamWithTools:
         # 拼接后应与原文一致
         reconstructed = "".join(e["content"] for e in token_events)
         assert reconstructed == long_content
-
-    @pytest.mark.asyncio
     def test_multi_round_with_events(self):
         asyncio.run(self._async_test_multi_round_with_events())
 

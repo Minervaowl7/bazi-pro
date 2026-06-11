@@ -7,9 +7,9 @@ Covers:
 - 4xx client error (non-auth) → no retry, raise_for_status
 - All retries exhausted → raise RuntimeError
 """
-
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -47,9 +47,11 @@ def mock_client():
 
 class TestRetryOn429:
     """429 rate limit should trigger retry with backoff."""
+    def test_429_then_success(self):
+        """First call returns 429, second returns 200."""
+        asyncio.run(self._async_test_429_then_success())
 
-    @pytest.mark.asyncio
-    async def test_429_then_success(self, mock_client):
+    async def _async_test_429_then_success(self):
         """First call returns 429, second returns 200."""
         success_resp = _make_response(200, {"choices": [{"message": {"content": "ok"}}]})
         rate_limit_resp = _make_response(429)
@@ -61,9 +63,11 @@ class TestRetryOn429:
 
         assert result == {"choices": [{"message": {"content": "ok"}}]}
         mock_sleep.assert_called_once()
+    def test_429_multiple_retries_then_success(self):
+        """Two 429s then success."""
+        asyncio.run(self._async_test_429_multiple_retries_then_success())
 
-    @pytest.mark.asyncio
-    async def test_429_multiple_retries_then_success(self, mock_client):
+    async def _async_test_429_multiple_retries_then_success(self):
         """Two 429s then success."""
         success_resp = _make_response(200, {"ok": True})
         rate_limit_resp = _make_response(429)
@@ -75,9 +79,11 @@ class TestRetryOn429:
 
         assert result == {"ok": True}
         assert mock_sleep.call_count == 2
+    def test_429_exhausted_retries(self):
+        """All retries on 429 → RuntimeError."""
+        asyncio.run(self._async_test_429_exhausted_retries())
 
-    @pytest.mark.asyncio
-    async def test_429_exhausted_retries(self, mock_client):
+    async def _async_test_429_exhausted_retries(self):
         """All retries on 429 → RuntimeError."""
         rate_limit_resp = _make_response(429)
         mock_client.post = AsyncMock(return_value=rate_limit_resp)
@@ -90,9 +96,11 @@ class TestRetryOn429:
 
 class TestRetryOn5xx:
     """5xx server errors should trigger retry."""
+    def test_500_then_success(self):
+        """500 on first call, 200 on second."""
+        asyncio.run(self._async_test_500_then_success())
 
-    @pytest.mark.asyncio
-    async def test_500_then_success(self, mock_client):
+    async def _async_test_500_then_success(self):
         """500 on first call, 200 on second."""
         success_resp = _make_response(200, {"choices": [{"message": {"content": "ok"}}]})
         error_resp = _make_response(500)
@@ -104,9 +112,11 @@ class TestRetryOn5xx:
 
         assert result == {"choices": [{"message": {"content": "ok"}}]}
         mock_sleep.assert_called_once()
+    def test_502_then_success(self):
+        """502 on first call, 200 on second."""
+        asyncio.run(self._async_test_502_then_success())
 
-    @pytest.mark.asyncio
-    async def test_502_then_success(self, mock_client):
+    async def _async_test_502_then_success(self):
         """502 on first call, 200 on second."""
         success_resp = _make_response(200, {"ok": True})
         error_resp = _make_response(502)
@@ -117,9 +127,11 @@ class TestRetryOn5xx:
             result = await _post_with_retry("http://test.com/api", {}, {})
 
         assert result == {"ok": True}
+    def test_503_then_success(self):
+        """503 on first call, 200 on second."""
+        asyncio.run(self._async_test_503_then_success())
 
-    @pytest.mark.asyncio
-    async def test_503_then_success(self, mock_client):
+    async def _async_test_503_then_success(self):
         """503 on first call, 200 on second."""
         success_resp = _make_response(200, {"ok": True})
         error_resp = _make_response(503)
@@ -130,9 +142,11 @@ class TestRetryOn5xx:
             result = await _post_with_retry("http://test.com/api", {}, {})
 
         assert result == {"ok": True}
+    def test_5xx_exhausted_retries(self):
+        """All retries on 5xx → raise_for_status."""
+        asyncio.run(self._async_test_5xx_exhausted_retries())
 
-    @pytest.mark.asyncio
-    async def test_5xx_exhausted_retries(self, mock_client):
+    async def _async_test_5xx_exhausted_retries(self):
         """All retries on 5xx → raise_for_status."""
         error_resp = _make_response(500)
         mock_client.post = AsyncMock(return_value=error_resp)
@@ -145,9 +159,11 @@ class TestRetryOn5xx:
 
 class TestNoRetryOnAuth:
     """401/403 should NOT retry — raise immediately."""
+    def test_401_no_retry(self):
+        """401 → RuntimeError immediately, no retry."""
+        asyncio.run(self._async_test_401_no_retry())
 
-    @pytest.mark.asyncio
-    async def test_401_no_retry(self, mock_client):
+    async def _async_test_401_no_retry(self):
         """401 → RuntimeError immediately, no retry."""
         auth_resp = _make_response(401)
         mock_client.post = AsyncMock(return_value=auth_resp)
@@ -158,9 +174,11 @@ class TestNoRetryOnAuth:
                 await _post_with_retry("http://test.com/api", {}, {})
 
         mock_sleep.assert_not_called()
+    def test_403_no_retry(self):
+        """403 → RuntimeError immediately, no retry."""
+        asyncio.run(self._async_test_403_no_retry())
 
-    @pytest.mark.asyncio
-    async def test_403_no_retry(self, mock_client):
+    async def _async_test_403_no_retry(self):
         """403 → RuntimeError immediately, no retry."""
         auth_resp = _make_response(403)
         mock_client.post = AsyncMock(return_value=auth_resp)
@@ -171,9 +189,11 @@ class TestNoRetryOnAuth:
                 await _post_with_retry("http://test.com/api", {}, {})
 
         mock_sleep.assert_not_called()
+    def test_401_only_called_once(self):
+        """401 should result in exactly 1 HTTP call (no retries)."""
+        asyncio.run(self._async_test_401_only_called_once())
 
-    @pytest.mark.asyncio
-    async def test_401_only_called_once(self, mock_client):
+    async def _async_test_401_only_called_once(self):
         """401 should result in exactly 1 HTTP call (no retries)."""
         auth_resp = _make_response(401)
         mock_client.post = AsyncMock(return_value=auth_resp)
@@ -188,9 +208,11 @@ class TestNoRetryOnAuth:
 
 class TestNoRetryOnOther4xx:
     """Other 4xx errors (non-auth) should not retry."""
+    def test_400_no_retry(self):
+        """400 → raise_for_status immediately."""
+        asyncio.run(self._async_test_400_no_retry())
 
-    @pytest.mark.asyncio
-    async def test_400_no_retry(self, mock_client):
+    async def _async_test_400_no_retry(self):
         """400 → raise_for_status immediately."""
         error_resp = _make_response(400)
         mock_client.post = AsyncMock(return_value=error_resp)
@@ -201,9 +223,11 @@ class TestNoRetryOnOther4xx:
                 await _post_with_retry("http://test.com/api", {}, {})
 
         mock_sleep.assert_not_called()
+    def test_404_no_retry(self):
+        """404 → raise_for_status immediately."""
+        asyncio.run(self._async_test_404_no_retry())
 
-    @pytest.mark.asyncio
-    async def test_404_no_retry(self, mock_client):
+    async def _async_test_404_no_retry(self):
         """404 → raise_for_status immediately."""
         error_resp = _make_response(404)
         mock_client.post = AsyncMock(return_value=error_resp)
@@ -216,9 +240,11 @@ class TestNoRetryOnOther4xx:
 
 class TestSuccessfulCall:
     """Normal successful call (no retries needed)."""
+    def test_200_immediate_success(self):
+        """200 on first call → return data, no retry."""
+        asyncio.run(self._async_test_200_immediate_success())
 
-    @pytest.mark.asyncio
-    async def test_200_immediate_success(self, mock_client):
+    async def _async_test_200_immediate_success(self):
         """200 on first call → return data, no retry."""
         success_resp = _make_response(200, {"choices": [{"message": {"content": "hello"}}]})
         mock_client.post = AsyncMock(return_value=success_resp)
@@ -232,9 +258,11 @@ class TestSuccessfulCall:
 
 class TestCustomMaxRetries:
     """max_retries parameter is respected."""
+    def test_max_retries_1(self):
+        """With max_retries=1, should try twice total."""
+        asyncio.run(self._async_test_max_retries_1())
 
-    @pytest.mark.asyncio
-    async def test_max_retries_1(self, mock_client):
+    async def _async_test_max_retries_1(self):
         """With max_retries=1, should try twice total."""
         error_resp = _make_response(500)
         mock_client.post = AsyncMock(return_value=error_resp)
@@ -245,9 +273,11 @@ class TestCustomMaxRetries:
                 await _post_with_retry("http://test.com/api", {}, {}, max_retries=1)
 
         assert mock_client.post.call_count == 2  # 1 initial + 1 retry
+    def test_max_retries_0_no_retry(self):
+        """With max_retries=0, should not retry at all."""
+        asyncio.run(self._async_test_max_retries_0_no_retry())
 
-    @pytest.mark.asyncio
-    async def test_max_retries_0_no_retry(self, mock_client):
+    async def _async_test_max_retries_0_no_retry(self):
         """With max_retries=0, should not retry at all."""
         error_resp = _make_response(500)
         mock_client.post = AsyncMock(return_value=error_resp)
