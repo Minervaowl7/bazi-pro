@@ -26,30 +26,30 @@ const DIMENSION_CONFIGS: Record<string, DimensionConfig> = {
   marriage: {
     icon: "♥",
     title: "感情婚姻",
-    accentColor: "#e8637a",
-    accentBg: "rgba(232,99,122,0.06)",
-    accentBorder: "rgba(232,99,122,0.15)",
+    accentColor: "var(--dim-rose)",
+    accentBg: "color-mix(in srgb, var(--dim-rose) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--dim-rose) 15%, transparent)",
   },
   health: {
     icon: "☘",
     title: "健康体质",
-    accentColor: "#2e9e6a",
-    accentBg: "rgba(46,158,106,0.06)",
-    accentBorder: "rgba(46,158,106,0.15)",
+    accentColor: "var(--dim-teal)",
+    accentBg: "color-mix(in srgb, var(--dim-teal) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--dim-teal) 15%, transparent)",
   },
   wealth: {
     icon: "◆",
     title: "财富财运",
-    accentColor: "#c49a2b",
-    accentBg: "rgba(196,154,43,0.06)",
-    accentBorder: "rgba(196,154,43,0.15)",
+    accentColor: "var(--dim-amber)",
+    accentBg: "color-mix(in srgb, var(--dim-amber) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--dim-amber) 15%, transparent)",
   },
   family: {
     icon: "家",
     title: "六亲关系",
-    accentColor: "#5e7ab5",
-    accentBg: "rgba(94,122,181,0.06)",
-    accentBorder: "rgba(94,122,181,0.15)",
+    accentColor: "var(--dim-steel)",
+    accentBg: "color-mix(in srgb, var(--dim-steel) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--dim-steel) 15%, transparent)",
   },
 };
 
@@ -205,7 +205,7 @@ export default function DimensionAnalysisPanel({ dimension, data, narration }: P
             width: 28,
             height: 28,
             borderRadius: "50%",
-            background: `${cfg.accentColor}18`,
+            background: `color-mix(in srgb, ${cfg.accentColor} 9%, transparent)`,
           }}>
             {cfg.icon}
           </span>

@@ -28,7 +28,8 @@ export default function ShareCard({ result }: Props) {
     setGenerating(true);
     setGenError("");
     try {
-      const { default: html2pdf } = await import("html2pdf.js");
+      const mod = await import(/* webpackIgnore: true */ "html2pdf.js");
+      const html2pdf = mod.default;
       const el = cardRef.current;
       const canvas: HTMLCanvasElement = await html2pdf()
         .set({ html2canvas: { scale: 2, useCORS: true } })

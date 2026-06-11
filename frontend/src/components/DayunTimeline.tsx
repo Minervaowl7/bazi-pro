@@ -84,6 +84,8 @@ export default function DayunTimeline({ result, ziweiParams }: Props) {
   const zwCurrentBadgeRef = useRef<HTMLSpanElement>(null);
   const expandCtx = useRef<gsap.Context | null>(null);
   const zwFetchCancelledRef = useRef(false);
+  const pulseTweenRef = useRef<gsap.core.Tween | null>(null);
+  const zwPulseTweenRef = useRef<gsap.core.Tween | null>(null);
 
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -91,6 +93,22 @@ export default function DayunTimeline({ result, ziweiParams }: Props) {
   useEffect(() => {
     return () => { zwFetchCancelledRef.current = true; };
   }, []);
+
+  // ── IntersectionObserver：不可见时暂停脉冲动画 ──
+  useEffect(() => {
+    const section = containerRef.current;
+    if (!section || prefersReducedMotion) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry.isIntersecting;
+        if (pulseTweenRef.current) visible ? pulseTweenRef.current.resume() : pulseTweenRef.current.pause();
+        if (zwPulseTweenRef.current) visible ? zwPulseTweenRef.current.resume() : zwPulseTweenRef.current.pause();
+      },
+      { threshold: 0 },
+    );
+    observer.observe(section);
+    return () => { observer.disconnect(); };
+  }, [prefersReducedMotion]);
 
   // ── 获取紫微大运数据 ──────────────────────────
   useEffect(() => {
@@ -172,7 +190,7 @@ export default function DayunTimeline({ result, ziweiParams }: Props) {
       }, "-=0.3");
     }
     if (currentBadgeRef.current) {
-      gsap.to(currentBadgeRef.current, {
+      pulseTweenRef.current = gsap.to(currentBadgeRef.current, {
         scale: 1.06, duration: 1.2, repeat: -1, yoyo: true, ease: "sine.inOut",
       });
     }
@@ -198,7 +216,7 @@ export default function DayunTimeline({ result, ziweiParams }: Props) {
       }, "-=0.25");
     }
     if (zwCurrentBadgeRef.current) {
-      gsap.to(zwCurrentBadgeRef.current, {
+      zwPulseTweenRef.current = gsap.to(zwCurrentBadgeRef.current, {
         scale: 1.06, duration: 1.2, repeat: -1, yoyo: true, ease: "sine.inOut",
       });
     }

@@ -1,6 +1,6 @@
 # Agent Guardrails
 
-Rules that any AI agent (or human contributor) must follow when modifying this project.
+Rules that any AI agent must follow when modifying this project.
 
 ## Core Rules
 

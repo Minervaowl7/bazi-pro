@@ -112,8 +112,8 @@ export default function BirthForm() {
       <form onSubmit={handlePaipan} className="space-y-3.5">
         {/* 性别 */}
         <div>
-          <label className="form-label">性别</label>
-          <div className="flex gap-2 mt-1.5">
+          <label id="birthform-gender-label" className="form-label">性别</label>
+          <div className="flex gap-2 mt-1.5" role="group" aria-labelledby="birthform-gender-label">
             {["男", "女"].map(g => (
               <button key={g} type="button" onClick={() => handleChange("gender", g)}
                 className={`form-input flex-1 text-center cursor-pointer transition-all duration-200 ${
@@ -131,21 +131,21 @@ export default function BirthForm() {
 
         {/* 姓名 */}
         <div>
-          <label className="form-label">姓名 <span className="text-[10px] font-normal" style={{ color: "var(--text-4)" }}>选填，留空显示"命主"</span></label>
-          <input type="text" value={form.name} placeholder="请输入姓名" autoComplete="name" className="form-input mt-1.5"
+          <label htmlFor="birthform-name" className="form-label">姓名 <span className="text-[10px] font-normal" style={{ color: "var(--text-4)" }}>选填，留空显示"命主"</span></label>
+          <input id="birthform-name" type="text" value={form.name} placeholder="请输入姓名" autoComplete="name" className="form-input mt-1.5"
             onChange={e => handleChange("name", e.target.value)} />
         </div>
 
         {/* 出生日期 + 出生时辰 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="form-label">出生日期 <span style={{ color: "var(--danger)" }}>*</span></label>
-            <input type="date" value={form.solarDate} autoComplete="bday" className="form-input mt-1.5"
+            <label htmlFor="birthform-date" className="form-label">出生日期 <span style={{ color: "var(--danger)" }}>*</span></label>
+            <input id="birthform-date" type="date" value={form.solarDate} autoComplete="bday" className="form-input mt-1.5"
               onChange={e => { handleChange("solarDate", e.target.value); setShowPaipan(false); }} />
           </div>
           <div>
-            <label className="form-label">出生时辰</label>
-            <select value={form.shichen} className="form-input mt-1.5"
+            <label htmlFor="birthform-shichen" className="form-label">出生时辰</label>
+            <select id="birthform-shichen" value={form.shichen} className="form-input mt-1.5"
               style={{ color: form.shichen ? "var(--ink)" : "var(--text-3)" }}
               onChange={e => { handleChange("shichen", e.target.value); setShowPaipan(false); }}>
               <option value="">不确定时辰</option>
@@ -156,9 +156,9 @@ export default function BirthForm() {
 
         {/* 城市搜索 */}
         <div>
-          <label className="form-label">出生城市（真太阳时校正）</label>
+          <label htmlFor="birthform-city" className="form-label">出生城市（真太阳时校正）</label>
           <div ref={cityRef} className="relative mt-1.5">
-            <input ref={cityInputRef} type="text" value={cityInput} placeholder="输入城市名搜索…" autoComplete="off" className="form-input"
+            <input id="birthform-city" ref={cityInputRef} type="text" value={cityInput} placeholder="输入城市名搜索…" autoComplete="off" className="form-input"
               onFocus={() => setCityOpen(true)}
               onChange={e => { setCityInput(e.target.value); setCityFilter(e.target.value); setCityOpen(true); if (!e.target.value) setForm(prev => ({ ...prev, city: "", cityLng: 0 })); }} />
             {cityOpen && (
@@ -180,7 +180,7 @@ export default function BirthForm() {
           </div>
         </div>
 
-        {error && <p className="text-xs" style={{ color: "var(--danger)" }}>{error}</p>}
+        {error && <div aria-live="polite"><p className="text-xs" style={{ color: "var(--danger)" }}>{error}</p></div>}
 
         {/* 提交按钮 */}
         <button type="submit" disabled={isSubmitting}
@@ -219,10 +219,10 @@ export default function BirthForm() {
             </div>
           </div>
           <div className="mb-5">
-            <label className="form-label">选择解读流派</label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1.5">
+            <label className="form-label" id="birthform-school-label">选择解读流派</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1.5" role="radiogroup" aria-labelledby="birthform-school-label">
               {SCHOOL_OPTIONS.map(s => (
-                <button key={s.value} type="button" onClick={() => handleChange("school", s.value)}
+                <button key={s.value} type="button" role="radio" aria-checked={form.school === s.value} onClick={() => handleChange("school", s.value)}
                   className="p-3 rounded-xl text-left transition-all duration-200"
                   style={{ border: form.school === s.value ? "2px solid var(--wx-water)" : "1px solid var(--border)", background: form.school === s.value ? "rgba(46,92,138,0.06)" : "var(--surface-2)" }}>
                   <div className="text-xs font-semibold" style={{ color: form.school === s.value ? "var(--wx-water)" : "var(--ink)" }}>{s.label}</div>

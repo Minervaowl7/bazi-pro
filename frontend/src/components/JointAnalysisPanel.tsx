@@ -203,15 +203,15 @@ export default function JointAnalysisPanel({
           <div className="border-b border-[var(--border)] px-6 py-4 flex items-center gap-2.5 relative bg-[var(--surface-2)]">
             <span
               className="absolute top-0 left-0 right-0 h-[2px]"
-              style={{ background: "#a855f7" }}
+              style={{ background: "var(--school-mangpai)" }}
             />
             <span
               className="w-6 h-6 rounded-md flex items-center justify-center text-xs"
-              style={{ background: "rgba(168,85,247,0.12)", color: "#a855f7" }}
+              style={{ background: "color-mix(in srgb, var(--school-mangpai) 12%, transparent)", color: "var(--school-mangpai)" }}
             >
               ✧
             </span>
-            <span className="text-xs font-semibold" style={{ color: "#a855f7" }}>
+            <span className="text-xs font-semibold" style={{ color: "var(--school-mangpai)" }}>
               紫微命盘
             </span>
           </div>
@@ -318,7 +318,7 @@ export default function JointAnalysisPanel({
                     <div className="flex items-center gap-1.5 mb-1">
                       <span
                         className="w-1.5 h-1.5 rounded-full shrink-0"
-                        style={{ background: "#a855f7" }}
+                        style={{ background: "var(--school-mangpai)" }}
                       />
                       <span className="text-[10px] font-medium text-[var(--text-3)]">紫微</span>
                     </div>
@@ -357,7 +357,7 @@ export default function JointAnalysisPanel({
             {Object.entries(groupedInsights).map(([source, items]) => {
               const sourceColors: Record<string, { color: string; bg: string }> = {
                 bazi: { color: "var(--cinnabar)", bg: "var(--cinnabar-light)" },
-                ziwei: { color: "#a855f7", bg: "rgba(168,85,247,0.12)" },
+                ziwei: { color: "var(--school-mangpai)", bg: "color-mix(in srgb, var(--school-mangpai) 12%, transparent)" },
                 joint: { color: "var(--jade)", bg: "rgba(58,125,92,0.10)" },
               };
               const sc = sourceColors[source] || { color: "var(--text-3)", bg: "var(--surface-2)" };

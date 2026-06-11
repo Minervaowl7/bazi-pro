@@ -1,6 +1,5 @@
 "use client";
 
-import { type ReactNode, Component } from "react";
 import type { AnalysisResultData } from "@/lib/types";
 import BaziChartCard from "@/components/BaziChartCard";
 import ChartQuality, { type ChartQualityData } from "@/components/ChartQuality";
@@ -8,29 +7,7 @@ import StrengthSlider from "@/components/StrengthSlider";
 import ShishenEnergyChart from "@/components/ShishenEnergyChart";
 import dynamic from "next/dynamic";
 import ResponsiveTabPanel from "@/components/analyze/ResponsiveTabPanel";
-
-interface FallbackProps { children: ReactNode; fallback?: ReactNode; }
-class ErrorBoundary extends Component<FallbackProps, { hasError: boolean; error?: Error }> {
-  constructor(props: FallbackProps) { super(props); this.state = { hasError: false }; }
-  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
-  componentDidCatch(error: Error, info: React.ErrorInfo) { console.error("[ErrorBoundary]", error, info.componentStack); }
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback || (
-        <section className="card p-8 text-center" style={{ margin: "2rem auto", maxWidth: 600 }}>
-          <h3 style={{ color: "var(--danger)", marginBottom: 8 }}>渲染出错</h3>
-          <p style={{ color: "var(--text-2)", fontSize: 14 }}>{this.state.error?.message || "未知错误"}</p>
-          <button onClick={() => this.setState({ hasError: false, error: undefined })}
-            style={{ marginTop: 16, padding: "8px 20px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", color: "var(--ink)" }}>
-            重试
-          </button>
-        </section>
-      );
-    }
-    return this.props.children;
-  }
-}
-function Safe({ children, fallback }: FallbackProps) { return <ErrorBoundary fallback={fallback}>{children}</ErrorBoundary>; }
+import { Safe } from "@/components/ui/ErrorBoundary";
 
 const RelationGraph = dynamic(() => import("@/components/RelationGraph").then((m) => m.default), {
   ssr: false,

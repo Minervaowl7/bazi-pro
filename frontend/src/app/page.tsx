@@ -241,7 +241,7 @@ export default function Home() {
 
           {/* 功能亮点 */}
           <div className="hero-features w-full max-w-[420px] mt-12 mb-8" style={{ visibility: "hidden" }}>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {FEATURES.map((f) => (
                 <div
                   key={f.title}

@@ -13,6 +13,7 @@ const notoSerifSC = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://bazi.pro"),
   title: "八字排盘 · 确定性命理引擎 | 古法排盘 · 智能解读",
   description:
     "2964 条古籍条文驱动的八字排盘引擎。子平、盲派、新派三大流派并行分析，六层格局筛查，喜用神推导，每一步均可追溯至古籍原文。零 LLM 依赖的确定性计算核心。",
@@ -28,12 +29,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "zh_CN",
     siteName: "八字排盘 · 确定性命理引擎",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "八字排盘 · 确定性命理引擎" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "八字排盘 · 确定性命理引擎",
     description:
       "子平、盲派、新派三大流派并行分析。六层格局筛查，喜用神推导，古籍条文驱动。",
+    images: ["/og.png"],
   },
   other: { "theme-color": "#f5f2eb" },
 };

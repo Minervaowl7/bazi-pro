@@ -444,7 +444,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 sm:px-7 py-[18px]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--cinnabar), #c0392b)", boxShadow: "0 2px 8px rgba(192,57,43,0.25)" }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--cinnabar), var(--danger))", boxShadow: "0 2px 8px rgba(192,57,43,0.25)" }}>
             <span className="text-lg text-white">☯</span>
           </div>
           <div>
@@ -454,8 +454,8 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
         </div>
         <div className="flex items-center gap-2">
           {isStreaming && (
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: "rgba(46,204,113,0.1)", color: "#2ecc71", border: "1px solid rgba(46,204,113,0.3)" }}>
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#2ecc71" }} />
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", color: "var(--success)", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)" }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--success)" }} />
               生成中
             </span>
           )}
@@ -485,7 +485,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
             {msg.role === "assistant" ? (
               <div className="pr-16">
                 <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, var(--cinnabar), #c0392b)" }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, var(--cinnabar), var(--danger))" }}>
                     <span className="text-sm text-white">☯</span>
                   </div>
                   <span className="font-semibold text-[13px] tracking-wider" style={{ color: "var(--scholar-blue)", fontFamily: "var(--font-display)" }}>命理师</span>
@@ -500,7 +500,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
             ) : (
               <div className="max-w-[78%]">
                 <div className="px-5 py-3.5 whitespace-pre-wrap rounded-2xl rounded-br-md" style={{
-                  fontSize: 15, lineHeight: 1.7, color: "var(--ink)",
+                  fontSize: 15, lineHeight: 1.7, color: "#fff",
                   background: "var(--scholar-blue)", border: "none",
                   boxShadow: "0 2px 8px rgba(45,62,95,0.15)",
                 }}>
@@ -515,7 +515,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
         {isStreaming && (
           <div className="mb-6 pr-16" style={{ animation: "fadeInUp 0.3s ease both" }}>
             <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, var(--cinnabar), #c0392b)" }}>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, var(--cinnabar), var(--danger))" }}>
                 <span className="text-sm text-white">☯</span>
               </div>
               <span className="font-semibold text-[13px] tracking-wider" style={{ color: "var(--scholar-blue)", fontFamily: "var(--font-display)" }}>命理师</span>

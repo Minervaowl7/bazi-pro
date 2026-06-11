@@ -82,7 +82,7 @@
 
 ## TODOs
 
-- [ ] 1. SSRF 域名 DNS 解析校验
+- [x] 1. SSRF 域名 DNS 解析校验
 
   **What to do**:
   - 修改 `server/routes/v2_settings.py` 的 `_is_private_ip()` 函数
@@ -108,7 +108,7 @@
 
 ---
 
-- [ ] 2. LLM 工具调用重试逻辑
+- [x] 2. LLM 工具调用重试逻辑
 
   **What to do**:
   - 从 `chat_completion()` 提取重试逻辑为 `_retry_on_error()` 辅助函数
@@ -136,7 +136,7 @@
 
 ---
 
-- [ ] 3. API 认证覆盖补全
+- [x] 3. API 认证覆盖补全
 
   **What to do**:
   - 为以下 8 个端点添加 `Depends(verify_api_key)`：
@@ -168,7 +168,7 @@
 
 ---
 
-- [ ] 4. llm.py 三模块拆分
+- [x] 4. llm.py 三模块拆分
 
   **What to do**:
   - 创建 `server/llm_client.py`（~370 行）：配置管理 + HTTP 调用 + 函数调用
@@ -196,7 +196,7 @@
 
 ---
 
-- [ ] 5. v2_chat.py ChatService 提取
+- [x] 5. v2_chat.py ChatService 提取
 
   **What to do**:
   - 创建 `server/chat_service.py`
@@ -222,7 +222,7 @@
 
 ---
 
-- [ ] 6. page.tsx Tab 组件拆分
+- [x] 6. page.tsx Tab 组件拆分
 
   **What to do**:
   - 提取 `useAnalyzePageState` hook
@@ -249,7 +249,7 @@
 
 ---
 
-- [ ] 7. Property-based testing 核心计算
+- [x] 7. Property-based testing 核心计算
 
   **What to do**:
   - 在 `pyproject.toml` 添加 `hypothesis` 测试依赖
@@ -280,7 +280,7 @@
 
 ---
 
-- [ ] 8. 集成测试补充
+- [x] 8. 集成测试补充
 
   **What to do**:
   - 为新增的 SSRF 防护添加测试
@@ -304,7 +304,7 @@
 
 ---
 
-- [ ] 9. 全量回归测试 + 代码审查
+- [x] 9. 全量回归测试 + 代码审查
 
   **What to do**:
   - 运行 `ruff check server/ bazi_pro/ tests/`

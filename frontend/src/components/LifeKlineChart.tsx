@@ -2,7 +2,7 @@
 // @ts-nocheck -- echarts-for-react types incompatible with React 19
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { getDayunLiunian } from "@/lib/api";
 
@@ -45,7 +45,14 @@ export default function LifeKlineChart({ analysisId }: Props) {
   const [loading, setLoading] = useState(true);
   const [birthYear, setBirthYear] = useState<number>(0);
   const [chartMode, setChartMode] = useState<"kline" | "line">("kline");
+  const chartRef = useRef<any>(null);
   const currentYear = new Date().getFullYear();
+
+  useEffect(() => {
+    return () => {
+      chartRef.current?.getEchartsInstance()?.dispose();
+    };
+  }, []);
 
   useEffect(() => {
     if (!analysisId) return;
@@ -426,10 +433,12 @@ export default function LifeKlineChart({ analysisId }: Props) {
 
       <div style={{ padding: "4px 8px 12px 8px" }}>
         <EChartsReact
+          ref={chartRef}
           option={option}
           style={{ height: "min(420px, 60vw)" }}
           notMerge={true}
           lazyUpdate={true}
+          autoresize={true}
         />
       </div>
     </section>
