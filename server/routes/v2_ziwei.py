@@ -3,9 +3,11 @@ from __future__ import annotations
 import asyncio
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+
+from server.deps import verify_api_key
 
 router = APIRouter()
 
@@ -51,7 +53,7 @@ class ZiweiSihuaRequest(BaseModel):
 
 
 @router.post("/api/v2/ziwei/chart")
-async def api_v2_ziwei_chart(payload: ZiweiChartRequest):
+async def api_v2_ziwei_chart(payload: ZiweiChartRequest, _auth=Depends(verify_api_key)):
     from server.ziwei import get_ziwei_chart
 
     result = await asyncio.to_thread(
@@ -66,7 +68,7 @@ async def api_v2_ziwei_chart(payload: ZiweiChartRequest):
 
 
 @router.post("/api/v2/ziwei/horoscope")
-async def api_v2_ziwei_horoscope(payload: ZiweiHoroscopeRequest):
+async def api_v2_ziwei_horoscope(payload: ZiweiHoroscopeRequest, _auth=Depends(verify_api_key)):
     from server.ziwei import get_ziwei_horoscope
 
     result = await asyncio.to_thread(
@@ -82,7 +84,7 @@ async def api_v2_ziwei_horoscope(payload: ZiweiHoroscopeRequest):
 
 
 @router.post("/api/v2/ziwei/palace")
-async def api_v2_ziwei_palace(payload: ZiweiPalaceRequest):
+async def api_v2_ziwei_palace(payload: ZiweiPalaceRequest, _auth=Depends(verify_api_key)):
     from server.ziwei import analyze_ziwei_palace
 
     result = await asyncio.to_thread(
@@ -98,7 +100,7 @@ async def api_v2_ziwei_palace(payload: ZiweiPalaceRequest):
 
 
 @router.post("/api/v2/ziwei/sihua")
-async def api_v2_ziwei_sihua(payload: ZiweiSihuaRequest):
+async def api_v2_ziwei_sihua(payload: ZiweiSihuaRequest, _auth=Depends(verify_api_key)):
     from server.ziwei import get_ziwei_sihua
 
     result = await asyncio.to_thread(
@@ -114,7 +116,7 @@ async def api_v2_ziwei_sihua(payload: ZiweiSihuaRequest):
 
 
 @router.post("/api/v2/ziwei/dayun")
-async def api_v2_ziwei_dayun(payload: ZiweiDayunRequest):
+async def api_v2_ziwei_dayun(payload: ZiweiDayunRequest, _auth=Depends(verify_api_key)):
     from server.ziwei import get_ziwei_dayun
 
     result = await asyncio.to_thread(
@@ -129,7 +131,7 @@ async def api_v2_ziwei_dayun(payload: ZiweiDayunRequest):
 
 
 @router.post("/api/v2/ziwei/liunian")
-async def api_v2_ziwei_liunian(payload: ZiweiLiunianRequest):
+async def api_v2_ziwei_liunian(payload: ZiweiLiunianRequest, _auth=Depends(verify_api_key)):
     from server.ziwei import get_ziwei_liunian
 
     result = await asyncio.to_thread(

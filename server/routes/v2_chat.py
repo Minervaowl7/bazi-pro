@@ -6,7 +6,7 @@ import logging
 import os
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -20,7 +20,7 @@ from server.db import (
     insert_chat_summary,
     save_report,
 )
-from server.deps import error_response
+from server.deps import error_response, verify_api_key
 from server.llm import (
     build_chat_system_prompt,
     build_report_system_prompt,
@@ -81,7 +81,7 @@ async def _generate_chat_summary(messages: list[dict], previous_summary: str = "
 
 class ChatRequest(BaseModel):
     analysis_id: str = Field(..., description="分析记录 ID")
-    message: str = Field(..., description="用户消息")
+    message: str = Field(..., max_length=10000, description="用户消息")
     school: str = Field(default="ziping", description="派别视角: ziping/mangpai/xinpai")
     retrieval_depth: str = Field(default="enhanced", description="检索深度: basic/enhanced")
 
@@ -181,7 +181,7 @@ def _parse_report_json(raw_reply: str) -> dict:
 
 
 @router.post("/api/v2/chat")
-async def api_v2_chat(payload: ChatRequest):
+async def api_v2_chat(payload: ChatRequest, _auth=Depends(verify_api_key)):
     if not is_llm_configured():
         return error_response(503, "LLM_NOT_CONFIGURED", "LLM 服务未配置。请设置 LLM_API_KEY 环境变量。")
 
@@ -305,12 +305,11 @@ async def api_v2_chat(payload: ChatRequest):
         import traceback
         tb = traceback.format_exc()
         logger.error("Chat failed for analysis %s: %s\n%s", payload.analysis_id, e, tb)
-        err_msg = str(e) or type(e).__name__
-        return error_response(500, "LLM_ERROR", f"LLM 调用失败: {err_msg}")
+        return error_response(500, "LLM_ERROR", "LLM 调用失败，请稍后重试")
 
 
 @router.post("/api/v2/chat/stream")
-async def api_v2_chat_stream(payload: ChatRequest):
+async def api_v2_chat_stream(payload: ChatRequest, _auth=Depends(verify_api_key)):
     """SSE 流式 Chat 端点 — 逐字输出 + reasoning_content 折叠"""
     if not is_llm_configured():
         return error_response(503, "LLM_NOT_CONFIGURED", "LLM 服务未配置。请设置 LLM_API_KEY 环境变量。")
@@ -439,14 +438,13 @@ async def api_v2_chat_stream(payload: ChatRequest):
             logger.error("Chat stream failed for analysis %s: %s", payload.analysis_id, e)
             # 保存错误消息作为助手回复，避免孤立用户消息
             try:
-                err_reply = f"抱歉，AI 解读过程中出现错误：{str(e) or type(e).__name__}"
                 await insert_chat_message(
-                    payload.analysis_id, "assistant", err_reply,
+                    payload.analysis_id, "assistant", "抱歉，AI 解读过程中出现错误，请稍后重试",
                     school=payload.school,
                 )
             except Exception:
                 logger.warning("Failed to save error reply for analysis %s", payload.analysis_id)
-            yield f"data: {json.dumps({'type': 'error', 'content': str(e) or type(e).__name__}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'content': 'AI 解读过程中出现错误，请稍后重试'}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(
         _sse_generator(),
@@ -460,13 +458,13 @@ async def api_v2_chat_stream(payload: ChatRequest):
 
 
 @router.get("/api/v2/chat/{analysis_id}")
-async def api_v2_get_chat(analysis_id: str, school: str = Query(default=None)):
+async def api_v2_get_chat(analysis_id: str, school: str = Query(default=None), _auth=Depends(verify_api_key)):
     messages = await get_chat_messages(analysis_id, limit=100, school=school)
     return JSONResponse({"messages": messages})
 
 
 @router.post("/api/v2/report")
-async def api_v2_create_report(payload: ReportRequest):
+async def api_v2_create_report(payload: ReportRequest, _auth=Depends(verify_api_key)):
     if not is_llm_configured():
         return error_response(503, "LLM_NOT_CONFIGURED", "LLM 服务未配置。请设置 LLM_API_KEY 环境变量。")
 
@@ -529,8 +527,7 @@ async def api_v2_create_report(payload: ReportRequest):
         raw_reply = await chat_completion(messages, temperature=0.7, max_tokens=8192)
     except Exception as e:
         logger.error("Report LLM call failed for analysis %s: %s", payload.analysis_id, e)
-        err_msg = str(e) or type(e).__name__
-        return error_response(500, "LLM_ERROR", f"LLM 调用失败: {err_msg}")
+        return error_response(500, "LLM_ERROR", "LLM 调用失败，请稍后重试")
 
     report_data = _parse_report_json(raw_reply)
 
@@ -549,7 +546,7 @@ async def api_v2_create_report(payload: ReportRequest):
 
 
 @router.get("/api/v2/report/{analysis_id}")
-async def api_v2_get_report(analysis_id: str):
+async def api_v2_get_report(analysis_id: str, _auth=Depends(verify_api_key)):
     record = await get_report(analysis_id)
     if not record:
         return error_response(404, "NOT_FOUND", "报告不存在，请先通过 POST /api/v2/report 生成")
@@ -565,7 +562,7 @@ async def api_v2_get_report(analysis_id: str):
 
 
 @router.get("/api/v2/report/{analysis_id}/pdf")
-async def api_v2_report_pdf(analysis_id: str):
+async def api_v2_report_pdf(analysis_id: str, _auth=Depends(verify_api_key)):
     """下载详批报告 PDF"""
     from fastapi.responses import Response
 

@@ -445,6 +445,8 @@ export default function AnalyzePage() {
             <div className="relative">
               <button
                 onClick={(e)=>{e.stopPropagation();setSchoolDropdownOpen(!schoolDropdownOpen);}}
+                aria-expanded={schoolDropdownOpen}
+                aria-haspopup="true"
                 className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[12px] sm:text-[13px] font-medium border border-[var(--border)] rounded-lg transition-colors"
                 style={{ color:"var(--text-2)", background:"var(--surface)" }}
               >
@@ -456,11 +458,13 @@ export default function AnalyzePage() {
               </button>
               {schoolDropdownOpen && (
                 <div
+                  role="menu"
                   className="card absolute left-0 top-full mt-1.5 w-60 overflow-hidden"
                   style={{ zIndex: "var(--z-dropdown)" }}
                 >
                   {SCHOOL_OPTIONS.map(s=>(
                     <button key={s.value}
+                      role="menuitem"
                       onClick={()=>{setSelectedSchool(s.value);setSchoolDropdownOpen(false);}}
                       className="w-full px-5 py-2.5 text-left transition-colors hover:bg-[var(--surface-2)]"
                       style={{fontSize:13,background:selectedSchool===s.value?"var(--cinnabar-light)":"transparent"}}
@@ -471,6 +475,7 @@ export default function AnalyzePage() {
                   ))}
                   <div style={{borderTop:"1px solid var(--border)"}}>
                     <button onClick={()=>{setSchoolDropdownOpen(false);handleReanalyze();}}
+                      role="menuitem"
                       disabled={!birthInput||isLoading}
                       className="w-full px-5 py-2.5 font-medium disabled:opacity-50 transition-colors hover:bg-[var(--surface-2)]"
                       style={{fontSize:13,color:"var(--wx-water)"}}
@@ -765,6 +770,7 @@ export default function AnalyzePage() {
                 const isActive=activeTab===tab.id;
                 return (
                   <button key={tab.id}
+                    id={`tab-${tab.id}`}
                     role="tab"
                     aria-selected={isActive}
                     tabIndex={isActive?0:-1}
@@ -790,7 +796,7 @@ export default function AnalyzePage() {
             {/* Tab 内容区（桌面端直接展示，移动端用 AccordionItem 包裹实现可折叠） */}
             <div ref={tabContentRef} className="space-y-6 sm:space-y-10">
               {/* Tab 1: 四柱命盘 */}
-              {activeTab==="bazi"&&(
+              <div role="tabpanel" aria-labelledby="tab-bazi" style={{ display: activeTab === "bazi" ? "block" : "none" }}>
                 <>
                   {/* 桌面端：直接渲染 */}
                   <div className="hidden sm:block">
@@ -875,10 +881,10 @@ export default function AnalyzePage() {
                     </Accordion>
                   </div>
                 </>
-              )}
+              </div>
 
               {/* Tab 2: 大运流年 */}
-              {activeTab==="dayun"&&(
+              <div role="tabpanel" aria-labelledby="tab-dayun" style={{ display: activeTab === "dayun" ? "block" : "none" }}>
                 <>
                   <div className="hidden sm:block">
                     <DayunTimeline result={analysisResult} />
@@ -903,10 +909,10 @@ export default function AnalyzePage() {
                     </Accordion>
                   </div>
                 </>
-              )}
+              </div>
 
               {/* Tab 3: 宫位神煞 */}
-              {activeTab==="detail"&&(
+              <div role="tabpanel" aria-labelledby="tab-detail" style={{ display: activeTab === "detail" ? "block" : "none" }}>
                 <>
                   <div className="hidden sm:block">
                     <GongweiPanel result={analysisResult} />
@@ -923,10 +929,10 @@ export default function AnalyzePage() {
                     </Accordion>
                   </div>
                 </>
-              )}
+              </div>
 
               {/* Tab 4: 紫微斗数 */}
-              {activeTab==="ziwei"&&(
+              <div role="tabpanel" aria-labelledby="tab-ziwei" style={{ display: activeTab === "ziwei" ? "block" : "none" }}>
                 <>
                   <div className="hidden sm:block">
                     {analysisResult?.ziwei ? (
@@ -956,10 +962,10 @@ export default function AnalyzePage() {
                     )}
                   </div>
                 </>
-              )}
+              </div>
 
               {/* Tab 5: 深度分析 */}
-              {activeTab==="deep"&&(
+              <div role="tabpanel" aria-labelledby="tab-deep" style={{ display: activeTab === "deep" ? "block" : "none" }}>
                 <>
                   <div className="hidden sm:block space-y-8">
                     <DimensionAnalysisPanel dimension="marriage" data={(analysisResult?.marriage_analysis as Record<string,unknown>)||{}} narration={typeof narration?.marriage==="string"?narration.marriage:""} />
@@ -984,10 +990,10 @@ export default function AnalyzePage() {
                     </Accordion>
                   </div>
                 </>
-              )}
+              </div>
 
               {/* Tab 6: 流派解读 */}
-              {activeTab==="analysis"&&(
+              <div role="tabpanel" aria-labelledby="tab-analysis" style={{ display: activeTab === "analysis" ? "block" : "none" }}>
                 <>
                   <div className="hidden sm:block" style={{maxWidth:860,marginLeft:"auto",marginRight:"auto"}}>
                     {analysisResult?.llm_overview && <LlmOverview content={analysisResult.llm_overview as string} />}
@@ -1006,12 +1012,12 @@ export default function AnalyzePage() {
                     </Accordion>
                   </div>
                 </>
-              )}
+              </div>
 
               {/* Tab 7: 命理问答 */}
-              {activeTab==="chat"&&(
+              <div role="tabpanel" aria-labelledby="tab-chat" style={{ display: activeTab === "chat" ? "block" : "none" }}>
                 <ChatPanel analysisId={analysisId} school={currentSchool === "all" ? "ziping" : currentSchool} />
-              )}
+              </div>
             </div>
 
             {/* 移动端底部 Tab 导航 */}

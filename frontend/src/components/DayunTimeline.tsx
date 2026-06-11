@@ -83,8 +83,14 @@ export default function DayunTimeline({ result, ziweiParams }: Props) {
   const currentBadgeRef = useRef<HTMLSpanElement>(null);
   const zwCurrentBadgeRef = useRef<HTMLSpanElement>(null);
   const expandCtx = useRef<gsap.Context | null>(null);
+  const zwFetchCancelledRef = useRef(false);
 
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  // 组件卸载时标记取消，防止 Promise.all 回调更新已卸载的组件
+  useEffect(() => {
+    return () => { zwFetchCancelledRef.current = true; };
+  }, []);
 
   // ── 获取紫微大运数据 ──────────────────────────
   useEffect(() => {
@@ -140,6 +146,7 @@ export default function DayunTimeline({ result, ziweiParams }: Props) {
           }));
       })
     ).then(items => {
+      if (zwFetchCancelledRef.current) return;
       setZwLiunian(prev => ({ ...prev, [i]: items }));
     });
   }, [ziweiParams, zwLiunian, result.birth_year]);

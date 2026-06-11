@@ -465,7 +465,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
       </div>
 
       {/* Messages */}
-      <div className="overflow-y-auto px-7 py-6" style={{ maxHeight: 600, minHeight: 200 }}>
+      <div className="overflow-y-auto px-7 py-6" role="log" aria-live="polite" aria-relevant="additions" style={{ maxHeight: 600, minHeight: 200 }}>
         {messages.length === 0 && !isStreaming && (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5" style={{ background: "linear-gradient(135deg, rgba(192,57,43,0.08), rgba(45,62,95,0.08))", border: "2px dashed var(--border)" }}>
