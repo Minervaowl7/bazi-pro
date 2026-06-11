@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
+import socket
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends
@@ -28,14 +29,54 @@ _PRIVATE_NETWORKS = [
 ]
 
 
+# 域名黑名单，防止 SSRF
+_BLOCKED_DOMAINS = {"localhost", "metadata.google.internal"}
+
+# 域名后缀黑名单，防止通配符 DNS 解析绕过
+_BLOCKED_DOMAIN_SUFFIXES = (".nip.io", ".localtest.me")
+
+
 def _is_private_ip(hostname: str) -> bool:
-    """检查主机名是否解析到私有/保留 IP 段"""
+    """检查主机名是否解析到私有/保留 IP 段。
+
+    1. 先检查域名黑名单
+    2. 尝试直接解析为 IP 地址
+    3. 域名 → DNS 解析，检查所有结果
+    4. DNS 解析失败 → fail-closed（返回 True）
+    """
+    hostname_lower = hostname.lower().rstrip(".")
+
+    # 域名黑名单检查
+    if hostname_lower in _BLOCKED_DOMAINS:
+        return True
+
+    # 域名后缀黑名单检查
+    for suffix in _BLOCKED_DOMAIN_SUFFIXES:
+        if hostname_lower.endswith(suffix):
+            return True
+
+    # 尝试直接解析为 IP 地址
     try:
         addr = ipaddress.ip_address(hostname)
         return any(addr in net for net in _PRIVATE_NETWORKS)
     except ValueError:
-        # hostname 是域名而非 IP，无法在无 DNS 解析情况下判断，放行
+        pass
+
+    # 域名 → DNS 解析，检查所有解析结果
+    try:
+        addrinfos = socket.getaddrinfo(hostname, None)
+        for family, _, _, _, sockaddr in addrinfos:
+            ip_str = sockaddr[0]
+            try:
+                ip = ipaddress.ip_address(ip_str)
+                if any(ip in net for net in _PRIVATE_NETWORKS):
+                    return True
+            except ValueError:
+                continue
         return False
+    except (socket.gaierror, OSError):
+        # DNS 解析失败 → fail-closed
+        return True
 
 
 class LLMSettingsRequest(BaseModel):

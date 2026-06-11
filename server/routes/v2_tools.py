@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from server.db import list_analyses
-from server.deps import error_response
+from server.deps import error_response, verify_api_key
 
 logger = logging.getLogger("bazi-pro")
 
@@ -30,7 +30,7 @@ class ReverseLookupRequest(BaseModel):
 
 
 @router.post("/api/v2/hehun")
-async def api_v2_hehun(payload: HehunRequest):
+async def api_v2_hehun(payload: HehunRequest, _auth=Depends(verify_api_key)):
     try:
         from bazi_pro.compare_engine import CompareEngine
 
@@ -55,7 +55,7 @@ async def api_v2_hehun(payload: HehunRequest):
 
 
 @router.post("/api/v2/reverse-lookup")
-async def api_v2_reverse_lookup(payload: ReverseLookupRequest):
+async def api_v2_reverse_lookup(payload: ReverseLookupRequest, _auth=Depends(verify_api_key)):
     from server.reverse_lookup import reverse_lookup_day_pillar
 
     results = reverse_lookup_day_pillar(payload.day_pillar, payload.start_year, payload.end_year)
@@ -71,6 +71,6 @@ async def api_v2_cities():
 
 
 @router.get("/api/v2/history")
-async def api_v2_history(page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1, le=100)):
+async def api_v2_history(page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1, le=100), _auth=Depends(verify_api_key)):
     data = await list_analyses(page=page, page_size=page_size)
     return JSONResponse(data)

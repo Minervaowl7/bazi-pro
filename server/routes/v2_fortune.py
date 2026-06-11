@@ -4,11 +4,11 @@ import json
 import logging
 from datetime import date as _date
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
 from server.db import get_analysis
-from server.deps import error_response
+from server.deps import error_response, verify_api_key
 
 logger = logging.getLogger("bazi-pro")
 
@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/api/v2/fortune/daily/{analysis_id}")
-async def api_v2_daily_fortune(analysis_id: str):
+async def api_v2_daily_fortune(analysis_id: str, _auth=Depends(verify_api_key)):
     from server.daily_fortune import calc_daily_fortune
 
     analysis = await get_analysis(analysis_id)
@@ -48,7 +48,7 @@ async def api_v2_daily_fortune(analysis_id: str):
 
 
 @router.get("/api/v2/fortune/monthly/{analysis_id}")
-async def api_v2_monthly_fortune(analysis_id: str, year: int = Query(default=0), month: int = Query(default=0)):
+async def api_v2_monthly_fortune(analysis_id: str, year: int = Query(default=0), month: int = Query(default=0), _auth=Depends(verify_api_key)):
     from server.daily_fortune import calc_monthly_fortune
 
     if not year:
