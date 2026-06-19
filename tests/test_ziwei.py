@@ -498,6 +498,26 @@ class TestEdgeCases:
         assert _find_star(palace, "紫微") is not None
 
 
+# ── API 端点测试 ──────────────────────────────────────────────────
+# 注意：这些测试依赖 server/app，而 server/deps.py 会创建一个
+# MemoryRateLimiter（默认 30 次/60 秒）。由于此限流器是单例且被
+# 同进程中之前运行的 server 测试文件填充，API 测试可能被误判为
+# "Too Many Requests"。以下函数在模块加载时清空限流器桶。
+
+def _clear_rate_limiter():
+    try:
+        from server.deps import rate_limiter  # noqa: E402
+        if hasattr(rate_limiter, "_buckets"):
+            rate_limiter._buckets.clear()
+        if hasattr(rate_limiter, "_fallback") and hasattr(rate_limiter._fallback, "_buckets"):
+            rate_limiter._fallback._buckets.clear()
+    except Exception:
+        pass
+
+
+_clear_rate_limiter()
+
+
 class TestSihuaApi:
     """四化 API 端点测试"""
 
