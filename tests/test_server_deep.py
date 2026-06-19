@@ -1,6 +1,7 @@
 """深度测试 server 模块 — 提高核心模块覆盖率"""
 
 import os
+
 import pytest
 
 os.environ['BAZI_ALLOW_UNAUTHED'] = '1'
@@ -128,6 +129,7 @@ class TestRoutesV2Analysis:
 
     def test_paipan_endpoint(self):
         from fastapi.testclient import TestClient
+
         from server.app import app
         client = TestClient(app)
         resp = client.post('/api/v2/paipan', json={
@@ -138,6 +140,7 @@ class TestRoutesV2Analysis:
 
     def test_analyze_endpoint(self):
         from fastapi.testclient import TestClient
+
         from server.app import app
         client = TestClient(app)
         resp = client.post('/api/v2/analyze', json={
@@ -153,7 +156,8 @@ class TestDBDeep:
 
     def test_insert_and_get_analysis(self):
         import asyncio
-        from server.db import insert_analysis, get_analysis, generate_analysis_id
+
+        from server.db import generate_analysis_id, get_analysis, insert_analysis
         aid = generate_analysis_id()
         asyncio.run(insert_analysis(aid, {'test': 'data'}, 'standard'))
         result = asyncio.run(get_analysis(aid))
@@ -162,6 +166,7 @@ class TestDBDeep:
 
     def test_list_analyses(self):
         import asyncio
+
         from server.db import list_analyses
         result = asyncio.run(list_analyses(page=1, page_size=10))
         assert isinstance(result, dict)
@@ -187,7 +192,6 @@ class TestCacheDeep:
         assert cache.get('test_key') is None
 
     def test_cache_store_expired(self):
-        import time
         from server.cache import LRUDict
         lru = LRUDict(maxsize=10)
         lru.set('key', {'data': 'value'}, ttl=1)
@@ -217,7 +221,7 @@ class TestMetricsDeep:
 
     def test_timer_context_manager(self):
         from server.metrics import _TimerContext
-        with _TimerContext('test_metric', {'label': 'value'}) as t:
+        with _TimerContext('test_metric', {'label': 'value'}):
             pass
         # Should complete without error
 
@@ -232,6 +236,7 @@ class TestRoutesV2Settings:
 
     def test_get_llm_settings(self):
         from fastapi.testclient import TestClient
+
         from server.app import app
         client = TestClient(app)
         resp = client.get('/api/v2/settings/llm')
@@ -243,6 +248,7 @@ class TestHealthEndpoint:
 
     def test_health(self):
         from fastapi.testclient import TestClient
+
         from server.app import app
         client = TestClient(app)
         resp = client.get('/api/health')
@@ -256,6 +262,7 @@ class TestIndexEndpoint:
 
     def test_index(self):
         from fastapi.testclient import TestClient
+
         from server.app import app
         client = TestClient(app)
         resp = client.get('/')
@@ -268,6 +275,7 @@ class TestMetricsEndpoint:
 
     def test_metrics_json(self):
         from fastapi.testclient import TestClient
+
         from server.app import app
         client = TestClient(app)
         resp = client.get('/metrics')
@@ -275,6 +283,7 @@ class TestMetricsEndpoint:
 
     def test_metrics_text(self):
         from fastapi.testclient import TestClient
+
         from server.app import app
         client = TestClient(app)
         resp = client.get('/metrics/text')
@@ -287,6 +296,7 @@ class TestRouteEndpoints:
     @pytest.fixture
     def client(self):
         from fastapi.testclient import TestClient
+
         from server.app import app
         return TestClient(app)
 

@@ -1,6 +1,5 @@
 """提高 bazi_pro 模块覆盖率的测试"""
 
-import pytest
 
 
 class TestDoctor:
@@ -108,9 +107,6 @@ class TestValidation:
     def test_import(self):
         from bazi_pro.validation import (
             validate_bazi_input,
-            validate_bazi_string,
-            validate_day_master,
-            validate_gender,
         )
         assert callable(validate_bazi_input)
 
@@ -199,7 +195,7 @@ class TestCoreModules:
         assert 'percent' in result
 
     def test_strength(self):
-        from bazi_pro.core.strength import calc_deling, calc_dedi, calc_deshi, judge_wangshuai
+        from bazi_pro.core.strength import calc_deling
         status, score = calc_deling('丁', '巳')
         assert isinstance(status, str)
         assert isinstance(score, int)
@@ -277,7 +273,7 @@ class TestSchools:
     """测试流派分析"""
 
     def test_import(self):
-        from bazi_pro.core.schools import school_analyze, SCHOOL_REGISTRY
+        from bazi_pro.core.schools import SCHOOL_REGISTRY, school_analyze
         assert callable(school_analyze)
         assert isinstance(SCHOOL_REGISTRY, dict)
 

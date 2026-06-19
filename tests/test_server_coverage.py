@@ -1,8 +1,6 @@
 """提高 server 模块覆盖率的测试"""
 
-import json
 import os
-import pytest
 
 # 确保测试环境允许无认证访问
 os.environ['BAZI_ALLOW_UNAUTHED'] = '1'
@@ -12,7 +10,7 @@ class TestAnalysisModule:
     """测试 server/analysis.py 核心分析模块"""
 
     def test_import(self):
-        from server.analysis import run_analysis, _validate_input, _make_cache_key
+        from server.analysis import _make_cache_key, _validate_input, run_analysis
         assert callable(run_analysis)
         assert callable(_validate_input)
         assert callable(_make_cache_key)
@@ -52,15 +50,9 @@ class TestDBModule:
 
     def test_import(self):
         from server.db import (
-            close_db,
-            generate_analysis_id,
-            get_analysis,
+            MAX_PAGE_SIZE,
             get_db,
             insert_analysis,
-            list_analyses,
-            update_analysis_result,
-            update_analysis_status,
-            MAX_PAGE_SIZE,
         )
         assert callable(get_db)
         assert callable(insert_analysis)
@@ -86,7 +78,6 @@ class TestLLMModule:
             chat_completion,
             get_llm_config,
             is_llm_configured,
-            update_llm_config,
         )
         assert callable(chat_completion)
         assert callable(get_llm_config)
@@ -105,7 +96,7 @@ class TestLLMModule:
         assert isinstance(result, bool)
 
     def test_update_llm_config(self):
-        from server.llm import update_llm_config, get_llm_config
+        from server.llm import get_llm_config, update_llm_config
         original = get_llm_config()
         # 只更新 model 字段（api_key 有格式验证）
         try:
@@ -152,7 +143,7 @@ class TestReverseLookupModule:
     """测试 server/reverse_lookup.py 日柱反查"""
 
     def test_import(self):
-        from server.reverse_lookup import reverse_lookup_pillars, reverse_lookup_day_pillar
+        from server.reverse_lookup import reverse_lookup_day_pillar, reverse_lookup_pillars
         assert callable(reverse_lookup_pillars)
         assert callable(reverse_lookup_day_pillar)
 
@@ -196,7 +187,7 @@ class TestReportPDFModule:
     """测试 server/report_pdf.py PDF 报告"""
 
     def test_import(self):
-        from server.report_pdf import generate_report_pdf, build_report_html
+        from server.report_pdf import build_report_html, generate_report_pdf
         assert callable(generate_report_pdf)
         assert callable(build_report_html)
 
@@ -211,7 +202,7 @@ class TestRAGEngineModule:
     """测试 server/rag_engine.py RAG 引擎"""
 
     def test_import(self):
-        from server.rag_engine import retrieve_for_chat, _classify_question
+        from server.rag_engine import _classify_question, retrieve_for_chat
         assert callable(retrieve_for_chat)
         assert callable(_classify_question)
 
@@ -248,7 +239,7 @@ class TestAppModule:
     """测试 server/app.py 应用模块"""
 
     def test_import(self):
-        from server.app import app, _validate_config
+        from server.app import _validate_config, app
         assert app is not None
         assert callable(_validate_config)
 
@@ -297,13 +288,9 @@ class TestDepsModule:
 
     def test_import(self):
         from server.deps import (
-            API_KEY,
-            APIKeyError,
-            error_response,
-            get_int_env,
-            validate_analysis_id,
-            verify_api_key,
             _is_unauthed_allowed,
+            error_response,
+            verify_api_key,
         )
         assert callable(verify_api_key)
         assert callable(error_response)
@@ -358,7 +345,7 @@ class TestSSEModule:
     """测试 server/sse.py SSE 模块"""
 
     def test_import(self):
-        from server.sse import buffers, lock, subscribers, v2_active_ids, broadcast
+        from server.sse import broadcast, buffers, lock, subscribers, v2_active_ids
         assert buffers is not None
         assert lock is not None
         assert subscribers is not None
