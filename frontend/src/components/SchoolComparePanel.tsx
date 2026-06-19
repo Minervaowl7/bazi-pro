@@ -5,7 +5,7 @@ interface Props {
 }
 
 const SCHOOL_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  ziping: { label: "传统子平法", icon: "☯", color: "var(--school-ziping)", bg: "color-mix(in srgb, var(--school-ziping) 12%, transparent)" },
+  ziping: { label: "传统子平法", icon: "☯", color: "var(--wx-water)", bg: "rgba(63,111,159,0.12)" },
   mangpai: { label: "盲派", icon: "👁", color: "var(--school-mangpai)", bg: "color-mix(in srgb, var(--school-mangpai) 12%, transparent)" },
   xinpai: { label: "新派", icon: "✧", color: "var(--school-xinpai)", bg: "color-mix(in srgb, var(--school-xinpai) 12%, transparent)" },
 };

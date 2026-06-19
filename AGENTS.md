@@ -1,6 +1,6 @@
 # Agent Guardrails
 
-Rules that any AI agent (or human contributor) must follow when modifying this project.
+Rules that any AI agent must follow when modifying this project.
 
 ## Core Rules
 
@@ -35,6 +35,16 @@ Rules that any AI agent (or human contributor) must follow when modifying this p
 15. **`core_rules.py` is a deprecated shim.** Internal code must import from `bazi_pro.core` directly. The shim emits `DeprecationWarning`.
 
 16. **`server/analysis.py` is append-only.** You may add new fields and imports, but never change existing function signatures or return structures.
+
+17. **紫微斗数核心模块 (`bazi_pro/core/ziwei/`) is pure deterministic.** No LLM calls, no I/O, no randomness. All computation must be reproducible.
+
+18. **Function Calling 工具集 (`server/agents/tools.py`) must not modify core.** Tools are wrappers around `bazi_pro.core` functions, never modify them.
+
+19. **流式 Chat 端点 (`/api/v2/chat/stream`) must save assistant reply on error.** When LLM call fails in SSE generator, save error message as assistant reply to avoid orphaned user messages.
+
+20. **`_parse_report_json` must include all chapter keys.** When adding new report chapters, update `new_keys`, `old_keys` fallback, and default dict in `_parse_report_json()`.
+
+21. **`ChatStreamEvent` type must include all event types.** When backend sends new SSE event types (e.g., `tool_call`, `tool_result`), update `ChatStreamEvent` type union in `frontend/src/lib/api.ts`.
 
 ## Verification Commands
 
@@ -103,3 +113,7 @@ python -m uvicorn server.app:app --host 127.0.0.1 --port 8711
 - **Schools use lazy loading** — `schools/__init__.py` uses `_ensure_schools_loaded()` with `import bazi_pro.core.schools.xxx` style (not `from ... import`).
 - **Windows compat** — subprocess tests use `sys.executable` (not `python3`); file I/O must specify `encoding="utf-8"`.
 - **Frontend TS quirk** — echarts-for-react types conflict with React 19 strict types; files using ECharts need `// @ts-nocheck`.
+- **`chat_completion_stream_typed` vs `chat_completion_stream_with_tools`** — the former is true SSE streaming, the latter is non-streaming with fake chunking (20-char slices). Use the typed version for real streaming.
+- **紫微斗数 iztro-py dependency** — `server/ziwei.py` imports `iztro-py` as optional dependency. All functions return `{"error": "..."}` when iztro-py is not installed.
+- **Function Calling 工具集** — `server/agents/tools.py` defines 5 tools (paipan/query_geju/query_yongshen/query_shensha/query_classical). Tools are wrappers, never modify core.
+- **RAG 检索模式** — `retrieve_for_chat()` and `retrieve_for_report()` support `retrieval_mode` parameter: "bm25" (default), "hybrid" (requires sentence-transformers), "auto" (hybrid with BM25 fallback).

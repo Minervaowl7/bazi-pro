@@ -395,7 +395,7 @@ export default function SchoolPanel({ result, narration }: Props) {
   }).filter(s => s.content);
 
   const SCHOOL_META: Record<string, { label: string; icon: string; color: string }> = {
-    ziping: { label: "传统子平法", icon: "☯", color: "var(--school-ziping)" },
+    ziping: { label: "传统子平法", icon: "☯", color: "var(--wx-water)" },
     mangpai: { label: "盲派", icon: "👁", color: "var(--school-mangpai)" },
     xinpai: { label: "新派", icon: "✧", color: "var(--school-xinpai)" },
   };
@@ -410,7 +410,7 @@ export default function SchoolPanel({ result, narration }: Props) {
           {sections.length} 维度
         </span>
         {hasSchoolData && (
-          <span className="font-semibold text-[13px] px-3 py-1 rounded" style={{ background: `color-mix(in srgb, ${schoolMeta.color} 12%, transparent)`, color: schoolMeta.color }}>
+          <span className="font-semibold text-[13px] px-3 py-1 rounded" style={{ background: `color-mix(in srgb, ${schoolMeta.color} 7%, transparent)`, color: schoolMeta.color }}>
             {schoolMeta.icon} {schoolMeta.label}
           </span>
         )}

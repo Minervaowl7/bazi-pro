@@ -1,15 +1,233 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import RemarkGfm from "remark-gfm";
-import { sendChatMessage, getChatHistory, type ChatMessage } from "@/lib/api";
+import {
+  getChatHistory,
+  sendChatMessageStream,
+  type ChatMessage,
+  type ChatStreamEvent,
+} from "@/lib/api";
 
+/* ─── 古籍引用数据结构 ─── */
+interface Citation {
+  source: string;
+  topic: string;
+  score: number;
+  content: string;
+  isCounter?: boolean;
+}
+
+/**
+ * 将后端格式化的 citations 字符串解析为结构化引用数组。
+ * 格式示例：
+ *   【古籍依据】
+ *   [1] 《子平真诠》@格局用神 (id=xxx, score=0.8765)
+ *       条文内容…
+ *   【反证/对立观点】
+ *   - 《滴天髓》@xxx (score=0.6543)
+ *     反证内容…
+ */
+function parseCitations(raw: string): Citation[] {
+  if (!raw || raw.trim().length === 0) return [];
+
+  const results: Citation[] = [];
+
+  // 按【反证/对立观点】分割主引用和反证
+  const counterSplit = raw.split(/【反证[\/／]?对立观点】/);
+  const mainSection = counterSplit[0] ?? "";
+  const counterSection = counterSplit[1] ?? "";
+
+  // 解析主引用：[n] 《source》@topic (id=xxx, score=0.xxxx)\n    content
+  const mainRe = /\[\d+]\s*《([^》]+)》@(\S+)\s*\([^)]*score=([\d.]+)[^)]*\)\s*\n([\s\S]*?)(?=\[\d+]|$)/g;
+  let m: RegExpExecArray | null;
+  while ((m = mainRe.exec(mainSection)) !== null) {
+    results.push({
+      source: m[1],
+      topic: m[2],
+      score: parseFloat(m[3]),
+      content: m[4].replace(/^ {4}/gm, "").trim(),
+    });
+  }
+
+  // 解析反证：- 《source》@topic (score=0.xxxx)\n  content
+  const counterRe = /-\s*《([^》]+)》@(\S+)\s*\([^)]*score=([\d.]+)[^)]*\)\s*\n([\s\S]*?)(?=-\s*《|$)/g;
+  while ((m = counterRe.exec(counterSection)) !== null) {
+    results.push({
+      source: m[1],
+      topic: m[2],
+      score: parseFloat(m[3]),
+      content: m[4].replace(/^ {2}/gm, "").trim(),
+      isCounter: true,
+    });
+  }
+
+  return results;
+}
+
+/* ─── 单条引用卡片 ─── */
+function CitationCard({ citation, index }: { citation: Citation; index: number }) {
+  const [expanded, setExpanded] = useState(false);
+
+  // 评分等级色彩
+  const scoreColor = citation.score >= 0.75 ? "var(--jade)"
+    : citation.score >= 0.5 ? "var(--gold)"
+    : "var(--text-3)";
+
+  return (
+    <div
+      className="rounded-lg overflow-hidden transition-all duration-200"
+      style={{
+        background: "var(--surface)",
+        border: `1px solid ${expanded ? "var(--border-strong)" : "var(--border-subtle)"}`,
+        boxShadow: expanded ? "var(--shadow-sm)" : "none",
+      }}
+    >
+      {/* 卡片头部 - 可点击展开 */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors duration-150"
+        style={{ background: expanded ? "var(--surface-2)" : "transparent" }}
+      >
+        {/* 序号 */}
+        <span
+          className="shrink-0 w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold"
+          style={{
+            background: citation.isCounter ? "var(--cinnabar-light)" : "rgba(45,62,95,0.08)",
+            color: citation.isCounter ? "var(--cinnabar)" : "var(--scholar-blue)",
+          }}
+        >
+          {index + 1}
+        </span>
+
+        {/* 古籍名 */}
+        <span
+          className="text-xs font-semibold truncate"
+          style={{
+            color: citation.isCounter ? "var(--cinnabar)" : "var(--scholar-blue)",
+            fontFamily: "var(--font-display)",
+          }}
+        >
+          {citation.isCounter ? "反" : ""}《{citation.source}》
+        </span>
+
+        {/* 主题标签 */}
+        <span
+          className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium"
+          style={{ background: "var(--surface-2)", color: "var(--text-3)" }}
+        >
+          {citation.topic}
+        </span>
+
+        {/* 评分 */}
+        <span
+          className="shrink-0 ml-auto px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums"
+          style={{ color: scoreColor, background: "var(--surface-2)" }}
+        >
+          {(citation.score * 100).toFixed(0)}%
+        </span>
+
+        {/* 展开箭头 */}
+        <svg
+          width="10" height="10" viewBox="0 0 12 12" fill="none"
+          className="shrink-0"
+          style={{
+            transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease",
+            color: "var(--text-4)",
+          }}
+        >
+          <path d="M4.5 2.5L7.5 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* 展开区域：完整条文 */}
+      <div
+        style={{
+          maxHeight: expanded ? 300 : 0,
+          opacity: expanded ? 1 : 0,
+          overflow: "hidden",
+          transition: "max-height 0.3s ease, opacity 0.2s ease",
+        }}
+      >
+        <div
+          className="px-3.5 pb-3 pt-0 text-xs leading-relaxed"
+          style={{
+            color: "var(--text-2)",
+            borderLeft: `3px solid ${citation.isCounter ? "var(--cinnabar)" : "var(--scholar-blue)"}`,
+            marginLeft: 14,
+            marginRight: 14,
+            paddingLeft: 12,
+            paddingTop: 8,
+            paddingBottom: 8,
+            background: citation.isCounter ? "var(--cinnabar-light)" : "rgba(45,62,95,0.04)",
+            borderRadius: 6,
+            whiteSpace: "pre-wrap",
+            maxHeight: 240,
+            overflowY: "auto",
+          }}
+        >
+          {citation.content}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── 折叠面板：古籍引用区域 ─── */
 function CitationsBlock({ citations }: { citations?: string }) {
   const [open, setOpen] = useState(false);
-  if (!citations || citations.trim().length === 0) return null;
+  const parsed = parseCitations(citations ?? "");
+  if (parsed.length === 0) return null;
+
+  const mainCount = parsed.filter(c => !c.isCounter).length;
+  const counterCount = parsed.filter(c => c.isCounter).length;
+
   return (
     <div className="mt-3">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 text-xs font-medium transition-all duration-200"
+        style={{ color: open ? "var(--scholar-blue)" : "var(--text-4)" }}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+          style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
+          <path d="M4.5 2.5L7.5 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        古籍引用
+        <span
+          className="px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums"
+          style={{ background: "var(--scholar-blue)", color: "var(--surface)" }}
+        >
+          {mainCount}{counterCount > 0 ? `+${counterCount}反` : ""}
+        </span>
+      </button>
+      <div
+        style={{
+          maxHeight: open ? 800 : 0,
+          opacity: open ? 1 : 0,
+          overflow: "hidden",
+          transition: "max-height 0.35s ease, opacity 0.2s ease, margin-top 0.2s ease",
+          marginTop: open ? 8 : 0,
+        }}
+      >
+        <div className="flex flex-col gap-2">
+          {parsed.map((c, i) => (
+            <CitationCard key={`${c.source}-${c.topic}-${i}`} citation={c} index={i} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── 折叠面板：思考过程 ─── */
+function ReasoningBlock({ content }: { content: string }) {
+  const [open, setOpen] = useState(false);
+  if (!content || content.trim().length === 0) return null;
+  return (
+    <div className="mb-3">
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 text-xs font-medium transition-all duration-200"
@@ -19,11 +237,14 @@ function CitationsBlock({ citations }: { citations?: string }) {
           style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
           <path d="M4.5 2.5L7.5 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        古籍依据
+        思考过程
+        <span className="px-1.5 py-0.5 rounded text-[10px]" style={{ background: "var(--surface-2)", color: "var(--text-4)" }}>
+          {content.length} 字
+        </span>
       </button>
       <div
         style={{
-          maxHeight: open ? 400 : 0,
+          maxHeight: open ? 600 : 0,
           opacity: open ? 1 : 0,
           overflow: "hidden",
           transition: "max-height 0.3s ease, opacity 0.2s ease, margin-top 0.2s ease",
@@ -31,21 +252,24 @@ function CitationsBlock({ citations }: { citations?: string }) {
         }}
       >
         <div
-          className="px-4 py-3 rounded-lg text-xs leading-relaxed"
+          className="px-4 py-3 rounded-lg text-xs leading-relaxed whitespace-pre-wrap"
           style={{
             background: "var(--bg-card)",
-            color: "var(--text-3)",
-            border: "1px solid var(--border)",
-            borderLeft: "3px solid var(--scholar-blue)",
+            color: "var(--text-4)",
+            border: "1px solid var(--border-subtle)",
+            borderLeft: "3px solid var(--text-4)",
+            maxHeight: 400,
+            overflowY: "auto",
           }}
         >
-          {citations}
+          {content}
         </div>
       </div>
     </div>
   );
 }
 
+/* ─── 常量 ─── */
 const QUICK_QUESTIONS = [
   { icon: "⚖", label: "旺衰格局", q: "请详细分析我的日主旺衰和格局" },
   { icon: "✦", label: "事业方向", q: "我的事业发展方向是什么？适合什么职业？" },
@@ -55,64 +279,172 @@ const QUICK_QUESTIONS = [
   { icon: "☘", label: "健康养生", q: "健康方面需要注意什么？五行如何养生？" },
 ];
 
+const STALL_TIMEOUT_MS = 60000; // 60 秒无数据 → 判定中断
+
 interface Props { analysisId: string; school?: string; }
 
 export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showQuick, setShowQuick] = useState(true);
+
+  /* 流式状态 */
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
+  const [streamingReasoning, setStreamingReasoning] = useState("");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mountedRef = useRef(true);
+  const abortRef = useRef<AbortController | null>(null);
+  const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const contentRef = useRef(""); // 累积的 token 内容
 
+  /* ─── 失速检测 ─── */
+  const clearStallTimer = useCallback(() => {
+    if (stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = null;
+    }
+  }, []);
+
+  const resetStallTimer = useCallback(() => {
+    clearStallTimer();
+    stallTimerRef.current = setTimeout(() => {
+      stallTimerRef.current = null;
+      if (mountedRef.current) {
+        abortRef.current?.abort();
+        setIsStreaming(false);
+        // 保存已收到的部分内容
+        if (contentRef.current) {
+          setMessages(prev => [...prev, { role: "assistant", content: contentRef.current }]);
+          contentRef.current = "";
+        }
+        setStreamingContent("");
+        setStreamingReasoning("");
+        setError("连接中断，请重试");
+      }
+    }, STALL_TIMEOUT_MS);
+  }, [clearStallTimer]);
+
+  /* ─── 加载历史 ─── */
   useEffect(() => {
     let cancelled = false;
     mountedRef.current = true;
     getChatHistory(analysisId, school).then((data) => {
       if (cancelled) return;
       if (data.messages && data.messages.length > 0) { setMessages(data.messages); setShowQuick(false); }
-    }).catch(() => { /* 历史加载失败静默处理，不影响新对话 */ });
+    }).catch(() => { /* 历史加载失败静默处理 */ });
     return () => { cancelled = true; mountedRef.current = false; };
   }, [analysisId, school]);
 
+  /* ─── 自动滚动 ─── */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, streamingContent]);
 
-  async function handleSend(text?: string) {
+  /* ─── 清理 ─── */
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      abortRef.current?.abort();
+      clearStallTimer();
+    };
+  }, [clearStallTimer]);
+
+  /* ─── 发送消息（SSE 流式） ─── */
+  function handleSend(text?: string) {
     const message = text || input.trim();
-    if (!message || loading) return;
+    if (!message || isStreaming) return;
     setInput(""); setError(""); setShowQuick(false);
     setMessages(prev => [...prev, { role: "user", content: message }]);
-    setLoading(true);
-    try {
-      const data = await sendChatMessage(analysisId, message, school);
-      if (!mountedRef.current) return;
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply || "抱歉，暂时无法回复。", citations: data.citations }]);
-    } catch (err) {
-      if (!mountedRef.current) return;
-      const errMsg = err instanceof Error ? err.message : "发送失败";
-      const errCode = err instanceof Error && "code" in err ? (err as { code?: string }).code : undefined;
-      if (errMsg.includes("LLM") && (errMsg.includes("未配置") || errMsg.includes("503") || errMsg.includes("not configured"))) {
-        setError("LLM 服务未配置。请在服务端设置 LLM_API_KEY 环境变量后重启。");
-      } else if (errCode === "TIMEOUT") {
-        setError("AI 思考超时（120s），请稍后重试或缩短问题。");
-      } else { setError(errMsg); }
-    } finally {
-      if (mountedRef.current) setLoading(false);
-    }
+    setIsStreaming(true);
+    setStreamingContent("");
+    setStreamingReasoning("");
+    contentRef.current = "";
+
+    resetStallTimer();
+
+    const controller = sendChatMessageStream(
+      analysisId,
+      message,
+      school,
+      /* onEvent */
+      (evt: ChatStreamEvent) => {
+        if (!mountedRef.current) return;
+        resetStallTimer();
+        if (evt.type === "token") {
+          contentRef.current += evt.content;
+          setStreamingContent(contentRef.current);
+        } else if (evt.type === "reasoning") {
+          setStreamingReasoning(prev => prev + evt.content);
+        }
+        // heartbeat/tool_call/tool_result 只重置 stall timer，不显示内容
+      },
+      /* onError */
+      (err: Error) => {
+        if (!mountedRef.current) return;
+        clearStallTimer();
+        setIsStreaming(false);
+        if (contentRef.current) {
+          setMessages(prev => [...prev, { role: "assistant", content: contentRef.current }]);
+          contentRef.current = "";
+        }
+        setStreamingContent("");
+        setStreamingReasoning("");
+        const errMsg = err.message;
+        if (errMsg.includes("LLM") && (errMsg.includes("未配置") || errMsg.includes("503") || errMsg.includes("not configured"))) {
+          setError("LLM 服务未配置。请在服务端设置 LLM_API_KEY 环境变量后重启。");
+        } else {
+          setError(errMsg);
+        }
+      },
+      /* onDone */
+      () => {
+        if (!mountedRef.current) return;
+        clearStallTimer();
+        setIsStreaming(false);
+        if (contentRef.current) {
+          setMessages(prev => [...prev, { role: "assistant", content: contentRef.current }]);
+          contentRef.current = "";
+        }
+        setStreamingContent("");
+        setStreamingReasoning("");
+        // 刷新历史以获取后端生成的 citations（古籍引用溯源）
+        getChatHistory(analysisId, school).then((data) => {
+          if (!mountedRef.current) return;
+          if (data.messages && data.messages.length > 0) {
+            setMessages(data.messages);
+          }
+        }).catch(() => { /* 静默处理 */ });
+      },
+    );
+
+    abortRef.current = controller;
   }
 
   function handleKeyDown(e: React.KeyboardEvent) { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); handleSend(); } }
+
+  /* ─── 中断流式 ─── */
+  function handleStop() {
+    abortRef.current?.abort();
+    clearStallTimer();
+    setIsStreaming(false);
+    if (contentRef.current) {
+      setMessages(prev => [...prev, { role: "assistant", content: contentRef.current }]);
+      contentRef.current = "";
+    }
+    setStreamingContent("");
+    setStreamingReasoning("");
+  }
 
   return (
     <section className="card">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 sm:px-7 py-[18px]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--cinnabar), #c0392b)", boxShadow: "0 2px 8px rgba(192,57,43,0.25)" }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--cinnabar), var(--danger))", boxShadow: "0 2px 8px rgba(192,57,43,0.25)" }}>
             <span className="text-lg text-white">☯</span>
           </div>
           <div>
@@ -121,6 +453,12 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {isStreaming && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", color: "var(--success)", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)" }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--success)" }} />
+              生成中
+            </span>
+          )}
           <span className="px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: "var(--surface-2)", color: "var(--text-4)", border: "1px solid var(--border-subtle)" }}>
             {school === "ziping" ? "子平法" : school === "mangpai" ? "盲派" : school === "xinpai" ? "新派" : school}
           </span>
@@ -128,8 +466,8 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
       </div>
 
       {/* Messages */}
-      <div className="overflow-y-auto px-7 py-6" style={{ maxHeight: "min(600px, 50vh)", minHeight: 200 }}>
-        {messages.length === 0 && !loading && (
+      <div className="overflow-y-auto px-7 py-6" role="log" aria-live="polite" aria-relevant="additions" style={{ maxHeight: 600, minHeight: 200 }}>
+        {messages.length === 0 && !isStreaming && (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5" style={{ background: "linear-gradient(135deg, rgba(192,57,43,0.08), rgba(45,62,95,0.08))", border: "2px dashed var(--border)" }}>
               <span className="text-[32px] opacity-60">☯</span>
@@ -147,7 +485,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
             {msg.role === "assistant" ? (
               <div className="pr-16">
                 <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, var(--cinnabar), #c0392b)" }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, var(--cinnabar), var(--danger))" }}>
                     <span className="text-sm text-white">☯</span>
                   </div>
                   <span className="font-semibold text-[13px] tracking-wider" style={{ color: "var(--scholar-blue)", fontFamily: "var(--font-display)" }}>命理师</span>
@@ -162,8 +500,8 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
             ) : (
               <div className="max-w-[78%]">
                 <div className="px-5 py-3.5 whitespace-pre-wrap rounded-2xl rounded-br-md" style={{
-                  fontSize: 15, lineHeight: 1.7, color: "var(--ink)",
-                  background: "var(--scholar-blue)", border: "none", overflowWrap: "break-word", wordBreak: "break-word",
+                  fontSize: 15, lineHeight: 1.7, color: "#fff",
+                  background: "var(--scholar-blue)", border: "none",
                   boxShadow: "0 2px 8px rgba(45,62,95,0.15)",
                 }}>
                   {msg.content}
@@ -173,24 +511,37 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
           </div>
         ))}
 
-        {loading && (
+        {/* 流式渲染中的助手消息 */}
+        {isStreaming && (
           <div className="mb-6 pr-16" style={{ animation: "fadeInUp 0.3s ease both" }}>
             <div className="flex items-center gap-2.5 mb-3">
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, var(--cinnabar), #c0392b)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontSize: 14, color: "#fff" }}>☯</span>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, var(--cinnabar), var(--danger))" }}>
+                <span className="text-sm text-white">☯</span>
               </div>
-              <span className="font-semibold" style={{ fontSize: 13, color: "var(--scholar-blue)", fontFamily: "var(--font-display)", letterSpacing: "0.05em" }}>命理师</span>
+              <span className="font-semibold text-[13px] tracking-wider" style={{ color: "var(--scholar-blue)", fontFamily: "var(--font-display)" }}>命理师</span>
             </div>
-            <div className="flex items-center gap-1.5 ml-[40px]" style={{ padding: "12px 0" }}>
-              {[0, 1, 2].map((idx) => (
-                <span key={idx} className="typing-dot" style={{
-                  width: 8, height: 8, borderRadius: "50%",
-                  background: "var(--scholar-blue)",
-                  opacity: 0.4,
-                  animation: "typingBounce 1.2s ease-in-out infinite",
-                  animationDelay: `${idx * 0.15}s`,
-                }} />
-              ))}
+            <div className="pl-10">
+              {/* reasoning 折叠面板 */}
+              <ReasoningBlock content={streamingReasoning} />
+              {/* 正文逐字渲染 */}
+              {streamingContent ? (
+                <div className="markdown-body text-[15px] leading-[1.85]" style={{ color: "var(--text-2)" }}>
+                  <ReactMarkdown remarkPlugins={[RemarkGfm]}>{streamingContent}</ReactMarkdown>
+                  <span className="inline-block w-[2px] h-[16px] ml-0.5 align-text-bottom animate-pulse" style={{ background: "var(--scholar-blue)" }} />
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5" style={{ padding: "12px 0" }}>
+                  {[0, 1, 2].map((idx) => (
+                    <span key={idx} className="typing-dot" style={{
+                      width: 8, height: 8, borderRadius: "50%",
+                      background: "var(--scholar-blue)",
+                      opacity: 0.4,
+                      animation: "typingBounce 1.2s ease-in-out infinite",
+                      animationDelay: `${idx * 0.15}s`,
+                    }} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -212,7 +563,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
           <p className="mb-4 font-semibold" style={{ fontSize: 13, color: "var(--text-4)", letterSpacing: "0.05em" }}>快捷提问</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             {QUICK_QUESTIONS.map((item, i) => (
-              <button key={i} onClick={() => handleSend(item.q)} disabled={loading}
+              <button key={i} onClick={() => handleSend(item.q)} disabled={isStreaming}
                 className="group flex items-center gap-2.5 px-4 py-3 rounded-lg hover-card text-left disabled:opacity-50"
                 style={{
                   fontSize: 13, fontWeight: 500,
@@ -256,10 +607,10 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
                 maxHeight: 100,
                 outline: "none",
               }}
-              disabled={loading}
+              disabled={isStreaming}
             />
           </div>
-          <button onClick={() => handleSend()} disabled={loading || !input.trim()}
+          <button onClick={isStreaming ? handleStop : () => handleSend()} disabled={!isStreaming && !input.trim()}
             className="flex items-center justify-center transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
             style={{
               width: 44, height: 44, borderRadius: "var(--r-sm)",
@@ -268,9 +619,16 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
               boxShadow: input.trim() ? "0 2px 8px rgba(45,62,95,0.25)" : "none",
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M3 9H15M15 9L10 4M15 9L10 14" stroke={input.trim() ? "#fff" : "var(--text-4)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            {isStreaming ? (
+              /* 停止按钮 */
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <rect x="4" y="4" width="10" height="10" rx="2" fill={input.trim() ? "#fff" : "var(--text-4)"} />
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M3 9H15M15 9L10 4M15 9L10 14" stroke={input.trim() ? "#fff" : "var(--text-4)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
           </button>
         </div>
         <p className="mt-2.5 text-center" style={{ fontSize: 11, color: "var(--text-4)", opacity: 0.6 }}>

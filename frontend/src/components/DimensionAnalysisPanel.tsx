@@ -26,30 +26,30 @@ const DIMENSION_CONFIGS: Record<string, DimensionConfig> = {
   marriage: {
     icon: "♥",
     title: "感情婚姻",
-    accentColor: "var(--cinnabar)",
-    accentBg: "color-mix(in srgb, var(--cinnabar) 6%, transparent)",
-    accentBorder: "color-mix(in srgb, var(--cinnabar) 15%, transparent)",
+    accentColor: "var(--dim-rose)",
+    accentBg: "color-mix(in srgb, var(--dim-rose) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--dim-rose) 15%, transparent)",
   },
   health: {
     icon: "☘",
     title: "健康体质",
-    accentColor: "var(--jade)",
-    accentBg: "color-mix(in srgb, var(--jade) 6%, transparent)",
-    accentBorder: "color-mix(in srgb, var(--jade) 15%, transparent)",
+    accentColor: "var(--dim-teal)",
+    accentBg: "color-mix(in srgb, var(--dim-teal) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--dim-teal) 15%, transparent)",
   },
   wealth: {
     icon: "◆",
     title: "财富财运",
-    accentColor: "var(--gold)",
-    accentBg: "color-mix(in srgb, var(--gold) 6%, transparent)",
-    accentBorder: "color-mix(in srgb, var(--gold) 15%, transparent)",
+    accentColor: "var(--dim-amber)",
+    accentBg: "color-mix(in srgb, var(--dim-amber) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--dim-amber) 15%, transparent)",
   },
   family: {
     icon: "家",
     title: "六亲关系",
-    accentColor: "var(--scholar-blue)",
-    accentBg: "color-mix(in srgb, var(--scholar-blue) 6%, transparent)",
-    accentBorder: "color-mix(in srgb, var(--scholar-blue) 15%, transparent)",
+    accentColor: "var(--dim-steel)",
+    accentBg: "color-mix(in srgb, var(--dim-steel) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--dim-steel) 15%, transparent)",
   },
 };
 
@@ -205,9 +205,6 @@ export default function DimensionAnalysisPanel({ dimension, data, narration }: P
             width: 28,
             height: 28,
             borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             background: `color-mix(in srgb, ${cfg.accentColor} 9%, transparent)`,
           }}>
             {cfg.icon}

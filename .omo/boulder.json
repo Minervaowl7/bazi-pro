@@ -1,0 +1,167 @@
+{
+  "schema_version": 2,
+  "active_work_id": "bazi-pro-next-iteration-991f9b73",
+  "works": {
+    "bazi-pro-next-iteration-991f9b73": {
+      "work_id": "bazi-pro-next-iteration-991f9b73",
+      "active_plan": "C:\\Users\\李云龙\\Desktop\\bazi-pro\\.omo\\plans\\bazi-pro-next-iteration.md",
+      "plan_name": "bazi-pro-next-iteration",
+      "status": "completed",
+      "started_at": "2026-06-11T01:31:40.846Z",
+      "updated_at": "2026-06-11T03:51:38.402Z",
+      "session_ids": [
+        "opencode:ses_155027379ffeuV7UA26kVDf69S"
+      ],
+      "session_origins": {
+        "opencode:ses_155027379ffeuV7UA26kVDf69S": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "紫微大运/流年 API",
+          "session_id": "opencode:ses_14baf255cffeY8IZmU7Qdzh41B",
+          "agent": "Sisyphus-Junior",
+          "category": "deep",
+          "updated_at": "2026-06-11T01:51:54.532Z",
+          "started_at": "2026-06-11T01:51:10.141Z",
+          "status": "completed",
+          "ended_at": "2026-06-11T01:51:54.532Z",
+          "elapsed_ms": 44391
+        },
+        "todo:7": {
+          "task_key": "todo:7",
+          "task_label": "7",
+          "task_title": "八字+紫微联合分析面板",
+          "session_id": "opencode:ses_14b9d9393ffeyzksAwlwpoMCPE",
+          "agent": "Sisyphus-Junior",
+          "category": "visual-engineering",
+          "updated_at": "2026-06-11T02:28:16.736Z",
+          "started_at": "2026-06-11T01:58:40.785Z",
+          "status": "completed",
+          "ended_at": "2026-06-11T02:28:16.736Z",
+          "elapsed_ms": 1775951
+        },
+        "todo:13": {
+          "task_key": "todo:13",
+          "task_label": "13",
+          "task_title": "Chat 引用溯源显示",
+          "session_id": "opencode:ses_14b7ccaf0ffeH9cw6WprQdHGhi",
+          "agent": "Sisyphus-Junior",
+          "category": "visual-engineering",
+          "updated_at": "2026-06-11T02:45:49.375Z",
+          "started_at": "2026-06-11T02:42:33.641Z",
+          "status": "completed",
+          "ended_at": "2026-06-11T02:45:49.375Z",
+          "elapsed_ms": 195734
+        },
+        "todo:15": {
+          "task_key": "todo:15",
+          "task_label": "15",
+          "task_title": "联合分析 PDF 报告",
+          "session_id": "opencode:ses_14b6d6043ffeOWn9gZiiSUTSwV",
+          "agent": "Sisyphus-Junior",
+          "started_at": "2026-06-11T03:25:59.902Z",
+          "status": "completed",
+          "updated_at": "2026-06-11T03:34:33.453Z",
+          "ended_at": "2026-06-11T03:34:33.453Z",
+          "elapsed_ms": 513551
+        },
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "**计划合规审计** — `oracle`",
+          "session_id": "opencode:ses_14b40bd53ffeUodATngaGw5kVy",
+          "agent": "oracle",
+          "updated_at": "2026-06-11T03:50:30.925Z",
+          "started_at": "2026-06-11T03:38:32.772Z",
+          "status": "completed",
+          "ended_at": "2026-06-11T03:50:30.925Z",
+          "elapsed_ms": 718153
+        }
+      },
+      "ended_at": "2026-06-11T03:51:38.402Z",
+      "elapsed_ms": 8397556
+    }
+  },
+  "active_plan": "C:\\Users\\李云龙\\Desktop\\bazi-pro\\.omo\\plans\\bazi-pro-next-iteration.md",
+  "started_at": "2026-06-11T01:31:40.846Z",
+  "status": "completed",
+  "updated_at": "2026-06-11T03:51:38.402Z",
+  "session_ids": [
+    "opencode:ses_155027379ffeuV7UA26kVDf69S"
+  ],
+  "session_origins": {
+    "opencode:ses_155027379ffeuV7UA26kVDf69S": "direct"
+  },
+  "plan_name": "bazi-pro-next-iteration",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "紫微大运/流年 API",
+      "session_id": "opencode:ses_14baf255cffeY8IZmU7Qdzh41B",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-06-11T01:51:54.532Z",
+      "started_at": "2026-06-11T01:51:10.141Z",
+      "status": "completed",
+      "ended_at": "2026-06-11T01:51:54.532Z",
+      "elapsed_ms": 44391
+    },
+    "todo:7": {
+      "task_key": "todo:7",
+      "task_label": "7",
+      "task_title": "八字+紫微联合分析面板",
+      "session_id": "opencode:ses_14b9d9393ffeyzksAwlwpoMCPE",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-06-11T02:28:16.736Z",
+      "started_at": "2026-06-11T01:58:40.785Z",
+      "status": "completed",
+      "ended_at": "2026-06-11T02:28:16.736Z",
+      "elapsed_ms": 1775951
+    },
+    "todo:13": {
+      "task_key": "todo:13",
+      "task_label": "13",
+      "task_title": "Chat 引用溯源显示",
+      "session_id": "opencode:ses_14b7ccaf0ffeH9cw6WprQdHGhi",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-06-11T02:45:49.375Z",
+      "started_at": "2026-06-11T02:42:33.641Z",
+      "status": "completed",
+      "ended_at": "2026-06-11T02:45:49.375Z",
+      "elapsed_ms": 195734
+    },
+    "todo:15": {
+      "task_key": "todo:15",
+      "task_label": "15",
+      "task_title": "联合分析 PDF 报告",
+      "session_id": "opencode:ses_14b6d6043ffeOWn9gZiiSUTSwV",
+      "agent": "Sisyphus-Junior",
+      "started_at": "2026-06-11T03:25:59.902Z",
+      "status": "completed",
+      "updated_at": "2026-06-11T03:34:33.453Z",
+      "ended_at": "2026-06-11T03:34:33.453Z",
+      "elapsed_ms": 513551
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**计划合规审计** — `oracle`",
+      "session_id": "opencode:ses_14b40bd53ffeUodATngaGw5kVy",
+      "agent": "oracle",
+      "updated_at": "2026-06-11T03:50:30.925Z",
+      "started_at": "2026-06-11T03:38:32.772Z",
+      "status": "completed",
+      "ended_at": "2026-06-11T03:50:30.925Z",
+      "elapsed_ms": 718153
+    }
+  },
+  "agent": "atlas",
+  "ended_at": "2026-06-11T03:51:38.402Z",
+  "elapsed_ms": 8397556
+}

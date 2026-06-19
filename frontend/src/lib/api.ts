@@ -193,6 +193,111 @@ export async function sendChatMessage(analysisId: string, message: string, schoo
   }, 120000);
 }
 
+/** SSE 流式 Chat 事件类型 */
+export interface ChatStreamEvent {
+  type: "token" | "reasoning" | "done" | "error" | "tool_call" | "tool_result" | "heartbeat";
+  content: string;
+  /** 工具调用名称（仅 tool_call 事件） */
+  tool_name?: string;
+  /** 工具调用参数（仅 tool_call 事件） */
+  tool_args?: string;
+}
+
+/**
+ * SSE 流式 Chat — 使用 fetch + ReadableStream 消费 SSE（支持自定义 Header）
+ * 回调 onEvent 在每次收到事件时触发，返回 AbortController 供中断
+ */
+export function sendChatMessageStream(
+  analysisId: string,
+  message: string,
+  school: string,
+  onEvent: (event: ChatStreamEvent) => void,
+  onError: (err: Error) => void,
+  onDone: () => void,
+): AbortController {
+  const apiKey = _getApiKey();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (apiKey) {
+    headers["X-API-Key"] = apiKey;
+  }
+
+  const controller = new AbortController();
+
+  (async () => {
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE}/api/v2/chat/stream`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ analysis_id: analysisId, message, school }),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return; // 用户主动中断
+      onError(new Error(err instanceof Error ? (err.name === "AbortError" ? "请求已取消" : err.message) : "网络连接失败"));
+      return;
+    }
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const msg = body?.error?.message || body?.detail || `请求失败 (${res.status})`;
+      onError(new Error(msg));
+      return;
+    }
+
+    const reader = res.body?.getReader();
+    if (!reader) {
+      onError(new Error("无法读取响应流"));
+      return;
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // 按 \n\n 分割 SSE 事件
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || ""; // 最后一个可能是不完整的
+
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data: ")) continue;
+          const dataStr = line.slice(6);
+          try {
+            const evt = JSON.parse(dataStr) as ChatStreamEvent;
+            onEvent(evt);
+            if (evt.type === "done") {
+              onDone();
+              return;
+            }
+            if (evt.type === "error") {
+              onError(new Error(evt.content || "流式响应出错"));
+              return;
+            }
+          } catch {
+            // 忽略解析失败的行
+          }
+        }
+      }
+      // 流正常结束但没有收到 done 事件
+      onDone();
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+      onError(new Error(err instanceof Error ? err.message : "流读取中断"));
+    }
+  })();
+
+  return controller;
+}
+
 export async function getChatHistory(analysisId: string, school?: string): Promise<ChatHistoryResponse> {
   const params = school ? `?school=${encodeURIComponent(school)}` : "";
   return fetchApi(`/api/v2/chat/${analysisId}${params}`);
@@ -381,6 +486,73 @@ export async function getZiweiHoroscope(params: ZiweiHoroscopeParams): Promise<R
 
 export async function getZiweiPalace(params: ZiweiPalaceParams): Promise<Record<string, unknown>> {
   return fetchApi("/api/v2/ziwei/palace", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export interface ZiweiDayunStep {
+  age_range: string;
+  age_start: number;
+  age_end: number;
+  palace: string;
+  heavenly_stem: string;
+  earthly_branch: string;
+  major_stars: Array<{ name: string; brightness: string }>;
+  sihua_flow: Record<string, string>;
+}
+
+export interface ZiweiDayunResponse {
+  dayun: ZiweiDayunStep[];
+  chart_summary?: {
+    soul?: string;
+    body?: string;
+    fiveElementsClass?: string;
+  };
+}
+
+export async function getZiweiDayun(params: ZiweiChartParams): Promise<ZiweiDayunResponse> {
+  return fetchApi("/api/v2/ziwei/dayun", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export interface ZiweiLiunianResponse {
+  year: number;
+  yearly_stem: string;
+  yearly_branch: string;
+  palace_name: string;
+  sihua: Record<string, string>;
+  [key: string]: unknown;
+}
+
+export async function getZiweiLiunian(params: ZiweiHoroscopeParams): Promise<ZiweiLiunianResponse> {
+  return fetchApi("/api/v2/ziwei/liunian", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export interface ZiweiSihuaParams extends ZiweiChartParams {
+  query_year?: number;
+}
+
+export interface ZiweiSihuaBenming {
+  sihua?: Record<string, string>;
+  star_sihua_map?: Record<string, string>;
+  palace_sihua?: Record<string, string[]>;
+}
+
+export interface ZiweiSihuaResponse {
+  benming?: ZiweiSihuaBenming;
+  daxian?: Array<Record<string, unknown>>;
+  liunian?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export async function getZiweiSihua(params: ZiweiSihuaParams): Promise<ZiweiSihuaResponse> {
+  return fetchApi("/api/v2/ziwei/sihua", {
     method: "POST",
     body: JSON.stringify(params),
   });

@@ -139,6 +139,7 @@ CHAPTERS = [
     ("family", "陆", "家庭六亲"),
     ("health", "柒", "健康提示"),
     ("guidance", "捌", "趋吉避凶"),
+    ("ziwei", "玖", "紫微斗数"),
 ]
 
 
@@ -274,6 +275,24 @@ body {
     font-size: 8pt;
     color: #bbb;
     margin-top: 20pt;
+}
+
+.cover .cover-section-label {
+    font-size: 9pt;
+    font-weight: 600;
+    color: var(--gold);
+    text-align: center;
+    letter-spacing: 0.15em;
+    margin-bottom: 8pt;
+    margin-top: 4pt;
+}
+
+.cover .info-grid-ziwei {
+    margin-bottom: 20pt;
+}
+
+.cover .info-grid-ziwei .info-value {
+    color: var(--gold);
 }
 
 /* ── 目录 ── */
@@ -476,6 +495,59 @@ body {
     color: #bbb;
     margin-top: 30pt;
 }
+
+/* ── 紫微斗数章节专用 ── */
+.ziwei-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10pt 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+}
+
+.ziwei-table th {
+    background: rgba(185, 154, 91, 0.12);
+    border: 1pt solid var(--border-light);
+    padding: 6pt 8pt;
+    text-align: center;
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 9pt;
+}
+
+.ziwei-table td {
+    border: 1pt solid var(--border-light);
+    padding: 5pt 8pt;
+    text-align: center;
+    vertical-align: top;
+}
+
+.ziwei-table tr:nth-child(even) {
+    background: rgba(247, 241, 232, 0.4);
+}
+
+.ziwei-palace-name {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.ziwei-star {
+    color: var(--ink-light);
+}
+
+.ziwei-sihua-tag {
+    display: inline-block;
+    font-size: 8pt;
+    padding: 1pt 4pt;
+    border-radius: 2pt;
+    margin-left: 2pt;
+    font-weight: 600;
+}
+
+.ziwei-sihua-lu { background: rgba(76, 175, 80, 0.15); color: #2e7d32; }
+.ziwei-sihua-quan { background: rgba(33, 150, 243, 0.15); color: #1565c0; }
+.ziwei-sihua-ke { background: rgba(156, 39, 176, 0.15); color: #7b1fa2; }
+.ziwei-sihua-ji { background: rgba(244, 67, 54, 0.15); color: #c62828; }
 """
 
 
@@ -535,13 +607,65 @@ def build_report_html(
         logger.warning("report_data['citations'] 类型异常: %s, 使用空字典", type(citations).__name__)
         citations = {}
 
+    # ── 紫微斗数封面信息 ──
+    ziwei = result.get("ziwei") or {}
+    if isinstance(ziwei, str):
+        try:
+            ziwei = json.loads(ziwei)
+        except Exception:
+            ziwei = {}
+    ziwei_chart = ziwei.get("chart") or {}
+    ziwei_soul = ziwei_chart.get("soul") or ""
+    ziwei_body = ziwei_chart.get("body") or ""
+    ziwei_five_class = ziwei_chart.get("fiveElementsClass") or ""
+
+    # 提取命宫主星
+    ming_palace_stars = ""
+    for palace in ziwei_chart.get("palaces", []):
+        if isinstance(palace, dict) and palace.get("name") == "命宫":
+            stars = [
+                s.get("name", "")
+                for s in palace.get("majorStars", [])
+                if isinstance(s, dict) and s.get("name")
+            ]
+            if stars:
+                ming_palace_stars = "、".join(stars)
+            break
+
+    has_ziwei = bool(ziwei_soul or ziwei_body or ziwei_five_class)
+
     # ── 封面 ──
+    ziwei_cover_html = ""
+    if has_ziwei:
+        ziwei_cover_html = f"""
+        <div class="cover-section-label">紫微命盘</div>
+        <div class="info-grid info-grid-ziwei">
+            <div class="info-item">
+                <div class="info-label">命主</div>
+                <div class="info-value">{escape(ziwei_soul)}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">身主</div>
+                <div class="info-value">{escape(ziwei_body)}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">五行局</div>
+                <div class="info-value">{escape(ziwei_five_class)}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">命宫主星</div>
+                <div class="info-value">{escape(ming_palace_stars) if ming_palace_stars else "—"}</div>
+            </div>
+        </div>
+        """
+
     cover_html = f"""
     <div class="cover">
         <div class="day-master-circle">{escape(day_master)}</div>
         <h1>{escape(display_name)}</h1>
         <div class="subtitle">详批报告 · {now_str}</div>
         <div class="bazi-line">{escape(bazi)}</div>
+        <div class="cover-section-label">八字命盘</div>
         <div class="info-grid">
             <div class="info-item">
                 <div class="info-label">格局</div>
@@ -560,6 +684,7 @@ def build_report_html(
                 <div class="info-value">{escape(zodiac)}</div>
             </div>
         </div>
+        {ziwei_cover_html}
         <div class="disclaimer">本报告专为 {escape(display_name)} 生成 · 基于确定性命理计算</div>
     </div>
     """

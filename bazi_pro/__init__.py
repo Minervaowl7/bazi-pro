@@ -1,6 +1,6 @@
 """bazi-pro — 可审计、可交互、可视化的八字命理分析引擎"""
 
-__version__ = "5.3.0"
+__version__ = "6.0.0"
 
 __all__ = [
     'retrieve', 'retrieve_batch', 'load_corpus',

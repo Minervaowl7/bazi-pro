@@ -159,3 +159,31 @@ if __name__ == "__main__":
         print("pytest not installed. Skipping tests.", file=sys.stderr)
         sys.exit(0)
     pytest.main([__file__, "-v"])
+
+
+# ---------------------------------------------------------------------------
+# RAG Engine 兼容性测试
+# ---------------------------------------------------------------------------
+
+
+def test_retrieve_for_chat_backward_compat():
+    """retrieve_for_chat 签名向后兼容：旧调用方不传新参数仍正常工作"""
+    from server.rag_engine import retrieve_for_chat
+
+    context = {"day_master": "甲", "pattern": {"pattern": "正官格"}, "strength": {"verdict": "身旺"}}
+    # 旧调用方式：只传 question + analysis_context + k
+    result = retrieve_for_chat("食神制杀是什么意思", context, k=3)
+    assert isinstance(result, dict)
+    assert "results" in result
+    assert "category" in result
+    assert "query" in result
+
+
+def test_retrieve_for_chat_new_params():
+    """retrieve_for_chat 新参数 retrieval_mode 正常工作"""
+    from server.rag_engine import retrieve_for_chat
+
+    context = {"day_master": "甲", "pattern": {"pattern": "正官格"}, "strength": {"verdict": "身旺"}}
+    result = retrieve_for_chat("食神制杀", context, k=3, retrieval_mode="bm25")
+    assert isinstance(result, dict)
+    assert result.get("retrieval_mode") in ("bm25", "bm25_cached")

@@ -75,17 +75,17 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
       {/* 命盘概要 */}
       <div className="flex flex-wrap items-center gap-3 text-sm">
         {data.soul && (
-          <span className="rounded-full px-3 py-1 font-medium" style={{ background: "color-mix(in srgb, var(--scholar-blue) 15%, transparent)", color: "var(--scholar-blue)" }}>
+          <span className="rounded-full px-3 py-1 font-medium" style={{ background: "var(--ziwei-purple-bg)", color: "var(--ziwei-purple-text)" }}>
             命主: {String(data.soul)}
           </span>
         )}
         {data.body && (
-          <span className="rounded-full px-3 py-1 font-medium" style={{ background: "color-mix(in srgb, var(--wx-water) 15%, transparent)", color: "var(--wx-water)" }}>
+          <span className="rounded-full px-3 py-1 font-medium" style={{ background: "var(--ziwei-indigo-bg)", color: "var(--ziwei-indigo-text)" }}>
             身主: {String(data.body)}
           </span>
         )}
         {data.fiveElementsClass && (
-          <span className="rounded-full px-3 py-1 font-medium" style={{ background: "color-mix(in srgb, var(--gold) 15%, transparent)", color: "var(--gold)" }}>
+          <span className="rounded-full px-3 py-1 font-medium" style={{ background: "var(--ziwei-amber-bg)", color: "var(--ziwei-amber-text)" }}>
             {String(data.fiveElementsClass)}
           </span>
         )}
@@ -100,7 +100,7 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ borderBottom: "1px solid var(--border)" }}>
+            <tr className="border-b" style={{ borderColor: "var(--border)" }}>
               <th className="px-2 py-1.5 text-left font-medium" style={{ color: "var(--text-2)" }}>宫位</th>
               <th className="px-2 py-1.5 text-left font-medium" style={{ color: "var(--text-2)" }}>干支</th>
               <th className="px-2 py-1.5 text-left font-medium" style={{ color: "var(--text-2)" }}>主星</th>
@@ -112,12 +112,16 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
             {palaces.map((p) => (
               <tr
                 key={p.name}
-                style={{ borderBottom: "1px solid var(--border-subtle)", background: p.isBodyPalace ? "color-mix(in srgb, var(--wx-water) 6%, transparent)" : undefined }}
+                className="border-b"
+                style={{
+                  borderColor: "var(--border-subtle)",
+                  background: p.isBodyPalace ? "var(--ziwei-indigo-row)" : undefined,
+                }}
               >
                 <td className="px-2 py-1.5 font-medium" style={{ color: "var(--ink)" }}>
                   {p.name}
                   {p.isBodyPalace && (
-                    <span className="ml-1 text-xs" style={{ color: "var(--wx-water)" }}>(身)</span>
+                    <span className="ml-1 text-xs" style={{ color: "var(--ziwei-indigo-bright)" }}>(身)</span>
                   )}
                 </td>
                 <td className="px-2 py-1.5" style={{ color: "var(--text-2)" }}>
@@ -129,11 +133,11 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
                       <span
                         key={s.name}
                         className="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium"
-                        style={{ background: "color-mix(in srgb, var(--scholar-blue) 15%, transparent)", color: "var(--scholar-blue)" }}
+                        style={{ background: "var(--ziwei-purple-bg)", color: "var(--ziwei-purple-text)" }}
                       >
                         {s.name}
                         {s.brightness && (
-                          <span className="ml-0.5" style={{ color: "var(--text-3)" }}>({s.brightness})</span>
+                          <span className="ml-0.5" style={{ color: "var(--ziwei-purple-bright)" }}>({s.brightness})</span>
                         )}
                       </span>
                     ))}
@@ -145,7 +149,7 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
                       <span
                         key={s.name}
                         className="inline-flex items-center rounded px-1.5 py-0.5 text-xs"
-                        style={{ background: "color-mix(in srgb, var(--wx-water) 12%, transparent)", color: "var(--wx-water)" }}
+                        style={{ background: "var(--ziwei-blue-bg)", color: "var(--ziwei-blue-text)" }}
                       >
                         {s.name}
                       </span>
@@ -154,17 +158,17 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
                       <span
                         key={s.name}
                         className="inline-flex items-center rounded px-1.5 py-0.5 text-xs"
-                        style={{ background: "var(--surface-2)", color: "var(--text-3)" }}
+                        style={{ background: "var(--surface-2)", color: "var(--text-2)" }}
                       >
                         {s.name}
                       </span>
                     ))}
                     {(p.adjectiveStars ?? []).length > 3 && (
-                      <span className="text-xs" style={{ color: "var(--text-4)" }}>+{p.adjectiveStars.length - 3}</span>
+                      <span className="text-xs" style={{ color: "var(--text-3)" }}>+{p.adjectiveStars.length - 3}</span>
                     )}
                   </div>
                 </td>
-                <td className="px-2 py-1.5" style={{ color: "var(--text-3)" }}>
+                <td className="px-2 py-1.5" style={{ color: "var(--text-2)" }}>
                   {p.changsheng12}
                 </td>
               </tr>
@@ -178,7 +182,7 @@ export default function ZiweiPanel({ data }: ZiweiPanelProps) {
         {Object.entries(STAR_TYPE_LABELS).map(([key, label]) => (
           <span key={key}>{label}</span>
         ))}
-        <span style={{ color: "var(--wx-water)" }}>(身) = 身宫</span>
+        <span style={{ color: "var(--ziwei-indigo-bright)" }}>(身) = 身宫</span>
       </div>
     </div>
   );

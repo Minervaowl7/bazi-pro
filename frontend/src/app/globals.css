@@ -47,9 +47,29 @@
   --warning: #c5a55a;
 
   /* ── 流派色 ── */
-  --school-ziping: #2d3e5f;
-  --school-mangpai: #7c3aed;
-  --school-xinpai: #16a34a;
+  --school-mangpai: #a855f7;
+  --school-xinpai: #22c55e;
+
+  /* ── 维度面板色 ── */
+  --dim-rose: #e8637a;
+  --dim-teal: #2e9e6a;
+  --dim-amber: #c49a2b;
+  --dim-steel: #5e7ab5;
+  --dim-grape: #8b6ec7;
+  --dim-gold: #c49a42;
+
+  /* ── 紫微斗数面板色 ── */
+  --ziwei-purple-bg: rgba(128,90,213,0.10);
+  --ziwei-purple-text: #6b21a8;
+  --ziwei-purple-bright: #a855f7;
+  --ziwei-indigo-bg: rgba(79,70,229,0.10);
+  --ziwei-indigo-text: #3730a3;
+  --ziwei-indigo-bright: #6366f1;
+  --ziwei-indigo-row: rgba(79,70,229,0.04);
+  --ziwei-amber-bg: rgba(217,119,6,0.10);
+  --ziwei-amber-text: #92400e;
+  --ziwei-blue-bg: rgba(37,99,235,0.10);
+  --ziwei-blue-text: #1d4ed8;
 
   /* ── 兼容旧变量（被组件引用） ── */
   --bg-card: var(--surface);
@@ -109,12 +129,25 @@
   --wx-earth-bg: rgba(201,160,85,0.10);
   --wx-metal-bg: rgba(224,200,120,0.08);
   --wx-water-bg: rgba(90,155,201,0.10);
-  --success: #52c48a;
-  --danger: #e0795a;
-  --warning: #e0c878;
-  --school-ziping: #8da2c0;
-  --school-mangpai: #a78bfa;
+  --school-mangpai: #c084fc;
   --school-xinpai: #4ade80;
+  --dim-rose: #fb7185;
+  --dim-teal: #4ade80;
+  --dim-amber: #fbbf24;
+  --dim-steel: #93c5fd;
+  --dim-grape: #c084fc;
+  --dim-gold: #fbbf24;
+  --ziwei-purple-bg: rgba(168,85,247,0.15);
+  --ziwei-purple-text: #c084fc;
+  --ziwei-purple-bright: #c084fc;
+  --ziwei-indigo-bg: rgba(129,140,248,0.15);
+  --ziwei-indigo-text: #a5b4fc;
+  --ziwei-indigo-bright: #818cf8;
+  --ziwei-indigo-row: rgba(129,140,248,0.06);
+  --ziwei-amber-bg: rgba(245,158,11,0.15);
+  --ziwei-amber-text: #fbbf24;
+  --ziwei-blue-bg: rgba(96,165,250,0.15);
+  --ziwei-blue-text: #93c5fd;
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.2);
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(255,255,255,0.04);
   --shadow-card: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(255,255,255,0.04);
@@ -245,9 +278,29 @@
   border-color: var(--cinnabar);
   box-shadow: 0 0 0 3px rgba(201,100,66,0.08);
 }
+
+/* 移动端触摸友好：增大输入框和按钮最小高度至 44px */
+@media (max-width: 639px) {
+  .form-input {
+    min-height: 44px;
+    height: auto;
+    font-size: 14px;
+    padding: 0 12px;
+  }
+  select.form-input {
+    padding-right: 32px;
+  }
+}
 select.form-input {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239e9488' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  /* Note: SVG data URL cannot use CSS variables; the stroke color #9e9488 matches --text-3 in light mode.
+     Dark mode override below adapts the arrow to --text-3. */
+
+.dark select.form-input,
+[data-theme="dark"] select.form-input {
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23686662' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
   background-repeat: no-repeat;
   background-position: right 10px center;
   padding-right: 28px;
@@ -322,6 +375,9 @@ select.form-input {
 .hero-divider,
 .hero-desc,
 .hero-form,
+.hero-demo-btn,
+.hero-features,
+.feature-card,
 .cap-bar,
 .cap-item {
   animation: gsapFallback 0s 0.4s forwards;
@@ -389,6 +445,19 @@ select.form-input {
     transition-duration: 0.01ms !important;
   }
   html[data-scroll-behavior="smooth"] { scroll-behavior: auto !important; }
+}
+
+/* 移动端图表响应式 — ECharts 容器自适应缩放 */
+@media (max-width: 639px) {
+  .echarts-for-react,
+  .echarts-for-react > div,
+  .echarts-for-react > div > canvas,
+  .echarts-for-react > div > svg {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  /* 移动端卡片内边距收紧 */
+  .card { border-radius: var(--r-sm); }
 }
 
 /* 打印 */

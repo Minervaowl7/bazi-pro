@@ -3,9 +3,11 @@ from __future__ import annotations
 import asyncio
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+
+from server.deps import verify_api_key
 
 router = APIRouter()
 
@@ -30,8 +32,28 @@ class ZiweiPalaceRequest(BaseModel):
     palace_name: str = Field(default="命宫", description="宫位名称")
 
 
+class ZiweiDayunRequest(BaseModel):
+    solar_date: str = Field(..., description="阳历出生日期，格式 YYYY-MM-DD")
+    hour: int = Field(..., ge=0, le=23, description="出生小时(0-23)")
+    gender: int = Field(default=1, description="性别：1=男，0=女")
+
+
+class ZiweiLiunianRequest(BaseModel):
+    solar_date: str = Field(..., description="阳历出生日期，格式 YYYY-MM-DD")
+    hour: int = Field(..., ge=0, le=23, description="出生小时(0-23)")
+    gender: int = Field(default=1, description="性别：1=男，0=女")
+    query_year: Optional[int] = Field(default=None, description="查询年份，默认当年")
+
+
+class ZiweiSihuaRequest(BaseModel):
+    solar_date: str = Field(..., description="阳历出生日期，格式 YYYY-MM-DD")
+    hour: int = Field(..., ge=0, le=23, description="出生小时(0-23)")
+    gender: int = Field(default=1, description="性别：1=男，0=女")
+    query_year: Optional[int] = Field(default=None, description="查询年份（可选），用于流年四化")
+
+
 @router.post("/api/v2/ziwei/chart")
-async def api_v2_ziwei_chart(payload: ZiweiChartRequest):
+async def api_v2_ziwei_chart(payload: ZiweiChartRequest, _auth=Depends(verify_api_key)):
     from server.ziwei import get_ziwei_chart
 
     result = await asyncio.to_thread(
@@ -46,7 +68,7 @@ async def api_v2_ziwei_chart(payload: ZiweiChartRequest):
 
 
 @router.post("/api/v2/ziwei/horoscope")
-async def api_v2_ziwei_horoscope(payload: ZiweiHoroscopeRequest):
+async def api_v2_ziwei_horoscope(payload: ZiweiHoroscopeRequest, _auth=Depends(verify_api_key)):
     from server.ziwei import get_ziwei_horoscope
 
     result = await asyncio.to_thread(
@@ -62,7 +84,7 @@ async def api_v2_ziwei_horoscope(payload: ZiweiHoroscopeRequest):
 
 
 @router.post("/api/v2/ziwei/palace")
-async def api_v2_ziwei_palace(payload: ZiweiPalaceRequest):
+async def api_v2_ziwei_palace(payload: ZiweiPalaceRequest, _auth=Depends(verify_api_key)):
     from server.ziwei import analyze_ziwei_palace
 
     result = await asyncio.to_thread(
@@ -71,6 +93,53 @@ async def api_v2_ziwei_palace(payload: ZiweiPalaceRequest):
         hour=payload.hour,
         gender=payload.gender,
         palace_name=payload.palace_name,
+    )
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
+
+
+@router.post("/api/v2/ziwei/sihua")
+async def api_v2_ziwei_sihua(payload: ZiweiSihuaRequest, _auth=Depends(verify_api_key)):
+    from server.ziwei import get_ziwei_sihua
+
+    result = await asyncio.to_thread(
+        get_ziwei_sihua,
+        solar_date=payload.solar_date,
+        hour=payload.hour,
+        gender=payload.gender,
+        query_year=payload.query_year,
+    )
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
+
+
+@router.post("/api/v2/ziwei/dayun")
+async def api_v2_ziwei_dayun(payload: ZiweiDayunRequest, _auth=Depends(verify_api_key)):
+    from server.ziwei import get_ziwei_dayun
+
+    result = await asyncio.to_thread(
+        get_ziwei_dayun,
+        solar_date=payload.solar_date,
+        hour=payload.hour,
+        gender=payload.gender,
+    )
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
+
+
+@router.post("/api/v2/ziwei/liunian")
+async def api_v2_ziwei_liunian(payload: ZiweiLiunianRequest, _auth=Depends(verify_api_key)):
+    from server.ziwei import get_ziwei_liunian
+
+    result = await asyncio.to_thread(
+        get_ziwei_liunian,
+        solar_date=payload.solar_date,
+        hour=payload.hour,
+        gender=payload.gender,
+        query_year=payload.query_year,
     )
     if "error" in result:
         return JSONResponse(result, status_code=400)

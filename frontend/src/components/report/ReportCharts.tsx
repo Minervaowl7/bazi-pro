@@ -2,7 +2,7 @@
 // @ts-nocheck
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import dynamic from "next/dynamic";
 
 const EChartsReact = dynamic(() => import("echarts-for-react"), { ssr: false });
@@ -43,6 +43,13 @@ function WuxingRadar({ result }: ReportChartsProps) {
   const ink = cssVar("--ink", "#2c2418");
   const text2 = cssVar("--text-2", "#6b6154");
   const border = cssVar("--border", "rgba(180,160,120,0.20)");
+  const chartRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      chartRef.current?.getEchartsInstance()?.dispose();
+    };
+  }, []);
 
   const option = useMemo(() => ({
     tooltip: { trigger: "item" },
@@ -70,7 +77,7 @@ function WuxingRadar({ result }: ReportChartsProps) {
   return (
     <div className="report-chart-card">
       <div className="report-chart-title">五行力量分布</div>
-      <EChartsReact option={option} style={{ height: 260 }} opts={{ renderer: "svg" }} />
+      <EChartsReact ref={chartRef} option={option} style={{ height: 260 }} opts={{ renderer: "svg" }} autoresize={true} />
       <div className="flex justify-center gap-4 mt-2 flex-wrap">
         {WUXING_ORDER.map(wx => (
           <div key={wx} className="flex items-center gap-1.5 text-xs" style={{ color: text2 }}>
@@ -93,6 +100,13 @@ function ShishenBar({ result }: ReportChartsProps) {
   const ink = cssVar("--ink", "#2c2418");
   const text3 = cssVar("--text-3", "#9e9488");
   const border = cssVar("--border", "rgba(180,160,120,0.20)");
+  const chartRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      chartRef.current?.getEchartsInstance()?.dispose();
+    };
+  }, []);
 
   const counts: Record<string, number> = {};
   for (const p of pillars) {
@@ -150,7 +164,7 @@ function ShishenBar({ result }: ReportChartsProps) {
   return (
     <div className="report-chart-card">
       <div className="report-chart-title">十神能量分布</div>
-      <EChartsReact option={option} style={{ height: Math.max(200, sorted.length * 36 + 40) }} opts={{ renderer: "svg" }} />
+      <EChartsReact ref={chartRef} option={option} style={{ height: Math.max(200, sorted.length * 36 + 40) }} opts={{ renderer: "svg" }} autoresize={true} />
     </div>
   );
 }
@@ -163,6 +177,13 @@ function QualityGauge({ result }: ReportChartsProps) {
   const total = typeof chartQuality?.total === "number" ? chartQuality.total : null;
   const ink = cssVar("--ink", "#2c2418");
   const text3 = cssVar("--text-3", "#9e9488");
+  const chartRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      chartRef.current?.getEchartsInstance()?.dispose();
+    };
+  }, []);
 
   const getColor = (v: number) => {
     if (v >= 80) return cssVar("--wx-wood", "#3a7d5c");
@@ -219,7 +240,7 @@ function QualityGauge({ result }: ReportChartsProps) {
   return (
     <div className="report-chart-card">
       <div className="report-chart-title">命局评分</div>
-      <EChartsReact option={option} style={{ height: 220 }} opts={{ renderer: "svg" }} />
+      <EChartsReact ref={chartRef} option={option} style={{ height: 220 }} opts={{ renderer: "svg" }} autoresize={true} />
       <div className="grid grid-cols-4 gap-2 mt-2">
         {dimensions.map(d => {
           const val = typeof chartQuality?.[d.key] === "number" ? chartQuality[d.key] as number : null;
@@ -245,6 +266,13 @@ function DayunTimeline({ result }: ReportChartsProps) {
   const ink = cssVar("--ink", "#2c2418");
   const text3 = cssVar("--text-3", "#9e9488");
   const border = cssVar("--border", "rgba(180,160,120,0.20)");
+  const chartRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      chartRef.current?.getEchartsInstance()?.dispose();
+    };
+  }, []);
 
   const option = useMemo(() => {
     if (!dayun || dayun.length === 0) return null;
@@ -303,7 +331,7 @@ function DayunTimeline({ result }: ReportChartsProps) {
   return (
     <div className="report-chart-card">
       <div className="report-chart-title">大运走势</div>
-      <EChartsReact option={option} style={{ height: 200 }} opts={{ renderer: "svg" }} />
+      <EChartsReact ref={chartRef} option={option} style={{ height: 200 }} opts={{ renderer: "svg" }} autoresize={true} />
     </div>
   );
 }

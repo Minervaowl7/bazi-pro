@@ -15,6 +15,7 @@ const SECTION_META: Array<{ key: string; title: string }> = [
   { key: "family", title: "家庭六亲" },
   { key: "health", title: "健康提示" },
   { key: "guidance", title: "趋吉避凶" },
+  { key: "ziwei", title: "紫微斗数" },
 ];
 
 interface ReportPreviewModalProps {
@@ -47,6 +48,7 @@ export default function ReportPreviewModal({
   downloading,
 }: ReportPreviewModalProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const [activeChapter, setActiveChapter] = useState("overview");
   const [progress, setProgress] = useState(0);
 
@@ -91,13 +93,38 @@ export default function ReportPreviewModal({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // ESC 关闭
+  // ESC 关闭 + 焦点陷阱
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
     };
     document.addEventListener("keydown", handleKey);
+    // 打开时聚焦到关闭按钮
+    const closeBtn = modalRef.current?.querySelector<HTMLButtonElement>('[aria-label="关闭"]');
+    closeBtn?.focus();
     return () => document.removeEventListener("keydown", handleKey);
   }, [open, onClose]);
 
@@ -115,8 +142,11 @@ export default function ReportPreviewModal({
 
   return (
     <div
-      role="dialog" aria-modal="true" aria-label="详批报告预览"
+      ref={modalRef}
       className="fixed inset-0 flex flex-col"
+      role="dialog"
+      aria-modal="true"
+      aria-label="详批报告"
       style={{ background: "var(--bg)", zIndex: "var(--z-overlay)" }}
     >
       {/* 顶部栏 */}
@@ -211,8 +241,7 @@ export default function ReportPreviewModal({
             onClick={onClose}
             className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200"
             style={{ color: "var(--text-3)" }}
-            aria-label="关闭预览"
-            title="关闭"
+            aria-label="关闭"
           >
             <svg
               width="18"

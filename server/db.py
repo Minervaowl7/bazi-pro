@@ -311,15 +311,18 @@ async def insert_chat_message(analysis_id: str, role: str, content: str, citatio
 
 
 async def get_chat_messages(analysis_id: str, limit: int = 50, school: str | None = None) -> list[dict]:
+    """获取用户/助手消息（自动过滤摘要消息，前端不展示摘要）"""
     db = await get_db()
     if school:
         cursor = await db.execute(
-            "SELECT role, content, citations, created_at FROM chat_messages WHERE analysis_id = ? AND school = ? ORDER BY id ASC LIMIT ?",
+            "SELECT role, content, citations, created_at FROM chat_messages "
+            "WHERE analysis_id = ? AND school = ? AND role != 'summary' ORDER BY id ASC LIMIT ?",
             (analysis_id, school, limit),
         )
     else:
         cursor = await db.execute(
-            "SELECT role, content, citations, created_at FROM chat_messages WHERE analysis_id = ? ORDER BY id ASC LIMIT ?",
+            "SELECT role, content, citations, created_at FROM chat_messages "
+            "WHERE analysis_id = ? AND role != 'summary' ORDER BY id ASC LIMIT ?",
             (analysis_id, limit),
         )
     rows = await cursor.fetchall()
@@ -327,6 +330,49 @@ async def get_chat_messages(analysis_id: str, limit: int = 50, school: str | Non
         {"role": row[0], "content": row[1], "citations": row[2] or "", "created_at": row[3]}
         for row in rows
     ]
+
+
+async def get_latest_summary(analysis_id: str, school: str = "ziping") -> dict | None:
+    """获取最新的对话摘要消息（role='summary'）"""
+    db = await get_db()
+    cursor = await db.execute(
+        "SELECT id, content, created_at FROM chat_messages WHERE analysis_id = ? AND school = ? AND role = 'summary' ORDER BY id DESC LIMIT 1",
+        (analysis_id, school),
+    )
+    row = await cursor.fetchone()
+    if not row:
+        return None
+    return {"id": row[0], "content": row[1], "created_at": row[2]}
+
+
+async def get_messages_after_id(
+    analysis_id: str, after_id: int, school: str = "ziping", limit: int = 100
+) -> list[dict]:
+    """获取指定 ID 之后的用户/助手消息（不含摘要），用于构建 LLM 上下文"""
+    db = await get_db()
+    cursor = await db.execute(
+        "SELECT id, role, content, citations, created_at FROM chat_messages "
+        "WHERE analysis_id = ? AND school = ? AND id > ? AND role IN ('user', 'assistant') "
+        "ORDER BY id ASC LIMIT ?",
+        (analysis_id, school, after_id, limit),
+    )
+    rows = await cursor.fetchall()
+    return [
+        {"id": row[0], "role": row[1], "content": row[2], "citations": row[3] or "", "created_at": row[4]}
+        for row in rows
+    ]
+
+
+async def insert_chat_summary(analysis_id: str, content: str, school: str = "ziping") -> None:
+    """插入对话摘要消息（role='summary'）"""
+    db = await get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    await db.execute(
+        "INSERT INTO chat_messages (analysis_id, role, content, citations, school, created_at) "
+        "VALUES (?, 'summary', ?, '', ?, ?)",
+        (analysis_id, content, school, now),
+    )
+    await db.commit()
 
 
 async def save_report(analysis_id: str, report_data: dict, citations: dict | None = None) -> str:
