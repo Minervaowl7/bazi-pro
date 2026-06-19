@@ -1,3 +1,4 @@
+import os; os.environ["BAZI_ALLOW_UNAUTHED"] = "1"
 """
 紫微斗数模块测试
 """
