@@ -141,7 +141,7 @@ export default function DayunTimeline({ result }: Props) {
           top: 0,
           bottom: 0,
           width: 1,
-          background: "rgba(180,160,120,0.12)",
+          background: "color-mix(in srgb, var(--gold) 12%, transparent)",
         }} />
 
         {dayun.map((d, i) => {
@@ -253,6 +253,7 @@ export default function DayunTimeline({ result }: Props) {
                               const bgMap: Record<string, string> = { "冲": "rgba(196,60,44,0.08)", "合": "rgba(53,94,133,0.08)", "刑": "rgba(148,102,54,0.07)", "害": "rgba(184,146,63,0.06)" };
                               return <span key={ri} className="px-2 py-0.5 font-semibold" style={{ fontSize: 11, color: RELATION_COLORS[r.type] || "#a0a0b8", background: bgMap[r.type] || "rgba(160,160,184,0.07)", borderRadius: 9999 }} title={r.desc}>{r.type}</span>;
                             })}
+                            {rels.length > 3 && <span className="px-1.5 py-0.5 font-medium" style={{ fontSize: 10, color: "var(--text-4)" }}>+{rels.length - 3}</span>}
                           </span>
                         )}
                         <span className="ml-auto tabular-nums shrink-0" style={{ color: "var(--text-4)" }}>{year > 0 ? `${age}岁` : ""}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getLLMSettings, updateLLMSettings, testLLMConnection } from "@/lib/api";
 
 const STORAGE_KEY = "bazi_llm_settings";
@@ -109,11 +109,25 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
     if (open) loadFromServer();
   }, [open, loadFromServer]);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { onClose(); return; }
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusable.length === 0) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
     document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    dialogRef.current?.focus();
+    return () => { document.removeEventListener("keydown", handler); document.body.style.overflow = prevOverflow; };
   }, [open, onClose]);
 
   const handleProviderSelect = (p: Provider) => {
@@ -174,6 +188,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
     fontSize: 14, padding: "10px 12px",
     background: "var(--surface-2)", color: "var(--ink)",
     borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-subtle)",
+    borderRadius: "var(--r-sm)",
     fontFamily: "var(--font-mono)", outline: "none", width: "100%", boxSizing: "border-box",
     transition: "border-color 0.15s, box-shadow 0.15s",
   };
@@ -185,11 +200,12 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
   return (
     <div
       role="dialog" aria-modal="true" aria-label="AI 模型设置"
+      ref={dialogRef} tabIndex={-1}
       className="fixed inset-0 z-[100] flex items-center justify-center"
-      style={{ background: "rgba(28,25,23,0.45)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(28,25,23,0.45)", backdropFilter: "blur(4px)", outline: "none" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-[520px] max-h-[90vh] overflow-auto" style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "0 25px 50px -12px rgba(28,25,23,0.25)" }}>
+      <div className="w-full max-w-[520px] max-h-[90vh] overflow-auto animate-fade-in" style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", boxShadow: "0 25px 50px -12px rgba(28,25,23,0.25)" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
           <div>
@@ -224,7 +240,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           {/* Provider Selection */}
           <div>
             <div style={labelStyle}>选择服务商</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
               {PROVIDERS.map((p) => {
                 const active = !customBase && provider?.id === p.id;
                 return (

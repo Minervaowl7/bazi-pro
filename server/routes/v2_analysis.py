@@ -22,7 +22,7 @@ from server.deps import (
 )
 from server.sse import broadcast, buffers, lock, subscribers, v2_active_ids
 
-logger = logging.getLogger("bazi-pro")
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -59,7 +59,7 @@ class CompareRequest(BaseModel):
 
 
 @router.post("/api/v2/paipan")
-async def api_v2_paipan(payload: PaipanRequest):
+async def api_v2_paipan(payload: PaipanRequest, _auth=Depends(verify_api_key)):
     try:
         from bazi_pro.paipan import paipan_from_datetime
         solar = payload.阳历 or ""
@@ -70,7 +70,7 @@ async def api_v2_paipan(payload: PaipanRequest):
 
 
 @router.post("/api/v2/analyze")
-async def api_v2_analyze(payload: BirthAnalyzeRequest):
+async def api_v2_analyze(payload: BirthAnalyzeRequest, _auth=Depends(verify_api_key)):
     analysis_id = generate_analysis_id()
     payload_dict = payload.model_dump(exclude_none=True)
     detail_level = payload_dict.pop("detail_level", "standard")
@@ -111,7 +111,7 @@ async def api_v2_analyze(payload: BirthAnalyzeRequest):
 
 
 @router.post("/api/v2/analyze/compare")
-async def api_v2_analyze_compare(payload: CompareRequest):
+async def api_v2_analyze_compare(payload: CompareRequest, _auth=Depends(verify_api_key)):
     try:
         from bazi_pro.core.schools import school_analyze
     except ImportError:
@@ -141,7 +141,7 @@ async def api_v2_analyze_compare(payload: CompareRequest):
 
 
 @router.get("/api/v2/analysis/{analysis_id}")
-async def api_v2_get_analysis(analysis_id: str):
+async def api_v2_get_analysis(analysis_id: str, _auth=Depends(verify_api_key)):
     if not _validate_analysis_id(analysis_id):
         return error_response(400, "INVALID_FORMAT", "analysis_id 格式不合法")
     record = await get_analysis(analysis_id)

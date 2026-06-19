@@ -7,10 +7,10 @@ interface Props { result: Record<string, unknown>; }
 
 const TYPE_ORDER = ["吉", "凶", "中"];
 const TYPE_LABELS: Record<string, string> = { "吉": "吉神", "凶": "凶煞", "中": "中性" };
-const TYPE_COLORS: Record<string, { dot: string; bg: string; text: string; border: string }> = {
-  吉: { dot: "var(--wx-wood)", bg: "rgba(58,125,92,0.06)", text: "var(--wx-wood)", border: "rgba(58,125,92,0.16)" },
-  凶: { dot: "var(--wx-fire)", bg: "rgba(196,82,58,0.06)", text: "var(--wx-fire)", border: "rgba(196,82,58,0.16)" },
-  中: { dot: "var(--wx-earth)", bg: "rgba(197,165,90,0.06)", text: "var(--wx-earth)", border: "rgba(197,165,90,0.14)" },
+const TYPE_COLORS: Record<string, { dot: string; bg: string; bgActive: string; text: string; border: string }> = {
+  吉: { dot: "var(--wx-wood)", bg: "color-mix(in srgb, var(--wx-wood) 6%, transparent)", bgActive: "color-mix(in srgb, var(--wx-wood) 16%, transparent)", text: "var(--wx-wood)", border: "color-mix(in srgb, var(--wx-wood) 16%, transparent)" },
+  凶: { dot: "var(--wx-fire)", bg: "color-mix(in srgb, var(--wx-fire) 6%, transparent)", bgActive: "color-mix(in srgb, var(--wx-fire) 16%, transparent)", text: "var(--wx-fire)", border: "color-mix(in srgb, var(--wx-fire) 16%, transparent)" },
+  中: { dot: "var(--wx-earth)", bg: "color-mix(in srgb, var(--wx-earth) 6%, transparent)", bgActive: "color-mix(in srgb, var(--wx-earth) 14%, transparent)", text: "var(--wx-earth)", border: "color-mix(in srgb, var(--wx-earth) 14%, transparent)" },
 };
 
 export default function ShenShaPanel({ result }: Props) {
@@ -20,7 +20,7 @@ export default function ShenShaPanel({ result }: Props) {
   const [activeItem, setActiveItem] = useState<ShenShaItem | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // 点击外部关闭 tooltip
+  // 点击外部关闭 tooltip + Escape 关闭
   useEffect(() => {
     if (!activeItem) return;
     function handleClick(e: MouseEvent) {
@@ -28,8 +28,12 @@ export default function ShenShaPanel({ result }: Props) {
         setActiveItem(null);
       }
     }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setActiveItem(null);
+    }
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => { document.removeEventListener("mousedown", handleClick); document.removeEventListener("keydown", handleKey); };
   }, [activeItem]);
 
   if (!shensha || shensha.length === 0) return null;
@@ -64,6 +68,7 @@ export default function ShenShaPanel({ result }: Props) {
             return (
               <div key={type}>
                 <button
+                  aria-expanded={isGroupExpanded}
                   className="flex items-center gap-2 mb-3 w-full text-left"
                   onClick={() => setExpandedGroup(prev => ({ ...prev, [type]: !isGroupExpanded }))}
                   style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
@@ -89,7 +94,7 @@ export default function ShenShaPanel({ result }: Props) {
                               fontSize: 13,
                               fontWeight: 500,
                               fontFamily: "var(--font-display)",
-                              background: isActive ? colors.bg.replace("0.06", "0.15") : colors.bg,
+                              background: isActive ? colors.bgActive : colors.bg,
                               color: colors.text,
                               border: `1px solid ${isActive ? colors.text : colors.border}`,
                               borderRadius: 9999,
@@ -135,6 +140,7 @@ export default function ShenShaPanel({ result }: Props) {
                                 <span style={{ fontSize: 11, color: "var(--text-4)" }}>{item.position}柱</span>
                                 <button
                                   onClick={(e) => { e.stopPropagation(); setActiveItem(null); }}
+                                  aria-label="关闭"
                                   className="ml-auto"
                                   style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-4)", fontSize: 16, padding: 2, lineHeight: 1 }}
                                 >

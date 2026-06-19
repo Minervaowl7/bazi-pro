@@ -52,10 +52,11 @@ function PersonForm({ label, form, setForm, history, idPrefix }: {
 
       {history.length > 0 && (
         <div className="mb-4">
-          <label className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
+          <label htmlFor={`${idPrefix}-history`} className="block text-[11px] mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
             从历史记录选择
           </label>
           <select
+            id={`${idPrefix}-history`}
             onChange={(e) => {
               const item = history.find(h => h.id === e.target.value);
               if (item) setForm({ bazi: item.bazi, dayMaster: item.day_master, gender: item.gender || form.gender });
@@ -210,12 +211,22 @@ export default function ComparePage() {
               type="submit"
               disabled={loading}
               className="px-10 py-3 rounded-xl text-sm font-medium text-white disabled:opacity-50 transition-all active:scale-[0.97]"
-              style={{ background: "var(--scholar-blue)", boxShadow: "0 2px 12px rgba(44,62,107,0.3)" }}
+              style={{ background: "var(--scholar-blue)", boxShadow: "0 2px 12px color-mix(in srgb, var(--scholar-blue) 30%, transparent)" }}
             >
               {loading ? "分析中..." : "合婚分析"}
             </button>
           </div>
         </form>
+
+        {loading && (
+          <div role="status" aria-live="polite" className="mt-10 flex flex-col items-center gap-3">
+            <div className="relative w-10 h-10">
+              <div className="absolute inset-0 rounded-full border-2 border-[var(--border)]" />
+              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[var(--scholar-blue)] animate-spin" />
+            </div>
+            <p className="text-sm" style={{ color: "var(--text-3)" }}>正在分析双方命局...</p>
+          </div>
+        )}
 
         {/* Results */}
         {result && (

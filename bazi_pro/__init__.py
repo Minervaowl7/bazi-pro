@@ -212,69 +212,6 @@ class AnalysisEngine:
             if os.path.exists(p):
                 return os.path.abspath(p)
         return ''
-
-    @staticmethod
-    def _parse_pillars(bazi: str, day_master: str) -> list[dict]:
-        parts = bazi.split()
-        positions = ['年', '月', '日', '时']
-        pillars = []
-        for i, token in enumerate(parts):
-            if len(token) >= 2:
-                gan, zhi = token[0], token[1]
-                pillars.append({
-                    'position': positions[i] if i < 4 else '',
-                    'gan': gan,
-                    'zhi': zhi,
-                    'wuxing_gan': GAN_WUXING.get(gan, ''),
-                    'wuxing_zhi': ZHI_WUXING.get(zhi, ''),
-                    'shishen': derive_shishen(day_master, gan),
-                })
-        return pillars
-
-    @staticmethod
-    def _derive_shishen_map(day_master: str, pillars: list[dict]) -> dict[str, str]:
-        result = {}
-        for p in pillars:
-            pos = p.get('position', '')
-            gan = p.get('gan', '')
-            if gan:
-                result[f'{pos}干'] = derive_shishen(day_master, gan)
-        return result
-
-    @staticmethod
-    def _wuxing_quick_check(wuxing_counts: dict[str, int], day_master: str) -> dict:
-        dm_wx = GAN_WUXING.get(day_master, '')
-        if not dm_wx:
-            return {'tendency': '未知', 'yin_bi_pct': 0, 'ke_xie_hao_pct': 0}
-
-        sheng_wo = _sheng_map.get(dm_wx, '')
-        tong_wo = dm_wx
-
-        yin_bi = wuxing_counts.get(sheng_wo, 0) + wuxing_counts.get(tong_wo, 0)
-        total = max(1, sum(wuxing_counts.values()))
-        yin_bi_pct = round(yin_bi / total * 100, 1)
-        ke_xie_hao_pct = round(100 - yin_bi_pct, 1)
-
-        if yin_bi_pct >= 75:
-            tendency = '极偏·印比主导'
-        elif yin_bi_pct >= 60:
-            tendency = '偏旺·印比偏重'
-        elif yin_bi_pct <= 25:
-            tendency = '极偏·克泄耗主导'
-        elif yin_bi_pct <= 40:
-            tendency = '偏弱·克泄耗偏重'
-        else:
-            tendency = '相对平衡'
-
-        return {
-            'tendency': tendency,
-            'yin_bi_pct': yin_bi_pct,
-            'ke_xie_hao_pct': ke_xie_hao_pct,
-            'day_master_wuxing': dm_wx,
-            'sheng_wo_wuxing': sheng_wo,
-        }
-
-    @staticmethod
     def _format_analysis_body(analysis: dict) -> str:
         lines = ['# 八字命理分析报告', '']
         v = analysis.get('validation', {})
@@ -314,6 +251,3 @@ class AnalysisEngine:
         return '\n'.join(lines)
 
 
-_sheng_map = {
-    '木': '水', '火': '木', '土': '火', '金': '土', '水': '金',
-}

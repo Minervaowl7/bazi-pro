@@ -6,9 +6,10 @@ interface ProgressProps {
   color?: string;
   className?: string;
   showLabel?: boolean;
+  label?: string;
 }
 
-function Progress({ value, max = 100, color, className, showLabel }: ProgressProps) {
+function Progress({ value, max = 100, color, className, showLabel, label }: ProgressProps) {
   const pct = Math.min(100, Math.max(0, (value / max) * 100));
 
   return (
@@ -18,6 +19,7 @@ function Progress({ value, max = 100, color, className, showLabel }: ProgressPro
         aria-valuenow={value}
         aria-valuemin={0}
         aria-valuemax={max}
+        aria-label={label}
         className="flex-1 h-2 rounded-full bg-[var(--surface-2)] overflow-hidden"
       >
         <div

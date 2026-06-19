@@ -145,7 +145,11 @@ export default function RelationGraph({ result }: Props): JSX.Element | null {
     };
   }, [result, theme]);
 
-  if (!option) return <></>;
+  if (!option) return (
+    <section className="card p-6 text-center">
+      <p style={{ color: "var(--text-4)", fontSize: 13 }}>本命盘无刑冲合害关系</p>
+    </section>
+  );
 
   return (
     <div

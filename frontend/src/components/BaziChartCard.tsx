@@ -111,7 +111,7 @@ export default function BaziChartCard({ result }: Props) {
               {wangshuai?.verdict && (
                 <span
                   ref={dayunRef}
-                  className="inline-flex items-center justify-center px-3 py-0.5 font-semibold"
+                  className="inline-flex items-center justify-center px-3 py-0.5 font-semibold gsapFallback"
                   style={{
                     fontSize: 12,
                     background: "var(--cinnabar-light)",
@@ -132,7 +132,7 @@ export default function BaziChartCard({ result }: Props) {
         </div>
 
         {/* 四柱 */}
-        <div className="grid grid-cols-4 min-w-0" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 min-w-0" style={{ borderTop: "1px solid var(--border-subtle)" }}>
           {pillars.map((p, i) => {
             const isDayPillar = i === 2;
             const gan = p.gan || "";
@@ -144,9 +144,9 @@ export default function BaziChartCard({ result }: Props) {
               <div
                 key={i}
                 ref={(el) => { pillarRefs.current[i] = el; }}
-                className="flex flex-col items-center py-8 px-4"
+                className={`flex flex-col items-center py-8 px-4 gsapFallback ${i < 3 ? "sm:border-r" : ""}`}
                 style={{
-                  borderRight: i < 3 ? "1px solid var(--border-subtle)" : "none",
+                  borderColor: "var(--border-subtle)",
                   visibility: "hidden",
                 }}
               >
@@ -213,7 +213,7 @@ export default function BaziChartCard({ result }: Props) {
                 </div>
 
                 {p.nayin && (
-                  <span data-nayin style={{ fontSize: 10, color: "var(--text-4)", fontStyle: "italic", fontFamily: "var(--font-display)", letterSpacing: "0.03em", visibility: "hidden" }}>{p.nayin}</span>
+                  <span data-nayin className="gsapFallback" style={{ fontSize: 10, color: "var(--text-4)", fontStyle: "italic", fontFamily: "var(--font-display)", letterSpacing: "0.03em", visibility: "hidden" }}>{p.nayin}</span>
                 )}
               </div>
             );
@@ -412,6 +412,7 @@ function ShenShaInline({ result }: { result: Record<string, unknown> }) {
                             <span style={{ fontSize: 11, color: "var(--text-4)" }}>{item.position}柱</span>
                             <button
                               onClick={(e) => { e.stopPropagation(); setActiveItem(null); }}
+                              aria-label="关闭"
                               className="ml-auto"
                               style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-4)", fontSize: 16, padding: 2, lineHeight: 1 }}
                             >

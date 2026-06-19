@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAnalysisStore } from "@/stores/analysisStore";
 import { WUXING_COLORS, WUXING_BG, SCHOOL_OPTIONS } from "@/lib/constants";
@@ -67,7 +67,7 @@ export default function BirthForm() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filteredCities = cityFilter ? CITIES.filter(c => c.name.includes(cityFilter)) : CITIES;
+  const filteredCities = useMemo(() => cityFilter ? CITIES.filter(c => c.name.includes(cityFilter)) : CITIES, [cityFilter]);
 
   const handleCitySelect = useCallback((name: string, lng: number) => {
     setCityInput(name);
@@ -93,8 +93,11 @@ export default function BirthForm() {
     } catch (err) { setError(err instanceof Error ? err.message : "排盘失败"); }
   }
 
+  const submittingRef = useRef(false);
+
   async function handleDeepAnalysis() {
-    if (!paipanResult || paipanResult.status !== "completed") return;
+    if (!paipanResult || paipanResult.status !== "completed" || submittingRef.current) return;
+    submittingRef.current = true;
     const solarDatetime = form.shichen ? `${form.solarDate} ${form.shichen}` : form.solarDate;
     try {
       const analysisId = await startAnalysis({
@@ -103,8 +106,13 @@ export default function BirthForm() {
         name: form.name || undefined,
         ...(form.cityLng ? { longitude: form.cityLng } : {}),
       });
-      router.push(`/analyze/${analysisId}`);
+      if (analysisId) {
+        router.push(`/analyze/${analysisId}`);
+      } else {
+        setError("提交失败，请重试");
+      }
     } catch (err) { setError(err instanceof Error ? err.message : "提交失败"); }
+    finally { submittingRef.current = false; }
   }
 
   return (
@@ -113,9 +121,9 @@ export default function BirthForm() {
         {/* 性别 */}
         <div>
           <label className="form-label">性别</label>
-          <div className="flex gap-2 mt-1.5">
+          <div className="flex gap-2 mt-1.5" role="radiogroup" aria-label="性别">
             {["男", "女"].map(g => (
-              <button key={g} type="button" onClick={() => handleChange("gender", g)}
+              <button key={g} type="button" role="radio" aria-checked={form.gender === g} onClick={() => handleChange("gender", g)}
                 className={`form-input flex-1 text-center cursor-pointer transition-all duration-200 ${
                   form.gender === g ? "font-medium" : ""
                 }`}
@@ -141,6 +149,7 @@ export default function BirthForm() {
           <div>
             <label className="form-label">出生日期 <span style={{ color: "var(--danger)" }}>*</span></label>
             <input type="date" value={form.solarDate} autoComplete="bday" className="form-input mt-1.5"
+              max={new Date().toISOString().split("T")[0]}
               onChange={e => { handleChange("solarDate", e.target.value); setShowPaipan(false); }} />
           </div>
           <div>
@@ -159,6 +168,7 @@ export default function BirthForm() {
           <label className="form-label">出生城市（真太阳时校正）</label>
           <div ref={cityRef} className="relative mt-1.5">
             <input ref={cityInputRef} type="text" value={cityInput} placeholder="输入城市名搜索…" autoComplete="off" className="form-input"
+              aria-expanded={cityOpen}
               onFocus={() => setCityOpen(true)}
               onChange={e => { setCityInput(e.target.value); setCityFilter(e.target.value); setCityOpen(true); if (!e.target.value) setForm(prev => ({ ...prev, city: "", cityLng: 0 })); }} />
             {cityOpen && (

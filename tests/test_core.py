@@ -499,3 +499,25 @@ class TestElementForcesHehua:
         # 至少有一种五行的 adjusted 与 raw 不同
         diffs = [abs(adj.get(w, 0) - raw.get(w, 0)) for w in ['木', '火', '土', '金', '水']]
         assert sum(diffs) > 0.01, "合化应导致至少一个五行的百分比变化"
+
+
+class TestShishenUtils:
+    """测试十神工具函数"""
+
+    def test_get_transparent_gans(self):
+        from bazi_pro.core.shishen_utils import get_transparent_gans
+        gans = get_transparent_gans(['壬午', '乙巳', '丁亥', '癸卯'])
+        assert gans == {'壬', '乙', '丁', '癸'}
+
+    def test_find_shishen_instances(self):
+        from bazi_pro.core.shishen_utils import find_shishen_instances
+        instances = find_shishen_instances('丁', '正官', ['壬午', '乙巳', '丁亥', '癸卯'])
+        assert isinstance(instances, list)
+        # 壬是正官
+        gans = [i['gan'] for i in instances]
+        assert '壬' in gans
+
+    def test_find_shishen_instances_empty(self):
+        from bazi_pro.core.shishen_utils import find_shishen_instances
+        instances = find_shishen_instances('丁', '七杀', ['壬午', '乙巳', '丁亥', '癸卯'])
+        assert isinstance(instances, list)

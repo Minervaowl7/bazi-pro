@@ -31,6 +31,7 @@ export default function ReportNav({ items, activeKey }: ReportNavProps) {
 
   return (
     <nav
+      aria-label="报告目录"
       className="flex flex-col gap-1"
       style={{ minWidth: 140 }}
     >

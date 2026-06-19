@@ -77,7 +77,7 @@ export default function ShishenEnergyChart({ result }: Props) {
                   const pct = (val / total) * 100;
                   if (pct === 0) return null;
                   return (
-                    <div key={item} className="h-full flex items-center justify-center font-semibold transition-all duration-500" style={{ width: `${pct}%`, background: color, opacity: ii === 0 ? 0.85 : 0.5, color: "var(--bg)", fontSize: pct > 8 ? 14 : 11 }} title={`${item}: ${pct.toFixed(1)}%`}>
+                    <div key={item} className="h-full flex items-center justify-center font-semibold transition-all duration-500" style={{ width: `${pct}%`, background: `color-mix(in srgb, ${color} ${ii === 0 ? 85 : 50}%, var(--bg))`, color: "var(--bg)", fontSize: pct > 8 ? 14 : 11 }} title={`${item}: ${pct.toFixed(1)}%`}>
                       {pct > 8 ? item : ""}
                     </div>
                   );

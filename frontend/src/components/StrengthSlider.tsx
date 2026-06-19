@@ -112,7 +112,7 @@ export default function StrengthSlider({ strength, dayMaster }: Props) {
   return (
     <section
       ref={sectionRef}
-      className="card"
+      className="card gsapFallback"
       style={{ opacity: prefersReducedMotion ? 1 : 0 }}
     >
       <div className="relative flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
@@ -144,7 +144,7 @@ export default function StrengthSlider({ strength, dayMaster }: Props) {
               borderRadius: "50%",
               background: "var(--surface)",
               border: "2px solid var(--cinnabar)",
-              boxShadow: "0 0 0 3px rgba(201,100,66,0.12), 0 1px 4px rgba(201,100,66,0.2)",
+              boxShadow: "0 0 0 3px color-mix(in srgb, var(--cinnabar) 12%, transparent), 0 1px 4px color-mix(in srgb, var(--cinnabar) 20%, transparent)",
             }} />
           </div>
         </div>

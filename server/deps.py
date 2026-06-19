@@ -57,21 +57,32 @@ rate_limiter = create_rate_limiter(
 API_KEY = os.environ.get('BAZI_API_KEY', '')
 _api_key_scheme = APIKeyHeader(name='X-API-Key', auto_error=False)
 
+# 启动时记录认证状态
+if not API_KEY:
+    _allow_unauthed = os.environ.get('BAZI_ALLOW_UNAUTHED', '').lower() in ('1', 'true', 'yes')
+    if _allow_unauthed:
+        logger.warning("⚠️  BAZI_API_KEY 未设置，BAZI_ALLOW_UNAUTHED=1 — 认证已禁用（仅限开发环境）")
+    else:
+        logger.warning("⚠️  BAZI_API_KEY 未设置 — 所有请求将被拒绝。设置 BAZI_ALLOW_UNAUTHED=1 可禁用认证（仅限开发）")
+
 
 class APIKeyError(Exception):
     pass
 
 
+def _is_unauthed_allowed() -> bool:
+    """运行时检查是否允许无认证访问（支持测试中动态设置环境变量）"""
+    return os.environ.get('BAZI_ALLOW_UNAUTHED', '').lower() in ('1', 'true', 'yes')
+
+
 async def verify_api_key(request: Request, api_key: str = Security(_api_key_scheme)):
+    # 认证逻辑：默认拒绝，除非显式设置 BAZI_ALLOW_UNAUTHED=1
     if not API_KEY:
-        if os.environ.get('ENV', '').lower() in ('prod', 'production'):
-            logger.error("API key not configured in production environment!")
-            raise APIKeyError()
-        return True
+        if _is_unauthed_allowed():
+            return True
+        raise APIKeyError()
+    # 仅支持 X-API-Key header，不再支持 query string token（安全风险）
     if api_key and hmac.compare_digest(api_key, API_KEY):
-        return True
-    token = request.query_params.get("token", "")
-    if token and hmac.compare_digest(token, API_KEY):
         return True
     raise APIKeyError()
 

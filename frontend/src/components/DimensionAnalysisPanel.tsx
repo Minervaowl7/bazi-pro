@@ -26,30 +26,30 @@ const DIMENSION_CONFIGS: Record<string, DimensionConfig> = {
   marriage: {
     icon: "♥",
     title: "感情婚姻",
-    accentColor: "#e8637a",
-    accentBg: "rgba(232,99,122,0.06)",
-    accentBorder: "rgba(232,99,122,0.15)",
+    accentColor: "var(--cinnabar)",
+    accentBg: "color-mix(in srgb, var(--cinnabar) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--cinnabar) 15%, transparent)",
   },
   health: {
     icon: "☘",
     title: "健康体质",
-    accentColor: "#2e9e6a",
-    accentBg: "rgba(46,158,106,0.06)",
-    accentBorder: "rgba(46,158,106,0.15)",
+    accentColor: "var(--jade)",
+    accentBg: "color-mix(in srgb, var(--jade) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--jade) 15%, transparent)",
   },
   wealth: {
     icon: "◆",
     title: "财富财运",
-    accentColor: "#c49a2b",
-    accentBg: "rgba(196,154,43,0.06)",
-    accentBorder: "rgba(196,154,43,0.15)",
+    accentColor: "var(--gold)",
+    accentBg: "color-mix(in srgb, var(--gold) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--gold) 15%, transparent)",
   },
   family: {
     icon: "家",
     title: "六亲关系",
-    accentColor: "#5e7ab5",
-    accentBg: "rgba(94,122,181,0.06)",
-    accentBorder: "rgba(94,122,181,0.15)",
+    accentColor: "var(--scholar-blue)",
+    accentBg: "color-mix(in srgb, var(--scholar-blue) 6%, transparent)",
+    accentBorder: "color-mix(in srgb, var(--scholar-blue) 15%, transparent)",
   },
 };
 
@@ -167,7 +167,7 @@ function extractTags(dimension: string, data: Record<string, unknown>): Tag[] {
     if (children?.affinity) {
       tags.push({
         label: "子女",
-        value: children.count_estimate ? String(children.count_estimate).slice(0, 8) : String(children.affinity),
+        value: children.count_estimate ? (String(children.count_estimate).length > 8 ? String(children.count_estimate).slice(0, 8) + "…" : String(children.count_estimate)) : String(children.affinity),
         variant: children.affinity === "深" ? "good" : children.affinity === "浅" ? "warn" : "default",
       });
     }
@@ -181,9 +181,9 @@ function extractTags(dimension: string, data: Record<string, unknown>): Tag[] {
 
 const VARIANT_STYLES: Record<string, { bg: string; color: string; border: string }> = {
   default: { bg: "var(--surface-2)", color: "var(--text-2)", border: "var(--border-subtle)" },
-  good: { bg: "rgba(58,125,92,0.08)", color: "var(--success)", border: "rgba(58,125,92,0.18)" },
-  warn: { bg: "rgba(197,165,90,0.08)", color: "var(--warning)", border: "rgba(197,165,90,0.16)" },
-  bad: { bg: "rgba(196,82,58,0.08)", color: "var(--danger)", border: "rgba(196,82,58,0.16)" },
+  good: { bg: "color-mix(in srgb, var(--success) 8%, transparent)", color: "var(--success)", border: "color-mix(in srgb, var(--success) 18%, transparent)" },
+  warn: { bg: "color-mix(in srgb, var(--warning) 8%, transparent)", color: "var(--warning)", border: "color-mix(in srgb, var(--warning) 16%, transparent)" },
+  bad: { bg: "color-mix(in srgb, var(--danger) 8%, transparent)", color: "var(--danger)", border: "color-mix(in srgb, var(--danger) 16%, transparent)" },
 };
 
 export default function DimensionAnalysisPanel({ dimension, data, narration }: Props) {
@@ -201,11 +201,14 @@ export default function DimensionAnalysisPanel({ dimension, data, narration }: P
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-3">
-          <span style={{
+          <span aria-hidden="true" style={{
             width: 28,
             height: 28,
             borderRadius: "50%",
-            background: `${cfg.accentColor}18`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: `color-mix(in srgb, ${cfg.accentColor} 9%, transparent)`,
           }}>
             {cfg.icon}
           </span>
@@ -230,6 +233,7 @@ export default function DimensionAnalysisPanel({ dimension, data, narration }: P
                 return (
                   <div key={i} className="flex items-center gap-1.5 px-3 py-1.5" style={{
                     fontSize: 13,
+                    borderRadius: 9999,
                     background: vs.bg,
                     border: `1px solid ${vs.border}`,
                   }}>

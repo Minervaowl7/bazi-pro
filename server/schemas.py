@@ -1,18 +1,27 @@
 from __future__ import annotations
 
-import re
 from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-TIANGAN = set('甲乙丙丁戊己庚辛壬癸')
-DIZHI = set('子丑寅卯辰巳午未申酉戌亥')
-BAZI_PATTERN = re.compile(
-    r'^[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]'
-    r'\s+[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]'
-    r'\s+[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]'
-    r'\s+[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]$'
+# 复用 bazi_pro.validation 中的验证常量和函数，避免重复定义
+from bazi_pro.validation import (
+    BAZI_PATTERN as _BAZI_PATTERN,
 )
+from bazi_pro.validation import (
+    DIZHI,
+    TIANGAN,
+    validate_bazi_string,
+)
+from bazi_pro.validation import (
+    validate_day_master as _validate_day_master,
+)
+from bazi_pro.validation import (
+    validate_gender as _validate_gender,
+)
+
+# 保留本地引用以兼容现有代码
+BAZI_PATTERN = _BAZI_PATTERN
 
 
 class BaziPillars(BaseModel):
@@ -70,25 +79,26 @@ class BaziAnalysisRequest(BaseModel):
     @classmethod
     def validate_bazi(cls, v: str) -> str:
         v = v.strip()
-        if not BAZI_PATTERN.match(v):
-            raise ValueError(
-                '八字格式不合法，必须为4组天干地支以空格分隔，如 "壬午 乙巳 丁亥 癸卯"'
-            )
+        valid, msg = validate_bazi_string(v)
+        if not valid:
+            raise ValueError(msg)
         return v
 
     @field_validator('日主')
     @classmethod
     def validate_day_master(cls, v: str) -> str:
         v = v.strip()
-        if v not in TIANGAN:
-            raise ValueError(f'日主 "{v}" 不合法，必须为 甲乙丙丁戊己庚辛壬癸 之一')
+        valid, msg = _validate_day_master(v)
+        if not valid:
+            raise ValueError(msg)
         return v
 
     @field_validator('性别')
     @classmethod
     def validate_gender(cls, v: str) -> str:
-        if v not in ('男', '女', '其他'):
-            raise ValueError('性别必须为 男/女/其他 之一')
+        valid, msg = _validate_gender(v)
+        if not valid:
+            raise ValueError(msg)
         return v
 
 

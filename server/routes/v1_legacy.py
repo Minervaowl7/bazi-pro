@@ -23,7 +23,7 @@ from server.deps import (
 from server.schemas import BaziAnalysisRequest
 from server.ws import manager
 
-logger = logging.getLogger("bazi-pro")
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

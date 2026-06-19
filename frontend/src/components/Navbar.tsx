@@ -82,13 +82,14 @@ export default function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={active ? "page" : undefined}
                   className="relative px-3 py-1.5 text-[13px] rounded-md transition-colors duration-150"
                   style={{
                     fontFamily: "var(--font-body)",
                     fontWeight: active ? 600 : 400,
                     color: active ? "var(--cinnabar)" : "var(--text-2)",
                     background: active
-                      ? "rgba(201,100,66,0.06)"
+                      ? "color-mix(in srgb, var(--cinnabar) 6%, transparent)"
                       : "transparent",
                   }}
                 >
@@ -112,7 +113,7 @@ export default function Navbar() {
             {/* 功能按钮 */}
             <button
               onClick={() => setSettingsOpen(true)}
-              className="w-11 h-11 rounded-lg flex items-center justify-center transition-colors duration-150"
+              className="w-11 h-11 rounded-lg flex items-center justify-center transition-colors duration-150 hover:bg-[var(--surface-2)]"
               style={{ color: "var(--text-2)" }}
               aria-label="设置"
             >
@@ -133,7 +134,7 @@ export default function Navbar() {
 
             <button
               onClick={toggleTheme}
-              className="w-11 h-11 rounded-lg flex items-center justify-center transition-colors duration-150"
+              className="w-11 h-11 rounded-lg flex items-center justify-center transition-colors duration-150 hover:bg-[var(--surface-2)]"
               style={{ color: "var(--text-2)" }}
               aria-label="切换主题"
             >

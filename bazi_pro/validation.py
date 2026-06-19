@@ -15,7 +15,7 @@ def validate_bazi_string(bazi: str) -> tuple[bool, str]:
     if not bazi:
         return False, '八字不能为空'
     if not BAZI_PATTERN.match(bazi):
-        return False, f'八字格式无效，应为4组天干地支以空格分隔，如"甲子 乙丑 丙寅 丁卯"，实际值: {bazi}'
+        return False, '八字格式不合法，必须为4组天干地支以空格分隔，如 "壬午 乙巳 丁亥 癸卯"'
     return True, ''
 
 
@@ -23,7 +23,7 @@ def validate_day_master(day_master: str) -> tuple[bool, str]:
     if not day_master:
         return False, '日主不能为空'
     if day_master not in TIANGAN:
-        return False, f'日主无效，必须为十天干之一({"".join(sorted(TIANGAN))})，实际值: {day_master}'
+        return False, f'日主 "{day_master}" 不合法，必须为 甲乙丙丁戊己庚辛壬癸 之一'
     return True, ''
 
 
@@ -31,7 +31,7 @@ def validate_gender(gender: str) -> tuple[bool, str]:
     if not gender:
         return False, '性别不能为空'
     if gender not in VALID_GENDERS:
-        return False, f'性别无效，必须为{VALID_GENDERS}之一，实际值: {gender}'
+        return False, '性别必须为 男/女/其他 之一'
     return True, ''
 
 

@@ -115,6 +115,7 @@ export default function ReportPreviewModal({
 
   return (
     <div
+      role="dialog" aria-modal="true" aria-label="详批报告预览"
       className="fixed inset-0 flex flex-col"
       style={{ background: "var(--bg)", zIndex: "var(--z-overlay)" }}
     >
@@ -210,6 +211,7 @@ export default function ReportPreviewModal({
             onClick={onClose}
             className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200"
             style={{ color: "var(--text-3)" }}
+            aria-label="关闭预览"
             title="关闭"
           >
             <svg

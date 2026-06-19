@@ -6,7 +6,7 @@ type Size = "sm" | "md" | "lg";
 
 const variantStyles: Record<Variant, string> = {
   primary: "bg-[var(--cinnabar)] text-white hover:opacity-90 shadow-sm",
-  secondary: "bg-[var(--surface-2)] text-[var(--text-2)] border border-[var(--border)] hover:bg-[var(--surface-2)]",
+  secondary: "bg-[var(--surface-2)] text-[var(--text-2)] border border-[var(--border)] hover:bg-[var(--surface)]",
   ghost: "text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]",
   outline: "border border-[var(--border)] text-[var(--text-2)] hover:bg-[var(--surface-2)]",
   danger: "bg-[var(--danger)] text-white hover:opacity-90",
@@ -29,7 +29,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       className={cn(
         "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--wx-water)] focus-visible:ring-offset-1",
         "disabled:pointer-events-none disabled:opacity-50",
         "active:scale-[0.97] motion-reduce:active:scale-100",
         variantStyles[variant],

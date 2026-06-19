@@ -34,7 +34,8 @@ pdf = ["weasyprint>=60"]
 server = ["fastapi>=0.110", "uvicorn[standard]>=0.20", "redis>=4.5", "websockets>=11.0", "jinja2>=3.1", "pydantic>=2,<3", "aiosqlite>=0.19", "httpx>=0.25", "python-dotenv>=1.0"]
 ziwei = ["iztro-py>=0.2"]
 tui = ["rich>=13.0"]
-all = ["bazi-pro[hybrid,report,pdf,server,ziwei,tui]"]
+test = ["pytest>=7.0", "pytest-cov>=4.0", "hypothesis>=6.0", "mutmut>=2.0"]
+all = ["bazi-pro[hybrid,report,pdf,server,ziwei,tui,test]"]
 
 [project.scripts]
 bazi-retrieve = "bazi_pro.retrieve_classical:main"
@@ -75,4 +76,40 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --cov=bazi_pro --cov=server --cov-report=term-missing --cov-fail-under=50"
+
+[tool.coverage.run]
+source = ["bazi_pro", "server"]
+omit = [
+    "bazi_pro/ui/static/*",
+    "bazi_pro/ui/templates/*",
+    "bazi_pro/tui/*",
+    "server/agents/*",
+    "benchmarks/*",
+    "scripts/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "pass",
+    "@abstractmethod",
+]
+show_missing = true
+skip_covered = true
+
+[tool.mutmut]
+paths_to_mutate = [
+    "bazi_pro/core/elements.py",
+    "bazi_pro/core/strength.py",
+    "bazi_pro/core/patterns.py",
+    "bazi_pro/core/yongshen.py",
+    "bazi_pro/core/relations.py",
+    "bazi_pro/core/disease.py",
+    "bazi_pro/validation.py",
+]
+tests_dir = "tests"
+timeout = 300

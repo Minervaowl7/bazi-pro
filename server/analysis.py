@@ -9,6 +9,7 @@ import hashlib
 import json
 import logging
 import re
+import time
 import traceback
 from datetime import datetime, timezone
 
@@ -29,6 +30,14 @@ from bazi_pro.paipan import paipan_from_datetime
 from server.cache import get_cache
 from server.db import update_analysis_result
 from server.gongwei import calc_gongwei
+from server.metrics import (
+    ANALYSIS_DURATION,
+    ANALYSIS_TOTAL,
+    CACHE_HITS,
+    CACHE_MISSES,
+    inc_counter,
+    observe_histogram,
+)
 from server.nayin import lookup_nayin
 from server.shensha import calc_shensha_enhanced
 from server.ws import manager
@@ -50,13 +59,17 @@ async def run_analysis(mcp_json: dict, run_id: str,
             mcp_json[key] = ''
 
     cache = get_cache()
+    analysis_start = time.monotonic()
 
     cache_key = _make_cache_key(mcp_json, detail_level, school)
     cached = cache.get(cache_key)
     if cached:
+        inc_counter(CACHE_HITS)
         await manager.send_progress(run_id, 'cache', 'done',
                                      '命中缓存，直接返回结果')
         return cached
+    else:
+        inc_counter(CACHE_MISSES)
 
     result = {
         'run_id': run_id,
@@ -97,7 +110,7 @@ async def run_analysis(mcp_json: dict, run_id: str,
         if solar and gender:
             try:
                 paipan_result = paipan_from_datetime(solar, gender)
-            except Exception:
+            except Exception as _e:
                 paipan_result = None
 
         await manager.send_progress(run_id, '0', 'running', '古籍条文检索中...')
@@ -310,20 +323,24 @@ async def run_analysis(mcp_json: dict, run_id: str,
                 from server.llm import is_llm_configured
                 if is_llm_configured():
                     async def _run_llm_background():
+                        # 使用快照避免与主协程竞争 result dict
+                        result_snapshot = dict(result)
+                        llm_updates = {}
                         try:
                             from server.llm import chat_completion as _cc
                             # 命盘总览
                             try:
                                 await manager.send_progress(run_id, 'llm', 'running', 'AI 命盘总览生成中...')
-                                overview_prompt = _build_overview_prompt(result, mcp_json, result.get('dayun', []))
+                                overview_prompt = _build_overview_prompt(result_snapshot, mcp_json, result_snapshot.get('dayun', []))
                                 overview_messages = [
                                     {"role": "system", "content": OVERVIEW_SYSTEM_PROMPT},
                                     {"role": "user", "content": overview_prompt},
                                 ]
                                 overview_text = await _cc(overview_messages, temperature=0.6, max_tokens=4096)
                                 if overview_text:
-                                    result['llm_overview'] = overview_text
-                                    await update_analysis_result(run_id, result)
+                                    llm_updates['llm_overview'] = overview_text
+                                    result_snapshot['llm_overview'] = overview_text
+                                    await update_analysis_result(run_id, result_snapshot)
                                     await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览完成')
                                 else:
                                     await manager.send_progress(run_id, 'llm', 'done', 'AI 命盘总览（无输出）')
@@ -337,18 +354,19 @@ async def run_analysis(mcp_json: dict, run_id: str,
                                 await manager.send_progress(run_id, 'life_report', 'running', '命书撰写中...')
                                 try:
                                     from bazi_pro.narrator import narrate_analysis as _narrate
-                                    _narration = _narrate(result) if isinstance(result, dict) else {}
+                                    _narration = _narrate(result_snapshot) if isinstance(result_snapshot, dict) else {}
                                 except Exception:
                                     _narration = {}
-                                report_prompt = build_life_report_prompt(result, _narration)
+                                report_prompt = build_life_report_prompt(result_snapshot, _narration)
                                 report_messages = [
                                     {"role": "system", "content": LIFE_REPORT_SYSTEM_PROMPT},
                                     {"role": "user", "content": report_prompt},
                                 ]
                                 report_text = await _cc(report_messages, temperature=0.7, max_tokens=4096)
                                 if report_text:
-                                    result['life_report'] = report_text
-                                    await update_analysis_result(run_id, result)
+                                    llm_updates['life_report'] = report_text
+                                    result_snapshot['life_report'] = report_text
+                                    await update_analysis_result(run_id, result_snapshot)
                                     await manager.send_progress(run_id, 'life_report', 'done', '命书完成')
                                 else:
                                     await manager.send_progress(run_id, 'life_report', 'done', '命书（无输出）')
@@ -357,9 +375,12 @@ async def run_analysis(mcp_json: dict, run_id: str,
                                 await manager.send_progress(run_id, 'life_report', 'done', '命书跳过')
                         except Exception as e:
                             logger.debug("LLM background task failed: %s", e)
+                        finally:
+                            # 将 LLM 结果合并回主 result
+                            result.update(llm_updates)
                     _llm_task = asyncio.create_task(_run_llm_background())
-            except Exception:
-                pass
+            except Exception as _e:
+                logger.debug("Ziwei analysis failed (non-fatal): %s", _e)
 
         if solar and gender:
             try:
@@ -392,12 +413,15 @@ async def run_analysis(mcp_json: dict, run_id: str,
             from server.agents import AgentOrchestrator
             orchestrator = AgentOrchestrator()
             async def _run_agents_background():
+                # 使用快照避免与主协程竞争 result dict
+                result_snapshot = dict(result)
                 try:
                     await manager.send_progress(run_id, 'agents', 'running', '多智能体协作分析中...')
                     agent_result = await orchestrator.analyze(mcp_json)
                     if agent_result and agent_result.get('status') != 'failed':
+                        result_snapshot['agent_analysis'] = agent_result
                         result['agent_analysis'] = agent_result
-                        await update_analysis_result(run_id, result)
+                        await update_analysis_result(run_id, result_snapshot)
                         await manager.send_progress(run_id, 'agents', 'done',
                                                     f'多智能体分析完成: {agent_result.get("status", "")}',
                                                     agent_result)
@@ -421,6 +445,12 @@ async def run_analysis(mcp_json: dict, run_id: str,
         result['error'] = err_msg
         result['error_type'] = type(e).__name__
         await manager.send_progress(run_id, 'error', 'failed', err_msg)
+
+    # ── 记录分析指标 ──
+    analysis_duration = time.monotonic() - analysis_start
+    labels = {'school': school, 'status': result.get('status', 'unknown')}
+    inc_counter(ANALYSIS_TOTAL, 1.0, labels)
+    observe_histogram(ANALYSIS_DURATION, analysis_duration, labels)
 
     return result
 

@@ -119,7 +119,11 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
 
     try {
       const innerEl = document.querySelector("main > div") as HTMLElement;
-      if (!innerEl) { setExporting(false); return; }
+      if (!innerEl) {
+        setExporting(false);
+        alert("导出失败：未找到页面内容");
+        return;
+      }
 
       const chatEl = innerEl.querySelector("[class*='ChatPanel'], [class*='chat-panel']") as HTMLElement;
       if (chatEl) chatEl.classList.add("no-print");
@@ -185,6 +189,8 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
       <button
         onClick={() => setShowMenu(!showMenu)}
         disabled={exporting}
+        aria-expanded={showMenu}
+        aria-haspopup="menu"
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--surface-2)] transition-colors disabled:opacity-50"
       >
         {exporting ? (
@@ -208,8 +214,13 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
       </button>
 
       {showMenu && (
-        <div className="absolute right-0 mt-1.5 w-40 rounded-xl shadow-lg overflow-hidden animate-fade-in bg-[var(--surface)] border border-[var(--border)]" style={{ zIndex: "var(--z-dropdown)" }}>
+        <div className="fixed inset-0" style={{ zIndex: "calc(var(--z-dropdown) - 1)" }} onClick={() => setShowMenu(false)} />
+      )}
+
+      {showMenu && (
+        <div role="menu" className="absolute right-0 mt-1.5 w-40 rounded-xl shadow-lg overflow-hidden animate-fade-in bg-[var(--surface)] border border-[var(--border)]" style={{ zIndex: "var(--z-dropdown)" }} onKeyDown={(e) => { if (e.key === "Escape") { setShowMenu(false); } }}>
           <button
+            role="menuitem"
             onClick={handleExportPDF}
             disabled={exporting}
             className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs transition-colors text-[var(--text-2)] hover:bg-[var(--surface-2)]"
@@ -223,6 +234,7 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
             导出 PDF
           </button>
           <button
+            role="menuitem"
             onClick={handleCopyText}
             className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs transition-colors text-[var(--text-2)] hover:bg-[var(--surface-2)] border-t border-[var(--border-subtle)]"
           >
@@ -233,10 +245,6 @@ export default function ExportPanel({ analysisId, result, narration }: Props) {
             复制文本
           </button>
         </div>
-      )}
-
-      {showMenu && (
-        <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
       )}
     </div>
   );

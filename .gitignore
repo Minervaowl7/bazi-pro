@@ -75,3 +75,8 @@ server/.env
 # Benchmark data and results (downloaded/generated)
 benchmarks/data/
 benchmarks/results/
+
+.coverage
+logs_llm/
+htmlcov/
+coverage.xml

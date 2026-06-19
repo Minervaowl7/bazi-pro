@@ -105,7 +105,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }
+  function handleKeyDown(e: React.KeyboardEvent) { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); handleSend(); } }
 
   return (
     <section className="card">
@@ -128,7 +128,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
       </div>
 
       {/* Messages */}
-      <div className="overflow-y-auto px-7 py-6" style={{ maxHeight: 600, minHeight: 200 }}>
+      <div className="overflow-y-auto px-7 py-6" style={{ maxHeight: "min(600px, 50vh)", minHeight: 200 }}>
         {messages.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5" style={{ background: "linear-gradient(135deg, rgba(192,57,43,0.08), rgba(45,62,95,0.08))", border: "2px dashed var(--border)" }}>
@@ -163,7 +163,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
               <div className="max-w-[78%]">
                 <div className="px-5 py-3.5 whitespace-pre-wrap rounded-2xl rounded-br-md" style={{
                   fontSize: 15, lineHeight: 1.7, color: "var(--ink)",
-                  background: "var(--scholar-blue)", border: "none",
+                  background: "var(--scholar-blue)", border: "none", overflowWrap: "break-word", wordBreak: "break-word",
                   boxShadow: "0 2px 8px rgba(45,62,95,0.15)",
                 }}>
                   {msg.content}
@@ -200,7 +200,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
 
       {/* Error */}
       {error && (
-        <div className="px-7 py-3 border-t flex items-center gap-2" style={{ borderColor: "var(--border-subtle)", background: "rgba(220,38,38,0.04)" }}>
+        <div className="px-7 py-3 border-t flex items-center gap-2 animate-fade-in" style={{ borderColor: "var(--border-subtle)", background: "rgba(220,38,38,0.04)" }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="var(--danger)" strokeWidth="1.5" /><path d="M7 4v3M7 9.5v.5" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" /></svg>
           <p className="font-medium" style={{ fontSize: 13, color: "var(--danger)" }}>{error}</p>
         </div>
@@ -234,7 +234,14 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
         <div className="flex gap-3 items-end">
           <div className="flex-1 relative">
             <textarea
-              ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
+              ref={inputRef} value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onInput={(e) => {
+                const el = e.currentTarget;
+                el.style.height = "auto";
+                el.style.height = Math.min(el.scrollHeight, 100) + "px";
+              }}
               aria-label="输入你的问题"
               placeholder="向命理师提问…"
               rows={1}
@@ -243,7 +250,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
                 fontSize: 15, fontFamily: "var(--font-body)",
                 background: "color-mix(in srgb, var(--surface) 85%, var(--ink))",
                 border: "1.5px solid var(--border)",
-                borderRadius: 10,
+                borderRadius: "var(--r-sm)",
                 color: "var(--ink)",
                 padding: "12px 16px",
                 maxHeight: 100,
@@ -255,7 +262,7 @@ export default function ChatPanel({ analysisId, school = "ziping" }: Props) {
           <button onClick={() => handleSend()} disabled={loading || !input.trim()}
             className="flex items-center justify-center transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
             style={{
-              width: 44, height: 44, borderRadius: 10,
+              width: 44, height: 44, borderRadius: "var(--r-sm)",
               background: input.trim() ? "var(--scholar-blue)" : "var(--surface)",
               border: "none",
               boxShadow: input.trim() ? "0 2px 8px rgba(45,62,95,0.25)" : "none",

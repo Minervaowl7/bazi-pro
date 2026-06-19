@@ -16,6 +16,9 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def client_no_key():
+    import os
+    # 测试环境：无 API key 时允许无认证访问
+    os.environ['BAZI_ALLOW_UNAUTHED'] = '1'
     import server.app as app_module
     return TestClient(app_module.app)
 

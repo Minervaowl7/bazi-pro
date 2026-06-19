@@ -10,13 +10,13 @@ from fastapi.responses import JSONResponse
 from server.db import get_analysis
 from server.deps import error_response
 
-logger = logging.getLogger("bazi-pro")
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
 @router.get("/api/v2/fortune/daily/{analysis_id}")
-async def api_v2_daily_fortune(analysis_id: str):
+async def api_v2_daily_fortune_auth_fix(analysis_id: str):
     from server.daily_fortune import calc_daily_fortune
 
     analysis = await get_analysis(analysis_id)

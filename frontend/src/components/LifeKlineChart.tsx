@@ -51,7 +51,11 @@ export default function LifeKlineChart({ analysisId }: Props) {
   }, [analysisId]);
 
   if (loading) return null;
-  if (scores.length === 0) return null;
+  if (scores.length === 0) return (
+    <section className="card p-6 text-center">
+      <p style={{ color: "var(--text-4)", fontSize: 13 }}>暂无流年数据</p>
+    </section>
+  );
 
   const years = scores.map((s) => s.year);
   const scoreValues = scores.map((s) => s.score);
@@ -236,7 +240,7 @@ export default function LifeKlineChart({ analysisId }: Props) {
     >
       <div
         style={{
-          borderBottom: "2px solid var(--border-strong)",
+          borderBottom: "1px solid var(--border)",
           padding: "16px 24px",
           display: "flex",
           alignItems: "center",

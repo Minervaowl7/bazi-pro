@@ -2,6 +2,7 @@
 
 import { type ReactNode, useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 interface SectionProps {
   children: ReactNode;
@@ -60,9 +61,14 @@ export default function Section({
   animate = true,
 }: SectionProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useGSAP(() => {
     if (!animate || !ref.current) return;
+    if (prefersReducedMotion) {
+      gsap.set(ref.current, { autoAlpha: 1 });
+      return;
+    }
     gsap.from(ref.current, {
       autoAlpha: 0,
       y: 20,

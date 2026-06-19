@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { WUXING_COLORS, GAN_WUXING } from "@/lib/constants";
 
 interface Props {
@@ -9,9 +9,32 @@ interface Props {
 
 export default function ShareCard({ result }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [generating, setGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [genError, setGenError] = useState("");
+
+  /* ESC 关闭 + 焦点陷阱 */
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") { setShowPreview(false); return; }
+    if (e.key === "Tab" && dialogRef.current) {
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!showPreview) return;
+    document.addEventListener("keydown", handleKeyDown);
+    dialogRef.current?.focus();
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [showPreview, handleKeyDown]);
 
   const validation = result.validation as { day_master?: string; bazi?: string } | undefined;
   const dayMaster = validation?.day_master || "";
@@ -59,7 +82,7 @@ export default function ShareCard({ result }: Props) {
 
       {showPreview && (
         <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50" style={{ zIndex: "var(--z-overlay)" }} role="dialog" aria-modal="true" aria-label="分享卡片">
-          <div className="w-full max-w-sm rounded-2xl overflow-hidden bg-[var(--surface)] border border-[var(--border)]">
+          <div ref={dialogRef} tabIndex={-1} className="w-full max-w-sm rounded-2xl overflow-hidden bg-[var(--surface)] border border-[var(--border)] outline-none animate-fade-in">
             <div ref={cardRef} className="p-8" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #2c3e6b 100%)" }}>
               <div className="text-center mb-6">
                 <div className="text-[10px] uppercase tracking-[0.2em] mb-2 text-white/50">

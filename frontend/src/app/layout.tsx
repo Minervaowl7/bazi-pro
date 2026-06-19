@@ -32,6 +32,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" className={notoSerifSC.variable} suppressHydrationWarning data-scroll-behavior="smooth">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var t=localStorage.getItem('theme');
+            if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches)){
+              document.documentElement.setAttribute('data-theme','dark');
+              document.documentElement.classList.add('dark');
+              document.documentElement.style.colorScheme='dark';
+            }
+          })();
+        `}} />
+      </head>
       <body className="antialiased">
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--surface)] focus:text-[var(--ink)] focus:border focus:border-[var(--border)]" style={{top:8,left:8}}>跳到主要内容</a>
         <ThemeProvider>

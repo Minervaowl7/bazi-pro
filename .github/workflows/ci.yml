@@ -22,10 +22,13 @@ jobs:
       - name: Install package + test tools
         run: |
           python -m pip install -U pip
-          python -m pip install -e ".[all]" pytest build ruff
+          python -m pip install -e ".[all]" pytest pytest-cov build ruff mypy
 
       - name: Ruff lint
         run: ruff check server/ bazi_pro/ tests/
+
+      - name: Type check (mypy)
+        run: mypy bazi_pro/ server/ --ignore-missing-imports --no-error-summary 2>&1 || true
 
       - name: Compile check
         run: python -m compileall bazi_pro server scripts tests -q
@@ -48,8 +51,16 @@ jobs:
       - name: "Parallel audit (D: golden cases)"
         run: python scripts/audit_golden_cases.py
 
-      - name: Pytest (full suite)
-        run: python -m pytest -q
+      - name: Pytest (full suite with coverage)
+        run: python -m pytest -q --cov=bazi_pro --cov=server --cov-report=term-missing --cov-report=xml:coverage.xml --cov-report=html:htmlcov --cov-fail-under=50
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            htmlcov/
 
       - name: Doctor
         run: python scripts/doctor.py

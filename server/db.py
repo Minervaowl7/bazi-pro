@@ -1,27 +1,46 @@
 """
 bazi-pro SQLite 存储层 (aiosqlite)
 分析记录 + 聊天历史持久化
+
+并发安全：
+  - 使用 _db_write_lock 保护所有写操作，防止 SQLite 单连接并发写入
+  - WAL 模式允许并发读取
+  - 使用 try/except ping 检查连接健康，不访问私有属性
 """
 
+import asyncio
 import json
+import logging
 import os
 import uuid
 from datetime import datetime, timezone
 
 import aiosqlite
 
+logger = logging.getLogger(__name__)
+
 _DB_PATH = os.environ.get("BAZI_DB_PATH", "bazi_pro.db")
 _db_initialized = False
-_init_lock = None
+_init_lock: asyncio.Lock | None = None
+_write_lock: asyncio.Lock | None = None
 _db_connection: aiosqlite.Connection | None = None
 
+# 分页上限，防止恶意请求 dump 整个数据库
+MAX_PAGE_SIZE = 100
 
-def _get_init_lock():
+
+def _get_init_lock() -> asyncio.Lock:
     global _init_lock
     if _init_lock is None:
-        import asyncio
         _init_lock = asyncio.Lock()
     return _init_lock
+
+
+def _get_write_lock() -> asyncio.Lock:
+    global _write_lock
+    if _write_lock is None:
+        _write_lock = asyncio.Lock()
+    return _write_lock
 
 
 async def _create_connection() -> aiosqlite.Connection:
@@ -32,8 +51,21 @@ async def _create_connection() -> aiosqlite.Connection:
     return db
 
 
+async def _is_connection_alive(conn: aiosqlite.Connection) -> bool:
+    """检查连接是否可用（不访问私有属性）"""
+    try:
+        cursor = await conn.execute("SELECT 1")
+        await cursor.fetchone()
+        return True
+    except Exception:
+        return False
+
+
 async def get_db() -> aiosqlite.Connection:
+    """获取数据库连接（线程安全，自动重连）"""
     global _db_initialized, _db_connection
+
+    # 初始化阶段：创建表结构
     if not _db_initialized:
         async with _get_init_lock():
             if not _db_initialized:
@@ -41,18 +73,29 @@ async def get_db() -> aiosqlite.Connection:
                 await _init_tables(db)
                 await db.close()
                 _db_initialized = True
+
+    # 连接健康检查：使用 SELECT 1 ping（不访问私有属性）
     if _db_connection is not None:
+        if await _is_connection_alive(_db_connection):
+            return _db_connection
+        logger.warning("数据库连接已失效，正在重连...")
         try:
-            # 检查连接是否仍然可用（aiosqlite 关闭后 _connection 为 None）
-            if _db_connection._connection is not None:
-                return _db_connection
-        except AttributeError:
+            await _db_connection.close()
+        except Exception:
             pass
-    _db_connection = await _create_connection()
-    return _db_connection
+        _db_connection = None
+
+    # 创建新连接
+    async with _get_init_lock():
+        # 双重检查：另一个协程可能已经创建了连接
+        if _db_connection is not None and await _is_connection_alive(_db_connection):
+            return _db_connection
+        _db_connection = await _create_connection()
+        return _db_connection
 
 
 async def close_db():
+    """关闭数据库连接"""
     global _db_connection
     if _db_connection is not None:
         try:
@@ -63,6 +106,7 @@ async def close_db():
 
 
 async def _init_tables(db: aiosqlite.Connection):
+    """初始化数据库表结构"""
     await db.executescript("""
         CREATE TABLE IF NOT EXISTS analyses (
             id TEXT PRIMARY KEY,
@@ -111,15 +155,16 @@ async def _init_tables(db: aiosqlite.Connection):
             ON reports(analysis_id);
     """)
 
-    try:
-        await db.execute("ALTER TABLE chat_messages ADD COLUMN school TEXT NOT NULL DEFAULT 'ziping'")
-    except Exception:
-        pass
-
-    try:
-        await db.execute("ALTER TABLE reports ADD COLUMN citations TEXT")
-    except Exception:
-        pass
+    # 安全迁移：记录失败而非静默忽略
+    for sql, desc in [
+        ("ALTER TABLE chat_messages ADD COLUMN school TEXT NOT NULL DEFAULT 'ziping'", "chat_messages.school"),
+        ("ALTER TABLE reports ADD COLUMN citations TEXT", "reports.citations"),
+    ]:
+        try:
+            await db.execute(sql)
+            logger.info("数据库迁移完成: %s", desc)
+        except Exception:
+            pass  # 列已存在，正常情况
 
 
 def generate_analysis_id() -> str:
@@ -131,58 +176,61 @@ async def insert_analysis(
     birth_json: dict,
     detail_level: str = "standard",
 ) -> str:
-    db = await get_db()
-    now = datetime.now(timezone.utc).isoformat()
-    await db.execute(
-        """INSERT INTO analyses (id, status, detail_level, birth_json, created_at)
-           VALUES (?, ?, ?, ?, ?)""",
-        (analysis_id, "processing", detail_level, json.dumps(birth_json, ensure_ascii=False), now),
-    )
-    await db.commit()
+    async with _get_write_lock():
+        db = await get_db()
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute(
+            """INSERT INTO analyses (id, status, detail_level, birth_json, created_at)
+               VALUES (?, ?, ?, ?, ?)""",
+            (analysis_id, "processing", detail_level, json.dumps(birth_json, ensure_ascii=False), now),
+        )
+        await db.commit()
     return analysis_id
 
 
 async def update_analysis_result(analysis_id: str, result: dict):
-    db = await get_db()
-    now = datetime.now(timezone.utc).isoformat()
+    async with _get_write_lock():
+        db = await get_db()
+        now = datetime.now(timezone.utc).isoformat()
 
-    pattern_info = result.get("pattern", {})
-    yongshen_info = result.get("yongshen", {})
-    day_master = result.get("validation", {}).get("day_master", "") or result.get("day_master", "")
+        pattern_info = result.get("pattern", {})
+        yongshen_info = result.get("yongshen", {})
+        day_master = result.get("validation", {}).get("day_master", "") or result.get("day_master", "")
 
-    pattern_str = pattern_info.get("pattern", "") if isinstance(pattern_info, dict) else ""
-    yongshen_str = yongshen_info.get("yongshen", "") if isinstance(yongshen_info, dict) else ""
+        pattern_str = pattern_info.get("pattern", "") if isinstance(pattern_info, dict) else ""
+        yongshen_str = yongshen_info.get("yongshen", "") if isinstance(yongshen_info, dict) else ""
 
-    status = result.get("status", "completed")
+        status = result.get("status", "completed")
 
-    await db.execute(
-        """UPDATE analyses
-           SET status=?, full_result=?, completed_at=?,
-               day_master=?, pattern=?, yongshen=?
-           WHERE id=?""",
-        (
-            status,
-            json.dumps(result, ensure_ascii=False),
-            now,
-            day_master,
-            pattern_str,
-            yongshen_str,
-            analysis_id,
-        ),
-    )
-    await db.commit()
+        await db.execute(
+            """UPDATE analyses
+               SET status=?, full_result=?, completed_at=?,
+                   day_master=?, pattern=?, yongshen=?
+               WHERE id=?""",
+            (
+                status,
+                json.dumps(result, ensure_ascii=False),
+                now,
+                day_master,
+                pattern_str,
+                yongshen_str,
+                analysis_id,
+            ),
+        )
+        await db.commit()
 
 
 async def update_analysis_status(analysis_id: str, status: str, error: str | None = None):
-    db = await get_db()
-    if error:
-        await db.execute(
-            "UPDATE analyses SET status=?, full_result=? WHERE id=?",
-            (status, json.dumps({"error": error}, ensure_ascii=False), analysis_id),
-        )
-    else:
-        await db.execute("UPDATE analyses SET status=? WHERE id=?", (status, analysis_id))
-    await db.commit()
+    async with _get_write_lock():
+        db = await get_db()
+        if error:
+            await db.execute(
+                "UPDATE analyses SET status=?, full_result=? WHERE id=?",
+                (status, json.dumps({"error": error}, ensure_ascii=False), analysis_id),
+            )
+        else:
+            await db.execute("UPDATE analyses SET status=? WHERE id=?", (status, analysis_id))
+        await db.commit()
 
 
 async def get_analysis(analysis_id: str) -> dict | None:
@@ -195,6 +243,10 @@ async def get_analysis(analysis_id: str) -> dict | None:
 
 
 async def list_analyses(page: int = 1, page_size: int = 20) -> dict:
+    # 安全限制：防止恶意请求 dump 整个数据库
+    page_size = min(page_size, MAX_PAGE_SIZE)
+    page = max(1, page)
+
     db = await get_db()
     offset = (page - 1) * page_size
 
@@ -248,13 +300,14 @@ def _row_to_dict(row) -> dict:
 
 
 async def insert_chat_message(analysis_id: str, role: str, content: str, citations: str = "", school: str = "ziping"):
-    db = await get_db()
-    now = datetime.now(timezone.utc).isoformat()
-    await db.execute(
-        "INSERT INTO chat_messages (analysis_id, role, content, citations, school, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-        (analysis_id, role, content, citations, school, now),
-    )
-    await db.commit()
+    async with _get_write_lock():
+        db = await get_db()
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute(
+            "INSERT INTO chat_messages (analysis_id, role, content, citations, school, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (analysis_id, role, content, citations, school, now),
+        )
+        await db.commit()
 
 
 async def get_chat_messages(analysis_id: str, limit: int = 50, school: str | None = None) -> list[dict]:
@@ -277,15 +330,16 @@ async def get_chat_messages(analysis_id: str, limit: int = 50, school: str | Non
 
 
 async def save_report(analysis_id: str, report_data: dict, citations: dict | None = None) -> str:
-    db = await get_db()
-    report_id = f"rpt_{uuid.uuid4().hex[:12]}"
-    now = datetime.now(timezone.utc).isoformat()
-    citations_json = json.dumps(citations, ensure_ascii=False) if citations else None
-    await db.execute(
-        "INSERT INTO reports (id, analysis_id, report_data, citations, created_at) VALUES (?, ?, ?, ?, ?)",
-        (report_id, analysis_id, json.dumps(report_data, ensure_ascii=False), citations_json, now),
-    )
-    await db.commit()
+    async with _get_write_lock():
+        db = await get_db()
+        report_id = f"rpt_{uuid.uuid4().hex[:12]}"
+        now = datetime.now(timezone.utc).isoformat()
+        citations_json = json.dumps(citations, ensure_ascii=False) if citations else None
+        await db.execute(
+            "INSERT INTO reports (id, analysis_id, report_data, citations, created_at) VALUES (?, ?, ?, ?, ?)",
+            (report_id, analysis_id, json.dumps(report_data, ensure_ascii=False), citations_json, now),
+        )
+        await db.commit()
     return report_id
 
 

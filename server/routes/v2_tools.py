@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from server.db import list_analyses
 from server.deps import error_response
 
-logger = logging.getLogger("bazi-pro")
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

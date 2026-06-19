@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeProvider";
+
 import { SCHOOL_OPTIONS } from "@/lib/constants";
 import ReportPreviewModal from "@/components/report/ReportPreviewModal";
 import {
@@ -162,7 +162,6 @@ export default function ReportPage() {
           >
             ← 返回分析页
           </Link>
-          <ThemeToggle />
         </div>
 
         {/* 标题区 */}
@@ -205,7 +204,7 @@ export default function ReportPage() {
           )}
 
           {report?.status === "failed" && (
-            <div className="py-3 px-4 rounded-lg mt-4" style={{ background: "rgba(201,100,66,0.08)", border: "1px solid var(--danger)" }}>
+            <div className="py-3 px-4 rounded-lg mt-4" style={{ background: "color-mix(in srgb, var(--cinnabar) 8%, transparent)", border: "1px solid var(--danger)" }}>
               <p className="text-sm mb-3" style={{ color: "var(--danger)" }}>
                 报告生成失败：{report.error || "未知错误"}
               </p>
@@ -220,7 +219,7 @@ export default function ReportPage() {
           )}
 
           {error && !report && (
-            <div className="py-3 px-4 rounded-lg mt-4" style={{ background: "rgba(201,100,66,0.08)", border: "1px solid var(--danger)" }}>
+            <div className="py-3 px-4 rounded-lg mt-4" style={{ background: "color-mix(in srgb, var(--cinnabar) 8%, transparent)", border: "1px solid var(--danger)" }}>
               <p className="text-sm mb-3" style={{ color: "var(--danger)" }}>{error}</p>
               <button
                 onClick={handleGenerate}
@@ -248,6 +247,8 @@ export default function ReportPage() {
                     e.stopPropagation();
                     setSchoolDropdownOpen(!schoolDropdownOpen);
                   }}
+                  aria-expanded={schoolDropdownOpen}
+                  aria-haspopup="listbox"
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
                   style={{
                     background: "var(--surface)",
@@ -269,12 +270,15 @@ export default function ReportPage() {
                 </button>
                 {schoolDropdownOpen && (
                   <div
+                    role="listbox"
                     className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 rounded-xl overflow-hidden"
                     style={{ zIndex: "var(--z-dropdown)", background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}
                   >
                     {SCHOOL_OPTIONS.map((s) => (
                       <button
                         key={s.value}
+                        role="option"
+                        aria-selected={selectedSchool === s.value}
                         onClick={() => { setSelectedSchool(s.value); setSchoolDropdownOpen(false); }}
                         className="w-full px-5 py-3 text-left transition-colors hover:bg-[var(--surface-2)]"
                         style={{

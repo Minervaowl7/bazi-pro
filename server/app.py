@@ -4,6 +4,7 @@ bazi-pro FastAPI 应用 v5.0
 路由注册 + 中间件 + 健康检查
 """
 
+import asyncio
 import logging
 import os
 import uuid
@@ -31,6 +32,11 @@ from server.deps import (  # noqa: E402
     ratelimiter_backend_name,
     task_store,
 )
+from server.metrics import (  # noqa: E402
+    create_metrics_middleware,
+    format_prometheus_text,
+    get_metrics_snapshot,
+)
 from server.routes import (  # noqa: E402
     v1_legacy,
     v2_analysis,
@@ -46,11 +52,68 @@ from server.ws import manager  # noqa: E402
 
 logger = logging.getLogger("bazi-pro")
 
-_enable_docs = os.environ.get('BAZI_ENABLE_DOCS', '').lower() in ('1', 'true', 'yes')
+# OpenAPI 文档默认启用，可通过 BAZI_DISABLE_DOCS=1 禁用（生产环境建议禁用）
+_enable_docs = os.environ.get('BAZI_DISABLE_DOCS', '').lower() not in ('1', 'true', 'yes')
+
+
+def _validate_config():
+    """启动时验证关键配置，记录警告"""
+    import sys
+
+    api_key = os.environ.get('BAZI_API_KEY', '')
+    allow_unauthed = os.environ.get('BAZI_ALLOW_UNAUTHED', '').lower() in ('1', 'true', 'yes')
+    env = os.environ.get('ENV', '').lower()
+
+    # 认证检查
+    if not api_key and not allow_unauthed:
+        if env in ('prod', 'production'):
+            logger.error("❌ 生产环境必须设置 BAZI_API_KEY！")
+            sys.exit(1)
+        else:
+            logger.warning("⚠️  BAZI_API_KEY 未设置，所有请求将被拒绝。设置 BAZI_ALLOW_UNAUTHED=1 可禁用认证")
+
+    # LLM 配置检查
+    llm_key = os.environ.get('LLM_API_KEY', '')
+    if not llm_key:
+        logger.info("ℹ️  LLM_API_KEY 未设置 — LLM 辅助解读功能已禁用")
+
+    # LLM_TIMEOUT 安全解析（防止 ValueError 崩溃）
+    llm_timeout_raw = os.environ.get('LLM_TIMEOUT', '300')
+    try:
+        llm_timeout = int(llm_timeout_raw)
+        if llm_timeout <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        logger.warning("⚠️  LLM_TIMEOUT=%r 无效，使用默认值 300", llm_timeout_raw)
+
+    # 数据库路径检查
+    db_path = os.environ.get('BAZI_DB_PATH', 'bazi_pro.db')
+    db_dir = os.path.dirname(os.path.abspath(db_path))
+    if not os.path.isdir(db_dir):
+        logger.warning("⚠️  BAZI_DB_PATH 目录不存在: %s", db_dir)
+
+    # CORS 配置日志
+    cors_origins = os.environ.get('BAZI_CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
+    logger.info("ℹ️  CORS origins: %s", cors_origins)
+    if cors_origins == '*' and env in ('prod', 'production'):
+        logger.error("❌ 生产环境不应使用 CORS '*'！")
+        sys.exit(1)
+
+
+# 后台任务注册表（用于优雅关闭）
+_background_tasks: set = set()
+
+
+def register_background_task(task: asyncio.Task):
+    """注册后台任务，用于优雅关闭时取消"""
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
 
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
+    # 启动配置验证
+    _validate_config()
     await get_db()
     # 预热 BM25 古籍索引（避免首次请求阻塞 3-10 秒）
     try:
@@ -70,8 +133,23 @@ async def _lifespan(app: FastAPI):
         await _aio.to_thread(_warm_bm25)
     except Exception:
         logger.warning("BM25 古籍索引预热线程异常", exc_info=True)
+
     yield
+
+    # ── 优雅关闭 ──
+    logger.info("正在关闭服务...")
+
+    # 取消所有后台任务
+    if _background_tasks:
+        logger.info("取消 %d 个后台任务...", len(_background_tasks))
+        for task in _background_tasks:
+            task.cancel()
+        # 等待任务完成（最多 5 秒）
+        await asyncio.wait(_background_tasks, timeout=5.0)
+
+    # 关闭数据库连接
     await close_db()
+    logger.info("服务已关闭")
 
 
 app = FastAPI(
@@ -113,6 +191,31 @@ else:
     _allowed_hosts = ['localhost', '127.0.0.1', 'testserver']
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts)
 logger.info("TrustedHostMiddleware enabled: %s", _allowed_hosts)
+
+
+class _CorrelationIdMiddleware:
+    """为每个请求生成唯一 correlation ID，用于日志关联"""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            request_id = uuid.uuid4().hex[:12]
+            scope["request_id"] = request_id
+            # 添加到响应头
+            async def send_with_id(message):
+                if message["type"] == "http.response.start":
+                    headers = list(message.get("headers", []))
+                    headers.append((b"x-request-id", request_id.encode()))
+                    message["headers"] = headers
+                await send(message)
+            await self.app(scope, receive, send_with_id)
+        else:
+            await self.app(scope, receive, send)
+
+
+app.add_middleware(_CorrelationIdMiddleware)
 
 
 class _SecurityHeadersMiddleware:
@@ -226,14 +329,17 @@ class _RateLimitMiddleware:
 
 app.add_middleware(_RequestSizeLimitMiddleware, max_body_size=MAX_PAYLOAD_BYTES)
 app.add_middleware(_RateLimitMiddleware, rate_limiter=rate_limiter)
+app.add_middleware(create_metrics_middleware())
 
 
 @app.exception_handler(Exception)
 async def _global_exception_handler(request, exc):
     error_id = uuid.uuid4().hex[:8]
+    # 始终记录完整异常到日志（服务端）
     logger.error("[%s] Unhandled %s: %s", error_id, exc.__class__.__name__, exc, exc_info=True)
-    debug = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
-    message = f"{exc} (error_id={error_id})" if debug else f"服务器内部错误 (error_id={error_id})"
+    # 安全：永远不向客户端发送原始异常信息（防止信息泄露）
+    # DEBUG 模式下日志已包含完整堆栈，客户端只需 error_id 即可关联
+    message = f"服务器内部错误 (error_id={error_id})"
     return error_response(500, "INTERNAL_ERROR", message)
 
 
@@ -271,6 +377,19 @@ async def api_health():
     if degraded_reasons:
         health["degraded"] = degraded_reasons
     return JSONResponse(health)
+
+
+@app.get("/metrics")
+async def metrics_endpoint():
+    """Prometheus 指标端点（无需鉴权，供 Prometheus 抓取）"""
+    return JSONResponse(get_metrics_snapshot())
+
+
+@app.get("/metrics/text")
+async def metrics_text_endpoint():
+    """Prometheus text exposition 格式"""
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(format_prometheus_text(), media_type="text/plain")
 
 
 @app.get("/", response_class=HTMLResponse)

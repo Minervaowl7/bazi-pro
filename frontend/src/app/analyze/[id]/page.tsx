@@ -19,7 +19,6 @@ import ShenShaPanel from "@/components/ShenShaPanel";
 import DimensionAnalysisPanel from "@/components/DimensionAnalysisPanel";
 import ZiweiPanel from "@/components/ZiweiPanel";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
-import ChatPanel from "@/components/ChatPanel";
 import ExportPanel from "@/components/ExportPanel";
 import LifeReport from "@/components/LifeReport";
 import LlmOverview from "@/components/LlmOverview";
@@ -27,6 +26,8 @@ import { SCHOOL_OPTIONS_WITH_ALL, WUXING_COLORS, GAN_WUXING, ZHI_WUXING } from "
 import { gsap, useGSAP } from "@/lib/gsap";
 
 import ChartQuality, { type ChartQualityData } from "@/components/ChartQuality";
+
+const ChatPanel = dynamic(() => import("@/components/ChatPanel"), { ssr: false });
 
 const SCHOOL_OPTIONS = SCHOOL_OPTIONS_WITH_ALL;
 
@@ -42,7 +43,7 @@ class ErrorBoundary extends Component<FallbackProps, { hasError: boolean; error?
           <h3 style={{ color: "var(--danger)", marginBottom: 8 }}>渲染出错</h3>
           <p style={{ color: "var(--text-2)", fontSize: 14 }}>{this.state.error?.message || "未知错误"}</p>
           <button onClick={() => this.setState({ hasError: false, error: undefined })}
-            style={{ marginTop: 16, padding: "8px 20px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", color: "var(--ink)" }}>
+            style={{ marginTop: 16, padding: "8px 20px", borderRadius: "var(--r-sm)", border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", color: "var(--ink)" }}>
             重试
           </button>
         </section>
@@ -284,11 +285,11 @@ export default function AnalyzePage() {
           <p style={{ color: "var(--text-2)", fontSize: 14, marginBottom: 16 }}>分析结果渲染时发生异常，请重试或返回首页。</p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
             <button onClick={() => window.location.reload()}
-              style={{ padding: "10px 24px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", color: "var(--ink)", fontSize: 14 }}>
+              style={{ padding: "10px 24px", borderRadius: "var(--r-sm)", border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", color: "var(--ink)", fontSize: 14 }}>
               重试
             </button>
             <button onClick={() => window.location.href = "/"}
-              style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "var(--scholar-blue)", cursor: "pointer", color: "#fff", fontSize: 14 }}>
+              style={{ padding: "10px 24px", borderRadius: "var(--r-sm)", border: "none", background: "var(--scholar-blue)", cursor: "pointer", color: "#fff", fontSize: 14 }}>
               返回首页
             </button>
           </div>
@@ -304,6 +305,8 @@ export default function AnalyzePage() {
             <div className="relative">
               <button
                 onClick={(e)=>{e.stopPropagation();setSchoolDropdownOpen(!schoolDropdownOpen);}}
+                aria-expanded={schoolDropdownOpen}
+                aria-haspopup="listbox"
                 className="flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium border border-[var(--border)] rounded-lg transition-colors"
                 style={{ color:"var(--text-2)", background:"var(--surface)" }}
               >
@@ -315,11 +318,14 @@ export default function AnalyzePage() {
               </button>
               {schoolDropdownOpen && (
                 <div
+                  role="listbox"
                   className="card absolute left-0 top-full mt-1.5 w-60 overflow-hidden"
                   style={{ zIndex: "var(--z-dropdown)" }}
                 >
                   {SCHOOL_OPTIONS.map(s=>(
                     <button key={s.value}
+                      role="option"
+                      aria-selected={selectedSchool===s.value}
                       onClick={()=>{setSelectedSchool(s.value);setSchoolDropdownOpen(false);}}
                       className="w-full px-5 py-2.5 text-left transition-colors hover:bg-[var(--surface-2)]"
                       style={{fontSize:13,background:selectedSchool===s.value?"var(--cinnabar-light)":"transparent"}}
@@ -360,7 +366,14 @@ export default function AnalyzePage() {
         {status==="failed" && (
           <section className="card p-6 mb-6" style={{ border: "1px solid var(--danger)" }}>
             <h3 className="font-bold text-base mb-2" style={{ color: "var(--danger)" }}>分析失败</h3>
-            <p className="text-[15px]" style={{ color: "var(--text-2)" }}>{error||"未知错误"}</p>
+            <p className="text-[15px] mb-4" style={{ color: "var(--text-2)" }}>{error||"未知错误"}</p>
+            <button
+              onClick={() => { useAnalysisStore.getState().reset(); router.push("/"); }}
+              className="px-4 py-2 rounded-lg text-sm font-medium"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--ink)", cursor: "pointer" }}
+            >
+              重新排盘
+            </button>
           </section>
         )}
 
@@ -619,12 +632,10 @@ export default function AnalyzePage() {
                 </div>
               )}
 
-              {/* Tab 7: 命理问答 */}
-              {activeTab==="chat"&&(
-                <div>
-                  <ChatPanel analysisId={analysisId} school={currentSchool === "all" ? "ziping" : currentSchool} />
-                </div>
-              )}
+              {/* Tab 7: 命理问答 — 保持挂载以保留对话状态 */}
+              <div style={{ display: activeTab === "chat" ? "block" : "none" }}>
+                <ChatPanel analysisId={analysisId} school={currentSchool === "all" ? "ziping" : currentSchool} />
+              </div>
             </div>
           </>
           </Safe>

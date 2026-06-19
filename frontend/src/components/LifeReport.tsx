@@ -4,6 +4,7 @@ import { useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import RemarkGfm from "remark-gfm";
 import { gsap, useGSAP } from "@/lib/gsap";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 interface LifeReportProps {
   content: string;
@@ -13,9 +14,14 @@ interface LifeReportProps {
 
 export default function LifeReport({ content, isLlmGenerated = true }: LifeReportProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useGSAP(() => {
     if (!ref.current) return;
+    if (prefersReducedMotion) {
+      gsap.set(ref.current, { autoAlpha: 1 });
+      return;
+    }
     gsap.from(ref.current, {
       autoAlpha: 0,
       y: 24,
@@ -88,7 +94,7 @@ export default function LifeReport({ content, isLlmGenerated = true }: LifeRepor
               fontFamily: "var(--font-display)",
             }}>
               {isLlmGenerated
-                ? "基于确定性计算 · 深度解读"
+                ? "AI 深度解读 · 基于确定性计算"
                 : "确定性分析 · 零幻觉"}
             </p>
           </div>

@@ -202,6 +202,9 @@ class TestAppEndpoints:
 
     @pytest.fixture
     def client(self):
+        import os
+        # 测试环境允许无认证访问
+        os.environ['BAZI_ALLOW_UNAUTHED'] = '1'
         from fastapi.testclient import TestClient
 
         from server.app import app

@@ -14,9 +14,18 @@ function Tooltip({ children, content, className }: {
 
   useEffect(() => {
     if (!show) return;
-    const handler = () => setShow(false);
-    document.addEventListener("scroll", handler, true);
-    return () => document.removeEventListener("scroll", handler, true);
+    const handler = (e: Event) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setShow(false);
+    };
+    const keyHandler = (e: KeyboardEvent) => { if (e.key === "Escape") setShow(false); };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    document.addEventListener("keydown", keyHandler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+      document.removeEventListener("keydown", keyHandler);
+    };
   }, [show]);
 
   return (
@@ -27,6 +36,8 @@ function Tooltip({ children, content, className }: {
       onMouseLeave={() => setShow(false)}
       onFocus={() => setShow(true)}
       onBlur={() => setShow(false)}
+      onClick={() => setShow((s) => !s)}
+      aria-describedby={show ? tooltipId : undefined}
     >
       {children}
       {show && (
@@ -37,7 +48,7 @@ function Tooltip({ children, content, className }: {
             "absolute bottom-full left-1/2 -translate-x-1/2 mb-2",
             "px-2.5 py-1.5 rounded-md text-[11px] leading-tight",
             "bg-[var(--ink)] text-[var(--bg)]",
-            "shadow-lg whitespace-nowrap animate-fade-in",
+            "shadow-lg max-w-[220px] text-center animate-fade-in",
             className
           )}
           style={{ zIndex: "var(--z-tooltip)" }}

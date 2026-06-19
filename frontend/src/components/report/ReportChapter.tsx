@@ -155,6 +155,7 @@ export default function ReportChapter({
                 <div className="mt-4">
                   <button
                     onClick={() => setShowCitation(!showCitation)}
+                    aria-expanded={showCitation}
                     className="flex items-center gap-1.5 text-[12px] transition-colors duration-150"
                     style={{
                       color: "var(--gold)",

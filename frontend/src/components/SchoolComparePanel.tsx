@@ -5,9 +5,9 @@ interface Props {
 }
 
 const SCHOOL_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  ziping: { label: "传统子平法", icon: "☯", color: "var(--wx-water)", bg: "rgba(63,111,159,0.12)" },
-  mangpai: { label: "盲派", icon: "👁", color: "#a855f7", bg: "rgba(168,85,247,0.12)" },
-  xinpai: { label: "新派", icon: "✧", color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
+  ziping: { label: "传统子平法", icon: "☯", color: "var(--school-ziping)", bg: "color-mix(in srgb, var(--school-ziping) 12%, transparent)" },
+  mangpai: { label: "盲派", icon: "👁", color: "var(--school-mangpai)", bg: "color-mix(in srgb, var(--school-mangpai) 12%, transparent)" },
+  xinpai: { label: "新派", icon: "✧", color: "var(--school-xinpai)", bg: "color-mix(in srgb, var(--school-xinpai) 12%, transparent)" },
 };
 
 function ZipingColumn({ data }: { data: Record<string, unknown> }) {
@@ -127,7 +127,7 @@ function MangpaiColumn({ data }: { data: Record<string, unknown> }) {
           <div className="space-y-1.5">
             {(binzhu?.interpretations || []).map((interp, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7" }}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "color-mix(in srgb, var(--school-mangpai) 15%, transparent)", color: "var(--school-mangpai)" }}>
                   {interp.type}
                 </span>
                 <span className="text-xs text-[var(--text-2)]">{interp.meaning}</span>
@@ -143,11 +143,11 @@ function MangpaiColumn({ data }: { data: Record<string, unknown> }) {
         <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">体用</div>
         <div className="flex items-center gap-3 text-xs">
           <span>
-            体 <span className="font-semibold" style={{ color: "#a855f7" }}>{(tiyong?.ti || []).length}</span>
+            体 <span className="font-semibold" style={{ color: "var(--school-mangpai)" }}>{(tiyong?.ti || []).length}</span>
           </span>
           <span className="text-[var(--text-3)]">·</span>
           <span>
-            用 <span className="font-semibold" style={{ color: "#a855f7" }}>{(tiyong?.yong || []).length}</span>
+            用 <span className="font-semibold" style={{ color: "var(--school-mangpai)" }}>{(tiyong?.yong || []).length}</span>
           </span>
         </div>
         <div className="mt-2 flex items-center gap-2 text-[10px] text-[var(--text-3)]">
@@ -163,7 +163,7 @@ function MangpaiColumn({ data }: { data: Record<string, unknown> }) {
           <div className="space-y-1.5">
             {allGong.slice(0, 5).map((g, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7" }}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "color-mix(in srgb, var(--school-mangpai) 15%, transparent)", color: "var(--school-mangpai)" }}>
                   {g.type}
                 </span>
                 <span className="text-[10px] text-[var(--text-2)]">{g.description}</span>
@@ -178,7 +178,7 @@ function MangpaiColumn({ data }: { data: Record<string, unknown> }) {
       <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
         <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">功力</div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold" style={{ color: "#a855f7" }}>
+          <span className="text-xs font-semibold" style={{ color: "var(--school-mangpai)" }}>
             {gongli?.level || "—"}
           </span>
           <span className="text-[10px] text-[var(--text-3)]">
@@ -210,7 +210,7 @@ function XinpaiColumn({ data }: { data: Record<string, unknown> }) {
     <div className="space-y-4">
       <div className="rounded-xl px-6 py-4 bg-[var(--surface-2)]">
         <div className="text-[10px] font-medium mb-2 text-[var(--text-3)]">身扶判定</div>
-        <div className="text-xs font-semibold" style={{ color: "#22c55e" }}>
+        <div className="text-xs font-semibold" style={{ color: "var(--school-xinpai)" }}>
           {yongJi?.sheng_fu || "—"}
         </div>
         {yongJi?.reason && (
@@ -241,7 +241,7 @@ function XinpaiColumn({ data }: { data: Record<string, unknown> }) {
                 <span
                   key={zhi}
                   className="text-xs font-semibold px-2 py-0.5 rounded-md"
-                  style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e" }}
+                  style={{ background: "color-mix(in srgb, var(--school-xinpai) 12%, transparent)", color: "var(--school-xinpai)" }}
                 >
                   {zhi}
                 </span>
@@ -264,7 +264,7 @@ function XinpaiColumn({ data }: { data: Record<string, unknown> }) {
           <div className="space-y-1.5">
             {(fanduan.conditions || []).map((c, i) => (
               <div key={i} className="flex items-start gap-2">
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "color-mix(in srgb, var(--school-xinpai) 15%, transparent)", color: "var(--school-xinpai)" }}>
                   {c.action}
                 </span>
                 <span className="text-[10px] text-[var(--text-2)]">{c.description}</span>
@@ -323,8 +323,8 @@ export default function SchoolComparePanel({ schoolAnalyses }: Props) {
 
       <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] overflow-hidden">
         <div
-          className="grid"
-          style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}
+          className="grid overflow-x-auto"
+          style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(200px, 1fr))` }}
         >
           {columns.map((col, i) => {
             const meta = SCHOOL_META[col.key];

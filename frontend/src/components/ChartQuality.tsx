@@ -23,14 +23,14 @@ function scoreColor(score: number, max: number): string {
   const ratio = score / max;
   if (ratio >= 0.8) return "var(--wx-wood)";
   if (ratio >= 0.5) return "var(--scholar-blue)";
-  if (ratio >= 0.3) return "#e6a817";
+  if (ratio >= 0.3) return "var(--gold)";
   return "var(--danger)";
 }
 
 function totalColor(total: number): string {
   if (total >= 80) return "var(--wx-wood)";
   if (total >= 60) return "var(--scholar-blue)";
-  if (total >= 40) return "#e6a817";
+  if (total >= 40) return "var(--gold)";
   return "var(--danger)";
 }
 
@@ -46,12 +46,12 @@ export default function ChartQuality({ data }: Props) {
       {/* Header */}
       <div style={{ padding: "16px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-4)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          命局层次 <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.6 }}>(Chart Quality)</span>
+          命局层次 <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-4)" }}>(Chart Quality)</span>
         </span>
         <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{
-          background: `${totalColor(data.total)}15`,
+          background: `color-mix(in srgb, ${totalColor(data.total)} 15%, transparent)`,
           color: totalColor(data.total),
-          border: `1px solid ${totalColor(data.total)}30`,
+          border: `1px solid color-mix(in srgb, ${totalColor(data.total)} 30%, transparent)`,
         }}>
           {data.level}
         </span>
@@ -61,9 +61,9 @@ export default function ChartQuality({ data }: Props) {
       <div style={{ padding: "0 28px 20px" }}>
         <div className="flex items-baseline gap-3 mb-5">
           <h3 style={{ fontSize: 22, fontWeight: 700, color: totalColor(data.total), fontFamily: "var(--font-display)" }}>
-            {data.level_en}
+            {data.level}
           </h3>
-          <span style={{ fontSize: 13, color: "var(--text-4)" }}>{data.level}</span>
+          <span style={{ fontSize: 13, color: "var(--text-4)" }}>{data.level_en}</span>
         </div>
 
         {/* Dimension Bars */}

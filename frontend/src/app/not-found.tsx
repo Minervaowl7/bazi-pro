@@ -4,7 +4,7 @@ export default function NotFound() {
   return (
     <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-6">
       <div className="text-center">
-        <div className="text-6xl font-bold mb-4" style={{ color: "var(--border)" }}>404</div>
+        <div className="text-6xl font-bold mb-4" style={{ color: "var(--text-4)" }}>404</div>
         <h1 className="text-xl font-bold mb-2" style={{ color: "var(--ink)", fontFamily: "var(--font-display)" }}>
           页面未找到
         </h1>

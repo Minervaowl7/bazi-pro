@@ -8,18 +8,26 @@ import dynamic from "next/dynamic";
 const EChartsReact = dynamic(() => import("echarts-for-react"), { ssr: false });
 
 const WUXING_ORDER = ["木", "火", "土", "金", "水"];
-const WUXING_HEX: Record<string, string> = {
-  木: "#3a7d5c",
-  火: "#c4523a",
-  土: "#8b6a3a",
-  金: "#c5a55a",
-  水: "#2e5c8a",
-};
-
 function cssVar(name: string, fallback: string): string {
   if (typeof window === "undefined") return fallback;
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return v || fallback;
+}
+
+const WUXING_VAR: Record<string, string> = {
+  木: "--wx-wood",
+  火: "--wx-fire",
+  土: "--wx-earth",
+  金: "--wx-metal",
+  水: "--wx-water",
+};
+function wxColor(wx: string): string {
+  return cssVar(WUXING_VAR[wx] || "--text-3", "#888");
+}
+function cinnabarAlpha(alpha: number): string {
+  const hex = cssVar("--cinnabar", cssVar("--cinnabar", "#c96442"));
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 interface ReportChartsProps {
@@ -52,9 +60,9 @@ function WuxingRadar({ result }: ReportChartsProps) {
       data: [{
         value: WUXING_ORDER.map(wx => +(percent[wx] || 0).toFixed(1)),
         name: "五行力量",
-        areaStyle: { color: "rgba(201,100,66,0.12)" },
-        lineStyle: { color: "#c96442", width: 2 },
-        itemStyle: { color: "#c96442" },
+        areaStyle: { color: cinnabarAlpha(0.12) },
+        lineStyle: { color: cssVar("--cinnabar", "#c96442"), width: 2 },
+        itemStyle: { color: cssVar("--cinnabar", "#c96442") },
       }],
     }],
   }), [percent, ink, border]);
@@ -66,7 +74,7 @@ function WuxingRadar({ result }: ReportChartsProps) {
       <div className="flex justify-center gap-4 mt-2 flex-wrap">
         {WUXING_ORDER.map(wx => (
           <div key={wx} className="flex items-center gap-1.5 text-xs" style={{ color: text2 }}>
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: WUXING_HEX[wx] }} />
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: wxColor(wx) }} />
             <span>{wx}</span>
             <span className="font-medium" style={{ color: ink }}>{(percent[wx] || 0).toFixed(1)}%</span>
           </div>
@@ -120,7 +128,7 @@ function ShishenBar({ result }: ReportChartsProps) {
         data: sorted.map((s, i) => ({
           value: +s[1].toFixed(1),
           itemStyle: {
-            color: i === 0 ? "#c96442" : i < 3 ? "rgba(201,100,66,0.6)" : "rgba(201,100,66,0.3)",
+            color: i === 0 ? cssVar("--cinnabar", "#c96442") : i < 3 ? cinnabarAlpha(0.6) : cinnabarAlpha(0.3),
             borderRadius: [0, 4, 4, 0],
           },
         })),
@@ -157,10 +165,10 @@ function QualityGauge({ result }: ReportChartsProps) {
   const text3 = cssVar("--text-3", "#9e9488");
 
   const getColor = (v: number) => {
-    if (v >= 80) return "#3a7d5c";
-    if (v >= 60) return "#c5a55a";
-    if (v >= 40) return "#c96442";
-    return "#c4523a";
+    if (v >= 80) return cssVar("--wx-wood", "#3a7d5c");
+    if (v >= 60) return cssVar("--wx-metal", "#c5a55a");
+    if (v >= 40) return cssVar("--cinnabar", "#c96442");
+    return cssVar("--wx-fire", "#c4523a");
   };
 
   const option = useMemo(() => {
@@ -175,7 +183,7 @@ function QualityGauge({ result }: ReportChartsProps) {
         radius: "90%",
         progress: { show: true, width: 16, itemStyle: { color: getColor(total) } },
         pointer: { show: false },
-        axisLine: { lineStyle: { width: 16, color: [[1, "rgba(180,160,120,0.12)"]] } },
+        axisLine: { lineStyle: { width: 16, color: [[1, cssVar("--border", "rgba(180,160,120,0.12)")]] } },
         axisTick: { show: false },
         splitLine: { show: false },
         axisLabel: { show: false },
@@ -271,14 +279,14 @@ function DayunTimeline({ result }: ReportChartsProps) {
         data: dayun.map((d, i) => ({
           value: i,
           itemStyle: {
-            color: WUXING_HEX[d.gan_wuxing || ""] || "#888",
+            color: wxColor(d.gan_wuxing || ""),
             borderColor: "#fff",
             borderWidth: 2,
           },
         })),
         symbol: "circle",
         symbolSize: 14,
-        lineStyle: { color: "rgba(201,100,66,0.3)", width: 2 },
+        lineStyle: { color: cinnabarAlpha(0.3), width: 2 },
         label: {
           show: true,
           position: "bottom",
@@ -321,17 +329,17 @@ function RelationGraphMini({ result }: ReportChartsProps) {
   const typeColors: Record<string, string> = {
     "冲": "#c4523a",
     "合": "#3a7d5c",
-    "刑": "#c96442",
+    "刑": cssVar("--cinnabar", "#c96442"),
     "害": "#8b6a3a",
     "破": "#c5a55a",
   };
 
   const typeBgColors: Record<string, string> = {
-    "冲": "rgba(196,82,58,0.08)",
-    "合": "rgba(58,125,92,0.08)",
-    "刑": "rgba(201,100,66,0.08)",
-    "害": "rgba(139,106,58,0.08)",
-    "破": "rgba(197,165,90,0.08)",
+    "冲": `color-mix(in srgb, ${cssVar("--wx-fire", "#c4523a")} 8%, transparent)`,
+    "合": `color-mix(in srgb, ${cssVar("--wx-wood", "#3a7d5c")} 8%, transparent)`,
+    "刑": cinnabarAlpha(0.08),
+    "害": `color-mix(in srgb, ${cssVar("--wx-earth", "#8b6a3a")} 8%, transparent)`,
+    "破": `color-mix(in srgb, ${cssVar("--wx-metal", "#c5a55a")} 8%, transparent)`,
   };
 
   return (

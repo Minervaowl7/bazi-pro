@@ -46,6 +46,11 @@
   --danger: #c96442;
   --warning: #c5a55a;
 
+  /* ── 流派色 ── */
+  --school-ziping: #2d3e5f;
+  --school-mangpai: #7c3aed;
+  --school-xinpai: #16a34a;
+
   /* ── 兼容旧变量（被组件引用） ── */
   --bg-card: var(--surface);
   --shadow: var(--shadow-sm);
@@ -104,6 +109,12 @@
   --wx-earth-bg: rgba(201,160,85,0.10);
   --wx-metal-bg: rgba(224,200,120,0.08);
   --wx-water-bg: rgba(90,155,201,0.10);
+  --success: #52c48a;
+  --danger: #e0795a;
+  --warning: #e0c878;
+  --school-ziping: #8da2c0;
+  --school-mangpai: #a78bfa;
+  --school-xinpai: #4ade80;
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.2);
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(255,255,255,0.04);
   --shadow-card: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(255,255,255,0.04);
@@ -294,7 +305,7 @@ select.form-input {
 }
 @keyframes gsapFallback {
   from { visibility: hidden; opacity: 0; }
-  to { visibility: visible; opacity: 1; }
+  to { visibility: visible !important; opacity: 1 !important; }
 }
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -313,7 +324,7 @@ select.form-input {
 .hero-form,
 .cap-bar,
 .cap-item {
-  animation: gsapFallback 0s 1.5s forwards;
+  animation: gsapFallback 0s 0.4s forwards;
 }
 
 .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }

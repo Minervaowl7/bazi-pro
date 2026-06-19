@@ -161,7 +161,7 @@ export default function AnalysisProgress() {
                 {currentIdx >= 0
                   ? STEPS[currentIdx]?.desc
                   : connectTimeout
-                    ? "连接超时，请检查后端服务是否运行（端口 8711）"
+                    ? "连接超时，请检查后端服务是否正在运行"
                     : connectWarn
                       ? "首次分析需加载古籍索引，请稍候..."
                       : "正在连接分析引擎..."}
@@ -170,7 +170,7 @@ export default function AnalysisProgress() {
           </div>
 
           {/* 计时器 */}
-          <ElapsedTimer active={true} resetKey={progress.length} />
+          <ElapsedTimer active={true} resetKey={0} />
         </div>
 
         {/* 进度条 */}
